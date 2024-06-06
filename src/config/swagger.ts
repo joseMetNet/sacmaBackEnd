@@ -33,7 +33,7 @@ export const swaggerOptions: SwaggerOptions = {
         descripcion: "Development server"
       },
       {
-        url: "https://sacma-back.azurewebsites.net/api",
+        url: "https://sacma-dev.azurewebsites.net/api",
         descripcion: "Production server"
       }
     ]
