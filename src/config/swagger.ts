@@ -29,11 +29,11 @@ export const swaggerOptions: SwaggerOptions = {
     ],
     servers: [
       {
-        url: "http://localhost:8080/api/v1",
+        url: "http://localhost:8080/api",
         descripcion: "Development server"
       },
       {
-        url: "https://backkpiglobal.azurewebsites.net/api/v1",
+        url: "https://sacma-back.azurewebsites.net/api",
         descripcion: "Production server"
       }
     ]
