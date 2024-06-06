@@ -284,7 +284,7 @@ export function authenticationRoutes(app: Application): void {
 
   /**
    * @openapi
-   *  /register:
+   *  /v1/auth/register:
    *    post:
    *      tags: [Authentication Controller]
    *      summary: Register a new user
@@ -308,17 +308,24 @@ export function authenticationRoutes(app: Application): void {
    *                $ref: '#/components/responses/failedResponse'
   */
   routes.post(
-    "/register",
+    "/v1/auth/register",
     [check("firstName", "firstName is required").notEmpty(), validateEndpoint],
     [check("lastName", "lastName is required").notEmpty(), validateEndpoint],
     [check("email", "email is required").notEmpty(), validateEndpoint],
     [check("password", "password is required").notEmpty(), validateEndpoint],
+    [check("address", "address is required").notEmpty(), validateEndpoint],
+    [check("phoneNumber", "phoneNumber is required").notEmpty(), validateEndpoint],
+    [check("idIdentityCard", "idIdentityCard is required").notEmpty(), validateEndpoint],
+    [check("identityCardNumber", "identityCardNumber is required").notEmpty(), validateEndpoint],
+    [check("identityCardExpeditionDate", "identityCardExpeditionDate is required").notEmpty(), validateEndpoint],
+    [check("idIdentityCardExpeditionPlace", "idIdentityCardExpeditionPlace is required").notEmpty(), validateEndpoint],
+    [check("idRole", "idRole is required").notEmpty(), validateEndpoint],
     authController.register
   );
 
   /**
    * @openapi
-   *  /login:
+   *  /v1/auth/login:
    *    post:
    *      tags: [Authentication Controller]
    *      summary: Login a user
@@ -348,11 +355,11 @@ export function authenticationRoutes(app: Application): void {
    *                $ref: '#/components/responses/failedResponse'
   */
   routes.post(
-    "/login",
+    "/v1/auth/login",
     [check("email", "email is required").notEmpty(), validateEndpoint],
     [check("password", "password is required").notEmpty(), validateEndpoint],
     authController.login
   );
 
-  app.use("/api/v1/", routes);
+  app.use("/api/", routes);
 }
