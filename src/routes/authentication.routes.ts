@@ -203,8 +203,10 @@ export function authenticationRoutes(app: Application): void {
    *        identityCardExpeditionDate:
    *          type: string
    *          format: date
-   *        idIdentityCardExpeditionPlace:
-   *          type: string
+   *        idIdentityCardExpeditionCity:
+   *          type: number
+   *        idIdentityCardExpeditionDepartment:
+   *          type: number
    *        idRole:
    *          type: number
    *        idPosition:
@@ -277,7 +279,8 @@ export function authenticationRoutes(app: Application): void {
    *        - phoneNumber
    *        - idIdentityCard
    *        - identityCardNumber
-   *        - identityCardExpeditionDate
+   *        - identityCardExpeditionCity
+   *        - identityCardExpeditionDepartment
    *        - idIdentityCardExpeditionPlace
    *        - idRole
    */
@@ -318,7 +321,7 @@ export function authenticationRoutes(app: Application): void {
     [check("idIdentityCard", "idIdentityCard is required").notEmpty(), validateEndpoint],
     [check("identityCardNumber", "identityCardNumber is required").notEmpty(), validateEndpoint],
     [check("identityCardExpeditionDate", "identityCardExpeditionDate is required").notEmpty(), validateEndpoint],
-    [check("idIdentityCardExpeditionPlace", "idIdentityCardExpeditionPlace is required").notEmpty(), validateEndpoint],
+    [check("idIdentityCardExpeditionCity", "idIdentityCardExpeditionCity is required").notEmpty(), validateEndpoint],
     [check("idRole", "idRole is required").notEmpty(), validateEndpoint],
     authController.register
   );

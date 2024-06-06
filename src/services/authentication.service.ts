@@ -35,7 +35,7 @@ export class AuthenticationService {
         phoneNumber: request.phoneNumber,
         identityCardNumber: request.identityCardNumber,
         identityCardExpeditionDate: request.identityCardExpeditionDate,
-        idIdentityCardExpeditionPlace: request.idIdentityCardExpeditionPlace,
+        idIdentityCardExpeditionCity: request.idIdentityCardExpeditionCity,
         idIdentityCard: request.idIdentityCard,
         idRole: request.idRole,
         userName: request.userName

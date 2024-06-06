@@ -11,7 +11,7 @@ export class User extends Model {
   declare phoneNumber: string;
   declare idIdentityCard: number;
   declare identityCardNumber: string;
-  declare idIdentityCardExpeditionPlace: number;
+  declare idIdentityCardExpeditionCity: number;
   declare identityCardExpeditionDate: string;
   declare idRole: number;
 }
@@ -53,7 +53,7 @@ User.init({
     type: DataTypes.STRING,
     allowNull: false
   },
-  idIdentityCardExpeditionPlace: {
+  idIdentityCardExpeditionCity: {
     type: DataTypes.INTEGER,
     allowNull: false
   },

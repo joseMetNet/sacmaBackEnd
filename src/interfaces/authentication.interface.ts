@@ -18,7 +18,7 @@ export interface RegisterRequest {
   idIdentityCard: number;
   identityCardNumber: string;
   identityCardExpeditionDate: string;
-  idIdentityCardExpeditionPlace: number;
+  idIdentityCardExpeditionCity: number;
   idRole: number;
   idPosition?: number | null;
   idContractType?: number | null;

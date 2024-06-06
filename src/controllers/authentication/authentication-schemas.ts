@@ -10,7 +10,7 @@ export const registerSchema = z.object({
   idIdentityCard: z.coerce.number(),
   identityCardNumber: z.string(),
   identityCardExpeditionDate: z.string(),
-  idIdentityCardExpeditionPlace: z.coerce.number(),
+  idIdentityCardExpeditionCity: z.coerce.number(),
   idRole: z.coerce.number(),
   idPosition: z.coerce.number().optional(),
   idContractType: z.coerce.number().optional(),
