@@ -1,5 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
+import { Role } from "./role.model";
 
 export class User extends Model {
   declare idUser: number;
@@ -70,4 +71,9 @@ User.init({
   tableName: "TB_User",
   timestamps: true,
   paranoid: true
+});
+
+User.hasOne(Role, {
+  sourceKey: "idRole",
+  foreignKey: "idRole",
 });

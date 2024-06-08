@@ -6,19 +6,22 @@ export class CompensationFund extends Model {
   declare compensationFund: string;
 }
 
-CompensationFund.init({
-  idCompensationFund: {
-    type: DataTypes.INTEGER,
-    primaryKey: true
+CompensationFund.init(
+  {
+    idCompensationFund: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
+    },
+    compensationFund: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
   },
-  compensationFund: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true
-  },
-}, {
-  sequelize: dbConnection,
-  tableName: "TB_CompensationFund",
-  timestamps: false
-});
-
+  {
+    sequelize: dbConnection,
+    tableName: "TB_CompensationFund",
+    timestamps: false,
+  }
+);

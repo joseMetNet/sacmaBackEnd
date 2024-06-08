@@ -3,7 +3,7 @@ import { CustomError } from "../../utils";
 import { 
   ChagePasswordRequest, 
   AuthenticationRequest, 
-  RegisterRequest 
+  RegisterRequest, 
 } from "../../interfaces";
 
 export class AuthenticationRepository {
