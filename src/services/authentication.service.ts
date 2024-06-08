@@ -1,11 +1,16 @@
-import { AuthenticationRequest, RegisterRequest, StatusCode } from "../interfaces";
+import {
+  AuthenticationRequest,
+  RegisterRequest,
+  StatusCode,
+} from "../interfaces";
 import { AuthenticationRepository } from "../repositories";
 import { CustomError } from "../utils";
 import { BuildResponse } from "./build-response";
-import { AuthTokenPayload, ResponseEntity } from "./utils";
+import { AuthTokenPayload, ResponseEntity } from "./interface";
 import * as helper from "./helper";
 import { EmergencyContact, Employee, User } from "../models";
 import { dbConnection } from "../config";
+import { Transaction } from "sequelize";
 
 export class AuthenticationService {
   constructor(private readonly authRepository: AuthenticationRepository) {
@@ -25,8 +30,57 @@ export class AuthenticationService {
         await transaction.rollback();
         return BuildResponse.buildErrorResponse(newUserId.statusCode, {message: newUserId.message});
       }
+      const user = await this.createUser(request, newUserId, transaction);
+      const emergencyContact = await this.createEmergencyContact(request, transaction);
+      await this.createEmployee(request, emergencyContact, user, transaction);
 
-      const user = await User.create({
+      const payload: AuthTokenPayload = {
+        idUser: user.get("idUser"),
+        idRole: user.get("idRole"),
+      };
+      const token = helper.createAuthToken(payload);
+      transaction.commit();
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {token, userName: user.get("firstName") + " " + user.get("lastName")});
+    } catch (err: any) {
+      transaction.rollback();
+      console.log(JSON.stringify(err));
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {message: err});
+    }
+  }
+
+  async login(request: AuthenticationRequest): Promise<ResponseEntity> {
+    try {
+      const userExists = await this.authRepository.findUserByEmail(request.email);
+      if (userExists instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(userExists.statusCode, {message: userExists.message});
+      }
+      const authStatus = await this.authRepository.authenticationRequest(request);
+      if (authStatus instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(authStatus.statusCode, { error: authStatus.message });
+      }
+      const user = await User.findOne({ where: { email: request.email } });
+      if (!user) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {message: "User not found"});
+      }
+      const payload: AuthTokenPayload = {
+        idUser: user.get("idUser"),
+        idRole: user.get("idRole"),
+      };
+      const token = helper.createAuthToken(payload);
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        token,
+        userName: user.get("firstName") + " " + user.get("lastName"),
+      });
+    }catch(err: any) {
+      console.log(err);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {message: err});
+    }
+  }
+
+  private async createUser(request: RegisterRequest, newUserId: number, transaction: Transaction) {
+    return User.create(
+      {
         idUser: newUserId,
         firstName: request.firstName,
         lastName: request.lastName,
@@ -38,17 +92,27 @@ export class AuthenticationService {
         idIdentityCardExpeditionCity: request.idIdentityCardExpeditionCity,
         idIdentityCard: request.idIdentityCard,
         idRole: request.idRole,
-        userName: request.userName
-      }, { transaction });
+        userName: request.userName,
+      },
+      { transaction }
+    );
+  }
 
-      const emergencyContact = await EmergencyContact.create({
+  private createEmergencyContact(request: RegisterRequest, transaction: Transaction) {
+    return EmergencyContact.create(
+      {
         firstName: request.emergencyContactfirstName,
         lastName: request.emergencyContactlastName,
         phoneNumber: request.emergencyContactphoneNumber,
-        kinship: request.emergencyContactkinship
-      }, { transaction });
+        kinship: request.emergencyContactkinship,
+      },
+      { transaction }
+    );
+  }
 
-      const employee = await Employee.create({
+  private createEmployee(request: RegisterRequest, emergencyContact: EmergencyContact, user: User, transaction: Transaction) {
+    return Employee.create(
+      {
         idEmergencyContact: emergencyContact.get("idEmergencyContact"),
         idUser: user.get("idUser"),
         idPosition: request.idPosition,
@@ -64,37 +128,13 @@ export class AuthenticationService {
         severancePay: request.severancePay,
         idPensionFund: request.idPensionFund,
         idCompensationFund: request.idCompensationFund,
-        compensationFund: request.compensationFund,
-        idRequiredDocument: request.idRequiredDocument
-      }, { transaction });
-
-      const payload: AuthTokenPayload = { idUser: user.get("idUser"), idRole: user.get("idRole") };
-      const token = helper.createAuthToken(payload);
-      
-      transaction.commit();
-
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {token, userName: user.get("firstName") + " " + user.get("lastName")});
-    }catch (err: any) {
-      transaction.rollback();
-      console.log(JSON.stringify(err));
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {message: err});
-    }
-  }
-
-  async login(request: AuthenticationRequest): Promise<ResponseEntity> {
-    const userExists = await this.authRepository.findUserByEmail(request.email);
-    if (userExists instanceof CustomError) {
-      return BuildResponse.buildErrorResponse(userExists.statusCode, {message: userExists.message});
-    }
-    const user = await User.findOne({ where: { email: request.email } });
-    if (!user) {
-      return BuildResponse.buildErrorResponse(StatusCode.NotFound, {message: "User not found"});
-    }
-    const payload: AuthTokenPayload = { idUser: user.get("idUser"), idRole: user.get("idRole") };
-    const token = helper.createAuthToken(payload);
-    return BuildResponse.buildSuccessResponse(StatusCode.Ok, {token, userName: user.get("firstName") + " " + user.get("lastName")});
+        idRequiredDocument: request.idRequiredDocument,
+      },
+      { transaction }
+    );
   }
 }
+
 
 const authRepository = new AuthenticationRepository();
 export const authService = new AuthenticationService(authRepository);
