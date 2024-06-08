@@ -34,17 +34,9 @@ export function authenticationRoutes(app: Application): void {
    *              status:
    *                type: string
    *                example: FAILED
-   *              data:
-   *                type: object
-   *                properties:
-   *                  property1:
-   *                    type: string
-   *                  property2:
-   *                    type: string
-   *                  property3:
-   *                    type: string
-   *                  propertyn:
-   *                    type: string
+   *              message:
+   *                type: string
+   *                example: An internal server error occurred.
    *  schemas:
    *    employee:
    *      type: object

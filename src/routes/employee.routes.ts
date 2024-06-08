@@ -39,6 +39,16 @@ export function employeeRoutes(app: Application): void {
    *       description: Identity card number to filter
    *       required: false
    *   schemas:
+   *     failedResponse:
+   *       type: object
+   *       properties:
+   *         status:
+   *           type: string
+   *           example: FAILED
+   *         message:
+   *           type: string
+   *           example: An internal server error occurred.
+   * 
    *     UpdateEmployee:
    *       type: object
    *       properties:
@@ -176,20 +186,11 @@ export function employeeRoutes(app: Application): void {
    *         content:
    *           application/json:
    *             schema:
-   *               type: object
-   *               properties:
-   *                 status:
-   *                   type: string
-   *                   example: FAILED
-   *                 message:
-   *                   type: string
-   *                   example: An internal server error occurred.
+   *               $ref: "#/components/schemas/failedResponse"
    */
   routes.get(
     "/v1/employee/basic-info",
-    [
-      verifyToken,
-    ],
+    [verifyToken],
     employeeController.findEmployeeAndRoles
   );
 
@@ -233,22 +234,9 @@ export function employeeRoutes(app: Application): void {
    *         content:
    *           application/json:
    *             schema:
-   *               type: object
-   *               properties:
-   *                 status:
-   *                   type: string
-   *                   example: FAILED
-   *                 message:
-   *                   type: string
-   *                   example: An internal server error occurred.
+   *               $ref: "#/components/schemas/failedResponse"
    */
-  routes.get(
-    "/v1/employee",
-    [
-      verifyToken,
-    ],
-    employeeController.findEmployee
-  );
+  routes.get("/v1/employee", [verifyToken], employeeController.findEmployee);
 
   /**
    * @openapi
@@ -291,20 +279,462 @@ export function employeeRoutes(app: Application): void {
    *         content:
    *           application/json:
    *             schema:
+   *               $ref: "#/components/schemas/failedResponse"
+   */
+  routes.patch(
+    "/v1/employee",
+    [verifyToken],
+    employeeController.updateEmployee
+  );
+
+  /**
+   * @openapi
+   * /v1/employee/cities:
+   *   get:
+   *     tags: [Employee]
+   *     summary: Find cities
+   *     responses:
+   *       '200':
+   *         description: Successful response
+   *         content:
+   *           application/json:
+   *             schema:
    *               type: object
    *               properties:
    *                 status:
    *                   type: string
-   *                   example: FAILED
-   *                 message:
-   *                   type: string
-   *                   example: An internal server error occurred.
+   *                   example: SUCCESS
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       id:
+   *                         type: integer
+   *                       name:
+   *                         type: string
+   *       '500':
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/failedResponse"
    */
-  routes.patch(
-    "/v1/employee",[
-      verifyToken,
-    ],
-    employeeController.updateEmployee
+  routes.get(
+    "/v1/employee/cities",
+    [verifyToken],
+    employeeController.findCities
+  );
+
+  /**
+   * @openapi
+   * /v1/employee/eps:
+   *   get:
+   *     tags: [Employee]
+   *     summary: Find EPS
+   *     responses:
+   *       '200':
+   *         description: Successful response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: SUCCESS
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       id:
+   *                         type: integer
+   *                       name:
+   *                         type: string
+   *       '500':
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/failedResponse"
+   */
+
+  routes.get("/v1/employee/eps", [verifyToken], employeeController.findEps);
+
+  /**
+   * @openapi
+   * /v1/employee/roles:
+   *   get:
+   *     tags: [Employee]
+   *     summary: Find roles
+   *     responses:
+   *       '200':
+   *         description: Successful response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: SUCCESS
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       id:
+   *                         type: integer
+   *                       name:
+   *                         type: string
+   *       '500':
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/failedResponse"
+   */
+  routes.get("/v1/employee/roles", [verifyToken], employeeController.findRoles);
+
+  /**
+   * @openapi
+   * /v1/employee/state:
+   *   get:
+   *     tags: [Employee]
+   *     summary: Find state
+   *     responses:
+   *       '200':
+   *         description: Successful response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: SUCCESS
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       id:
+   *                         type: integer
+   *                       name:
+   *                         type: string
+   *       '500':
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/failedResponse"
+   */
+  routes.get("/v1/employee/state", [verifyToken], employeeController.findState);
+
+  /**
+   * @openapi
+   * /v1/employee/arls:
+   *   get:
+   *     tags: [Employee]
+   *     summary: Find ARls
+   *     responses:
+   *       '200':
+   *         description: Successful response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: SUCCESS
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       id:
+   *                         type: integer
+   *                       name:
+   *                         type: string
+   *       '500':
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/failedResponse"
+   */
+  routes.get("/v1/employee/arls", [verifyToken], employeeController.findArls);
+
+  /**
+   * @openapi
+   * /v1/employee/contract-types:
+   *   get:
+   *     tags: [Employee]
+   *     summary: Find contract types
+   *     responses:
+   *       '200':
+   *         description: Successful response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: SUCCESS
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       id:
+   *                         type: integer
+   *                       name:
+   *                         type: string
+   *       '500':
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/failedResponse"
+   */
+  routes.get(
+    "/v1/employee/contract-types",
+    [verifyToken],
+    employeeController.findContractTypes
+  );
+
+  /**
+   * @openapi
+   * /v1/employee/banks:
+   *   get:
+   *     tags: [Employee]
+   *     summary: Find banks
+   *     responses:
+   *       '200':
+   *         description: Successful response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: SUCCESS
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       idBankAccount:
+   *                         type: integer
+   *                       bankAccount:
+   *                         type: string
+   *       '500':
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/failedResponse"
+   */
+  routes.get("/v1/employee/banks", [verifyToken], employeeController.findBanks);
+
+  /**
+   * @openapi
+   * /v1/employee/payment-methods:
+   *   get:
+   *     tags: [Employee]
+   *     summary: Find payment methods
+   *     responses:
+   *       '200':
+   *         description: Successful response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: SUCCESS
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       idPaymentType:
+   *                         type: integer
+   *                       paymentType:
+   *                         type: string
+   *       '500':
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/failedResponse"
+   */
+  routes.get(
+    "/v1/employee/payment-methods",
+    [verifyToken],
+    employeeController.findPaymentMethods
+  );
+
+  /**
+   * @openapi
+   * /v1/employee/compensation-funds:
+   *   get:
+   *     tags: [Employee]
+   *     summary: Find compensation funds
+   *     responses:
+   *       '200':
+   *         description: Successful response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: SUCCESS
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       idCompensationFund:
+   *                         type: integer
+   *                       compensationFund:
+   *                         type: string
+   *       '500':
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/failedResponse"
+   */
+
+  routes.get(
+    "/v1/employee/compensation-funds",
+    [verifyToken],
+    employeeController.findCompensationFunds
+  );
+
+  /**
+   * @openapi
+   * /v1/employee/identification-types:
+   *   get:
+   *     tags: [Employee]
+   *     summary: Find identification types
+   *     responses:
+   *       '200':
+   *         description: Successful response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: SUCCESS
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       idIdentityCard:
+   *                         type: integer
+   *                       identityCard:
+   *                         type: string
+   *       '500':
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/failedResponse"
+   */
+  routes.get(
+    "/v1/employee/identification-types",
+    [verifyToken],
+    employeeController.findIdentificationTypes
+  );
+
+  /**
+   * @openapi
+   * /v1/employee/positions:
+   *   get:
+   *     tags: [Employee]
+   *     summary: Find positions
+   *     responses:
+   *       '200':
+   *         description: Successful response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: SUCCESS
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       idPosition:
+   *                         type: integer
+   *                       position:
+   *                         type: string
+   *       '500':
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/failedResponse"
+   */
+  routes.get(
+    "/v1/employee/positions",
+    [verifyToken],
+    employeeController.findPositions
+  );
+
+  /**
+   * @openapi
+   * /v1/employee/required-documents:
+   *   get:
+   *     tags: [Employee]
+   *     summary: Find required documents for employees
+   *     responses:
+   *       '200':
+   *         description: Successful response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: SUCCESS
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       idRequiredDocument:
+   *                         type: integer
+   *                       requiredDocument:
+   *                         type: string
+   *       '500':
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/failedResponse"
+   */
+  routes.get(
+    "/v1/employee/required-documents",
+    [verifyToken],
+    employeeController.findRequiredDocuments
   );
 
   app.use("/api/", routes);
