@@ -1,10 +1,10 @@
 import { StatusValue } from "../interfaces";
-import { ResponseEntity } from "./utils";
+import { ResponseEntity } from "./interface";
 
 export class BuildResponse {
   constructor(
-		public readonly status: StatusValue,
-		public readonly data: object
+    public readonly status: StatusValue,
+    public readonly data: object
   ) {
     this.status = status;
     this.data = data;

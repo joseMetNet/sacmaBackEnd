@@ -1,27 +1,26 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
 
-export class CompensationFund extends Model {
-  declare idCompensationFund: number;
-  declare compensationFund: string;
+export class state extends Model {
+  declare idDepartment: number;
+  declare state: string;
 }
 
-CompensationFund.init(
+state.init(
   {
-    idCompensationFund: {
+    idDepartment: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true
+      autoIncrement: true,
     },
-    compensationFund: {
+    state: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
   },
   {
     sequelize: dbConnection,
-    tableName: "TB_CompensationFund",
+    tableName: "TB_Department",
     timestamps: false,
   }
 );
