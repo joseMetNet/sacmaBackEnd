@@ -9,177 +9,43 @@ export function authenticationRoutes(app: Application): void {
   /**
    * @openapi
    * components:
-   *  parameters:
-   *    language:
-   *      required: false
-   *      in: query
-   *      name: language
-   *      default: en-US
-   *      schema:
-   *        type: string
-   *      description: Language to query
-   *    profileId:
-   *      required: true
-   *      in: query
-   *      name: profileId
-   *      schema:
-   *        type: number
-   *      description: Profile to query
-   *    userId:
-   *      required: true
-   *      in: query
-   *      name: userId
-   *      schema:
-   *        type: number
-   *      description: Required user
-   *    optionalUserId:
-   *      required: false
-   *      in: query
-   *      name: userId
-   *      schema:
-   *        type: number
-   *      description: Required used
-   *
    *  responses:
-   *    completeSurvey:
-   *      type: object
-   *      properties:
-   *        status:
-   *          type: string
-   *          example: SUCCESS
-   *        data:
-   *          type: array
-   *          items:
-   *            $ref: '#/components/schemas/survey'
    *    successResponse:
-   *      type: object
-   *      properties:
-   *        status:
-   *          type: string
-   *          example: SUCCESS
-   *        data:
-   *          type: array
-   *          items:
-   *            $ref: '#/components/schemas/messageSchema'
+   *      description: Successful response
+   *      content:
+   *        application/json:
+   *          schema:
+   *            type: object
+   *            properties:
+   *              status:
+   *                type: string
+   *                example: SUCCESS
+   *              data:
+   *                type: array
+   *                items:
+   *                  type: string
    *    failedResponse:
-   *      type: object
-   *      properties:
-   *        status:
-   *          type: string
-   *          example: FAILED
-   *        data:
-   *          type: object
-   *          properties:
-   *            property1:
-   *              type: string
-   *            property2:
-   *              type: string
-   *            property3:
-   *              type: string
-   *            propertyn:
-   *              type: string
-   *    successProfile:
-   *      type: object
-   *      properties:
-   *        status:
-   *          type: string
-   *          example: SUCCESS
-   *        data:
-   *          type: array
-   *          items:
-   *            $ref: '#/components/schemas/profileSchema'
-   *
+   *      description: Failed response
+   *      content:
+   *        application/json:
+   *          schema:
+   *            type: object
+   *            properties:
+   *              status:
+   *                type: string
+   *                example: FAILED
+   *              data:
+   *                type: object
+   *                properties:
+   *                  property1:
+   *                    type: string
+   *                  property2:
+   *                    type: string
+   *                  property3:
+   *                    type: string
+   *                  propertyn:
+   *                    type: string
    *  schemas:
-   *    updateUserSchema:
-   *      type: object
-   *      properties:
-   *        firstName:
-   *          type: string
-   *        lastName:
-   *          type: string
-   *        
-   *    survey:
-   *      type: object
-   *      properties:
-   *        id:
-   *          type: number
-   *        profile_id:
-   *          type: number
-   *        category_id:
-   *          type: number
-   *        question_number:
-   *          type: number
-   *        question:
-   *          type: string
-   *        Profile:
-   *          $ref: '#/components/schemas/userProfile'
-   *        answerOptions:
-   *          type: array
-   *          items:
-   *            $ref: '#/components/schemas/answerOption'
-   *        category:
-   *          $ref: '#/components/schemas/category'
-   *        language:
-   *          $ref: '#/components/schemas/language'
-   *    userResponse:
-   *      type: object
-   *      properties:
-   *        userId:
-   *          type: number
-   *        questionId:
-   *          type: number
-   *        answerOptionId:
-   *          type: number
-   *        openAnswerText:
-   *          type: string
-   *    userProfile:
-   *      type: object
-   *      properties:
-   *        id:
-   *          type: number
-   *        profile:
-   *          type: string
-   *    answerOption:
-   *      type: object
-   *      properties:
-   *        id:
-   *          type: number
-   *        question_id:
-   *          type: number
-   *        answer_option:
-   *          type: string
-   *    category:
-   *      type: object
-   *      properties:
-   *        id:
-   *          type: number
-   *        category:
-   *          type: string
-   *    language:
-   *      type: object
-   *      properties:
-   *        id:
-   *          type: number
-   *        language:
-   *          type: string
-   *    profileSchema:
-   *      type: object
-   *      properties:
-   *        id:
-   *          type: number
-   *        profile:
-   *          type: string
-   *        photoUrl:
-   *          type: string
-   *        videoUrl:
-   *          type: string
-   *        description:
-   *          type: string
-   *    messageSchema:
-   *      type: object
-   *      properties:
-   *        message:
-   *          type: string
    *    employee:
    *      type: object
    *      properties:
@@ -264,9 +130,6 @@ export function authenticationRoutes(app: Application): void {
    *        idCompensationFund:
    *          type: number
    *          nullable: true
-   *        compensationFund:
-   *          type: string
-   *          nullable: true
    *        idRequiredDocument:
    *          type: number
    *          nullable: true
@@ -281,7 +144,6 @@ export function authenticationRoutes(app: Application): void {
    *        - identityCardNumber
    *        - identityCardExpeditionCity
    *        - identityCardExpeditionDepartment
-   *        - idIdentityCardExpeditionPlace
    *        - idRole
    */
 
@@ -289,6 +151,7 @@ export function authenticationRoutes(app: Application): void {
    * @openapi
    *  /v1/auth/register:
    *    post:
+   *      security: []
    *      tags: [Authentication Controller]
    *      summary: Register a new user
    *      requestBody:
@@ -299,30 +162,36 @@ export function authenticationRoutes(app: Application): void {
    *                $ref: '#/components/schemas/employee'
    *      responses:
    *        '200':
-   *          description: Successful response
-   *          content:
-   *            application/json:
-   *              schema:
+   *          $ref: '#/components/responses/successResponse'
    *        '500':
-   *          description: Internal error server
-   *          content:
-   *            application/json:
-   *              schema:
-   *                $ref: '#/components/responses/failedResponse'
-  */
+   *          $ref: '#/components/responses/failedResponse'
+   */
   routes.post(
     "/v1/auth/register",
-    [check("firstName", "firstName is required").notEmpty(), validateEndpoint],
-    [check("lastName", "lastName is required").notEmpty(), validateEndpoint],
-    [check("email", "email is required").notEmpty(), validateEndpoint],
-    [check("password", "password is required").notEmpty(), validateEndpoint],
-    [check("address", "address is required").notEmpty(), validateEndpoint],
-    [check("phoneNumber", "phoneNumber is required").notEmpty(), validateEndpoint],
-    [check("idIdentityCard", "idIdentityCard is required").notEmpty(), validateEndpoint],
-    [check("identityCardNumber", "identityCardNumber is required").notEmpty(), validateEndpoint],
-    [check("identityCardExpeditionDate", "identityCardExpeditionDate is required").notEmpty(), validateEndpoint],
-    [check("idIdentityCardExpeditionCity", "idIdentityCardExpeditionCity is required").notEmpty(), validateEndpoint],
-    [check("idRole", "idRole is required").notEmpty(), validateEndpoint],
+    [
+      check("firstName", "firstName is required").notEmpty(),
+      validateEndpoint,
+      check("lastName", "lastName is required").notEmpty(),
+      validateEndpoint,
+      check("email", "email is required").notEmpty(),
+      validateEndpoint,
+      check("password", "password is required").notEmpty(),
+      validateEndpoint,
+      check("address", "address is required").notEmpty(),
+      validateEndpoint,
+      check("phoneNumber", "phoneNumber is required").notEmpty(),
+      validateEndpoint,
+      check("idIdentityCard", "idIdentityCard is required").notEmpty(),
+      validateEndpoint,
+      check("identityCardNumber", "identityCardNumber is required").notEmpty(),
+      validateEndpoint,
+      check("identityCardExpeditionDate", "identityCardExpeditionDate is required").notEmpty(),
+      validateEndpoint,
+      check("idIdentityCardExpeditionCity", "idIdentityCardExpeditionCity is required").notEmpty(),
+      validateEndpoint,
+      check("idRole", "idRole is required").notEmpty(),
+      validateEndpoint,
+    ],
     authController.register
   );
 
@@ -330,6 +199,7 @@ export function authenticationRoutes(app: Application): void {
    * @openapi
    *  /v1/auth/login:
    *    post:
+   *      security: []
    *      tags: [Authentication Controller]
    *      summary: Login a user
    *      requestBody:
@@ -345,22 +215,18 @@ export function authenticationRoutes(app: Application): void {
    *                  type: string
    *      responses:
    *        '200':
-   *          description: Successful response
-   *          content:
-   *            application/json:
-   *              schema:
-   *                $ref: '#/components/responses/successResponse'
+   *          $ref: '#/components/responses/successResponse'
    *        '500':
-   *          description: Internal error server
-   *          content:
-   *            application/json:
-   *              schema:
-   *                $ref: '#/components/responses/failedResponse'
-  */
+   *          $ref: '#/components/responses/failedResponse'
+   */
   routes.post(
     "/v1/auth/login",
-    [check("email", "email is required").notEmpty(), validateEndpoint],
-    [check("password", "password is required").notEmpty(), validateEndpoint],
+    [
+      check("email", "email is required").notEmpty(),
+      validateEndpoint,
+      check("password", "password is required").notEmpty(),
+      validateEndpoint,
+    ],
     authController.login
   );
 
