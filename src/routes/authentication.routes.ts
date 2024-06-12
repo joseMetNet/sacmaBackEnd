@@ -122,9 +122,6 @@ export function authenticationRoutes(app: Application): void {
    *        idCompensationFund:
    *          type: number
    *          nullable: true
-   *        idRequiredDocument:
-   *          type: number
-   *          nullable: true
    *      required:
    *        - firstName
    *        - lastName

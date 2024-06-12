@@ -169,6 +169,74 @@ export class EmployeeService {
     }
   }
 
+  async findEmployeeById(id: number): Promise<ResponseEntity> {
+    try {
+      const employee = await employeeRepository.findEmployeeById(id);
+
+      if (employee instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(employee.statusCode, {
+          message: employee.message,
+        });
+      }
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, employee);
+    } catch (err: any) {
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  deleteNullProperties(obj: any) {
+    const ids = ["idPosition", "idContractType", "idPaymentType", "idBankAccount", "idEps", "idArl", "idPensionFund", "idCompensationFund"];
+    for (const propName in ids) {
+      if (obj[propName] === null || obj[propName] === undefined) {
+        delete obj[propName];
+      }
+    }
+    return obj;
+  }
+
+  async deleteEmployee(id: number): Promise<ResponseEntity> {
+    const transaction = await dbConnection.transaction();
+    try {
+      const employee = await Employee.findByPk(id);
+      if (!employee) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
+          message: "Employee not found",
+        });
+      }
+      const user = await User.findByPk(employee.idUser);
+      if (!user) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
+          message: "User not found",
+        });
+      }
+      const emergencyContact = await EmergencyContact.findByPk(employee.idEmergencyContact);
+      if (!emergencyContact) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
+          message: "Emergency contact not found",
+        });
+      }
+      await employee.destroy({transaction});
+      await emergencyContact.destroy({transaction});
+      await user.destroy({transaction});
+
+      await transaction.commit();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        message: "Employee deleted successfully",
+      });
+    } catch (err: any) {
+      await transaction.rollback();
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "Internal server error",
+      });
+    }
+  }
+
   async findCities(): Promise<ResponseEntity> {
     try {
       const cities = await City.findAll();
@@ -356,8 +424,6 @@ export class EmployeeService {
       idPensionFund: employee.idPensionFund ?? dbEmployee.idPensionFund,
       idCompensationFund:
         employee.idCompensationFund ?? dbEmployee.idCompensationFund,
-      idRequiredDocument:
-        employee.idRequiredDocument ?? dbEmployee.idRequiredDocument,
     };
   }
 

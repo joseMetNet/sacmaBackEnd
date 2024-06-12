@@ -29,5 +29,4 @@ export interface UpdateEmployeeRequest {
   emergencyContactkinship?: string;
   idPensionFund?: number;
   idCompensationFund?: number;
-  idRequiredDocument?: number;
 }

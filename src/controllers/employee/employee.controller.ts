@@ -3,7 +3,7 @@ import { StatusCode, StatusValue } from "../../interfaces";
 import { formatZodError } from "../utils";
 import { Request, Response } from "express";
 import { employeeService } from "../../services";
-import { employeeRequestSchema, updateEmployeeSchema } from "./employee.schema";
+import { employeeRequestSchema, querySchema, updateEmployeeSchema } from "./employee.schema";
 
 class EmployeeController {
   private handleError = (res: Response, error: ZodError): void => {
@@ -40,6 +40,38 @@ class EmployeeController {
     const response = await employeeService.findEmployees(request.data);
     res
       .status(response.code)
+      .json({ status: response.status, data: response.data });
+  }
+
+  async findEmployeeById(req: Request, res: Response): Promise<void> {
+    const request = querySchema.safeParse(req.params);
+    if(!request.success) {
+      res
+        .status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) },
+        });
+      return;
+    }
+    const response = await employeeService.findEmployeeById(request.data.idEmployee);
+    res
+      .status(response.code)
+      .json({ status: response.status, data: response.data });
+  }
+
+  async deleteEmployee(req: Request, res: Response): Promise<void> {
+    const request = querySchema.safeParse(req.params);
+    if(!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) },
+        });
+      return;
+    }
+    const response = await employeeService.deleteEmployee(request.data.idEmployee);
+    res.status(response.code)
       .json({ status: response.status, data: response.data });
   }
 
