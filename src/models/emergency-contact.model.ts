@@ -34,5 +34,6 @@ EmergencyContact.init({
 }, {
   sequelize: dbConnection,
   tableName: "TB_EmergencyContact",
-  timestamps: false
+  timestamps: true,
+  paranoid: true
 });

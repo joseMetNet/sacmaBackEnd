@@ -2,8 +2,8 @@ import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
 
 export class PaymentType extends Model {
-  declare idContractType: number;
-  declare contractType: string;
+  declare idPaymentType: number;
+  declare paymentType: string;
 }
 
 PaymentType.init({
