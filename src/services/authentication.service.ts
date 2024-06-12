@@ -128,7 +128,6 @@ export class AuthenticationService {
         severancePay: request.severancePay,
         idPensionFund: request.idPensionFund,
         idCompensationFund: request.idCompensationFund,
-        idRequiredDocument: request.idRequiredDocument,
       },
       { transaction }
     );
