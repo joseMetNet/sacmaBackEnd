@@ -457,7 +457,7 @@ export function employeeRoutes(app: Application): void {
 
   /**
    * @openapi
-   * /v1/employee:
+   * /v1/employees:
    *   get:
    *     tags: [Employee]
    *     summary: Find employees
@@ -497,7 +497,7 @@ export function employeeRoutes(app: Application): void {
    *             schema:
    *               $ref: "#/components/schemas/failedResponse"
    */
-  routes.get("/v1/employee", [verifyToken], employeeController.findEmployee);
+  routes.get("/v1/employees", [verifyToken], employeeController.findEmployee);
 
   /**
    * @openapi
@@ -618,7 +618,7 @@ export function employeeRoutes(app: Application): void {
 
   /**
    * @openapi
-   * /v1/employee:
+   * /v1/employee/{idEmployee}:
    *   get:
    *     tags: [Employee]
    *     summary: Find employee by id
@@ -652,7 +652,7 @@ export function employeeRoutes(app: Application): void {
    *               $ref: "#/components/schemas/failedResponse"
    */
   routes.get(
-    "/v1/employee",
+    "/v1/employee/:idEmployee",
     [verifyToken],
     employeeController.findEmployeeById
   );
