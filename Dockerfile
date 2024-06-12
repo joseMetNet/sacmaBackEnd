@@ -30,7 +30,7 @@ ENV NODE_ENV=production
 RUN export $(grep -v '^#' .env | xargs)
 
 # Expose the port your application listens on (replace 3000 with your port)
-EXPOSE 3000
+EXPOSE 8080
 
 # Start the application
 CMD ["node", "dist/main.js"]
