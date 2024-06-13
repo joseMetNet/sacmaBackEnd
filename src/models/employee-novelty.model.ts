@@ -1,11 +1,14 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
-import { Novelty } from "./novelty.mode";
+import { Employee } from "./employee.model";
+import { Novelty } from "./novelty.model";
 
 export class EmployeeNovelty extends Model {
   declare idEmployeeNovelty: number;
   declare idNovelty: number;
   declare idEmployee: number;
+  declare loanValue: string;
+  declare observation: string;
 }
 
 EmployeeNovelty.init({
@@ -21,11 +24,25 @@ EmployeeNovelty.init({
   idEmployee: {
     type: DataTypes.INTEGER,
     allowNull: false
+  },
+  loanValue: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  observation: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 }, {
   sequelize: dbConnection,
   tableName: "TB_EmployeeNovelty",
-  timestamps: false
+  timestamps: true,
+  paranoid: true
+});
+
+EmployeeNovelty.hasOne(Employee, {
+  sourceKey: "idEmployee",
+  foreignKey: "idEmployee"
 });
 
 EmployeeNovelty.hasOne(Novelty, {

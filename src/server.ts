@@ -6,8 +6,11 @@ import morgan from "morgan";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import { EnvConfig, swaggerOptions } from "./config";
-import { authenticationRoutes } from "./routes";
-import { employeeRoutes } from "./routes/employee.routes";
+import { 
+  authenticationRoutes,
+  employeeRoutes,
+  noveltyRoutes
+} from "./routes";
 
 class Server {
   private app: Application;
@@ -44,6 +47,7 @@ class Server {
   private routes(): void {
     authenticationRoutes(this.app);
     employeeRoutes(this.app);
+    noveltyRoutes(this.app);
   }
 
   public listen(): void {
