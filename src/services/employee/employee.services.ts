@@ -23,6 +23,7 @@ import {
   Position,
   RequiredDocument,
   EmployeeRequiredDocument,
+  PensionFund,
 } from "../../models";
 import {
   AuthenticationRepository,
@@ -71,16 +72,45 @@ export class EmployeeService {
     const offset = (page - 1) * pageSize;
     const filter = this.buildFilter(request);
     try {
-      const employees = await Employee.findAndCountAll({
+      const employees: { rows: Employee[], count: number } = await Employee.findAndCountAll({
+        attributes: { 
+          exclude: [
+            "idUser", 
+            "idPosition", 
+            "idContractType", 
+            "idPaymentType",
+            "idArl",
+            "idEps",
+            "idEmergencyContact",
+            "idBankAccount",
+            "idPensionFund",
+            "idCompensationFund"
+          ] 
+        },
         include: [
           {
             model: User,
-            required: true,
+            attributes: { exclude: ["idRole", "idIdentityCard", "idIdentityCardExpeditionCity"] },
+            required: false,
+            include: [
+              { model: Role, required: false },
+              { model: IdentityCard, required: false },
+              { model: City, required: false },
+            ],
             where: filter,
           },
+          { model: Position, required: false },
+          { model: ContractType, required: false },
+          { model: PaymentType, required: false },
+          { model: Arl, required: false },
+          { model: Eps, required: false },
+          { model: EmergencyContact, required: false },
+          { model: BankAccount, required: false },
+          { model: PensionFund, required: false },
+          { model: EmployeeRequiredDocument, required: false },
         ],
-        limit,
-        offset,
+        limit: limit,
+        offset: offset
       });
       const totalItems = employees.count;
       const currentPage = page;
@@ -89,7 +119,7 @@ export class EmployeeService {
         data: employees,
         totalItems,
         totalPages,
-        currentPage,
+        currentPage
       });
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {

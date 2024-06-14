@@ -1,6 +1,8 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
 import { Role } from "./role.model";
+import { IdentityCard } from "./identity-card.model";
+import { City } from "./city.model";
 
 export class User extends Model {
   declare idUser: number;
@@ -81,4 +83,14 @@ User.init({
 User.hasOne(Role, {
   sourceKey: "idRole",
   foreignKey: "idRole",
+});
+
+User.hasOne(IdentityCard, {
+  sourceKey: "idIdentityCard",
+  foreignKey: "idIdentityCard"
+});
+
+User.hasOne(City, {
+  sourceKey: "idIdentityCardExpeditionCity",
+  foreignKey: "idCity"
 });

@@ -158,7 +158,7 @@ Employee.hasOne(CompensationFund, {
 Employee.hasOne(PensionFund, {
   sourceKey: "idPensionFund",
   foreignKey: "idPensionFund"
-});;
+});
 
 Employee.hasMany(EmployeeRequiredDocument, {
   sourceKey: "idEmployee",

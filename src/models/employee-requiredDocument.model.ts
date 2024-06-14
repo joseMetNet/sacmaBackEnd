@@ -26,7 +26,7 @@ EmployeeRequiredDocument.init({
   },
   expirationDate: {
     type: DataTypes.DATE,
-    allowNull: false,
+    allowNull: true,
   },
   documentUrl: {
     type: DataTypes.STRING,
