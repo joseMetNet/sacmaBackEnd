@@ -13,7 +13,8 @@ class Config {
   private readonly authTokenSecret: string;
   private readonly authTokenExpiryDuration: string;
   private readonly azureStorageAccountName: string;
-  private readonly azureStorageContainerName: string;
+  private readonly azureStorageContainerDocument: string;
+  private readonly azureStorageContainerImageProfile: string;
 
   constructor() {
     this.appPort = parseInt(this.getEnvVariable("APP_PORT"));
@@ -27,7 +28,8 @@ class Config {
     this.authTokenSecret = this.getEnvVariable("AUTH_TOKEN_SECRET");
     this.authTokenExpiryDuration = this.getEnvVariable("AUTH_TOKEN_EXPIRY_DURATION");
     this.azureStorageAccountName = this.getEnvVariable("AZURE_STORAGE_ACCOUNT_NAME");
-    this.azureStorageContainerName = this.getEnvVariable("AZURE_STORAGE_CONTAINER_NAME");
+    this.azureStorageContainerDocument = this.getEnvVariable("AZURE_STORAGE_CONTAINER_DOCUMENT");
+    this.azureStorageContainerImageProfile = this.getEnvVariable("AZURE_STORAGE_CONTAINER_IMAGE_PROFILE");
   }
 
   private getEnvVariable(name: string): string {
@@ -82,8 +84,12 @@ class Config {
     return this.azureStorageAccountName;
   }
 
-  get AZURE_STORAGE_CONTAINER_NAME(): string {
-    return this.azureStorageContainerName;
+  get AZURE_STORAGE_CONTAINER_DOCUMENT(): string {
+    return this.azureStorageContainerDocument;
+  }
+
+  get AZURE_STORAGE_CONTAINER_IMAGE_PROFILE(): string {
+    return this.azureStorageContainerImageProfile;
   }
 }
 
