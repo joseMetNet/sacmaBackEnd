@@ -30,3 +30,9 @@ export interface UpdateEmployeeRequest {
   idPensionFund?: number;
   idCompensationFund?: number;
 }
+
+export interface IUploadDocument {
+  idEmployee: number;
+  idRequiredDocument: number;
+  expirationDate?: string;
+}

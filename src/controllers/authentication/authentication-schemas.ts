@@ -30,6 +30,7 @@ export const registerSchema = z.object({
   emergencyContactkinship: z.string().optional(),
   idPensionFund: z.coerce.number().optional(),
   idCompensationFund: z.coerce.number().optional(),
+  imageProfile: z.string().optional(),
 });
 
 export const loginSchema = z.object({

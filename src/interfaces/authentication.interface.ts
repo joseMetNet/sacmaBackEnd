@@ -38,4 +38,5 @@ export interface RegisterRequest {
   emergencyContactkinship?: string | null;
   idPensionFund?: number | null;
   idCompensationFund?: number | null;
+  imageProfile?: string | null;
 }

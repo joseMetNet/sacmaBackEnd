@@ -5,7 +5,7 @@ export class EmployeeRepository {
 
   constructor() {}
 
-  async findEmployeeAndRoles() {
+  async findEmployeeAndRoles(): Promise<Employee[] | CustomError> {
     try {
       const employees = await Employee.findAll({
         attributes: [],

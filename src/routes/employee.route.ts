@@ -417,6 +417,34 @@ export function employeeRoutes(app: Application): void {
   );
 
   /**
+ * @openapi
+ * /v1/employee/upload-document:
+ *   post:
+ *     tags: [Employee]
+ *     summary: Upload image profile for employee
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/uploadDocument'
+ *     responses:
+ *       '200':
+ *         description: Successful uploaded image profile
+ *       '500':
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/failedResponse"
+ */
+  routes.post(
+    "/v1/employee/upload-document",
+    [verifyToken],
+    employeeController.uploadRequiredDocuments
+  );
+
+  /**
    * @openapi
    * /v1/employee/required-document:
    *   get:
@@ -508,7 +536,7 @@ export function employeeRoutes(app: Application): void {
    *     requestBody:
    *       required: true
    *       content:
-   *         application/json:
+   *         multipart/form-data:
    *           schema:
    *             $ref: '#/components/schemas/UpdateEmployee'
    *     responses:
@@ -700,6 +728,23 @@ export function employeeRoutes(app: Application): void {
    *       description: Identity card number to filter
    *       required: false
    *   schemas:
+   *     uploadDocument:
+   *       type: object
+   *       properties:
+   *         document:
+   *           type: string
+   *           format: binary
+   *         idEmployee:
+   *           type: integer
+   *           example: 1
+   *         idRequiredDocument:
+   *           type: integer
+   *           example: 1
+   *         expirationDate:
+   *           type: string
+   *           format: date
+   *           example: "2022-01-01"
+   *          
    *     failedResponse:
    *       type: object
    *       properties:
@@ -750,6 +795,9 @@ export function employeeRoutes(app: Application): void {
    *         idRole:
    *           type: integer
    *           example: 2
+   *         imageProfile:
+   *           type: string
+   *           format: binary
    *         idPosition:
    *           type: integer
    *           example: 3

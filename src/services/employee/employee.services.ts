@@ -1,7 +1,8 @@
-import { Op } from "sequelize";
+import { Op, Transaction } from "sequelize";
 import { dbConnection } from "../../config";
 import {
   ChagePasswordRequest,
+  IUploadDocument,
   StatusCode,
   UpdateEmployeeRequest,
 } from "../../interfaces";
@@ -21,6 +22,7 @@ import {
   IdentityCard,
   Position,
   RequiredDocument,
+  EmployeeRequiredDocument,
 } from "../../models";
 import {
   AuthenticationRepository,
@@ -29,11 +31,12 @@ import {
 import { CustomError } from "../../utils";
 import { BuildResponse } from "../build-response";
 import { ResponseEntity } from "../interface";
+import { deleteDocument, deleteImageProfile, uploadDocument, uploadImageProfile } from "../helper";
 
 export class EmployeeService {
   constructor(
     private readonly employeeRepository: EmployeeRepository,
-    private readonly authRepository: AuthenticationRepository
+    private readonly authRepository: AuthenticationRepository,
   ) {
     this.employeeRepository = employeeRepository;
     this.authRepository = authRepository;
@@ -95,9 +98,77 @@ export class EmployeeService {
     }
   }
 
-  async updateEmployee(
-    employee: UpdateEmployeeRequest
-  ): Promise<ResponseEntity> {
+  async uploadDocument(request: IUploadDocument, filePath: string) {
+    const transaction = await dbConnection.transaction();
+    try {
+      const employeeRequiredDocument = await EmployeeRequiredDocument.findOne(
+        {
+          where: {
+            idEmployee: request.idEmployee,
+            idRequiredDocument: request.idRequiredDocument,
+          },
+        },
+      );
+      if (employeeRequiredDocument) {
+        console.log(employeeRequiredDocument.documentUrl);
+        if (employeeRequiredDocument.documentUrl) {
+          const deleteBlobResponse = await deleteDocument(employeeRequiredDocument.documentUrl.split("/").pop() as string);
+          if (deleteBlobResponse instanceof CustomError) {
+            await transaction.rollback();
+            return BuildResponse.buildErrorResponse(StatusCode.BadRequest, { message: deleteBlobResponse.message });
+          }
+        }
+        const identifier = crypto.randomUUID();
+        const uploadDocumentResponse = await uploadDocument(filePath, identifier);
+        if (uploadDocumentResponse instanceof CustomError) {
+          await transaction.rollback();
+          return BuildResponse.buildErrorResponse(uploadDocumentResponse.statusCode, {
+            message: uploadDocumentResponse.message,
+          });
+        }
+        const url = `https://sacmaback.blob.core.windows.net/document/${identifier}.pdf`;
+        const newEmployeeRequiredDocument = {
+          idEmployee: employeeRequiredDocument.idEmployee,
+          idRequiredDocument: employeeRequiredDocument.idRequiredDocument,
+          documentUrl: url,
+          expirationDate: employeeRequiredDocument.expirationDate,
+        };
+        await employeeRequiredDocument.update(newEmployeeRequiredDocument, { transaction});
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
+          message: "Document updated successfully",
+        });
+      }
+
+      const identifier = crypto.randomUUID();
+      const uploadDocumentResponse = await uploadDocument(filePath, identifier);
+      if (uploadDocumentResponse instanceof CustomError) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(uploadDocumentResponse.statusCode, {
+          message: uploadDocumentResponse.message,
+        });
+      }
+      const url = `https://sacmaback.blob.core.windows.net/document/${identifier}.pdf`;
+      await EmployeeRequiredDocument.create({
+        idEmployee: request.idEmployee,
+        idRequiredDocument: request.idRequiredDocument,
+        documentUrl: url,
+        expirationDate: request.expirationDate ?? null,
+      }, { transaction});
+
+      await transaction.commit();
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        message: "Document uploaded successfully",
+      });
+    } catch (err: any) {
+      await transaction.rollback();
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: err.message,
+      });
+    }
+  }
+
+  async updateEmployee( employee: UpdateEmployeeRequest, imageProfile?: string): Promise<ResponseEntity> {
     const transaction = await dbConnection.transaction();
     try {
       const user = await User.findByPk(employee.idUser);
@@ -130,6 +201,11 @@ export class EmployeeService {
         where: { idUser: employee.idUser },
         transaction,
       });
+
+      if(imageProfile) {
+        await this.uploadImage(imageProfile, user, transaction);
+      }
+
       if (dbEmployee) {
         const updatedEmployee = this.updateEmployeeRequest(
           employee,
@@ -167,6 +243,35 @@ export class EmployeeService {
         message: err.message,
       });
     }
+  }
+
+  private async uploadImage(imageProfile: string, user: User, transaction: Transaction) {
+    const identifier = crypto.randomUUID();
+    if(user.imageProfileUrl != null) {
+      const deleteBlobResponse = await deleteImageProfile(user.imageProfileUrl.split("/").pop() as string);
+      if (deleteBlobResponse instanceof CustomError) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(StatusCode.BadRequest, { message: deleteBlobResponse.message });
+      }
+      const uploadDocumentResponse = await uploadImageProfile(imageProfile, identifier);
+      if (uploadDocumentResponse instanceof CustomError) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(uploadDocumentResponse.statusCode, {
+          message: uploadDocumentResponse.message,
+        });
+      }
+      const url = `https://sacmaback.blob.core.windows.net/image-profile/${identifier}.png`;
+      await user.update({ imageProfileUrl: url }, { transaction });
+    }
+    const uploadDocumentResponse = await uploadImageProfile(imageProfile, identifier);
+    if (uploadDocumentResponse instanceof CustomError) {
+      await transaction.rollback();
+      return BuildResponse.buildErrorResponse(uploadDocumentResponse.statusCode, {
+        message: uploadDocumentResponse.message,
+      });
+    }
+    const url = `https://sacmaback.blob.core.windows.net/image-profile/${identifier}.png`;
+    await user.update({ imageProfileUrl: url }, { transaction });
   }
 
   async findEmployeeById(id: number): Promise<ResponseEntity> {

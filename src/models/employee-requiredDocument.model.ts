@@ -6,12 +6,15 @@ export class EmployeeRequiredDocument extends Model {
   declare idEmployeeRequiredDocument: number;
   declare idEmployee: number;
   declare idRequiredDocument: number;
+  declare expirationDate: string;
+  declare documentUrl: string;
 }
 
 EmployeeRequiredDocument.init({
   idEmployeeRequiredDocument: {
     type: DataTypes.INTEGER,
-    primaryKey: true
+    primaryKey: true,
+    autoIncrement: true
   },
   idEmployee: {
     type: DataTypes.INTEGER,
@@ -21,6 +24,14 @@ EmployeeRequiredDocument.init({
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  expirationDate: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  documentUrl: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  }
 }, {
   sequelize: dbConnection,
   tableName: "TB_EmployeeRequiredDocument",
