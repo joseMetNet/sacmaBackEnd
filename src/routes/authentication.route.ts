@@ -63,10 +63,11 @@ export function authenticationRoutes(app: Application): void {
    *          format: date
    *        idIdentityCardExpeditionCity:
    *          type: number
-   *        idIdentityCardExpeditionDepartment:
-   *          type: number
    *        idRole:
    *          type: number
+   *        imageProfile:
+   *          type: string
+   *          format: binary
    *        idPosition:
    *          type: number
    *          nullable: true
@@ -131,8 +132,8 @@ export function authenticationRoutes(app: Application): void {
    *        - phoneNumber
    *        - idIdentityCard
    *        - identityCardNumber
-   *        - identityCardExpeditionCity
-   *        - identityCardExpeditionDepartment
+   *        - identityCardExpeditionDate
+   *        - idIdentityCardExpeditionCity
    *        - idRole
    */
 
@@ -146,9 +147,9 @@ export function authenticationRoutes(app: Application): void {
    *      requestBody:
    *        required: true
    *        content:
-   *          application/json:
+   *          multipart/form-data:
    *            schema:
-   *                $ref: '#/components/schemas/employee'
+   *              $ref: '#/components/schemas/employee'
    *      responses:
    *        '200':
    *          $ref: '#/components/responses/successResponse'
@@ -174,9 +175,15 @@ export function authenticationRoutes(app: Application): void {
       validateEndpoint,
       check("identityCardNumber", "identityCardNumber is required").notEmpty(),
       validateEndpoint,
-      check("identityCardExpeditionDate", "identityCardExpeditionDate is required").notEmpty(),
+      check(
+        "identityCardExpeditionDate",
+        "identityCardExpeditionDate is required"
+      ).notEmpty(),
       validateEndpoint,
-      check("idIdentityCardExpeditionCity", "idIdentityCardExpeditionCity is required").notEmpty(),
+      check(
+        "idIdentityCardExpeditionCity",
+        "idIdentityCardExpeditionCity is required"
+      ).notEmpty(),
       validateEndpoint,
       check("idRole", "idRole is required").notEmpty(),
       validateEndpoint,

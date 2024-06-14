@@ -30,6 +30,9 @@ export class AuthenticationService {
         await transaction.rollback();
         return BuildResponse.buildErrorResponse(newUserId.statusCode, {message: newUserId.message});
       }
+
+      await this.uploadImageProfile(request);
+
       const user = await this.createUser(request, newUserId, transaction);
       const emergencyContact = await this.createEmergencyContact(request, transaction);
       await this.createEmployee(request, emergencyContact, user, transaction);
@@ -78,6 +81,19 @@ export class AuthenticationService {
     }
   }
 
+  private async uploadImageProfile(request: RegisterRequest): Promise<RegisterRequest | CustomError> {
+    if(request.imageProfile != null) {
+      const identifier = crypto.randomUUID();
+      const uploadImage = await helper.uploadImageProfile(request.imageProfile, identifier);
+      if (uploadImage instanceof CustomError) {
+        return uploadImage;
+      }
+      request.imageProfile = `https://sacmaback.blob.core.windows.net/image-profile/${identifier}.png`;
+      return request;
+    }
+    return request;
+  }
+
   private async createUser(request: RegisterRequest, newUserId: number, transaction: Transaction) {
     return User.create(
       {
@@ -93,6 +109,7 @@ export class AuthenticationService {
         idIdentityCard: request.idIdentityCard,
         idRole: request.idRole,
         userName: request.userName,
+        imageProfileUrl: request.imageProfile,
       },
       { transaction }
     );
@@ -117,7 +134,7 @@ export class AuthenticationService {
         idUser: user.get("idUser"),
         idPosition: request.idPosition,
         idContractType: request.idContractType,
-        entryDate: request.entryDate,
+        entryDate: request.entryDate? request.entryDate: null,
         baseSalary: request.baseSalary,
         compensation: request.compensation,
         idPaymentType: request.idPaymentType,

@@ -15,6 +15,7 @@ export class User extends Model {
   declare idIdentityCardExpeditionCity: number;
   declare identityCardExpeditionDate: string;
   declare idRole: number;
+  declare imageProfileUrl: string;
 }
 
 User.init({
@@ -65,6 +66,10 @@ User.init({
   idRole: {
     type: DataTypes.INTEGER,
     allowNull: false
+  },
+  imageProfileUrl: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 }, {
   sequelize: dbConnection,

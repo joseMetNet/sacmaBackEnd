@@ -4,13 +4,13 @@ import { Request, Response } from "express";
 import { formatZodError } from "../utils";
 import { loginSchema, registerSchema } from "./authentication-schemas";
 import { authService } from "../../services";
+import { UploadedFile } from "express-fileupload";
 
 class AuthenticationController {
-
   private handleError = (res: Response, error: ZodError): void => {
-    res.status(StatusCode.BadRequest).json({ 
-      status: StatusValue.Failed, 
-      data: { error: formatZodError(error) } 
+    res.status(StatusCode.BadRequest).json({
+      status: StatusValue.Failed,
+      data: { error: formatZodError(error) },
     });
   };
 
@@ -21,21 +21,39 @@ class AuthenticationController {
   public async register(req: Request, res: Response): Promise<void> {
     const request = registerSchema.safeParse(req.body);
     if (!request.success) {
-      res.status(StatusCode.BadRequest).json({ status: StatusValue.Failed, data: { error: formatZodError(request.error) } });
+      res
+        .status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) },
+        });
       return;
     }
+    const filePath = req.files
+      ? (req.files.imageProfile as UploadedFile).tempFilePath
+      : undefined;
+    request.data.imageProfile = filePath;
     const response = await authService.register(request.data);
-    res.status(response.code).json({ status: response.status, data: response.data });
+    res
+      .status(response.code)
+      .json({ status: response.status, data: response.data });
   }
 
   public async login(req: Request, res: Response): Promise<void> {
     const request = loginSchema.safeParse(req.body);
     if (!request.success) {
-      res.status(StatusCode.BadRequest).json({ status: StatusValue.Failed, data: { error: formatZodError(request.error) } });
+      res
+        .status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) },
+        });
       return;
     }
     const response = await authService.login(request.data);
-    res.status(response.code).json({ status: response.status, data: response.data });
+    res
+      .status(response.code)
+      .json({ status: response.status, data: response.data });
   }
 }
 

@@ -3,7 +3,8 @@ import { StatusCode, StatusValue } from "../../interfaces";
 import { formatZodError } from "../utils";
 import { Request, Response } from "express";
 import { employeeService } from "../../services";
-import { employeeRequestSchema, querySchema, updateEmployeeSchema } from "./employee.schema";
+import { employeeRequestSchema, querySchema, requiredEmployeeSchema, updateEmployeeSchema } from "./employee.schema";
+import { UploadedFile } from "express-fileupload";
 
 class EmployeeController {
   private handleError = (res: Response, error: ZodError): void => {
@@ -75,6 +76,30 @@ class EmployeeController {
       .json({ status: response.status, data: response.data });
   }
 
+  async uploadRequiredDocuments(req: Request, res: Response): Promise<void> {
+    const request = requiredEmployeeSchema.safeParse(req.body);
+    if(!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) },
+        });
+      return;
+    }
+    if(!req.files || !req.files.document) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: "Document is required" },
+        });
+      return;
+    }
+    const documentPath = (req.files.document as UploadedFile).tempFilePath;
+    const response = await employeeService.uploadDocument(request.data, documentPath);
+    res.status(response.code)
+      .json({ status: response.status, data: response.data });
+  }
+
   async updateEmployee(req: Request, res: Response): Promise<void> {
     const request = updateEmployeeSchema.safeParse(req.body);
     if (!request.success) {
@@ -86,8 +111,8 @@ class EmployeeController {
         });
       return;
     }
-
-    const response = await employeeService.updateEmployee(request.data);
+    const filePath = req.files?.imageProfile ? (req.files.imageProfile as UploadedFile).tempFilePath : undefined;
+    const response = await employeeService.updateEmployee(request.data, filePath);
     res
       .status(response.code)
       .json({ status: response.status, data: response.data });
