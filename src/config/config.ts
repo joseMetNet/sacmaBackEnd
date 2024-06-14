@@ -15,6 +15,7 @@ class Config {
   private readonly azureStorageAccountName: string;
   private readonly azureStorageContainerDocument: string;
   private readonly azureStorageContainerImageProfile: string;
+  private readonly azureStorageManagedIdentityClientId: string;
 
   constructor() {
     this.appPort = parseInt(this.getEnvVariable("APP_PORT"));
@@ -30,6 +31,7 @@ class Config {
     this.azureStorageAccountName = this.getEnvVariable("AZURE_STORAGE_ACCOUNT_NAME");
     this.azureStorageContainerDocument = this.getEnvVariable("AZURE_STORAGE_CONTAINER_DOCUMENT");
     this.azureStorageContainerImageProfile = this.getEnvVariable("AZURE_STORAGE_CONTAINER_IMAGE_PROFILE");
+    this.azureStorageManagedIdentityClientId = this.getEnvVariable("AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID");
   }
 
   private getEnvVariable(name: string): string {
@@ -90,6 +92,10 @@ class Config {
 
   get AZURE_STORAGE_CONTAINER_IMAGE_PROFILE(): string {
     return this.azureStorageContainerImageProfile;
+  }
+
+  get AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID(): string {
+    return this.azureStorageManagedIdentityClientId;
   }
 }
 

@@ -23,7 +23,9 @@ export async function uploadDocument(
   identifier: string
 ): Promise<CustomError | BlobUploadCommonResponse> {
   try {
-    const defaultAzureCredential = new DefaultAzureCredential();
+    const defaultAzureCredential = new DefaultAzureCredential({
+      managedIdentityClientId: EnvConfig.AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID,
+    });
     const blobServiceClient = new BlobServiceClient(
       `https://${EnvConfig.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
       defaultAzureCredential
@@ -47,7 +49,9 @@ export async function uploadImageProfile(
   identifier: string
 ): Promise<CustomError | BlobUploadCommonResponse> {
   try {
-    const defaultAzureCredential = new DefaultAzureCredential();
+    const defaultAzureCredential = new DefaultAzureCredential({
+      managedIdentityClientId: EnvConfig.AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID,
+    });
     const blobServiceClient = new BlobServiceClient(
       `https://${EnvConfig.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
       defaultAzureCredential
@@ -70,7 +74,9 @@ export async function deleteImageProfile (
   blobName: string
 ): Promise<CustomError | BlobUploadCommonResponse> {
   try {
-    const defaultAzureCredential = new DefaultAzureCredential();
+    const defaultAzureCredential = new DefaultAzureCredential({
+      managedIdentityClientId: EnvConfig.AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID,
+    });
     const blobServiceClient = new BlobServiceClient(
       `https://${EnvConfig.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
       defaultAzureCredential
@@ -91,7 +97,9 @@ export async function deleteDocument(
   blobName: string
 ): Promise<CustomError | BlobUploadCommonResponse> {
   try {
-    const defaultAzureCredential = new DefaultAzureCredential();
+    const defaultAzureCredential = new DefaultAzureCredential({
+      managedIdentityClientId: EnvConfig.AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID,
+    });
     const blobServiceClient = new BlobServiceClient(
       `https://${EnvConfig.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
       defaultAzureCredential
