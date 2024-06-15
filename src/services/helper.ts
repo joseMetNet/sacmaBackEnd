@@ -23,12 +23,8 @@ export async function uploadDocument(
   identifier: string
 ): Promise<CustomError | BlobUploadCommonResponse> {
   try {
-    const defaultAzureCredential = new DefaultAzureCredential({
-      managedIdentityClientId: EnvConfig.AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID,
-    });
-    const blobServiceClient = new BlobServiceClient(
-      `https://${EnvConfig.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
-      defaultAzureCredential
+    const blobServiceClient = BlobServiceClient.fromConnectionString(
+      EnvConfig.AZURE_STORAGE_CONNECTION_STRING,
     );
     const containerClient = blobServiceClient.getContainerClient(
       EnvConfig.AZURE_STORAGE_CONTAINER_DOCUMENT
@@ -49,12 +45,8 @@ export async function uploadImageProfile(
   identifier: string
 ): Promise<CustomError | BlobUploadCommonResponse> {
   try {
-    const defaultAzureCredential = new DefaultAzureCredential({
-      managedIdentityClientId: EnvConfig.AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID,
-    });
-    const blobServiceClient = new BlobServiceClient(
-      `https://${EnvConfig.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
-      defaultAzureCredential
+    const blobServiceClient = BlobServiceClient.fromConnectionString(
+      EnvConfig.AZURE_STORAGE_CONNECTION_STRING,
     );
     const containerClient = blobServiceClient.getContainerClient(
       EnvConfig.AZURE_STORAGE_CONTAINER_IMAGE_PROFILE
@@ -74,12 +66,8 @@ export async function deleteImageProfile (
   blobName: string
 ): Promise<CustomError | BlobUploadCommonResponse> {
   try {
-    const defaultAzureCredential = new DefaultAzureCredential({
-      managedIdentityClientId: EnvConfig.AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID,
-    });
-    const blobServiceClient = new BlobServiceClient(
-      `https://${EnvConfig.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
-      defaultAzureCredential
+    const blobServiceClient = BlobServiceClient.fromConnectionString(
+      EnvConfig.AZURE_STORAGE_CONNECTION_STRING,
     );
     const containerClient = blobServiceClient.getContainerClient(
       EnvConfig.AZURE_STORAGE_CONTAINER_IMAGE_PROFILE
@@ -97,12 +85,8 @@ export async function deleteDocument(
   blobName: string
 ): Promise<CustomError | BlobUploadCommonResponse> {
   try {
-    const defaultAzureCredential = new DefaultAzureCredential({
-      managedIdentityClientId: EnvConfig.AZURE_STORAGE_MANAGED_IDENTITY_CLIENT_ID,
-    });
-    const blobServiceClient = new BlobServiceClient(
-      `https://${EnvConfig.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
-      defaultAzureCredential
+    const blobServiceClient = BlobServiceClient.fromConnectionString(
+      EnvConfig.AZURE_STORAGE_CONNECTION_STRING,
     );
     const containerClient = blobServiceClient.getContainerClient(
       EnvConfig.AZURE_STORAGE_CONTAINER_DOCUMENT
