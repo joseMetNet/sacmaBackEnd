@@ -12,6 +12,12 @@ export function noveltyRoutes(app: Application): void {
    *     tags: [Novelty]
    *     summary: Get all novelties
    *     description: Get all novelties
+   *     parameters:
+   *       - $ref: '#/components/parameters/idNovelty'
+   *       - $ref: '#/components/parameters/firstName'
+   *       - $ref: '#/components/parameters/identityCardNumber'
+   *       - $ref: '#/components/parameters/noveltyYear'
+   *       - $ref: '#/components/parameters/noveltyMonth'
    *     responses:
    *       200:
    *         description: A list of novelties
@@ -159,6 +165,56 @@ export function noveltyRoutes(app: Application): void {
    *       schema:
    *         type: integer
    *       description: Employee novelty ID
+   *     page:
+   *       in: query
+   *       name: page
+   *       required: false
+   *       schema:
+   *         type: integer
+   *       description: Page number
+   *     pageSize:
+   *       in: query
+   *       name: pageSize
+   *       required: false
+   *       schema:
+   *         type: string
+   *       description: Page size
+   *     idNovelty:
+   *       in: query
+   *       name: idNovelty
+   *       required: false
+   *       schema:
+   *         type: string
+   *       description: Novelty ID
+   *     firstName:
+   *       in: query
+   *       name: firstName
+   *       required: false
+   *       schema:
+   *         type: string
+   *       description: Employee first name
+   *     noveltyYear:
+   *       in: query
+   *       name: noveltyYear
+   *       required: false
+   *       schema:
+   *         type: string
+   *       description: Novelty year
+   *     noveltyMonth:
+   *       in: query
+   *       name: noveltyMonth
+   *       required: false
+   *       schema:
+   *         type: string
+   *       description: Novelty month
+   *     identityCardNumber:
+   *       in: query
+   *       name: identityCardNumber
+   *       required: false
+   *       schema:
+   *         type: string
+   *       description: Employee identity card number
+   *
    *   schemas:
    *     failedResponse:
    *       type: object

@@ -6,10 +6,13 @@ import {
 import { 
   StatusCode,
   ICreateEmployeeNovelty,
-  IUpdateEmployeeNovelty
+  IUpdateEmployeeNovelty,
+  IFindEmployeeRequest
 } from "../../interfaces";
 import { EmployeeNovelty } from "../../models";
 import { noveltyRepository } from "../../repositories";
+import sequelize from "sequelize";
+import { Op } from "sequelize";
 
 export class NoveltyService {
   constructor() {}
@@ -27,18 +30,63 @@ export class NoveltyService {
     }
   }
 
-  async findNovelties(): Promise<ResponseEntity> {
+  async findNovelties(request: IFindEmployeeRequest): Promise<ResponseEntity> {
+    let page = 1;
+    if (request.page) {
+      page = request.page;
+    }
+    let pageSize = 10;
+    if (request.pageSize) {
+      pageSize = request.pageSize;
+    }
+    const limit = pageSize;
+    const offset = (page - 1) * pageSize;
     try {
-      const novelties = await noveltyRepository.findEmployeeNovelties();
-      console.log(novelties);
+      const filter = this.buildFilter(request);
+      const novelties = await noveltyRepository.findEmployeeNovelties(filter, limit, offset);
       if(novelties instanceof CustomError) {
-        return BuildResponse.buildErrorResponse(StatusCode.NotFound, novelties);
+        return BuildResponse.buildErrorResponse(novelties.statusCode,{ message: novelties.message });
       }
 
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, novelties);
+      const totalItems = novelties.count;
+      const currentPage = page;
+      const totalPages = Math.ceil(totalItems / limit);
+      console.log(`rows: ${JSON.stringify(novelties.rows)}`);
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        employeeNovelties: novelties.rows,
+        currentPage,
+        totalPages,
+        totalItems
+      });
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, err);
     }
+  }
+
+
+  private buildFilter(request: IFindEmployeeRequest) {
+    let employeeNoveltyFilter = {};
+    for (const key of Object.getOwnPropertyNames(request)) {
+      if (key === "noveltyYear") {
+        employeeNoveltyFilter = { ...employeeNoveltyFilter, "noveltyYear": sequelize.where(sequelize.fn("YEAR", sequelize.col("EmployeeNovelty.createdAt")), request.noveltyYear) };
+      }
+      if (key === "noveltyMonth") {
+        employeeNoveltyFilter = { ...employeeNoveltyFilter, "noveltyMonth": sequelize.where(sequelize.fn("MONTH", sequelize.col("EmployeeNovelty.createdAt")), request.noveltyMonth) };
+      }
+      if(key === "idNovelty") {
+        employeeNoveltyFilter = { ...employeeNoveltyFilter, "idNovelty": request.idNovelty };
+      }
+    }
+
+    let userFilter = {};
+    if (request.identityCardNumber) {
+      userFilter = { identityCardNumber: {[Op.substring]: request.identityCardNumber }};
+    }
+    if(request.firstName) {
+      userFilter = { ...userFilter, firstName: {[Op.substring]: request.firstName }};
+    }
+    return [employeeNoveltyFilter, userFilter];
   }
 
   async createNovelty(novelty: ICreateEmployeeNovelty): Promise<ResponseEntity> {

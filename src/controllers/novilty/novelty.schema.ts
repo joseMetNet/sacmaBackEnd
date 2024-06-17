@@ -17,3 +17,11 @@ export const createNoveltySchema = z.object({
   idEmployee: z.coerce.number(),
   observation: z.string().optional(),
 });
+
+export const findEmployeeNoveltiesSchema = z.object({
+  idNovelty: z.coerce.number().optional(),
+  firstName: z.string().optional(),
+  identityCardNumber: z.string().optional(),
+  noveltyYear: z.string().optional(),
+  noveltyMonth: z.string().optional(),
+});

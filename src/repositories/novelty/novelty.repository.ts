@@ -1,5 +1,6 @@
+import { Op } from "sequelize";
 import { ICreateEmployeeNovelty } from "../../interfaces/novelty.interface";
-import { Employee, EmployeeNovelty, Novelty, Position  } from "../../models";
+import { Employee, EmployeeNovelty, Novelty, Position, User  } from "../../models";
 import { CustomError } from "../../utils";
 
 export class NoveltyRepository {
@@ -49,12 +50,17 @@ export class NoveltyRepository {
     }
   }
 
-  async findEmployeeNovelties(): Promise<CustomError | EmployeeNovelty[]> {
+  async findEmployeeNovelties(
+    noveltyFilter: {[key: string]: string}[],
+    limit: number,
+    offset: number
+  ): Promise<CustomError | {rows: EmployeeNovelty[], count: number}> {
     try {
-      const novelties = await EmployeeNovelty.findAll({
+      const novelties = await EmployeeNovelty.findAndCountAll({
         attributes: { 
           exclude: ["idNovelty", "idEmployee"]
         },
+        where: noveltyFilter[9],
         include: [
           {
             model: Novelty,
@@ -62,16 +68,25 @@ export class NoveltyRepository {
           },
           {
             model: Employee,
-            attributes: ["idPosition"],
             required: true,
+            attributes: ["idPosition", "idUser"],
             include: [
               {
                 model: Position,
-                required: true,
+                attributes: ["position"],
+                required: false,
               },
+              {
+                model: User,
+                attributes: ["firstName", "lastName"],
+                required: true,
+                where: noveltyFilter[1]
+              }
             ]
           }
         ],
+        limit,
+        offset
       });
       return novelties;
     }
