@@ -1,11 +1,11 @@
 import { StatusCode, StatusValue } from "../../interfaces";
 import { noveltyService } from "../../services";
 import { formatZodError } from "../utils";
-import { idNoveltySchema, updateNoveltySchema } from "./novelty.schema";
+import { findEmployeeNoveltiesSchema, idNoveltySchema, updateNoveltySchema } from "./novelty.schema";
 import { Request, Response } from "express";
 
 class NoveltyController {
-  constructor() {}
+  constructor() { }
 
   async createNovelty(req: Request, res: Response): Promise<void> {
     const novelty = req.body;
@@ -14,16 +14,36 @@ class NoveltyController {
   }
 
   async findNovelties(req: Request, res: Response): Promise<void> {
-    const novelties = await noveltyService.findNovelties();
-    res
-      .status(novelties.code)
-      .json({ status: novelties.code, data: novelties.data });
+    try {
+      const request = findEmployeeNoveltiesSchema.safeParse(req.query);
+      if (!request.success) {
+        res
+          .status(StatusCode.BadRequest)
+          .json({
+            status: StatusValue.Failed,
+            data: { error: formatZodError(request.error) },
+          });
+        return;
+      }
+      const novelties = await noveltyService.findNovelties(request.data);
+      res
+        .status(novelties.code)
+        .json({ status: novelties.code, data: novelties.data });
+    }
+    catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: err.message },
+        });
+    }
   }
 
   async findNoveltyById(req: Request, res: Response): Promise<void> {
     try {
       const request = idNoveltySchema.safeParse(req.params);
-      if(!request.success) {
+      if (!request.success) {
         res
           .status(StatusCode.BadRequest)
           .json({
@@ -49,7 +69,7 @@ class NoveltyController {
   async updateNovelty(req: Request, res: Response): Promise<void> {
     try {
       const request = updateNoveltySchema.safeParse(req.body);
-      if(!request.success) {
+      if (!request.success) {
         res
           .status(StatusCode.BadRequest)
           .json({
@@ -61,7 +81,7 @@ class NoveltyController {
       const updatedNovelty = await noveltyService.updateNovelty(request.data);
       res.status(200).json(updatedNovelty);
 
-    }catch(err: any) {
+    } catch (err: any) {
       res
         .status(StatusCode.InternalErrorServer)
         .json({
@@ -74,7 +94,7 @@ class NoveltyController {
   async deleteNovelty(req: Request, res: Response): Promise<void> {
     try {
       const request = idNoveltySchema.safeParse(req.params);
-      if(!request.success) {
+      if (!request.success) {
         res
           .status(StatusCode.BadRequest)
           .json({

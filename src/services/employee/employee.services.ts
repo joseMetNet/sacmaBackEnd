@@ -579,6 +579,7 @@ export class EmployeeService {
     return filter;
   }
 }
+
 interface IFindEmployeeRequest {
   page?: number;
   pageSize?: number;

@@ -11,3 +11,13 @@ export interface ICreateEmployeeNovelty {
   idEmployee: number;
   observation?: string;
 }
+
+export interface IFindEmployeeRequest {
+  page?: number;
+  pageSize?: number;
+  idNovelty?: number;
+  firstName?: string;
+  identityCardNumber? : string;
+  noveltyYear? : string;
+  noveltyMonth? : string;
+}
