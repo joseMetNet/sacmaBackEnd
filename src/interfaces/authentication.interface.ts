@@ -12,7 +12,8 @@ export interface RegisterRequest {
   firstName: string;
   lastName: string;
   email: string;
-  password: string;
+  password?: string;
+  userName?: string;
   address: string;
   phoneNumber: string;
   idIdentityCard: number;
@@ -31,7 +32,6 @@ export interface RegisterRequest {
   idEps?: number | null;
   idArl?: number | null;
   severancePay?: string | null;
-  userName?: string;
   emergencyContactfirstName?: string | null;
   emergencyContactlastName?: string | null;
   emergencyContactphoneNumber?: string | null;

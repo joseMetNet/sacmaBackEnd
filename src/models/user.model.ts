@@ -23,6 +23,7 @@ export class User extends Model {
 User.init({
   idUser: {
     type: DataTypes.INTEGER,
+    autoIncrement: true,
     primaryKey: true,
   },
   firstName: {

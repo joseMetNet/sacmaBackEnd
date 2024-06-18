@@ -3,7 +3,8 @@ import { CustomError } from "../../utils";
 import { 
   ChagePasswordRequest, 
   AuthenticationRequest, 
-  RegisterRequest, 
+  RegisterRequest,
+  UpdateEmployeeRequest, 
 } from "../../interfaces";
 
 export class AuthenticationRepository {
@@ -121,11 +122,11 @@ export class AuthenticationRepository {
     * }
     * response;
   */
-  async registerRequest(request: RegisterRequest): Promise<CustomError | number> {
+  async registerRequest(request: UpdateEmployeeRequest | RegisterRequest): Promise<CustomError | number> {
     const payload = JSON.stringify({
       "userGroup": EnvConfig.USER_GROUP,
       "email": request.email,
-      "userName": request.email,
+      "userName": request.userName,
       "password": request.password
     });
     const requestOptions: RequestInit = {
