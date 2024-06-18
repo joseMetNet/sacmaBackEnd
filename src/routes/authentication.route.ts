@@ -24,6 +24,22 @@ export function authenticationRoutes(app: Application): void {
    *                type: array
    *                items:
    *                  type: string
+   *    notFoundResponse:
+   *      description: Not found response
+   *      content:
+   *        application/json:
+   *          schema:
+   *            type: object
+   *            properties:
+   *              status:
+   *                type: string
+   *                example: FAILED
+   *              data:
+   *                type: object
+   *                properties:
+   *                  message:
+   *                    type: string
+   *                    example: Not found.
    *    failedResponse:
    *      description: Failed response
    *      content:
@@ -34,9 +50,12 @@ export function authenticationRoutes(app: Application): void {
    *              status:
    *                type: string
    *                example: FAILED
-   *              message:
-   *                type: string
-   *                example: An internal server error occurred.
+   *              data:
+   *                type: object
+   *                properties:
+   *                  message:
+   *                    type: string
+   *                    example: An internal server error occurred.
    *  schemas:
    *    employee:
    *      type: object
@@ -127,7 +146,6 @@ export function authenticationRoutes(app: Application): void {
    *        - firstName
    *        - lastName
    *        - email
-   *        - password
    *        - address
    *        - phoneNumber
    *        - idIdentityCard
@@ -160,31 +178,20 @@ export function authenticationRoutes(app: Application): void {
     "/v1/auth/register",
     [
       check("firstName", "firstName is required").notEmpty(),
-      validateEndpoint,
       check("lastName", "lastName is required").notEmpty(),
-      validateEndpoint,
       check("email", "email is required").notEmpty(),
-      validateEndpoint,
-      check("password", "password is required").notEmpty(),
-      validateEndpoint,
       check("address", "address is required").notEmpty(),
-      validateEndpoint,
       check("phoneNumber", "phoneNumber is required").notEmpty(),
-      validateEndpoint,
       check("idIdentityCard", "idIdentityCard is required").notEmpty(),
-      validateEndpoint,
       check("identityCardNumber", "identityCardNumber is required").notEmpty(),
-      validateEndpoint,
       check(
         "identityCardExpeditionDate",
         "identityCardExpeditionDate is required"
       ).notEmpty(),
-      validateEndpoint,
       check(
         "idIdentityCardExpeditionCity",
         "idIdentityCardExpeditionCity is required"
       ).notEmpty(),
-      validateEndpoint,
       check("idRole", "idRole is required").notEmpty(),
       validateEndpoint,
     ],
@@ -212,6 +219,8 @@ export function authenticationRoutes(app: Application): void {
    *      responses:
    *        '200':
    *          $ref: '#/components/responses/successResponse'
+   *        '404':
+   *          $ref: '#/components/responses/notFoundResponse'
    *        '500':
    *          $ref: '#/components/responses/failedResponse'
    */

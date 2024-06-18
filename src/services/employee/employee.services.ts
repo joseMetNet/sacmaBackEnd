@@ -140,7 +140,6 @@ export class EmployeeService {
         },
       );
       if (employeeRequiredDocument) {
-        console.log(employeeRequiredDocument.documentUrl);
         if (employeeRequiredDocument.documentUrl) {
           const deleteBlobResponse = await deleteDocument(employeeRequiredDocument.documentUrl.split("/").pop() as string);
           if (deleteBlobResponse instanceof CustomError) {
@@ -207,6 +206,16 @@ export class EmployeeService {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
           message: "User not found",
         });
+      }
+
+      const userMicro = await this.authRepository.findUserByEmail(user.userName?? "");
+      if(typeof userMicro === "number" && employee.password && employee.userName) {
+        const newUser = await this.authRepository.registerRequest(employee);
+        if (newUser instanceof CustomError) {
+          return BuildResponse.buildErrorResponse(newUser.statusCode, {
+            message: newUser.message,
+          });
+        }
       }
 
       if (employee.password) {
@@ -527,6 +536,7 @@ export class EmployeeService {
       address: employee.address ?? dbUser.address,
       phoneNumber: employee.phoneNumber ?? dbUser.phoneNumber,
       idIdentityCard: employee.idIdentityCard ?? dbUser.idIdentityCard,
+      userName: employee.userName ?? dbUser.userName,
       identityCardNumber:
         employee.identityCardNumber ?? dbUser.identityCardNumber,
       identityCardExpeditionDate:

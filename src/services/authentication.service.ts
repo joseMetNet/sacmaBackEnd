@@ -25,15 +25,18 @@ export class AuthenticationService {
         await transaction.rollback();
         return BuildResponse.buildErrorResponse(StatusCode.Conflict, {message: "User already exists"});
       }
-      const newUserId = await this.authRepository.registerRequest(request);
-      if (newUserId instanceof CustomError) {
-        await transaction.rollback();
-        return BuildResponse.buildErrorResponse(newUserId.statusCode, {message: newUserId.message});
+
+      if(request.password) {
+        const newUserId = await this.authRepository.registerRequest(request);
+        if (newUserId instanceof CustomError) {
+          await transaction.rollback();
+          return BuildResponse.buildErrorResponse(newUserId.statusCode, {message: newUserId.message});
+        }
       }
 
       await this.uploadImageProfile(request);
 
-      const user = await this.createUser(request, newUserId, transaction);
+      const user = await this.createUser(request, transaction);
       const emergencyContact = await this.createEmergencyContact(request, transaction);
       await this.createEmployee(request, emergencyContact, user, transaction);
 
@@ -62,7 +65,7 @@ export class AuthenticationService {
       if (authStatus instanceof CustomError) {
         return BuildResponse.buildErrorResponse(authStatus.statusCode, { error: authStatus.message });
       }
-      const user = await User.findOne({ where: { email: request.email } });
+      const user = await User.findOne({ where: { userName: request.email } });
       if (!user) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, {message: "User not found"});
       }
@@ -94,10 +97,9 @@ export class AuthenticationService {
     return request;
   }
 
-  private async createUser(request: RegisterRequest, newUserId: number, transaction: Transaction) {
+  private async createUser(request: RegisterRequest, transaction: Transaction) {
     return User.create(
       {
-        idUser: newUserId,
         firstName: request.firstName,
         lastName: request.lastName,
         email: request.email,
