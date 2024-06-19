@@ -1,6 +1,5 @@
-import { DefaultAzureCredential } from "@azure/identity";
 import { EnvConfig } from "../config";
-import { AuthTokenPayload } from "./interface";
+import { AuthRefreshTokenPayload, AuthTokenPayload } from "./interface";
 import { CustomError } from "../utils";
 import {
   BlobServiceClient,
@@ -9,7 +8,7 @@ import {
 } from "@azure/storage-blob";
 import * as jwt from "jsonwebtoken";
 
-export function createAuthToken(payload: AuthTokenPayload): string {
+export function signAuthToken(payload: AuthTokenPayload): string {
   return jwt.sign(payload, EnvConfig.AUTH_TOKEN_SECRET, {
     algorithm: "HS256",
     issuer: "metnet",
@@ -17,6 +16,16 @@ export function createAuthToken(payload: AuthTokenPayload): string {
     expiresIn: EnvConfig.AUTH_TOKEN_EXPIRY_DURATION,
   });
 }
+
+export function signAuthRefreshToken(payload: AuthRefreshTokenPayload): string {
+  return jwt.sign(payload, EnvConfig.REFRESH_TOKEN_SECRET, {
+    algorithm: "HS256",
+    issuer: "metnet",
+    audience: "audience",
+    expiresIn: "1d"
+  });
+}
+
 
 export async function uploadDocument(
   filePath: string,

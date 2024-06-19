@@ -9,4 +9,10 @@ export interface ResponseEntity {
 export interface AuthTokenPayload {
   idUser: number;
   idRole?: number;
+  idRefreshToken: number;
+}
+
+export interface AuthRefreshTokenPayload {
+  idUser: number;
+  idRefreshToken: number;
 }

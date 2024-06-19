@@ -11,6 +11,7 @@ class Config {
   private readonly authUrl: string;
   private readonly userGroup:  string;
   private readonly authTokenSecret: string;
+  private readonly refreshTokenSecret: string;
   private readonly authTokenExpiryDuration: string;
   private readonly azureStorageAccountName: string;
   private readonly azureStorageContainerDocument: string;
@@ -28,6 +29,7 @@ class Config {
     this.authUrl = this.getEnvVariable("AUTH_URL");
     this.userGroup = this.getEnvVariable("USER_GROUP");
     this.authTokenSecret = this.getEnvVariable("AUTH_TOKEN_SECRET");
+    this.refreshTokenSecret = this.getEnvVariable("REFRESH_TOKEN_SECRET");
     this.authTokenExpiryDuration = this.getEnvVariable("AUTH_TOKEN_EXPIRY_DURATION");
     this.azureStorageAccountName = this.getEnvVariable("AZURE_STORAGE_ACCOUNT_NAME");
     this.azureStorageContainerDocument = this.getEnvVariable("AZURE_STORAGE_CONTAINER_DOCUMENT");
@@ -78,6 +80,10 @@ class Config {
 
   get AUTH_TOKEN_SECRET(): string {
     return this.authTokenSecret;
+  }
+
+  get REFRESH_TOKEN_SECRET(): string {
+    return this.refreshTokenSecret;
   }
 
   get AUTH_TOKEN_EXPIRY_DURATION(): string {

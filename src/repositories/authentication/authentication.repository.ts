@@ -6,6 +6,8 @@ import {
   RegisterRequest,
   UpdateEmployeeRequest, 
 } from "../../interfaces";
+import { RefreshToken } from "../../models";
+import { Transaction } from "sequelize";
 
 export class AuthenticationRepository {
   private readonly headers = new Headers();
@@ -13,6 +15,69 @@ export class AuthenticationRepository {
 
   constructor() {
     this.headers.append("Content-Type", "application/json");
+  }
+
+  async createRefreshToken(idUser: number, transaction: Transaction): Promise<CustomError | RefreshToken> {
+    try {
+      const refreshToken = await RefreshToken.create({
+        idUser,
+      }, { transaction });
+      return refreshToken;
+    }catch( err: any) {
+      return CustomError.internalServer(err.message);
+    }
+  }
+
+  async updateRefreshToken(idRefreshToken: number, idUser: number): Promise<CustomError | number> {
+    try {
+      const refreshToken = await RefreshToken.update({
+        idUser,
+      }, {
+        where: {
+          idRefreshToken,
+        }
+      });
+      if (refreshToken[0] === 0) {
+        return CustomError.notFound("Refresh token not found");
+      }
+      return refreshToken[0];
+    }catch( err: any) {
+      return CustomError.internalServer(err.message);
+    }
+  }
+
+  async findRefreshToken(idRefreshToken: number, idUser: number): Promise<CustomError | RefreshToken> {
+    try {
+      const refreshToken = await RefreshToken.findOne({
+        where: {
+          idRefreshToken,
+          idUser,
+        }
+      });
+      if (!refreshToken) {
+        return CustomError.notFound("Refresh token not found");
+      }
+      return refreshToken;
+    }catch( err: any) {
+      return CustomError.internalServer(err.message);
+    }
+  }
+
+  async deleteRefreshToken(idRefreshToken: number, idUser: number): Promise<CustomError | number> {
+    try {
+      const refreshToken = await RefreshToken.destroy({
+        where: {
+          idRefreshToken,
+          idUser,
+        }
+      });
+      if (refreshToken === 0) {
+        return CustomError.notFound("Refresh token not found");
+      }
+      return refreshToken;
+    }catch( err: any) {
+      return CustomError.internalServer(err.message);
+    }
   }
 
   /**

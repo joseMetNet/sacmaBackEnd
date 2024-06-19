@@ -33,6 +33,15 @@ export const registerSchema = z.object({
   imageProfile: z.string().optional(),
 });
 
+export const createRefreshTokenSchema = z.object({
+  idUser: z.coerce.number(),
+});
+
+export const revokeRefreshTokenSchema = z.object({
+  idUser: z.coerce.number(),
+  idRefreshToken: z.coerce.number()
+});
+
 export const loginSchema = z.object({
   email: z.string().max(50),
   password: z.string().max(40),

@@ -2,6 +2,7 @@ import { Application, Router } from "express";
 import { authController } from "../controllers";
 import { check } from "express-validator";
 import { validateEndpoint } from "../controllers/utils";
+import { verifyRefreshToken } from "../middlewares";
 
 export function authenticationRoutes(app: Application): void {
   const routes: Router = Router();
@@ -233,6 +234,68 @@ export function authenticationRoutes(app: Application): void {
       validateEndpoint,
     ],
     authController.login
+  );
+
+  /**
+   * @openapi
+   *  /v1/auth/logout:
+   *    post:
+   *      security: []
+   *      tags: [Authentication Controller]
+   *      summary: Logout
+   *      requestBody:
+   *        required: true
+   *        content:
+   *          application/json:
+   *            schema:
+   *              type: object
+   *              properties:
+   *                refreshToken:
+   *                  type: string
+   *      responses:
+   *        '200':
+   *          $ref: '#/components/responses/successResponse'
+   *        '401':
+   *          $ref: '#/components/responses/failedResponse'
+   */
+  routes.post(
+    "/v1/auth/logout",
+    [
+      check("refreshToken", "refreshToken is required").notEmpty(),
+      verifyRefreshToken
+    ],
+    authController.revokeRefreshToken
+  );
+
+  /**
+   * @openapi
+   *  /v1/auth/refresh-token:
+   *    post:
+   *      security: []
+   *      tags: [Authentication Controller]
+   *      summary: Refresh token
+   *      requestBody:
+   *        required: true
+   *        content:
+   *          application/json:
+   *            schema:
+   *              type: object
+   *              properties:
+   *                refreshToken:
+   *                  type: string
+   *      responses:
+   *        '200':
+   *          $ref: '#/components/responses/successResponse'
+   *        '401':
+   *          $ref: '#/components/responses/failedResponse'
+   */
+  routes.post(
+    "/v1/auth/refresh-token",
+    [
+      check("refreshToken", "refreshToken is required").notEmpty(),
+      verifyRefreshToken
+    ],
+    authController.createRefreshToken
   );
 
   app.use("/api/", routes);

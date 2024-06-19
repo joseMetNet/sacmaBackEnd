@@ -20,3 +20,4 @@ export * from "./state.model";
 export * from "./compensation-fund.model";
 export * from "./required-document.model";
 export * from "./employee-requiredDocument.model";
+export * from "./refresh-token.model";
