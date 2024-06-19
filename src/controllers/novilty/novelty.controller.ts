@@ -1,16 +1,41 @@
+import { UploadedFile } from "express-fileupload";
 import { StatusCode, StatusValue } from "../../interfaces";
 import { noveltyService } from "../../services";
 import { formatZodError } from "../utils";
-import { findEmployeeNoveltiesSchema, idNoveltySchema, updateNoveltySchema } from "./novelty.schema";
+import { createNoveltySchema, findEmployeeNoveltiesSchema, idNoveltySchema, updateNoveltySchema } from "./novelty.schema";
 import { Request, Response } from "express";
 
 class NoveltyController {
   constructor() { }
 
   async createNovelty(req: Request, res: Response): Promise<void> {
-    const novelty = req.body;
-    const createdNovelty = await noveltyService.createNovelty(novelty);
-    res.status(201).json(createdNovelty);
+    try {
+      const request = createNoveltySchema.safeParse(req.body);
+      if (!request.success) {
+        res
+          .status(StatusCode.BadRequest)
+          .json({
+            status: StatusValue.Failed,
+            data: { error: formatZodError(request.error) },
+          });
+        return;
+      }
+
+      const filePath = req.files?.imageProfile ? (req.files.imageProfile as UploadedFile).tempFilePath : undefined;
+      
+      const createdNovelty = await noveltyService.createNovelty(request.data, filePath);
+      res
+        .status(createdNovelty.code)
+        .json({ status: createdNovelty.code, data: createdNovelty.data });
+    }
+    catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: err.message },
+        });
+    }
   }
 
   async findNovelties(req: Request, res: Response): Promise<void> {

@@ -11,8 +11,10 @@ import {
 } from "../../interfaces";
 import { EmployeeNovelty } from "../../models";
 import { noveltyRepository } from "../../repositories";
-import sequelize from "sequelize";
+import sequelize, { Transaction } from "sequelize";
 import { Op } from "sequelize";
+import { deleteDocument, deleteImageProfile, uploadDocument } from "../helper";
+import { dbConnection } from "../../config";
 
 export class NoveltyService {
   constructor() {}
@@ -89,22 +91,60 @@ export class NoveltyService {
     return [employeeNoveltyFilter, userFilter];
   }
 
-  async createNovelty(novelty: ICreateEmployeeNovelty): Promise<ResponseEntity> {
+  async createNovelty(novelty: ICreateEmployeeNovelty, filePath?: string): Promise<ResponseEntity> {
+    const transaction = await dbConnection.transaction();
     try {
       const dbNovelty = await noveltyRepository.findNovelty(novelty.idNovelty, novelty.idEmployee);
       if(!(dbNovelty instanceof CustomError)) {
         return BuildResponse.buildErrorResponse(StatusCode.Conflict, { message: "Novelty already exists" });
       }
 
-      const newNovelty = await noveltyRepository.createNovelty(novelty);
+      const newNovelty = await noveltyRepository.createNovelty(novelty, transaction);
       if(newNovelty instanceof CustomError) {
+        await transaction.rollback();
         return BuildResponse.buildErrorResponse(StatusCode.BadRequest, newNovelty);
       }
 
+      if(filePath) {
+        await this.uploadDocument(filePath, newNovelty, transaction);
+      }
+
+      await transaction.commit();
+
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, newNovelty);
     } catch (err: any) {
+      await transaction.rollback();
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, err);
     }
+  }
+
+  private async uploadDocument(document: string, employeeNovelty: EmployeeNovelty, transaction: Transaction) {
+    const identifier = crypto.randomUUID();
+    if(employeeNovelty.documentUrl != null) {
+      const deleteBlobResponse = await deleteDocument(employeeNovelty.documentUrl.split("/").pop() as string);
+      if (deleteBlobResponse instanceof CustomError) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(StatusCode.BadRequest, { message: deleteBlobResponse.message });
+      }
+      const uploadDocumentResponse = await uploadDocument(document, identifier);
+      if (uploadDocumentResponse instanceof CustomError) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(uploadDocumentResponse.statusCode, {
+          message: uploadDocumentResponse.message,
+        });
+      }
+      const url = `https://sacmaback.blob.core.windows.net/document/${identifier}.png`;
+      await employeeNovelty.update({ imageProfileUrl: url }, { transaction });
+    }
+    const uploadDocumentResponse = await uploadDocument(document, identifier);
+    if (uploadDocumentResponse instanceof CustomError) {
+      await transaction.rollback();
+      return BuildResponse.buildErrorResponse(uploadDocumentResponse.statusCode, {
+        message: uploadDocumentResponse.message,
+      });
+    }
+    const url = `https://sacmaback.blob.core.windows.net/document/${identifier}.png`;
+    await employeeNovelty.update({ imageProfileUrl: url }, { transaction });
   }
 
   async updateNovelty(novelty: IUpdateEmployeeNovelty): Promise<ResponseEntity> {

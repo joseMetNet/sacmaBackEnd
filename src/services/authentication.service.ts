@@ -20,7 +20,7 @@ export class AuthenticationService {
   async register(request: RegisterRequest): Promise<ResponseEntity> {
     const transaction = await dbConnection.transaction();
     try {
-      const userExists = await this.authRepository.findUserByEmail(request.email);
+      const userExists = await this.authRepository.findUserByEmail(request.userName);
       if (typeof userExists === "number") {
         await transaction.rollback();
         return BuildResponse.buildErrorResponse(StatusCode.Conflict, {message: "User already exists"});

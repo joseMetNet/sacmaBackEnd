@@ -12,9 +12,12 @@ export const updateNoveltySchema = z.object({
 });
 
 export const createNoveltySchema = z.object({
-  idNoveltyKind: z.coerce.number(),
-  loanValue: z.string(),
+  idNovelty: z.coerce.number(),
   idEmployee: z.coerce.number(),
+  createdAt: z.string(),
+  endAt: z.string(),
+  loanValue: z.string().optional(),
+  installment: z.number().optional(),
   observation: z.string().optional(),
 });
 

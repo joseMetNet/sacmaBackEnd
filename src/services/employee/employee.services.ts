@@ -209,7 +209,9 @@ export class EmployeeService {
       }
 
       const userMicro = await this.authRepository.findUserByEmail(user.userName?? "");
-      if(typeof userMicro === "number" && employee.password && employee.userName) {
+      if(userMicro instanceof CustomError && employee.password && employee.userName) {
+        console.log("create user in microservice");
+        console.log(`crendentials: ${employee.userName} ${employee.password}`);
         const newUser = await this.authRepository.registerRequest(employee);
         if (newUser instanceof CustomError) {
           return BuildResponse.buildErrorResponse(newUser.statusCode, {
@@ -217,15 +219,18 @@ export class EmployeeService {
           });
         }
       }
+      console.log(`password: ${employee.password}`);
 
-      if (employee.password) {
+      if(typeof userMicro === "number" && employee.password && employee.userName) {
+        console.log(`try to update user with credentials: ${employee.userName} ${employee.password}`);
         const changePasswordRequest: ChagePasswordRequest = {
-          email: user.email,
+          email: user.userName,
           password: employee.password,
         };
         const passwordUpdated = await this.authRepository.changePassword(
           changePasswordRequest
         );
+        console.log(`password updated: ${passwordUpdated}`);
         if (passwordUpdated instanceof CustomError) {
           return BuildResponse.buildErrorResponse(passwordUpdated.statusCode, {
             message: passwordUpdated.message,

@@ -7,8 +7,12 @@ export interface IUpdateEmployeeNovelty {
 
 export interface ICreateEmployeeNovelty {
   idNovelty: number;
-  loanValue: number;
   idEmployee: number;
+  createdAt: string;
+  endAt: string;
+  documentUrl?: string;
+  loanValue?: string;
+  installment?: number;
   observation?: string;
 }
 

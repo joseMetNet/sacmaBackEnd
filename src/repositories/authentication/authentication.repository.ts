@@ -128,6 +128,7 @@ export class AuthenticationRepository {
       "password": request.password,
       "userName": request.email
     });
+    console.log(payload);
     const requestOptions: RequestInit = {
       method: "PUT",
       headers: this.headers,

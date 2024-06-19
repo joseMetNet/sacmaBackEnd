@@ -147,6 +147,7 @@ export function authenticationRoutes(app: Application): void {
    *        - firstName
    *        - lastName
    *        - email
+   *        - userName
    *        - address
    *        - phoneNumber
    *        - idIdentityCard
@@ -181,6 +182,7 @@ export function authenticationRoutes(app: Application): void {
       check("firstName", "firstName is required").notEmpty(),
       check("lastName", "lastName is required").notEmpty(),
       check("email", "email is required").notEmpty(),
+      check("userName", "userName is required").notEmpty(),
       check("address", "address is required").notEmpty(),
       check("phoneNumber", "phoneNumber is required").notEmpty(),
       check("idIdentityCard", "idIdentityCard is required").notEmpty(),
