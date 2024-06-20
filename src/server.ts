@@ -11,6 +11,7 @@ import {
   employeeRoutes,
   noveltyRoutes
 } from "./routes";
+import { employeePayrollRoutes } from "./routes/payroll.route";
 
 class Server {
   private app: Application;
@@ -48,6 +49,7 @@ class Server {
     authenticationRoutes(this.app);
     employeeRoutes(this.app);
     noveltyRoutes(this.app);
+    employeePayrollRoutes(this.app);
   }
 
   public listen(): void {
