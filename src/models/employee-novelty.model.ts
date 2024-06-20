@@ -8,6 +8,7 @@ export class EmployeeNovelty extends Model {
   declare idNovelty: number;
   declare idEmployee: number;
   declare installment: number;
+  declare periodicity: string;
   declare loanValue: string;
   declare observation: string;
   declare documentUrl: string;
@@ -32,6 +33,10 @@ EmployeeNovelty.init({
   installment: {
     type: DataTypes.INTEGER,
     allowNull: true,
+  },
+  periodicity: {
+    type: DataTypes.STRING,
+    allowNull: true
   },
   loanValue: {
     type: DataTypes.STRING,
