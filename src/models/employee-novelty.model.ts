@@ -12,6 +12,7 @@ export class EmployeeNovelty extends Model {
   declare observation: string;
   declare documentUrl: string;
   declare endAt: string;
+  declare createdAt: string;
 }
 
 EmployeeNovelty.init({
@@ -45,6 +46,10 @@ EmployeeNovelty.init({
     allowNull: true,
   },
   endAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  createdAt: {
     type: DataTypes.DATE,
     allowNull: false,
   },

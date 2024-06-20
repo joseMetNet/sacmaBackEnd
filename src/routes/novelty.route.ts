@@ -109,9 +109,9 @@ export function noveltyRoutes(app: Application): void {
    *     requestBody:
    *       required: true
    *       content:
-   *         application/json:
+   *         multipart/form-data:
    *           schema:
-   *             $ref: '#/components/schemas/Novelty'
+   *             $ref: '#/components/schemas/updateEmployeeNovelty'
    *     responses:
    *       200:
    *         description: Updated
@@ -271,7 +271,37 @@ export function noveltyRoutes(app: Application): void {
    *         observation:
    *           type: string
    *           example: "Loan for employee"
-   * 
+   *     updateEmployeeNovelty:
+   *       type: object
+   *       properties:
+   *         idEmployeeNovelty:
+   *           type: integer
+   *           example: 1
+   *         idNovelty:
+   *           type: integer
+   *           example: 1
+   *         createdAt:
+   *           type: string
+   *           example: "2021-09-01T00:00:00.000Z"
+   *         endAt:
+   *           type: string
+   *           example: "2021-09-01T00:00:00.000Z"
+   *         loanValue:
+   *           type: string
+   *           example: "100.00"
+   *         installment:
+   *           type: number
+   *           example: 12
+   *         periodicity:
+   *           type: string
+   *           example: "monthly"
+   *         document:
+   *           type: string
+   *           format: binary
+   *           example: "Loan for employee"
+   *         observation:
+   *           type: string
+   *           example: "Loan for employee"
    */
 
   app.use("/api", routes);

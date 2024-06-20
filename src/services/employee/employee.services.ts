@@ -8,22 +8,22 @@ import {
 } from "../../interfaces";
 import {
   Arl,
-  Eps,
+  BankAccount,
   City,
+  CompensationFund,
   ContractType,
   EmergencyContact,
   Employee,
-  Role,
-  User,
-  State,
-  BankAccount,
-  PaymentType,
-  CompensationFund,
+  EmployeeRequiredDocument,
+  Eps,
   IdentityCard,
+  PaymentType,
+  PensionFund,
   Position,
   RequiredDocument,
-  EmployeeRequiredDocument,
-  PensionFund,
+  Role,
+  State,
+  User,
 } from "../../models";
 import {
   AuthenticationRepository,
@@ -31,8 +31,8 @@ import {
 } from "../../repositories";
 import { CustomError } from "../../utils";
 import { BuildResponse } from "../build-response";
-import { ResponseEntity } from "../interface";
 import { deleteDocument, deleteImageProfile, uploadDocument, uploadImageProfile } from "../helper";
+import { ResponseEntity } from "../interface";
 
 export class EmployeeService {
   constructor(

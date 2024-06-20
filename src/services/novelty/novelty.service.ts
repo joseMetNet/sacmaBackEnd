@@ -13,7 +13,7 @@ import { EmployeeNovelty } from "../../models";
 import { noveltyRepository } from "../../repositories";
 import sequelize, { Transaction } from "sequelize";
 import { Op } from "sequelize";
-import { deleteDocument, deleteImageProfile, uploadDocument } from "../helper";
+import { deleteDocument, uploadDocument } from "../helper";
 import { dbConnection } from "../../config";
 
 export class NoveltyService {
@@ -53,7 +53,6 @@ export class NoveltyService {
       const totalItems = novelties.count;
       const currentPage = page;
       const totalPages = Math.ceil(totalItems / limit);
-      console.log(`rows: ${JSON.stringify(novelties.rows)}`);
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         employeeNovelties: novelties.rows,
@@ -94,16 +93,13 @@ export class NoveltyService {
   async createNovelty(novelty: ICreateEmployeeNovelty, filePath?: string): Promise<ResponseEntity> {
     const transaction = await dbConnection.transaction();
     try {
-      const dbNovelty = await noveltyRepository.findNovelty(novelty.idNovelty, novelty.idEmployee);
-      if(!(dbNovelty instanceof CustomError)) {
-        return BuildResponse.buildErrorResponse(StatusCode.Conflict, { message: "Novelty already exists" });
-      }
 
       const newNovelty = await noveltyRepository.createNovelty(novelty, transaction);
       if(newNovelty instanceof CustomError) {
         await transaction.rollback();
         return BuildResponse.buildErrorResponse(StatusCode.BadRequest, newNovelty);
       }
+
 
       if(filePath) {
         await this.uploadDocument(filePath, newNovelty, transaction);
@@ -113,8 +109,9 @@ export class NoveltyService {
 
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, newNovelty);
     } catch (err: any) {
+      console.log(err);
       await transaction.rollback();
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, err);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: err.message });
     }
   }
 
@@ -123,18 +120,16 @@ export class NoveltyService {
     if(employeeNovelty.documentUrl != null) {
       const deleteBlobResponse = await deleteDocument(employeeNovelty.documentUrl.split("/").pop() as string);
       if (deleteBlobResponse instanceof CustomError) {
-        await transaction.rollback();
         return BuildResponse.buildErrorResponse(StatusCode.BadRequest, { message: deleteBlobResponse.message });
       }
       const uploadDocumentResponse = await uploadDocument(document, identifier);
       if (uploadDocumentResponse instanceof CustomError) {
-        await transaction.rollback();
         return BuildResponse.buildErrorResponse(uploadDocumentResponse.statusCode, {
           message: uploadDocumentResponse.message,
         });
       }
-      const url = `https://sacmaback.blob.core.windows.net/document/${identifier}.png`;
-      await employeeNovelty.update({ imageProfileUrl: url }, { transaction });
+      const url = `https://sacmaback.blob.core.windows.net/document/${identifier}.pdf`;
+      await employeeNovelty.update({ documentUrl: url }, { transaction });
     }
     const uploadDocumentResponse = await uploadDocument(document, identifier);
     if (uploadDocumentResponse instanceof CustomError) {
@@ -143,34 +138,41 @@ export class NoveltyService {
         message: uploadDocumentResponse.message,
       });
     }
-    const url = `https://sacmaback.blob.core.windows.net/document/${identifier}.png`;
-    await employeeNovelty.update({ imageProfileUrl: url }, { transaction });
+    const url = `https://sacmaback.blob.core.windows.net/document/${identifier}.pdf`;
+    await employeeNovelty.update({ documentUrl: url }, { transaction });
   }
 
-  async updateNovelty(novelty: IUpdateEmployeeNovelty): Promise<ResponseEntity> {
+  async updateNovelty(employeeNovelty: IUpdateEmployeeNovelty, document?: string): Promise<ResponseEntity> {
+    const transaction = await dbConnection.transaction();
     try {
-      const dbEmployeeNovelty = await noveltyRepository.findNovelty(novelty.idNovelty, novelty.idEmployee);
+      const dbEmployeeNovelty = await noveltyRepository.findEmployeeNovelty(employeeNovelty.idEmployeeNovelty);
       if(dbEmployeeNovelty instanceof CustomError) {
         return BuildResponse.buildErrorResponse(dbEmployeeNovelty.statusCode, {message: dbEmployeeNovelty.message} );
       }
 
-      const updateEmployeeNovelty = this.buildUpdateNovelty(novelty, dbEmployeeNovelty);
-      const newNovelty = await dbEmployeeNovelty.update(updateEmployeeNovelty);
+      const updateEmployeeNovelty = this.buildUpdateEmployeeNovelty(employeeNovelty, dbEmployeeNovelty);
+      const newNovelty = await dbEmployeeNovelty.update(updateEmployeeNovelty, { transaction });
 
+      if(document) {
+        await this.uploadDocument(document, newNovelty, transaction);
+      }
+
+      await transaction.commit();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, newNovelty);
     } catch (err: any) {
+      await transaction.rollback();
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, err);
     }
   }
 
-  async deleteNovelty(idNovelty: number): Promise<ResponseEntity> {
+  async deleteEmployeeNovelty(idEmployeeNovelty: number): Promise<ResponseEntity> {
     try {
-      const dbNovelty = await noveltyRepository.findNoveltyById(idNovelty);
-      if(dbNovelty instanceof CustomError) {
-        return BuildResponse.buildErrorResponse(StatusCode.NotFound, dbNovelty);
+      const dbEmployeeNovelty = await noveltyRepository.findNoveltyById(idEmployeeNovelty);
+      if(dbEmployeeNovelty instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, dbEmployeeNovelty);
       }
 
-      await dbNovelty.destroy();
+      await dbEmployeeNovelty.destroy();
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Novelty deleted" });
     } catch (err: any) {
@@ -178,15 +180,17 @@ export class NoveltyService {
     }
   }
 
-  private buildUpdateNovelty(
-    novelty: IUpdateEmployeeNovelty, 
+  private buildUpdateEmployeeNovelty(
+    employeeNovelty: IUpdateEmployeeNovelty, 
     dbEmployee: EmployeeNovelty
   ) {
     return {
-      idNovelty: novelty.idNovelty ?? dbEmployee.idNovelty,
-      loanValue: novelty.loanValue ?? dbEmployee.loanValue,
-      idEmployee: novelty.idEmployee ?? dbEmployee.idEmployee,
-      observation: novelty.observation ?? dbEmployee.observation
+      idNovelty: employeeNovelty.idNovelty ?? dbEmployee.idNovelty,
+      createdAt: employeeNovelty.createdAt ?? dbEmployee.createdAt,
+      endAt: employeeNovelty.endAt ?? dbEmployee.endAt,
+      loanValue: employeeNovelty.loanValue ?? dbEmployee.loanValue,
+      installment: employeeNovelty.installment ?? dbEmployee.installment,
+      observation: employeeNovelty.observation ?? dbEmployee.observation
     };
   }
 }

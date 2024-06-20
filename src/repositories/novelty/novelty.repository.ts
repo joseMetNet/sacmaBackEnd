@@ -8,7 +8,34 @@ export class NoveltyRepository {
 
   async findNoveltyById(id: number): Promise<CustomError | EmployeeNovelty> {
     try {
-      const novelty = await EmployeeNovelty.findByPk(id);
+      const novelty = await EmployeeNovelty.findByPk(id, {
+        attributes: { 
+          exclude: ["idNovelty", "idEmployee"]
+        },
+        include: [
+          {
+            model: Novelty,
+            required: true
+          },
+          {
+            model: Employee,
+            required: true,
+            attributes: ["idPosition", "idUser"],
+            include: [
+              {
+                model: Position,
+                attributes: ["position"],
+                required: false,
+              },
+              {
+                model: User,
+                attributes: ["firstName", "lastName"],
+                required: true,
+              }
+            ]
+          }
+        ],
+      });
       if(!novelty) {
         return CustomError.notFound("Novelty not found");
       }
@@ -38,11 +65,9 @@ export class NoveltyRepository {
     }
   }
 
-  async findNovelty(idNovelty: number, idEmployee: number): Promise<CustomError | EmployeeNovelty> {
+  async findEmployeeNovelty(idEmployeeNovelty: number): Promise<CustomError | EmployeeNovelty> {
     try {
-      const novelty = await EmployeeNovelty.findOne({
-        where: { idNovelty, idEmployee },
-      });
+      const novelty = await EmployeeNovelty.findByPk(idEmployeeNovelty);
       if(!novelty) {
         return CustomError.notFound("Novelty not found");
       }
@@ -64,7 +89,7 @@ export class NoveltyRepository {
         attributes: { 
           exclude: ["idNovelty", "idEmployee"]
         },
-        where: noveltyFilter[9],
+        where: noveltyFilter[0],
         include: [
           {
             model: Novelty,

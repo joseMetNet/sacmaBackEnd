@@ -1,7 +1,12 @@
 export interface IUpdateEmployeeNovelty {
-  idNovelty: number;
-  idEmployee: number;
+  idEmployeeNovelty: number;
+  idNovelty?: number;
+  idEmployee?: number;
+  createdAt?: string;
+  endAt?: string;
+  documentUrl?: string;
   loanValue?: string;
+  installment?: number;
   observation?: string;
 }
 

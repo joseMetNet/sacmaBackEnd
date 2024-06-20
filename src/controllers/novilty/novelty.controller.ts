@@ -21,7 +21,7 @@ class NoveltyController {
         return;
       }
 
-      const filePath = req.files?.imageProfile ? (req.files.imageProfile as UploadedFile).tempFilePath : undefined;
+      const filePath = req.files?.document ? (req.files.document as UploadedFile).tempFilePath : undefined;
       
       const createdNovelty = await noveltyService.createNovelty(request.data, filePath);
       res
@@ -103,7 +103,9 @@ class NoveltyController {
           });
         return;
       }
-      const updatedNovelty = await noveltyService.updateNovelty(request.data);
+
+      const filePath = req.files?.document ? (req.files.document as UploadedFile).tempFilePath : undefined;
+      const updatedNovelty = await noveltyService.updateNovelty(request.data, filePath);
       res.status(200).json(updatedNovelty);
 
     } catch (err: any) {
@@ -128,7 +130,7 @@ class NoveltyController {
           });
         return;
       }
-      const response = await noveltyService.deleteNovelty(request.data.idEmployeeNovelty);
+      const response = await noveltyService.deleteEmployeeNovelty(request.data.idEmployeeNovelty);
       res.status(response.code).json({ status: response.status, data: response.data });
     } catch (err: any) {
       res
