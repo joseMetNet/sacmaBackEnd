@@ -408,6 +408,17 @@ export class EmployeeService {
     }
   }
 
+  async findPensionFund(): Promise<ResponseEntity> {
+    try {
+      const pensionFund = await PensionFund.findAll();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, pensionFund);
+    } catch (err: any) {
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: err.message,
+      });
+    }
+  }
+
   async findRoles(): Promise<ResponseEntity> {
     try {
       const roles = await Role.findAll();

@@ -1,4 +1,4 @@
-import { Employee, Position, Role, User } from "../../models";
+import { City, Employee, Position, Role, User } from "../../models";
 import { CustomError } from "../../utils";
 
 export class EmployeeRepository {
@@ -58,7 +58,10 @@ export class EmployeeRepository {
               {
                 model: Role,
                 required: true
-              }
+              },
+              {
+                all: true
+              },
             ]
           },
           {

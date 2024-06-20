@@ -12,7 +12,7 @@ export function employeePayrollRoutes(app: Application): void {
    *     tags: [Payroll]
    *     summary: Get all payrolls
    *     parameters:
-   *       - $ref: "#/components/parameters/idEmployee"
+   *       - $ref: "#/components/parameters/idEmployeeQuery"
    *       - $ref: "#/components/parameters/page"
    *       - $ref: "#/components/parameters/pageSize"
    *       - $ref: "#/components/parameters/year"
@@ -180,7 +180,7 @@ export function employeePayrollRoutes(app: Application): void {
    *       description: Employee payroll id
    *       required: false
    *       default: 1
-   *     idEmployee:
+   *     idEmployeeQuery:
    *       in: query
    *       name: idEmployee
    *       schema:
@@ -234,16 +234,6 @@ export function employeePayrollRoutes(app: Application): void {
    *           type: string
    *           format: date
    *           example: "2022-01-01"
-   *          
-   *     failedResponse:
-   *       type: object
-   *       properties:
-   *         status:
-   *           type: string
-   *           example: FAILED
-   *         message:
-   *           type: string
-   *           example: An internal server error occurred.
    *     uploadPayroll:
    *       type: object
    *       properties:

@@ -132,6 +132,13 @@ class EmployeeController {
       .json({ status: response.status, data: response.data });
   }
 
+  async findPensionFund(req: Request, res: Response): Promise<void> {
+    const response = await employeeService.findPensionFund();
+    res
+      .status(response.code)
+      .json({ status: response.status, data: response.data });
+  }
+
   async findRoles(req: Request, res: Response): Promise<void> {
     const response = await employeeService.findRoles();
     res

@@ -6,12 +6,7 @@ import morgan from "morgan";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import { EnvConfig, swaggerOptions } from "./config";
-import { 
-  authenticationRoutes,
-  employeeRoutes,
-  noveltyRoutes
-} from "./routes";
-import { employeePayrollRoutes } from "./routes/payroll.route";
+import { authenticationRoutes, employeePayrollRoutes, employeeRoutes, noveltyRoutes } from "./routes";
 
 class Server {
   private app: Application;
@@ -42,7 +37,11 @@ class Server {
 
   private initializeSwagger(): void {
     const configSwagger = swaggerJSDoc(swaggerOptions);
-    this.app.use("/api/v1/docs", swaggerUi.serve, swaggerUi.setup(configSwagger));
+    this.app.use(
+      "/api/v1/docs",
+      swaggerUi.serve,
+      swaggerUi.setup(configSwagger)
+    );
   }
 
   private routes(): void {
