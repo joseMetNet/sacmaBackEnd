@@ -1,4 +1,4 @@
-import { Op, Transaction } from "sequelize";
+import { Transaction } from "sequelize";
 import { ICreateEmployeeNovelty } from "../../interfaces/novelty.interface";
 import { Employee, EmployeeNovelty, Novelty, Position, User  } from "../../models";
 import { CustomError } from "../../utils";
