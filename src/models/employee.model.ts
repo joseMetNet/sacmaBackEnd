@@ -11,6 +11,7 @@ import { CompensationFund } from "./compensation-fund.model";
 import { EmployeeRequiredDocument } from "./employee-requiredDocument.model";
 import { EmergencyContact } from "./emergency-contact.model";
 import { PensionFund } from "./pension-fund.model";
+import { SeverancePay } from "./severance-pay.model";
 
 export class Employee extends Model {
   declare idEmployee: number;
@@ -117,6 +118,11 @@ Employee.hasOne(User, {
 Employee.hasOne(Position, {
   sourceKey: "idPosition",
   foreignKey: "idPosition",
+});
+
+Employee.hasOne(SeverancePay, {
+  sourceKey: "idSeverancePay",
+  foreignKey: "idSeverancePay",
 });
 
 
