@@ -38,11 +38,7 @@ export function employeeRoutes(app: Application): void {
    *             schema:
    *               $ref: "#/components/schemas/failedResponse"
    */
-  routes.get(
-    "/v1/employee/city",
-    [verifyToken],
-    employeeController.findCities
-  );
+  routes.get("/v1/employee/city", [verifyToken], employeeController.findCities);
 
   /**
    * @openapi
@@ -114,7 +110,11 @@ export function employeeRoutes(app: Application): void {
    *               $ref: "#/components/schemas/failedResponse"
    */
 
-  routes.get("/v1/employee/pension-fund", [verifyToken], employeeController.findPensionFund);
+  routes.get(
+    "/v1/employee/pension-fund",
+    [verifyToken],
+    employeeController.findPensionFund
+  );
 
   /**
    * @openapi
@@ -258,6 +258,45 @@ export function employeeRoutes(app: Application): void {
     "/v1/employee/contract-type",
     [verifyToken],
     employeeController.findContractTypes
+  );
+
+  /**
+   * @openapi
+   * /v1/employee/severance-pay:
+   *   get:
+   *     tags: [Employee]
+   *     summary: Find severance pays
+   *     responses:
+   *       '200':
+   *         description: Successful response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: SUCCESS
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       idSeverancePay:
+   *                         type: integer
+   *                       idSeverancePay:
+   *                         type: string
+   *       '500':
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/failedResponse"
+   */
+  routes.get(
+    "/v1/employee/severance-pay",
+    [verifyToken],
+    employeeController.findSeverancePay
   );
 
   /**
@@ -453,27 +492,27 @@ export function employeeRoutes(app: Application): void {
   );
 
   /**
- * @openapi
- * /v1/employee/upload-document:
- *   post:
- *     tags: [Employee]
- *     summary: Upload image profile for employee
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             $ref: '#/components/schemas/uploadDocument'
- *     responses:
- *       '200':
- *         description: Successful uploaded image profile
- *       '500':
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/failedResponse"
- */
+   * @openapi
+   * /v1/employee/upload-document:
+   *   post:
+   *     tags: [Employee]
+   *     summary: Upload image profile for employee
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         multipart/form-data:
+   *           schema:
+   *             $ref: '#/components/schemas/uploadDocument'
+   *     responses:
+   *       '200':
+   *         description: Successful uploaded image profile
+   *       '500':
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/failedResponse"
+   */
   routes.post(
     "/v1/employee/upload-document",
     [verifyToken],
@@ -612,7 +651,6 @@ export function employeeRoutes(app: Application): void {
     employeeController.updateEmployee
   );
 
-
   /**
    * @openapi
    * /v1/employee/{idEmployee}:
@@ -721,7 +759,6 @@ export function employeeRoutes(app: Application): void {
     employeeController.findEmployeeById
   );
 
-
   /**
    * @openapi
    * components:
@@ -780,7 +817,7 @@ export function employeeRoutes(app: Application): void {
    *           type: string
    *           format: date
    *           example: "2022-01-01"
-   *          
+   *
    *     failedResponse:
    *       type: object
    *       properties:
@@ -790,7 +827,7 @@ export function employeeRoutes(app: Application): void {
    *         message:
    *           type: string
    *           example: An internal server error occurred.
-   * 
+   *
    *     UpdateEmployee:
    *       type: object
    *       properties:
@@ -865,7 +902,7 @@ export function employeeRoutes(app: Application): void {
    *         idArl:
    *           type: integer
    *           example: 1
-   *         severancePay:
+   *         idSeverancePay:
    *           type: string
    *           example: "5000"
    *         userName:

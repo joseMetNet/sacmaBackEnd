@@ -11,6 +11,7 @@ export const registerSchema = z.object({
   idIdentityCard: z.coerce.number(),
   identityCardNumber: z.string(),
   identityCardExpeditionDate: z.string(),
+  birthDate: z.string().optional(),
   idIdentityCardExpeditionCity: z.coerce.number(),
   idRole: z.coerce.number(),
   idPosition: z.coerce.number().optional(),
@@ -23,7 +24,7 @@ export const registerSchema = z.object({
   idBankAccount: z.coerce.number().optional(),
   idEps: z.coerce.number().optional(),
   idArl: z.coerce.number().optional(),
-  severancePay: z.string().optional(),
+  idSeverancePay: z.coerce.number().optional(),
   emergencyContactfirstName: z.string().optional(),
   emergencyContactlastName: z.string().optional(),
   emergencyContactphoneNumber: z.string().optional(),
@@ -39,7 +40,7 @@ export const createRefreshTokenSchema = z.object({
 
 export const revokeRefreshTokenSchema = z.object({
   idUser: z.coerce.number(),
-  idRefreshToken: z.coerce.number()
+  idRefreshToken: z.coerce.number(),
 });
 
 export const loginSchema = z.object({

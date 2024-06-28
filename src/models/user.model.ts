@@ -14,6 +14,7 @@ export class User extends Model {
   declare phoneNumber: string;
   declare idIdentityCard: number;
   declare identityCardNumber: string;
+  declare birthDate: string;
   declare idIdentityCardExpeditionCity: number;
   declare identityCardExpeditionDate: string;
   declare idRole: number;
@@ -56,6 +57,10 @@ User.init({
   },
   identityCardNumber: {
     type: DataTypes.STRING,
+    allowNull: false
+  },
+  birthDate: {
+    type: DataTypes.DATE,
     allowNull: false
   },
   idIdentityCardExpeditionCity: {

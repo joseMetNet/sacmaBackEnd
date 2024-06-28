@@ -26,7 +26,7 @@ export class Employee extends Model {
   declare bankAccountNumber: string;
   declare idEps: number;
   declare idArl: number;
-  declare severancePay: string;
+  declare idSeverancePay: number;
   declare idPensionFund: number;
   declare idCompensationFund: string;
 }
@@ -86,7 +86,7 @@ Employee.init(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
-    severancePay: {
+    idSeverancePay: {
       type: DataTypes.STRING,
       allowNull: true,
     },

@@ -20,6 +20,7 @@ export interface RegisterRequest {
   identityCardNumber: string;
   identityCardExpeditionDate: string;
   idIdentityCardExpeditionCity: number;
+  birthDate?: string;
   idRole: number;
   idPosition?: number | null;
   idContractType?: number | null;
@@ -31,7 +32,7 @@ export interface RegisterRequest {
   idBankAccount?: number | null;
   idEps?: number | null;
   idArl?: number | null;
-  severancePay?: string | null;
+  idSeverancePay?: number;
   emergencyContactfirstName?: string | null;
   emergencyContactlastName?: string | null;
   emergencyContactphoneNumber?: string | null;

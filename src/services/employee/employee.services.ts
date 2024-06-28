@@ -22,6 +22,7 @@ import {
   Position,
   RequiredDocument,
   Role,
+  SeverancePay,
   State,
   User,
 } from "../../models";
@@ -31,13 +32,18 @@ import {
 } from "../../repositories";
 import { CustomError } from "../../utils";
 import { BuildResponse } from "../build-response";
-import { deleteDocument, deleteImageProfile, uploadDocument, uploadImageProfile } from "../helper";
+import {
+  deleteDocument,
+  deleteImageProfile,
+  uploadDocument,
+  uploadImageProfile,
+} from "../helper";
 import { ResponseEntity } from "../interface";
 
 export class EmployeeService {
   constructor(
     private readonly employeeRepository: EmployeeRepository,
-    private readonly authRepository: AuthenticationRepository,
+    private readonly authRepository: AuthenticationRepository
   ) {
     this.employeeRepository = employeeRepository;
     this.authRepository = authRepository;
@@ -54,7 +60,7 @@ export class EmployeeService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, employees);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-        message: err.message,
+        message: "Internal error server",
       });
     }
   }
@@ -72,46 +78,53 @@ export class EmployeeService {
     const offset = (page - 1) * pageSize;
     const filter = this.buildFilter(request);
     try {
-      const employees: { rows: Employee[], count: number } = await Employee.findAndCountAll({
-        attributes: { 
-          exclude: [
-            "idUser", 
-            "idPosition", 
-            "idContractType", 
-            "idPaymentType",
-            "idArl",
-            "idEps",
-            "idEmergencyContact",
-            "idBankAccount",
-            "idPensionFund",
-            "idCompensationFund"
-          ] 
-        },
-        include: [
-          {
-            model: User,
-            attributes: { exclude: ["idRole", "idIdentityCard", "idIdentityCardExpeditionCity"] },
-            required: false,
-            include: [
-              { model: Role, required: false },
-              { model: IdentityCard, required: false },
-              { model: City, required: false },
+      const employees: { rows: Employee[]; count: number } =
+        await Employee.findAndCountAll({
+          attributes: {
+            exclude: [
+              "idUser",
+              "idPosition",
+              "idContractType",
+              "idPaymentType",
+              "idArl",
+              "idEps",
+              "idEmergencyContact",
+              "idBankAccount",
+              "idPensionFund",
+              "idCompensationFund",
             ],
-            where: filter,
           },
-          { model: Position, required: false },
-          { model: ContractType, required: false },
-          { model: PaymentType, required: false },
-          { model: Arl, required: false },
-          { model: Eps, required: false },
-          { model: EmergencyContact, required: false },
-          { model: BankAccount, required: false },
-          { model: PensionFund, required: false },
-          { model: EmployeeRequiredDocument, required: false },
-        ],
-        limit: limit,
-        offset: offset
-      });
+          include: [
+            {
+              model: User,
+              attributes: {
+                exclude: [
+                  "idRole",
+                  "idIdentityCard",
+                  "idIdentityCardExpeditionCity",
+                ],
+              },
+              required: false,
+              include: [
+                { model: Role, required: false },
+                { model: IdentityCard, required: false },
+                { model: City, required: false },
+              ],
+              where: filter,
+            },
+            { model: Position, required: false },
+            { model: ContractType, required: false },
+            { model: PaymentType, required: false },
+            { model: Arl, required: false },
+            { model: Eps, required: false },
+            { model: EmergencyContact, required: false },
+            { model: BankAccount, required: false },
+            { model: PensionFund, required: false },
+            { model: EmployeeRequiredDocument, required: false },
+          ],
+          limit: limit,
+          offset: offset,
+        });
       const totalItems = employees.count;
       const currentPage = page;
       const totalPages = Math.ceil(totalItems / limit);
@@ -119,11 +132,11 @@ export class EmployeeService {
         data: employees,
         totalItems,
         totalPages,
-        currentPage
+        currentPage,
       });
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-        message: err.message,
+        message: "Internal error server",
       });
     }
   }
@@ -131,73 +144,74 @@ export class EmployeeService {
   async uploadDocument(request: IUploadDocument, filePath: string) {
     const transaction = await dbConnection.transaction();
     try {
-      const employeeRequiredDocument = await EmployeeRequiredDocument.findOne(
-        {
-          where: {
-            idEmployee: request.idEmployee,
-            idRequiredDocument: request.idRequiredDocument,
-          },
+      const employeeRequiredDocument = await EmployeeRequiredDocument.findOne({
+        where: {
+          idEmployee: request.idEmployee,
+          idRequiredDocument: request.idRequiredDocument,
         },
-      );
-      if (employeeRequiredDocument) {
-        if (employeeRequiredDocument.documentUrl) {
-          const deleteBlobResponse = await deleteDocument(employeeRequiredDocument.documentUrl.split("/").pop() as string);
-          if (deleteBlobResponse instanceof CustomError) {
-            await transaction.rollback();
-            return BuildResponse.buildErrorResponse(StatusCode.BadRequest, { message: deleteBlobResponse.message });
-          }
-        }
-        const identifier = crypto.randomUUID();
-        const uploadDocumentResponse = await uploadDocument(filePath, identifier);
-        if (uploadDocumentResponse instanceof CustomError) {
+      });
+
+      if (employeeRequiredDocument && employeeRequiredDocument.documentUrl) {
+        const deleteBlobResponse = await deleteDocument(
+          employeeRequiredDocument.documentUrl.split("/").pop() as string
+        );
+        if (deleteBlobResponse instanceof CustomError) {
           await transaction.rollback();
-          return BuildResponse.buildErrorResponse(uploadDocumentResponse.statusCode, {
-            message: uploadDocumentResponse.message,
+          return BuildResponse.buildErrorResponse(StatusCode.BadRequest, {
+            message: deleteBlobResponse.message,
           });
         }
-        const url = `https://sacmaback.blob.core.windows.net/document/${identifier}.pdf`;
-        const newEmployeeRequiredDocument = {
-          idEmployee: employeeRequiredDocument.idEmployee,
-          idRequiredDocument: employeeRequiredDocument.idRequiredDocument,
-          documentUrl: url,
-          expirationDate: employeeRequiredDocument.expirationDate,
-        };
-        await employeeRequiredDocument.update(newEmployeeRequiredDocument, { transaction});
-        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
-          message: "Document updated successfully",
-        });
       }
 
       const identifier = crypto.randomUUID();
       const uploadDocumentResponse = await uploadDocument(filePath, identifier);
       if (uploadDocumentResponse instanceof CustomError) {
         await transaction.rollback();
-        return BuildResponse.buildErrorResponse(uploadDocumentResponse.statusCode, {
-          message: uploadDocumentResponse.message,
-        });
+        return BuildResponse.buildErrorResponse(
+          uploadDocumentResponse.statusCode,
+          { message: uploadDocumentResponse.message }
+        );
       }
+
       const url = `https://sacmaback.blob.core.windows.net/document/${identifier}.pdf`;
-      await EmployeeRequiredDocument.create({
-        idEmployee: request.idEmployee,
-        idRequiredDocument: request.idRequiredDocument,
-        documentUrl: url,
-        expirationDate: request.expirationDate ?? null,
-      }, { transaction});
+
+      if (employeeRequiredDocument) {
+        await employeeRequiredDocument.update(
+          {
+            documentUrl: url,
+            expirationDate: employeeRequiredDocument.expirationDate,
+          },
+          { transaction }
+        );
+      } else {
+        await EmployeeRequiredDocument.create(
+          {
+            idEmployee: request.idEmployee,
+            idRequiredDocument: request.idRequiredDocument,
+            documentUrl: url,
+            expirationDate: request.expirationDate ?? null,
+          },
+          { transaction }
+        );
+      }
 
       await transaction.commit();
-
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         message: "Document uploaded successfully",
       });
     } catch (err: any) {
       await transaction.rollback();
+      console.log(err);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-        message: err.message,
+        message: "Internal server error",
       });
     }
   }
 
-  async updateEmployee( employee: UpdateEmployeeRequest, imageProfile?: string): Promise<ResponseEntity> {
+  async updateEmployee(
+    employee: UpdateEmployeeRequest,
+    imageProfile?: string
+  ): Promise<ResponseEntity> {
     const transaction = await dbConnection.transaction();
     try {
       const user = await User.findByPk(employee.idUser);
@@ -208,8 +222,14 @@ export class EmployeeService {
         });
       }
 
-      const userMicro = await this.authRepository.findUserByEmail(user.userName?? "");
-      if(userMicro instanceof CustomError && employee.password && employee.userName) {
+      const userMicro = await this.authRepository.findUserByEmail(
+        user.userName ?? ""
+      );
+      if (
+        userMicro instanceof CustomError &&
+        employee.password &&
+        employee.userName
+      ) {
         console.log("create user in microservice");
         console.log(`crendentials: ${employee.userName} ${employee.password}`);
         const newUser = await this.authRepository.registerRequest(employee);
@@ -219,10 +239,12 @@ export class EmployeeService {
           });
         }
       }
-      console.log(`password: ${employee.password}`);
 
-      if(typeof userMicro === "number" && employee.password && employee.userName) {
-        console.log(`try to update user with credentials: ${employee.userName} ${employee.password}`);
+      if (
+        typeof userMicro === "number" &&
+        employee.password &&
+        employee.userName
+      ) {
         const changePasswordRequest: ChagePasswordRequest = {
           email: user.userName,
           password: employee.password,
@@ -230,7 +252,6 @@ export class EmployeeService {
         const passwordUpdated = await this.authRepository.changePassword(
           changePasswordRequest
         );
-        console.log(`password updated: ${passwordUpdated}`);
         if (passwordUpdated instanceof CustomError) {
           return BuildResponse.buildErrorResponse(passwordUpdated.statusCode, {
             message: passwordUpdated.message,
@@ -246,7 +267,7 @@ export class EmployeeService {
         transaction,
       });
 
-      if(imageProfile) {
+      if (imageProfile) {
         await this.uploadImage(imageProfile, user, transaction);
       }
 
@@ -284,35 +305,55 @@ export class EmployeeService {
       await transaction.rollback();
       console.error(err);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-        message: err.message,
+        message: "Internal error server",
       });
     }
   }
 
-  private async uploadImage(imageProfile: string, user: User, transaction: Transaction) {
+  private async uploadImage(
+    imageProfile: string,
+    user: User,
+    transaction: Transaction
+  ) {
     const identifier = crypto.randomUUID();
-    if(user.imageProfileUrl != null) {
-      const deleteBlobResponse = await deleteImageProfile(user.imageProfileUrl.split("/").pop() as string);
+    if (user.imageProfileUrl != null) {
+      const deleteBlobResponse = await deleteImageProfile(
+        user.imageProfileUrl.split("/").pop() as string
+      );
       if (deleteBlobResponse instanceof CustomError) {
         await transaction.rollback();
-        return BuildResponse.buildErrorResponse(StatusCode.BadRequest, { message: deleteBlobResponse.message });
+        return BuildResponse.buildErrorResponse(StatusCode.BadRequest, {
+          message: deleteBlobResponse.message,
+        });
       }
-      const uploadDocumentResponse = await uploadImageProfile(imageProfile, identifier);
+      const uploadDocumentResponse = await uploadImageProfile(
+        imageProfile,
+        identifier
+      );
       if (uploadDocumentResponse instanceof CustomError) {
         await transaction.rollback();
-        return BuildResponse.buildErrorResponse(uploadDocumentResponse.statusCode, {
-          message: uploadDocumentResponse.message,
-        });
+        return BuildResponse.buildErrorResponse(
+          uploadDocumentResponse.statusCode,
+          {
+            message: uploadDocumentResponse.message,
+          }
+        );
       }
       const url = `https://sacmaback.blob.core.windows.net/image-profile/${identifier}.png`;
       await user.update({ imageProfileUrl: url }, { transaction });
     }
-    const uploadDocumentResponse = await uploadImageProfile(imageProfile, identifier);
+    const uploadDocumentResponse = await uploadImageProfile(
+      imageProfile,
+      identifier
+    );
     if (uploadDocumentResponse instanceof CustomError) {
       await transaction.rollback();
-      return BuildResponse.buildErrorResponse(uploadDocumentResponse.statusCode, {
-        message: uploadDocumentResponse.message,
-      });
+      return BuildResponse.buildErrorResponse(
+        uploadDocumentResponse.statusCode,
+        {
+          message: uploadDocumentResponse.message,
+        }
+      );
     }
     const url = `https://sacmaback.blob.core.windows.net/image-profile/${identifier}.png`;
     await user.update({ imageProfileUrl: url }, { transaction });
@@ -337,7 +378,16 @@ export class EmployeeService {
   }
 
   deleteNullProperties(obj: any) {
-    const ids = ["idPosition", "idContractType", "idPaymentType", "idBankAccount", "idEps", "idArl", "idPensionFund", "idCompensationFund"];
+    const ids = [
+      "idPosition",
+      "idContractType",
+      "idPaymentType",
+      "idBankAccount",
+      "idEps",
+      "idArl",
+      "idPensionFund",
+      "idCompensationFund",
+    ];
     for (const propName in ids) {
       if (obj[propName] === null || obj[propName] === undefined) {
         delete obj[propName];
@@ -363,16 +413,18 @@ export class EmployeeService {
           message: "User not found",
         });
       }
-      const emergencyContact = await EmergencyContact.findByPk(employee.idEmergencyContact);
+      const emergencyContact = await EmergencyContact.findByPk(
+        employee.idEmergencyContact
+      );
       if (!emergencyContact) {
         await transaction.rollback();
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
           message: "Emergency contact not found",
         });
       }
-      await employee.destroy({transaction});
-      await emergencyContact.destroy({transaction});
-      await user.destroy({transaction});
+      await employee.destroy({ transaction });
+      await emergencyContact.destroy({ transaction });
+      await user.destroy({ transaction });
 
       await transaction.commit();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
@@ -388,11 +440,13 @@ export class EmployeeService {
 
   async findCities(): Promise<ResponseEntity> {
     try {
-      const cities = await City.findAll();
+      const cities = await City.findAll({
+        order: [["city", "ASC"]],
+      });
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, cities);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-        message: err.message,
+        message: "Internal error server",
       });
     }
   }
@@ -403,7 +457,7 @@ export class EmployeeService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, eps);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-        message: err.message,
+        message: "Internal error server",
       });
     }
   }
@@ -414,7 +468,7 @@ export class EmployeeService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, pensionFund);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-        message: err.message,
+        message: "Internal error server",
       });
     }
   }
@@ -425,7 +479,7 @@ export class EmployeeService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, roles);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-        message: err.message,
+        message: "Internal error server",
       });
     }
   }
@@ -436,7 +490,7 @@ export class EmployeeService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, state);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-        message: err.message,
+        message: "Internal error server",
       });
     }
   }
@@ -447,7 +501,7 @@ export class EmployeeService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, arls);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-        message: err.message,
+        message: "Internal error server",
       });
     }
   }
@@ -458,7 +512,18 @@ export class EmployeeService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, contractTypes);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-        message: err.message,
+        message: "Internal error server",
+      });
+    }
+  }
+
+  async findSeverancePay(): Promise<ResponseEntity> {
+    try {
+      const sevenracePay = await SeverancePay.findAll();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, sevenracePay);
+    } catch (err: any) {
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "Internal error server",
       });
     }
   }
@@ -469,7 +534,7 @@ export class EmployeeService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, banks);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-        message: err.message,
+        message: "Internal error server",
       });
     }
   }
@@ -480,7 +545,7 @@ export class EmployeeService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, paymentMethods);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-        message: err.message,
+        message: "Internal error server",
       });
     }
   }
@@ -488,10 +553,13 @@ export class EmployeeService {
   async findCompensationFunds(): Promise<ResponseEntity> {
     try {
       const compensationFunds = await CompensationFund.findAll();
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, compensationFunds);
+      return BuildResponse.buildSuccessResponse(
+        StatusCode.Ok,
+        compensationFunds
+      );
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-        message: err.message,
+        message: "Internal error server",
       });
     }
   }
@@ -499,10 +567,13 @@ export class EmployeeService {
   async findIdentificationTypes(): Promise<ResponseEntity> {
     try {
       const identificationTypes = await IdentityCard.findAll();
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, identificationTypes);
+      return BuildResponse.buildSuccessResponse(
+        StatusCode.Ok,
+        identificationTypes
+      );
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-        message: err.message,
+        message: "Internal error server",
       });
     }
   }
@@ -513,7 +584,7 @@ export class EmployeeService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, positions);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-        message: err.message,
+        message: "Internal error server",
       });
     }
   }
@@ -521,10 +592,13 @@ export class EmployeeService {
   async findRequiredDocuments(): Promise<ResponseEntity> {
     try {
       const requiredDocuments = await RequiredDocument.findAll();
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, requiredDocuments);
+      return BuildResponse.buildSuccessResponse(
+        StatusCode.Ok,
+        requiredDocuments
+      );
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-        message: err.message,
+        message: "Internal error server",
       });
     }
   }
@@ -553,6 +627,7 @@ export class EmployeeService {
       phoneNumber: employee.phoneNumber ?? dbUser.phoneNumber,
       idIdentityCard: employee.idIdentityCard ?? dbUser.idIdentityCard,
       userName: employee.userName ?? dbUser.userName,
+      birthDate: employee.birthDate ?? dbUser.birthDate,
       identityCardNumber:
         employee.identityCardNumber ?? dbUser.identityCardNumber,
       identityCardExpeditionDate:
@@ -581,7 +656,7 @@ export class EmployeeService {
       idBankAccount: employee.idBankAccount ?? dbEmployee.idBankAccount,
       idEps: employee.idEps ?? dbEmployee.idEps,
       idArl: employee.idArl ?? dbEmployee.idArl,
-      severancePay: employee.severancePay ?? dbEmployee.severancePay,
+      idSeverancePay: employee.idSeverancePay ?? dbEmployee.idSeverancePay,
       idPensionFund: employee.idPensionFund ?? dbEmployee.idPensionFund,
       idCompensationFund:
         employee.idCompensationFund ?? dbEmployee.idCompensationFund,

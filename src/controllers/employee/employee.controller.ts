@@ -167,6 +167,13 @@ class EmployeeController {
       .json({ status: response.status, data: response.data });
   }
 
+  async findSeverancePay(req: Request, res: Response): Promise<void> {
+    const response = await employeeService.findSeverancePay();
+    res
+      .status(response.code)
+      .json({ status: response.status, data: response.data });
+  }
+
   async findBanks(req: Request, res: Response): Promise<void> {
     const response = await employeeService.findBanks();
     res
