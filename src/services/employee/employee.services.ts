@@ -230,8 +230,6 @@ export class EmployeeService {
         employee.password &&
         employee.userName
       ) {
-        console.log("create user in microservice");
-        console.log(`crendentials: ${employee.userName} ${employee.password}`);
         const newUser = await this.authRepository.registerRequest(employee);
         if (newUser instanceof CustomError) {
           return BuildResponse.buildErrorResponse(newUser.statusCode, {

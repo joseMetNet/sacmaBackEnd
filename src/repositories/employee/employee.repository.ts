@@ -1,4 +1,4 @@
-import { City, Employee, Position, Role, User } from "../../models";
+import { Employee, Position, Role, User } from "../../models";
 import { CustomError } from "../../utils";
 
 export class EmployeeRepository {
