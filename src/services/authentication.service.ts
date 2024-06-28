@@ -20,16 +20,6 @@ export class AuthenticationService {
   async register(request: RegisterRequest): Promise<ResponseEntity> {
     const transaction = await dbConnection.transaction();
     try {
-      const userExists = await this.authRepository.findUserByEmail(
-        request.userName
-      );
-      if (typeof userExists === "number") {
-        await transaction.rollback();
-        return BuildResponse.buildErrorResponse(StatusCode.Conflict, {
-          message: "User already exists",
-        });
-      }
-
       if (request.password) {
         const newUserId = await this.authRepository.registerRequest(request);
         if (newUserId instanceof CustomError) {
@@ -147,6 +137,7 @@ export class AuthenticationService {
         userName: user.get("firstName") + " " + user.get("lastName"),
       });
     } catch (err: any) {
+      console.log(err);
       await transaction.rollback();
       if(err instanceof CustomError) {
         return BuildResponse.buildErrorResponse(err.statusCode, {
