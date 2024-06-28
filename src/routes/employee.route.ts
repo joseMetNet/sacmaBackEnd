@@ -42,6 +42,41 @@ export function employeeRoutes(app: Application): void {
 
   /**
    * @openapi
+   * /v1/employee/severance-pay:
+   *   get:
+   *     tags: [Employee]
+   *     summary: Find severance pay
+   *     responses:
+   *       '200':
+   *         description: Successful response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: SUCCESS
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       idSeverancePay:
+   *                         type: integer
+   *                       severancePay:
+   *                         type: string
+   *       '500':
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/failedResponse"
+   */
+  routes.get("/v1/employee/severance-pay", [verifyToken], employeeController.findSeverancePay);
+
+  /**
+   * @openapi
    * /v1/employee/eps:
    *   get:
    *     tags: [Employee]
@@ -258,45 +293,6 @@ export function employeeRoutes(app: Application): void {
     "/v1/employee/contract-type",
     [verifyToken],
     employeeController.findContractTypes
-  );
-
-  /**
-   * @openapi
-   * /v1/employee/severance-pay:
-   *   get:
-   *     tags: [Employee]
-   *     summary: Find severance pays
-   *     responses:
-   *       '200':
-   *         description: Successful response
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 status:
-   *                   type: string
-   *                   example: SUCCESS
-   *                 data:
-   *                   type: array
-   *                   items:
-   *                     type: object
-   *                     properties:
-   *                       idSeverancePay:
-   *                         type: integer
-   *                       idSeverancePay:
-   *                         type: string
-   *       '500':
-   *         description: Internal server error
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: "#/components/schemas/failedResponse"
-   */
-  routes.get(
-    "/v1/employee/severance-pay",
-    [verifyToken],
-    employeeController.findSeverancePay
   );
 
   /**

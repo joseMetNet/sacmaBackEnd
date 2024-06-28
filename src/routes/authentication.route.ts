@@ -2,7 +2,7 @@ import { Application, Router } from "express";
 import { authController } from "../controllers";
 import { check } from "express-validator";
 import { validateEndpoint } from "../controllers/utils";
-import { verifyRefreshToken } from "../middlewares";
+import { verifyAuthRequest, verifyRefreshToken } from "../middlewares";
 
 export function authenticationRoutes(app: Application): void {
   const routes: Router = Router();
@@ -201,6 +201,7 @@ export function authenticationRoutes(app: Application): void {
       ).notEmpty(),
       check("idRole", "idRole is required").notEmpty(),
       validateEndpoint,
+      verifyAuthRequest
     ],
     authController.register
   );
