@@ -20,102 +20,142 @@ export class AuthenticationService {
   async register(request: RegisterRequest): Promise<ResponseEntity> {
     const transaction = await dbConnection.transaction();
     try {
-      const userExists = await this.authRepository.findUserByEmail(request.userName);
+      const userExists = await this.authRepository.findUserByEmail(
+        request.userName
+      );
       if (typeof userExists === "number") {
         await transaction.rollback();
-        return BuildResponse.buildErrorResponse(StatusCode.Conflict, {message: "User already exists"});
+        return BuildResponse.buildErrorResponse(StatusCode.Conflict, {
+          message: "User already exists",
+        });
       }
 
-      if(request.password) {
+      if (request.password) {
         const newUserId = await this.authRepository.registerRequest(request);
         if (newUserId instanceof CustomError) {
           await transaction.rollback();
-          return BuildResponse.buildErrorResponse(newUserId.statusCode, {message: newUserId.message});
+          return BuildResponse.buildErrorResponse(newUserId.statusCode, {
+            message: newUserId.message,
+          });
         }
       }
 
       await this.uploadImageProfile(request);
 
       const user = await this.createUser(request, transaction);
-      const emergencyContact = await this.createEmergencyContact(request, transaction);
+      const emergencyContact = await this.createEmergencyContact(
+        request,
+        transaction
+      );
       await this.createEmployee(request, emergencyContact, user, transaction);
 
-      const idRefreshToken = await this.insertRefreshToken(user.get("idUser"), transaction);
+      const idRefreshToken = await this.insertRefreshToken(
+        user.get("idUser"),
+        transaction
+      );
       if (idRefreshToken instanceof CustomError) {
-        return BuildResponse.buildErrorResponse(idRefreshToken.statusCode, {message: idRefreshToken.message});
+        return BuildResponse.buildErrorResponse(idRefreshToken.statusCode, {
+          message: idRefreshToken.message,
+        });
       }
 
       const payload: AuthTokenPayload = {
         idUser: user.get("idUser"),
         idRole: user.get("idRole"),
-        idRefreshToken
+        idRefreshToken,
       };
 
-      const refreshToken = helper.signAuthRefreshToken({ 
-        idUser: user.get("idUser"), 
-        idRefreshToken 
+      const refreshToken = helper.signAuthRefreshToken({
+        idUser: user.get("idUser"),
+        idRefreshToken,
       });
       const token = helper.signAuthToken(payload);
       transaction.commit();
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         token,
-        refreshToken, 
-        userName: user.get("firstName") + " " + user.get("lastName")
+        refreshToken,
+        userName: user.get("firstName") + " " + user.get("lastName"),
       });
     } catch (err: any) {
       transaction.rollback();
-      console.log(JSON.stringify(err));
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {message: err});
+      if(err instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(err.statusCode, {
+          message: err.message,
+        });
+      }
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "Internal server error",
+      });
     }
   }
 
   async login(request: AuthenticationRequest): Promise<ResponseEntity> {
     const transaction = await dbConnection.transaction();
     try {
-      const userExists = await this.authRepository.findUserByEmail(request.email);
+      const userExists = await this.authRepository.findUserByEmail(
+        request.email
+      );
       if (userExists instanceof CustomError) {
-        return BuildResponse.buildErrorResponse(userExists.statusCode, {message: userExists.message});
+        return BuildResponse.buildErrorResponse(userExists.statusCode, {
+          message: userExists.message,
+        });
       }
-      const authStatus = await this.authRepository.authenticationRequest(request);
+      const authStatus = await this.authRepository.authenticationRequest(
+        request
+      );
       if (authStatus instanceof CustomError) {
-        return BuildResponse.buildErrorResponse(authStatus.statusCode, { error: authStatus.message });
+        return BuildResponse.buildErrorResponse(authStatus.statusCode, {
+          error: authStatus.message,
+        });
       }
       const user = await User.findOne({ where: { userName: request.email } });
       if (!user) {
-        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {message: "User not found"});
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
+          message: "User not found",
+        });
       }
 
-      const idRefreshToken = await this.insertRefreshToken(user.get("idUser"), transaction);
+      const idRefreshToken = await this.insertRefreshToken(
+        user.get("idUser"),
+        transaction
+      );
       if (idRefreshToken instanceof CustomError) {
         await transaction.rollback();
-        return BuildResponse.buildErrorResponse(idRefreshToken.statusCode, {message: idRefreshToken.message});
+        return BuildResponse.buildErrorResponse(idRefreshToken.statusCode, {
+          message: idRefreshToken.message,
+        });
       }
 
       const payload: AuthTokenPayload = {
         idUser: user.get("idUser"),
         idRole: user.get("idRole"),
-        idRefreshToken
+        idRefreshToken,
       };
 
-      const refreshToken = helper.signAuthRefreshToken({ 
-        idUser: user.get("idUser"), 
-        idRefreshToken 
+      const refreshToken = helper.signAuthRefreshToken({
+        idUser: user.get("idUser"),
+        idRefreshToken,
       });
       const token = helper.signAuthToken(payload);
 
       await transaction.commit();
-      
+
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         token,
         refreshToken,
         userName: user.get("firstName") + " " + user.get("lastName"),
       });
-
-    }catch(err: any) {
+    } catch (err: any) {
       await transaction.rollback();
-      console.log(err);
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {message: err});
+      if(err instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(err.statusCode, {
+          message: err.message,
+        });
+      }
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "Internal server error",
+      });
     }
   }
 
@@ -125,67 +165,92 @@ export class AuthenticationService {
       const idRefreshToken = await this.insertRefreshToken(idUser, transaction);
       if (idRefreshToken instanceof CustomError) {
         await transaction.rollback();
-        return BuildResponse.buildErrorResponse(idRefreshToken.statusCode, {message: idRefreshToken.message});
+        return BuildResponse.buildErrorResponse(idRefreshToken.statusCode, {
+          message: idRefreshToken.message,
+        });
       }
 
-      const user = await User.findOne({ where: { idUser } }) as User;
+      const user = (await User.findOne({ where: { idUser } })) as User;
 
       const payload: AuthTokenPayload = {
         idUser,
         idRole: user.get("idRole"),
-        idRefreshToken
+        idRefreshToken,
       };
 
-      const refreshToken = helper.signAuthRefreshToken({ 
-        idUser: user.get("idUser"), 
-        idRefreshToken 
+      const refreshToken = helper.signAuthRefreshToken({
+        idUser: user.get("idUser"),
+        idRefreshToken,
       });
       const token = helper.signAuthToken(payload);
-      
+
       await transaction.commit();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         token,
         refreshToken,
       });
-
-    }catch(err: any) {
+    } catch (err: any) {
       await transaction.rollback();
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {message: err});
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: err,
+      });
     }
   }
 
-  private async insertRefreshToken(idUser: number, transaction: Transaction): Promise<number | CustomError> {
+  private async insertRefreshToken(
+    idUser: number,
+    transaction: Transaction
+  ): Promise<number | CustomError> {
     try {
-      const refreshToken = await this.authRepository.createRefreshToken(idUser, transaction);
-      if(refreshToken instanceof CustomError) {
+      const refreshToken = await this.authRepository.createRefreshToken(
+        idUser,
+        transaction
+      );
+      if (refreshToken instanceof CustomError) {
         await transaction.rollback();
         return refreshToken;
       }
       return refreshToken.idRefreshToken;
-    }
-    catch(err: any) {
+    } catch (err: any) {
       await transaction.rollback();
       return CustomError.internalServer(err.message);
     }
   }
 
-  async revokeRefreshToken(idRefreshToken: number, idUser: number): Promise<ResponseEntity> {
+  async revokeRefreshToken(
+    idRefreshToken: number,
+    idUser: number
+  ): Promise<ResponseEntity> {
     try {
-      const response = await authRepository.deleteRefreshToken(idRefreshToken, idUser);
+      const response = await authRepository.deleteRefreshToken(
+        idRefreshToken,
+        idUser
+      );
       if (response instanceof CustomError) {
-        return BuildResponse.buildErrorResponse(response.statusCode, {message: response.message});
+        return BuildResponse.buildErrorResponse(response.statusCode, {
+          message: response.message,
+        });
       }
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {message: "Refresh token revoked"});
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        message: "Refresh token revoked",
+      });
     } catch (err: any) {
       console.log(err);
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {message: err});
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: err,
+      });
     }
   }
 
-  private async uploadImageProfile(request: RegisterRequest): Promise<RegisterRequest | CustomError> {
-    if(request.imageProfile != null) {
+  private async uploadImageProfile(
+    request: RegisterRequest
+  ): Promise<RegisterRequest | CustomError> {
+    if (request.imageProfile != null) {
       const identifier = crypto.randomUUID();
-      const uploadImage = await helper.uploadImageProfile(request.imageProfile, identifier);
+      const uploadImage = await helper.uploadImageProfile(
+        request.imageProfile,
+        identifier
+      );
       if (uploadImage instanceof CustomError) {
         return uploadImage;
       }
@@ -207,6 +272,7 @@ export class AuthenticationService {
         identityCardExpeditionDate: request.identityCardExpeditionDate,
         idIdentityCardExpeditionCity: request.idIdentityCardExpeditionCity,
         idIdentityCard: request.idIdentityCard,
+        birthDate: request.birthDate,
         idRole: request.idRole,
         userName: request.userName,
         imageProfileUrl: request.imageProfile,
@@ -215,7 +281,10 @@ export class AuthenticationService {
     );
   }
 
-  private createEmergencyContact(request: RegisterRequest, transaction: Transaction) {
+  private createEmergencyContact(
+    request: RegisterRequest,
+    transaction: Transaction
+  ) {
     return EmergencyContact.create(
       {
         firstName: request.emergencyContactfirstName,
@@ -227,14 +296,19 @@ export class AuthenticationService {
     );
   }
 
-  private createEmployee(request: RegisterRequest, emergencyContact: EmergencyContact, user: User, transaction: Transaction) {
+  private createEmployee(
+    request: RegisterRequest,
+    emergencyContact: EmergencyContact,
+    user: User,
+    transaction: Transaction
+  ) {
     return Employee.create(
       {
         idEmergencyContact: emergencyContact.get("idEmergencyContact"),
         idUser: user.get("idUser"),
         idPosition: request.idPosition,
         idContractType: request.idContractType,
-        entryDate: request.entryDate? request.entryDate: null,
+        entryDate: request.entryDate ? request.entryDate : null,
         baseSalary: request.baseSalary,
         compensation: request.compensation,
         idPaymentType: request.idPaymentType,
@@ -242,7 +316,7 @@ export class AuthenticationService {
         idBankAccount: request.idBankAccount,
         idEps: request.idEps,
         idArl: request.idArl,
-        severancePay: request.severancePay,
+        idSeverancePay: request.idSeverancePay,
         idPensionFund: request.idPensionFund,
         idCompensationFund: request.idCompensationFund,
       },
@@ -250,7 +324,6 @@ export class AuthenticationService {
     );
   }
 }
-
 
 const authRepository = new AuthenticationRepository();
 export const authService = new AuthenticationService(authRepository);

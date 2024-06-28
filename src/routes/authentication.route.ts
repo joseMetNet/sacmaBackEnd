@@ -94,6 +94,10 @@ export function authenticationRoutes(app: Application): void {
    *        idContractType:
    *          type: number
    *          nullable: true
+   *        birthDate:
+   *          type: string
+   *          format: date
+   *          nullable: true
    *        entryDate:
    *          type: string
    *          format: date
@@ -119,8 +123,8 @@ export function authenticationRoutes(app: Application): void {
    *        idArl:
    *          type: number
    *          nullable: true
-   *        severancePay:
-   *          type: string
+   *        idSeverancePay:
+   *          type: number
    *          nullable: true
    *        userName:
    *          type: string
@@ -264,7 +268,7 @@ export function authenticationRoutes(app: Application): void {
     "/v1/auth/logout",
     [
       check("refreshToken", "refreshToken is required").notEmpty(),
-      verifyRefreshToken
+      verifyRefreshToken,
     ],
     authController.revokeRefreshToken
   );
@@ -295,7 +299,7 @@ export function authenticationRoutes(app: Application): void {
     "/v1/auth/refresh-token",
     [
       check("refreshToken", "refreshToken is required").notEmpty(),
-      verifyRefreshToken
+      verifyRefreshToken,
     ],
     authController.createRefreshToken
   );

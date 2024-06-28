@@ -22,3 +22,4 @@ export * from "./required-document.model";
 export * from "./employee-requiredDocument.model";
 export * from "./refresh-token.model";
 export * from "./payroll.model";
+export * from "./severance-pay.model";

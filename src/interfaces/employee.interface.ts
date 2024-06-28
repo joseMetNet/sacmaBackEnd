@@ -12,6 +12,7 @@ export interface UpdateEmployeeRequest {
   idIdentityCardExpeditionCity?: number;
   idRole?: number;
   idPosition?: number;
+  birthDate?: string;
   idContractType?: number;
   entryDate?: string;
   baseSalary?: string;
@@ -21,7 +22,7 @@ export interface UpdateEmployeeRequest {
   idBankAccount?: number;
   idEps?: number;
   idArl?: number;
-  severancePay?: string;
+  idSeverancePay?: number;
   userName?: string;
   emergencyContactfirstName?: string;
   emergencyContactlastName?: string;
