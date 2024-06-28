@@ -47,6 +47,7 @@ export class EmployeeRepository {
             "idEmergencyContact",
             "idBankAccount",
             "idPensionFund",
+            "idSeverancePay",
             "idCompensationFund"
           ] 
         },
