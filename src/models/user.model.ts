@@ -61,7 +61,7 @@ User.init({
   },
   birthDate: {
     type: DataTypes.DATE,
-    allowNull: false
+    allowNull: true
   },
   idIdentityCardExpeditionCity: {
     type: DataTypes.INTEGER,
