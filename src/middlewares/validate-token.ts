@@ -3,7 +3,24 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { RefreshToken, User } from "../models";
 import { EnvConfig } from "../config";
 
+function removeBlankAttributes(obj: { [key: string]: any }) {
+  const result: { [key: string]: any } = {};
+  for (const key in obj) {
+    if (
+      obj[key] !== null &&
+      obj[key] !== undefined &&
+      obj[key] !== "" &&
+      obj[key] !== "null" &&
+      obj[key] !== "undefined"
+    ) {
+      result[key] = obj[key];
+    }
+  }
+  return result;
+}
+
 export async function verifyToken(req: Request, res: Response, next: NextFunction): Promise<void> {
+
   const authHeader = req.header("Authorization");
 
   if (!authHeader) {
@@ -48,8 +65,8 @@ export async function verifyToken(req: Request, res: Response, next: NextFunctio
         return;
       }
 
-      // Attach user to request object for further use
-      req.body.user = user;
+      const body = removeBlankAttributes(req.body);
+      req.body = body;
 
       next();
     } catch (error) {

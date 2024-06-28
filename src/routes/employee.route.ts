@@ -609,7 +609,7 @@ export function employeeRoutes(app: Application): void {
    *       content:
    *         multipart/form-data:
    *           schema:
-   *             $ref: '#/components/schemas/UpdateEmployee'
+   *             $ref: '#/components/schemas/UpdateEmployeeSchema'
    *     responses:
    *       '200':
    *         description: Successful response
@@ -824,7 +824,7 @@ export function employeeRoutes(app: Application): void {
    *           type: string
    *           example: An internal server error occurred.
    *
-   *     UpdateEmployee:
+   *     UpdateEmployeeSchema:
    *       type: object
    *       properties:
    *         idUser:

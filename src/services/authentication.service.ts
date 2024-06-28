@@ -29,47 +29,42 @@ export class AuthenticationService {
           });
         }
       }
-
+  
       await this.uploadImageProfile(request);
-
+  
       const user = await this.createUser(request, transaction);
-      const emergencyContact = await this.createEmergencyContact(
-        request,
-        transaction
-      );
+      const emergencyContact = await this.createEmergencyContact(request, transaction);
       await this.createEmployee(request, emergencyContact, user, transaction);
-
-      const idRefreshToken = await this.insertRefreshToken(
-        user.get("idUser"),
-        transaction
-      );
+  
+      const idRefreshToken = await this.insertRefreshToken(user.get("idUser"), transaction);
       if (idRefreshToken instanceof CustomError) {
+        await transaction.rollback();
         return BuildResponse.buildErrorResponse(idRefreshToken.statusCode, {
           message: idRefreshToken.message,
         });
       }
-
+  
       const payload: AuthTokenPayload = {
         idUser: user.get("idUser"),
         idRole: user.get("idRole"),
         idRefreshToken,
       };
-
-      const refreshToken = helper.signAuthRefreshToken({
-        idUser: user.get("idUser"),
-        idRefreshToken,
-      });
+  
+      const refreshToken = helper.signAuthRefreshToken({ idUser: user.get("idUser"), idRefreshToken });
       const token = helper.signAuthToken(payload);
-      transaction.commit();
-
+  
+      await transaction.commit();
+  
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         token,
         refreshToken,
-        userName: user.get("firstName") + " " + user.get("lastName"),
+        userName: `${user.get("firstName")} ${user.get("lastName")}`,
       });
     } catch (err: any) {
-      transaction.rollback();
-      if(err instanceof CustomError) {
+      console.log(err);
+      await transaction.rollback();
+  
+      if (err instanceof CustomError) {
         return BuildResponse.buildErrorResponse(err.statusCode, {
           message: err.message,
         });
@@ -79,7 +74,7 @@ export class AuthenticationService {
       });
     }
   }
-
+  
   async login(request: AuthenticationRequest): Promise<ResponseEntity> {
     const transaction = await dbConnection.transaction();
     try {
@@ -252,6 +247,10 @@ export class AuthenticationService {
   }
 
   private async createUser(request: RegisterRequest, transaction: Transaction) {
+    let birthDate = null;
+    if (request.birthDate != "" && request.birthDate != null) {
+      birthDate = request.birthDate;
+    }
     return User.create(
       {
         firstName: request.firstName,
@@ -263,7 +262,7 @@ export class AuthenticationService {
         identityCardExpeditionDate: request.identityCardExpeditionDate,
         idIdentityCardExpeditionCity: request.idIdentityCardExpeditionCity,
         idIdentityCard: request.idIdentityCard,
-        birthDate: request.birthDate,
+        birthDate: birthDate,
         idRole: request.idRole,
         userName: request.userName,
         imageProfileUrl: request.imageProfile,

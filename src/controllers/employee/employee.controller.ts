@@ -1,4 +1,4 @@
-import { ZodError } from "zod";
+import { ZodError, z } from "zod";
 import { StatusCode, StatusValue } from "../../interfaces";
 import { formatZodError } from "../utils";
 import { Request, Response } from "express";
