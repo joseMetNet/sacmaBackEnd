@@ -1,5 +1,6 @@
 import { Op, Transaction } from "sequelize";
 import { dbConnection } from "../../config";
+import * as ExcelJS from "exceljs";
 import {
   ChagePasswordRequest,
   IUploadDocument,
@@ -436,6 +437,69 @@ export class EmployeeService {
     }
   }
 
+  async createExcelFileBuffer() {
+    try {
+      const employees = await Employee.findAll({
+        include: [
+          { model: User },
+          { model: Eps},
+          { model: PensionFund },
+          { model: CompensationFund },
+          { model: SeverancePay },
+          { model: ContractType },
+          { model: Position },
+        ],
+      });
+      if (employees instanceof CustomError) {
+        throw new CustomError(employees.statusCode, employees.message);
+      }
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Employees");
+
+      worksheet.columns = [
+        { header: "Cedula", key: "identityCardNumber", width: 20 },
+        { header: "Nombre", key: "firstName", width: 20 },
+        { header: "Apellidos", key: "lastName", width: 20 },
+        { header: "Telefono", key: "phoneNumber", width: 20 },
+        { header: "Correo", key: "email", width: 20 },
+        { header: "Direccion", key: "address", width: 20 },
+        { header: "Eps", key: "eps", width: 20 },
+        { header: "AFP", key: "pensionFund", width: 20 },
+        { header: "Caja", key: "compensationFund", width: 20 },
+        { header: "Fondo Pensiones", key: "severancePay", width: 20 },
+        { header: "Fecha inicio contrato", key: "entryDate", width: 20 },
+        { header: "Tipo contrato", key: "contractType", width: 20 },
+        { header: "Cargo", key: "position", width: 20 },
+      ];
+
+      employees.forEach((employee) => {
+        const row = employee.toJSON();
+        worksheet.addRow({
+          identityCardNumber: row.User?.identityCardNumber,
+          firstName: row.User?.firstName,
+          lastName: row.User?.lastName,
+          phoneNumber: row.User?.phoneNumber,
+          email: row.User?.email,
+          address: row.User?.address,
+          eps: row.Ep?.eps,
+          pensionFund: row.PensionFund?.pensionFund,
+          compensationFund: row.CompensationFund?.compensationFund,
+          entryDate: employee.entryDate,
+          severancePay: row.SeverancePay?.severancePay,
+          contractType: row.ContractType?.contractType,
+          position: row.Position?.position,
+        });
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      return buffer;
+    } catch (err) {
+      console.error('Error creating Excel file buffer:', err);
+      throw new Error('Internal server error');
+    }
+  }
+
   async findCities(): Promise<ResponseEntity> {
     try {
       const cities = await City.findAll({
@@ -692,3 +756,54 @@ export const employeeService = new EmployeeService(
   employeeRepository,
   authRepository
 );
+
+
+interface IUser {
+  identityCardNumber: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+  address: string;
+  IdentitiCard?: IIdentityCard;
+}
+
+interface IIdentityCard {
+  idIdentityCard: number;
+  identityCard: string;
+}
+
+interface IEps {
+  eps: string;
+}
+
+interface IPensionFund {
+  pensionFund: string;
+}
+
+interface ICompensationFund {
+  compensationFund: string;
+}
+
+interface ISeverancePay {
+  severancePay: string;
+}
+
+interface IContractType {
+  contractType: string;
+}
+
+interface IPosition {
+  position: string;
+}
+
+interface IEmployee {
+  User?: IUser;
+  Eps?: IEps;
+  PensionFund?: IPensionFund;
+  CompensationFund?: ICompensationFund;
+  SeverancePay?: ISeverancePay;
+  entryDate?: string;
+  ContractType?: IContractType;
+  Position?: IPosition;
+}

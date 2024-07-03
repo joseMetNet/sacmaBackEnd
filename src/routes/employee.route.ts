@@ -599,6 +599,29 @@ export function employeeRoutes(app: Application): void {
   routes.get("/v1/employees", [verifyToken], employeeController.findEmployee);
 
   /**
+  * @openapi
+  * /v1/employees/download:
+  *   get:
+  *     tags: [Employee]
+  *     summary: Download employees as an Excel file
+  *     responses:
+  *       '200':
+  *         description: Successful response
+  *         content:
+  *           application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+  *             schema:
+  *               type: string
+  *               format: binary
+  *       '500':
+  *         description: Internal server error
+  *         content:
+  *           application/json:
+  *             schema:
+  *               $ref: "#/components/schemas/failedResponse"
+  */
+  routes.get("/v1/employees/download", [verifyToken], employeeController.employeesToExcel);
+
+  /**
    * @openapi
    * /v1/employee:
    *   patch:

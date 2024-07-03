@@ -118,6 +118,19 @@ class EmployeeController {
       .json({ status: response.status, data: response.data });
   }
 
+  async employeesToExcel(req: Request, res: Response): Promise<void> {
+    try {
+      const buffer = await employeeService.createExcelFileBuffer();
+
+      res.setHeader('Content-Disposition', 'attachment; filename="employees.xlsx"');
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.end(buffer, 'binary');
+    }
+    catch (error) {
+      res.status(StatusCode.InternalErrorServer).json({ status: StatusValue.Failed, data: { error } });
+    }
+  }
+
   async findCities(req: Request, res: Response): Promise<void> {
     const response = await employeeService.findCities();
     res
