@@ -14,7 +14,7 @@ export async function verifyAuthRequest(req: Request, res: Response, next: NextF
   const authRepository = new AuthenticationRepository();
   const userExists = await authRepository.findUserByEmail(userName);
   if (typeof userExists === "number") {
-    res.status(400).json({ status: StatusValue.Failed, data: { message: "User already exists." } });
+    res.status(400).json({ status: StatusValue.Failed, data: { message: "userName already exists." } });
     return;
   }
 
