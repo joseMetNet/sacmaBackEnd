@@ -780,6 +780,32 @@ export function employeeRoutes(app: Application): void {
 
   /**
    * @openapi
+   * /v1/employee/{idEmployee}/novelties:
+   *   get:
+   *     tags: [Employee]
+   *     summary: Find novelties by employee ID
+   *     parameters:
+   *       - $ref: '#/components/parameters/idEmployee'
+   *     responses:
+   *       200:
+   *         description: A list of novelties
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Not found
+   *       500:
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/failedResponse'
+   */
+  routes.get("/v1/employee/:idEmployee/novelties", [verifyToken], employeeController.findNoveltiesByEmployee);
+
+  /**
+   * @openapi
    * components:
    *   parameters:
    *     idEmployee:
