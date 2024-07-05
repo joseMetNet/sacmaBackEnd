@@ -665,6 +665,20 @@ export class EmployeeService {
     }
   }
 
+
+  async findNoveltiesByEmployee(idEmployee: number): Promise<ResponseEntity> {
+    try {
+      const novelties = await employeeRepository.findEmployeeNoveltiesByEmployeeId(idEmployee);
+      if(novelties instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: novelties.message });
+      }
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, novelties);
+    } catch (err: any) {
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, err);
+    }
+  }
+
   private updateEmergencyContactRequest(
     employee: UpdateEmployeeRequest,
     dbEmergencyContact: EmergencyContact

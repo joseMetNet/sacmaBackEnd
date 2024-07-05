@@ -76,6 +76,21 @@ class EmployeeController {
       .json({ status: response.status, data: response.data });
   }
 
+  async findNoveltiesByEmployee(req: Request, res: Response): Promise<void> {
+    const request = querySchema.safeParse(req.params);
+    if(!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) },
+        });
+      return;
+    }
+    const response = await employeeService.findNoveltiesByEmployee(request.data.idEmployee);
+    res.status(response.code)
+      .json({ status: response.status, data: response.data });
+  }
+
   async uploadRequiredDocuments(req: Request, res: Response): Promise<void> {
     const request = requiredEmployeeSchema.safeParse(req.body);
     if(!request.success) {

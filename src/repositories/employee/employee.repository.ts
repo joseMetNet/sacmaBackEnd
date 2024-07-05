@@ -1,4 +1,4 @@
-import { Employee, Position, Role, User } from "../../models";
+import { Employee, EmployeeNovelty, Novelty, Position, Role, User } from "../../models";
 import { CustomError } from "../../utils";
 
 export class EmployeeRepository {
@@ -77,6 +77,28 @@ export class EmployeeRepository {
       return employee;
     }catch(err: any) {
       return CustomError.internalServer(err.message);
+    }
+  }
+
+  async findEmployeeNoveltiesByEmployeeId(idEmployee: number): Promise<CustomError | EmployeeNovelty[]> {
+    try {
+      const novelties = await EmployeeNovelty.findAll({
+        attributes: { 
+          exclude: ["idNovelty", "idEmployee"]
+        },
+        where: { idEmployee },
+        include: [
+          {
+            model: Novelty,
+            required: true
+          },
+        ],
+      });
+      return novelties;
+    }
+    catch(err: any) {
+      console.log(err);
+      return CustomError.internalServer("Internal server error");
     }
   }
 }
