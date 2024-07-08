@@ -20,6 +20,7 @@ export const createNoveltySchema = z.object({
   createdAt: z.string(),
   endAt: z.string(),
   loanValue: z.string().optional(),
+  periodicity: z.string().optional(),
   installment: z.coerce.number().optional(),
   observation: z.string().optional(),
 });

@@ -9,9 +9,6 @@ export class NoveltyRepository {
   async findNoveltyById(id: number): Promise<CustomError | EmployeeNovelty> {
     try {
       const novelty = await EmployeeNovelty.findByPk(id, {
-        attributes: { 
-          exclude: ["idNovelty", "idEmployee"]
-        },
         include: [
           {
             model: Novelty,
@@ -56,6 +53,7 @@ export class NoveltyRepository {
         installment: novelty.installment ?? null,
         documentUrl: novelty.documentUrl ?? null,
         loanValue: novelty.loanValue ?? null,
+        periodicity: novelty.periodicity ?? null,
         observation: novelty.observation ?? null,
       }, { transaction });
       return newNovelty;

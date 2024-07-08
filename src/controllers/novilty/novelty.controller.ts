@@ -65,6 +65,22 @@ class NoveltyController {
     }
   }
 
+  async findNoveltyTypes(req: Request, res: Response): Promise<void> {
+    try {
+      const novelties = await noveltyService.findNoveltyTypes();
+      res
+        .status(novelties.code)
+        .json({ status: novelties.code, data: novelties.data });
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: err.message },
+        });
+    }
+  }
+
   async findNoveltyById(req: Request, res: Response): Promise<void> {
     try {
       const request = idNoveltySchema.safeParse(req.params);

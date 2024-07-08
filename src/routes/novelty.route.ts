@@ -42,6 +42,38 @@ export function noveltyRoutes(app: Application): void {
    */
   routes.get("/v1/novelty/novelties", [verifyToken], noveltyController.findNovelties);
 
+
+  /**
+   * @openapi
+   * /v1/novelty/types:
+   *   get:
+   *     tags: [Novelty]
+   *     summary: Find novelties types
+   *     description: Find novelties types
+   *     responses:
+   *       200:
+   *         description: A list of novelties
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 $ref: '#/components/schemas/NoveltyType'
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Not found
+   *       500:
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/failedResponse'
+   */
+  routes.get("/v1/novelty/types", [verifyToken], noveltyController.findNoveltyTypes);
+
   /**
    * @openapi
    * /v1/novelty/{idEmployeeNovelty}:
@@ -240,6 +272,15 @@ export function noveltyRoutes(app: Application): void {
    *         observation:
    *           type: string
    *           example: "Loan for employee"
+   *     NoveltyType:
+   *       type: object
+   *       properties:
+   *         idNovelty:
+   *           type: integer
+   *           example: 1
+   *         novelty:
+   *           type: string
+   *           example: "Loan"
    *     createNovelty:
    *       type: object
    *       properties:
