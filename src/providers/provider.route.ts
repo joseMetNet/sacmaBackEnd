@@ -1,5 +1,6 @@
 import { Application, Router } from "express";
 import { providerController } from "./provider.controller";
+import { verifyToken } from "../middlewares";
 
 export function providerRoutes(app: Application): void {
   const router: Router = Router();
@@ -49,7 +50,11 @@ export function providerRoutes(app: Application): void {
    *             schema:
    *               $ref: '#/components/schemas/failedResponse'
    */
-  router.get("/v1/providers", providerController.findAll);
+  router.get(
+    "/v1/providers",
+    [verifyToken], 
+    providerController.findAll
+  );
 
   /**
    * @openapi
@@ -84,7 +89,11 @@ export function providerRoutes(app: Application): void {
    *             schema:
    *               $ref: '#/components/schemas/failedResponse'
    */
-  router.post("/v1/providers", providerController.create);
+  router.post(
+    "/v1/providers", 
+    [verifyToken],
+    providerController.create
+  );
 
   /**
    * @openapi
@@ -120,7 +129,11 @@ export function providerRoutes(app: Application): void {
    *             schema:
    *               $ref: '#/components/schemas/failedResponse'
    */
-  router.get("/v1/providers/:id", providerController.findById);
+  router.get(
+    "/v1/providers/:id", 
+    [verifyToken],
+    providerController.findById
+  );
 
   /**
    * @openapi
@@ -152,7 +165,11 @@ export function providerRoutes(app: Application): void {
    *             schema:
    *               $ref: '#/components/schemas/failedResponse'
    */
-  router.delete("/v1/providers/:id", providerController.delete);
+  router.delete(
+    "/v1/providers/:id", 
+    [verifyToken],
+    providerController.delete
+  );
 
   /**
    * @openapi
@@ -189,7 +206,11 @@ export function providerRoutes(app: Application): void {
    *             schema:
    *               $ref: '#/components/schemas/failedResponse'
    */
-  router.patch("/v1/providers", providerController.update);
+  router.patch(
+    "/v1/providers", 
+    [verifyToken],
+    providerController.update
+  );
 
   /**
  * @openapi
