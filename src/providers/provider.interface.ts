@@ -21,6 +21,10 @@ export interface CreateProviderDTO {
   accountHolderId?: string;
   paymentMethod?: string;
   observation?: string;
+  providerContactName?: string;
+  providerContactEmail?: string;
+  providerContactPhoneNumber?: string;
+  providerContactPosition?: string;
 }
 
 export interface UpdateProviderDTO {
@@ -41,8 +45,4 @@ export interface UpdateProviderDTO {
   accountHolderId?: string;
   paymentMethod?: string;
   observation?: string;
-  providerContactName?: string;
-  providerContactEmail?: string;
-  providerContactPhoneNumber?: string;
-  providerContactPosition?: string;
 }
