@@ -7,6 +7,7 @@ import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import { EnvConfig, swaggerOptions } from "./config";
 import { authenticationRoutes, employeePayrollRoutes, employeeRoutes, noveltyRoutes } from "./routes";
+import { providerRoutes } from "./providers/provider.route";
 
 class Server {
   private app: Application;
@@ -49,6 +50,7 @@ class Server {
     employeeRoutes(this.app);
     noveltyRoutes(this.app);
     employeePayrollRoutes(this.app);
+    providerRoutes(this.app);
   }
 
   public listen(): void {
