@@ -9,7 +9,7 @@ import {
   IUpdateEmployeeNovelty,
   IFindEmployeeRequest
 } from "../../interfaces";
-import { EmployeeNovelty } from "../../models";
+import { EmployeeNovelty, Novelty } from "../../models";
 import { noveltyRepository } from "../../repositories";
 import sequelize, { Transaction } from "sequelize";
 import { Op } from "sequelize";
@@ -60,6 +60,19 @@ export class NoveltyService {
         totalPages,
         totalItems
       });
+    } catch (err: any) {
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, err);
+    }
+  }
+
+  async findNoveltyTypes(): Promise<ResponseEntity> {
+    try {
+      const novelties = await Novelty.findAll();
+      if(novelties instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: novelties.message });
+      }
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, novelties);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, err);
     }

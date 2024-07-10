@@ -17,6 +17,7 @@ export interface ICreateEmployeeNovelty {
   endAt: string;
   documentUrl?: string;
   loanValue?: string;
+  periodicity?: string;
   installment?: number;
   observation?: string;
 }
