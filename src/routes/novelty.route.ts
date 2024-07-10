@@ -73,6 +73,37 @@ export function noveltyRoutes(app: Application): void {
    *               $ref: '#/components/schemas/failedResponse'
    */
   routes.get("/v1/novelty/types", [verifyToken], noveltyController.findNoveltyTypes);
+  
+  /**
+   * @openapi
+   * /v1/novelty/periodicities:
+   *   get:
+   *     tags: [Novelty]
+   *     summary: Find periodicities
+   *     description: Find periodicities
+   *     responses:
+   *       200:
+   *         description: A list of periodicities
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 $ref: '#/components/schemas/Periodicity'
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Not found
+   *       500:
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/failedResponse'
+   */
+  routes.get("/v1/novelty/periodicities", [verifyToken], noveltyController.findPeriodicities);
 
   /**
    * @openapi
@@ -281,6 +312,15 @@ export function noveltyRoutes(app: Application): void {
    *         novelty:
    *           type: string
    *           example: "Loan"
+   *     Periodicity:
+   *       type: object
+   *       properties:
+   *         idPeriodicity:
+   *           type: integer
+   *           example: 1
+   *         periodicity:
+   *           type: string
+   *           example: "Monthly"
    *     createNovelty:
    *       type: object
    *       properties:

@@ -81,6 +81,22 @@ class NoveltyController {
     }
   }
 
+  async findPeriodicities(req: Request, res: Response): Promise<void> {
+    try {
+      const periodicities = await noveltyService.findPeriodicities();
+      res
+        .status(periodicities.code)
+        .json({ status: periodicities.code, data: periodicities.data });
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: err.message },
+        });
+    }
+  }
+
   async findNoveltyById(req: Request, res: Response): Promise<void> {
     try {
       const request = idNoveltySchema.safeParse(req.params);
