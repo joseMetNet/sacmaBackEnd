@@ -5,6 +5,7 @@ export interface IUpdateEmployeeNovelty {
   createdAt?: string;
   endAt?: string;
   documentUrl?: string;
+  idPeriodicity?: number;
   loanValue?: string;
   installment?: number;
   observation?: string;
@@ -17,7 +18,7 @@ export interface ICreateEmployeeNovelty {
   endAt: string;
   documentUrl?: string;
   loanValue?: string;
-  periodicity?: string;
+  idPeriodicity?: number;
   installment?: number;
   observation?: string;
 }
@@ -27,7 +28,7 @@ export interface IFindEmployeeRequest {
   pageSize?: number;
   idNovelty?: number;
   firstName?: string;
-  identityCardNumber? : string;
-  noveltyYear? : string;
-  noveltyMonth? : string;
+  identityCardNumber?: string;
+  noveltyYear?: string;
+  noveltyMonth?: string;
 }

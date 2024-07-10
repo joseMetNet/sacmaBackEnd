@@ -1,10 +1,10 @@
 import { Transaction } from "sequelize";
 import { ICreateEmployeeNovelty } from "../../interfaces/novelty.interface";
-import { Employee, EmployeeNovelty, Novelty, Position, User  } from "../../models";
+import { Employee, EmployeeNovelty, Novelty, Periodicity, Position, User } from "../../models";
 import { CustomError } from "../../utils";
 
 export class NoveltyRepository {
-  constructor() {}
+  constructor() { }
 
   async findNoveltyById(id: number): Promise<CustomError | EmployeeNovelty> {
     try {
@@ -13,6 +13,10 @@ export class NoveltyRepository {
           {
             model: Novelty,
             required: true
+          },
+          {
+            model: Periodicity,
+            required: false
           },
           {
             model: Employee,
@@ -33,12 +37,12 @@ export class NoveltyRepository {
           }
         ],
       });
-      if(!novelty) {
+      if (!novelty) {
         return CustomError.notFound("Novelty not found");
       }
       return novelty;
     }
-    catch(err: any) {
+    catch (err: any) {
       return CustomError.internalServer(err);
     }
   }
@@ -53,12 +57,12 @@ export class NoveltyRepository {
         installment: novelty.installment ?? null,
         documentUrl: novelty.documentUrl ?? null,
         loanValue: novelty.loanValue ?? null,
-        periodicity: novelty.periodicity ?? null,
+        idPeriodicity: novelty.idPeriodicity ?? null,
         observation: novelty.observation ?? null,
       }, { transaction });
       return newNovelty;
     }
-    catch(err: any) {
+    catch (err: any) {
       return CustomError.internalServer(err);
     }
   }
@@ -66,25 +70,25 @@ export class NoveltyRepository {
   async findEmployeeNovelty(idEmployeeNovelty: number): Promise<CustomError | EmployeeNovelty> {
     try {
       const novelty = await EmployeeNovelty.findByPk(idEmployeeNovelty);
-      if(!novelty) {
+      if (!novelty) {
         return CustomError.notFound("Novelty not found");
       }
       return novelty;
     }
-    catch(err: any) {
+    catch (err: any) {
       console.log(err);
       return CustomError.internalServer("Internal server error");
     }
   }
 
   async findEmployeeNovelties(
-    noveltyFilter: {[key: string]: string}[],
+    noveltyFilter: { [key: string]: string }[],
     limit: number,
     offset: number
-  ): Promise<CustomError | {rows: EmployeeNovelty[], count: number}> {
+  ): Promise<CustomError | { rows: EmployeeNovelty[], count: number }> {
     try {
       const novelties = await EmployeeNovelty.findAndCountAll({
-        attributes: { 
+        attributes: {
           exclude: ["idNovelty", "idEmployee"]
         },
         where: noveltyFilter[0],
@@ -92,6 +96,10 @@ export class NoveltyRepository {
           {
             model: Novelty,
             required: true
+          },
+          {
+            model: Periodicity,
+            required: false
           },
           {
             model: Employee,
@@ -117,7 +125,7 @@ export class NoveltyRepository {
       });
       return novelties;
     }
-    catch(err: any) {
+    catch (err: any) {
       console.log(err);
       return CustomError.internalServer("Internal server error");
     }

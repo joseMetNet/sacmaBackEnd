@@ -9,6 +9,7 @@ export const updateNoveltySchema = z.object({
   idNovelty: z.coerce.number().optional(),
   createdAt: z.string().optional(),
   endAt: z.string().optional(),
+  idPeriodicity: z.coerce.number().optional(),
   loanValue: z.string().optional(),
   installment: z.coerce.number().optional(),
   observation: z.string().optional(),
@@ -20,7 +21,7 @@ export const createNoveltySchema = z.object({
   createdAt: z.string(),
   endAt: z.string(),
   loanValue: z.string().optional(),
-  periodicity: z.string().optional(),
+  idPeriodicity: z.coerce.number().optional(),
   installment: z.coerce.number().optional(),
   observation: z.string().optional(),
 });

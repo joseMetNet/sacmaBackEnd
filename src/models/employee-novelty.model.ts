@@ -2,13 +2,14 @@ import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
 import { Employee } from "./employee.model";
 import { Novelty } from "./novelty.model";
+import { Periodicity } from "./periodicity.model";
 
 export class EmployeeNovelty extends Model {
   declare idEmployeeNovelty: number;
   declare idNovelty: number;
   declare idEmployee: number;
   declare installment: number;
-  declare periodicity: string;
+  declare idPeriodicity: number;
   declare loanValue: string;
   declare observation: string;
   declare documentUrl: string;
@@ -34,8 +35,8 @@ EmployeeNovelty.init({
     type: DataTypes.INTEGER,
     allowNull: true,
   },
-  periodicity: {
-    type: DataTypes.STRING,
+  idPeriodicity: {
+    type: DataTypes.NUMBER,
     allowNull: true
   },
   loanValue: {
@@ -74,4 +75,9 @@ EmployeeNovelty.hasOne(Employee, {
 EmployeeNovelty.hasOne(Novelty, {
   sourceKey: "idNovelty",
   foreignKey: "idNovelty"
+});
+
+EmployeeNovelty.hasOne(Periodicity, {
+  sourceKey: "idPeriodicity",
+  foreignKey: "idPeriodicity"
 });

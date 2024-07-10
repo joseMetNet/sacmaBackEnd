@@ -302,9 +302,9 @@ export function noveltyRoutes(app: Application): void {
    *         installment:
    *           type: number
    *           example: 12
-   *         periodicity:
-   *           type: string
-   *           example: "monthly"
+   *         idPeriodicity:
+   *           type: number
+   *           example: 1
    *         document:
    *           type: string
    *           format: binary
@@ -333,9 +333,9 @@ export function noveltyRoutes(app: Application): void {
    *         installment:
    *           type: number
    *           example: 12
-   *         periodicity:
-   *           type: string
-   *           example: "monthly"
+   *         idPeriodicity:
+   *           type: number
+   *           example: 1
    *         document:
    *           type: string
    *           format: binary

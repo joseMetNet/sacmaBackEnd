@@ -202,6 +202,7 @@ export class NoveltyService {
       createdAt: employeeNovelty.createdAt ?? dbEmployee.createdAt,
       endAt: employeeNovelty.endAt ?? dbEmployee.endAt,
       loanValue: employeeNovelty.loanValue ?? dbEmployee.loanValue,
+      idPeriodicity: employeeNovelty.idPeriodicity ?? dbEmployee.idPeriodicity,
       installment: employeeNovelty.installment ?? dbEmployee.installment,
       observation: employeeNovelty.observation ?? dbEmployee.observation
     };
