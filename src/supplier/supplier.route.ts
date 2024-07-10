@@ -1,15 +1,15 @@
 import { Application, Router } from "express";
-import { providerController } from "./provider.controller";
+import { supplierController } from "./supplier.controller";
 import { verifyToken } from "../middlewares";
 
-export function providerRoutes(app: Application): void {
+export function supplierRoutes(app: Application): void {
   const router: Router = Router();
 
   /**
    * @openapi
-   * /v1/providers/document-types:
+   * /v1/suppliers/document-types:
    *   get:
-   *     tags: [Provider]
+   *     tags: [Supplier]
    *     summary: find document types
    *     description: Find all document types
    *     responses:
@@ -20,7 +20,7 @@ export function providerRoutes(app: Application): void {
    *             schema:
    *               type: array
    *               items:
-   *                 $ref: '#/components/schemas/ProviderDocument'
+   *                 $ref: '#/components/schemas/SupplierDocument'
    *       401:
    *         description: Unauthorized
    *       403:
@@ -35,17 +35,17 @@ export function providerRoutes(app: Application): void {
    *               $ref: '#/components/schemas/failedResponse'
    */
   router.get(
-    "/v1/providers/document-types",
-    providerController.findDocumentTypes
+    "/v1/suppliers/document-types",
+    supplierController.findDocumentTypes
   );
 
   /**
    * @openapi
-   * /v1/providers/upload-document:
+   * /v1/suppliers/upload-document:
    *   post:
-   *     tags: [Provider]
+   *     tags: [Supplier]
    *     summary: Upload required document
-   *     description: Upload a required document for a provider
+   *     description: Upload a required document for a supplier
    *     requestBody:
    *       required: true
    *       content:
@@ -54,11 +54,11 @@ export function providerRoutes(app: Application): void {
    *             $ref: '#/components/schemas/UploadDocument'
    *     responses:
    *       201:
-   *         description: Provider created successfully
+   *         description: Supplier created successfully
    *         content:
    *           application/json:
    *             schema:
-   *               $ref: '#/components/schemas/ProviderDocument'
+   *               $ref: '#/components/schemas/SupplierDocument'
    *       400:
    *         description: Bad request
    *       401:
@@ -73,18 +73,18 @@ export function providerRoutes(app: Application): void {
    *               $ref: '#/components/schemas/failedResponse'
    */
   router.post(
-    "/v1/providers/upload-document", 
+    "/v1/suppliers/upload-document",
     [verifyToken],
-    providerController.uploadRequiredDocument
+    supplierController.uploadRequiredDocument
   );
 
   /**
    * @openapi
-   * /v1/providers:
+   * /v1/suppliers:
    *   get:
-   *     tags: [Provider]
-   *     summary: Get all providers
-   *     description: Get a list of all providers
+   *     tags: [Supplier]
+   *     summary: Get all suppliers
+   *     description: Get a list of all suppliers
    *     parameters:
    *       - in: query
    *         name: page
@@ -100,16 +100,16 @@ export function providerRoutes(app: Application): void {
    *         name: socialReason
    *         schema:
    *           type: string
-   *         description: Social reason of the provider
+   *         description: Social reason of the supplier
    *     responses:
    *       200:
-   *         description: A list of providers
+   *         description: A list of suppliers
    *         content:
    *           application/json:
    *             schema:
    *               type: array
    *               items:
-   *                 $ref: '#/components/schemas/Provider'
+   *                 $ref: '#/components/schemas/Supplier'
    *       401:
    *         description: Unauthorized
    *       403:
@@ -124,31 +124,31 @@ export function providerRoutes(app: Application): void {
    *               $ref: '#/components/schemas/failedResponse'
    */
   router.get(
-    "/v1/providers",
-    [verifyToken], 
-    providerController.findAll
+    "/v1/suppliers",
+    [verifyToken],
+    supplierController.findAll
   );
 
   /**
    * @openapi
-   * /v1/providers:
+   * /v1/suppliers:
    *   post:
-   *     tags: [Provider]
-   *     summary: Create a new provider
-   *     description: Create a new provider with the given details
+   *     tags: [Supplier]
+   *     summary: Create a new supplier
+   *     description: Create a new supplier with the given details
    *     requestBody:
    *       required: true
    *       content:
    *         multipart/form-data:
    *           schema:
-   *             $ref: '#/components/schemas/CreateProvider'
+   *             $ref: '#/components/schemas/CreateSupplier'
    *     responses:
    *       201:
-   *         description: Provider created successfully
+   *         description: Supplier created successfully
    *         content:
    *           application/json:
    *             schema:
-   *               $ref: '#/components/schemas/Provider'
+   *               $ref: '#/components/schemas/Supplier'
    *       400:
    *         description: Bad request
    *       401:
@@ -163,32 +163,32 @@ export function providerRoutes(app: Application): void {
    *               $ref: '#/components/schemas/failedResponse'
    */
   router.post(
-    "/v1/providers", 
+    "/v1/suppliers",
     [verifyToken],
-    providerController.create
+    supplierController.create
   );
 
   /**
    * @openapi
-   * /v1/providers/{id}:
+   * /v1/suppliers/{id}:
    *   get:
-   *     tags: [Provider]
-   *     summary: Get provider by ID
-   *     description: Get details of a provider by ID
+   *     tags: [Supplier]
+   *     summary: Get supplier by ID
+   *     description: Get details of a supplier by ID
    *     parameters:
    *       - in: path
    *         name: id
    *         required: true
    *         schema:
    *           type: integer
-   *         description: ID of the provider
+   *         description: ID of the supplier
    *     responses:
    *       200:
-   *         description: Provider details
+   *         description: Supplier details
    *         content:
    *           application/json:
    *             schema:
-   *               $ref: '#/components/schemas/Provider'
+   *               $ref: '#/components/schemas/Supplier'
    *       401:
    *         description: Unauthorized
    *       403:
@@ -203,28 +203,28 @@ export function providerRoutes(app: Application): void {
    *               $ref: '#/components/schemas/failedResponse'
    */
   router.get(
-    "/v1/providers/:id", 
+    "/v1/suppliers/:id",
     [verifyToken],
-    providerController.findById
+    supplierController.findById
   );
 
   /**
    * @openapi
-   * /v1/providers/{id}:
+   * /v1/suppliers/{id}:
    *   delete:
-   *     tags: [Provider]
-   *     summary: Delete a provider
-   *     description: Delete a provider by ID
+   *     tags: [Supplier]
+   *     summary: Delete a supplier
+   *     description: Delete a supplier by ID
    *     parameters:
    *       - in: path
    *         name: id
    *         required: true
    *         schema:
    *           type: integer
-   *         description: ID of the provider
+   *         description: ID of the supplier
    *     responses:
    *       204:
-   *         description: Provider deleted successfully
+   *         description: Supplier deleted successfully
    *       401:
    *         description: Unauthorized
    *       403:
@@ -239,31 +239,31 @@ export function providerRoutes(app: Application): void {
    *               $ref: '#/components/schemas/failedResponse'
    */
   router.delete(
-    "/v1/providers/:id", 
+    "/v1/suppliers/:id",
     [verifyToken],
-    providerController.delete
+    supplierController.delete
   );
 
   /**
    * @openapi
-   * /v1/providers:
+   * /v1/suppliers:
    *   patch:
-   *     tags: [Provider]
-   *     summary: Update a provider
-   *     description: Update a provider with the given details
+   *     tags: [Supplier]
+   *     summary: Update a supplier
+   *     description: Update a supplier with the given details
    *     requestBody:
    *       required: true
    *       content:
    *         multipart/form-data:
    *           schema:
-   *             $ref: '#/components/schemas/UpdateProvider'
+   *             $ref: '#/components/schemas/UpdateSupplier'
    *     responses:
    *       200:
-   *         description: Provider updated successfully
+   *         description: Supplier updated successfully
    *         content:
    *           application/json:
    *             schema:
-   *               $ref: '#/components/schemas/Provider'
+   *               $ref: '#/components/schemas/Supplier'
    *       400:
    *         description: Bad request
    *       401:
@@ -280,9 +280,9 @@ export function providerRoutes(app: Application): void {
    *               $ref: '#/components/schemas/failedResponse'
    */
   router.patch(
-    "/v1/providers", 
+    "/v1/suppliers",
     [verifyToken],
-    providerController.update
+    supplierController.update
   );
 
   /**
@@ -294,19 +294,19 @@ export function providerRoutes(app: Application): void {
  *       properties:
  *         idDocumentType:
  *           type: integer
- *         idProvider:
+ *         idSupplier:
  *           type: integer
  *         document:
  *           type: string
  *           format: binary
- *     ProviderDocument:
+ *     SupplierDocument:
  *       type: object
  *       properties:
  *         idDocumentType:
  *           type: integer
  *         documentType:
  *           type: string
- *     Provider:
+ *     Supplier:
  *       type: object
  *       properties:
  *         id:
@@ -351,19 +351,19 @@ export function providerRoutes(app: Application): void {
  *         observation:
  *           type: string
  *           nullable: true
- *         providerContactName:
+ *         supplierContactName:
  *           type: string
  *           nullable: true
- *         providerContactEmail:
+ *         supplierContactEmail:
  *           type: string
  *           nullable: true
- *         providerContactPhoneNumber:
+ *         supplierContactPhoneNumber:
  *           type: string
  *           nullable: true
- *         providerContactPosition:
+ *         supplierContactPosition:
  *           type: string
  *           nullable: true
- *     CreateProvider:
+ *     CreateSupplier:
  *       type: object
  *       required:
  *         - socialReason
@@ -415,24 +415,24 @@ export function providerRoutes(app: Application): void {
  *         observation:
  *           type: string
  *           nullable: true
- *         providerContactName:
+ *         supplierContactName:
  *           type: string
  *           nullable: true
- *         providerContactEmail:
+ *         supplierContactEmail:
  *           type: string
  *           nullable: true
- *         providerContactPhoneNumber:
+ *         supplierContactPhoneNumber:
  *           type: string
  *           nullable: true
- *         providerContactPosition:
+ *         supplierContactPosition:
  *           type: string
  *           nullable: true
- *     UpdateProvider:
+ *     UpdateSupplier:
  *       type: object
  *       required:
- *         - idProvider
+ *         - idSupplier
  *       properties:
- *         idProvider:
+ *         idSupplier:
  *           type: integer
  *         socialReason:
  *           type: string
