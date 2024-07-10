@@ -1,16 +1,16 @@
 import z from "zod";
 
-export const findAllProviderSchema = z.object({
+export const findAllSupplierSchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
   socialReason: z.string().optional(),
 });
 
-export const providerIdSchema = z.object({
+export const supplierIdSchema = z.object({
   id: z.coerce.number(),
 });
 
-export const createProviderSchema = z.object({
+export const createSupplierSchema = z.object({
   socialReason: z.string(),
   nit: z.string(),
   telephone: z.string(),
@@ -27,14 +27,14 @@ export const createProviderSchema = z.object({
   accountHolderId: z.string().optional(),
   paymentMethod: z.string().optional(),
   observation: z.string().optional(),
-  providerContactName: z.string().optional(),
-  providerContactEmail: z.string().optional(),
-  providerContactPhoneNumber: z.string().optional(),
-  providerContactPosition: z.string().optional(),
+  supplierContactName: z.string().optional(),
+  supplierContactEmail: z.string().optional(),
+  supplierContactPhoneNumber: z.string().optional(),
+  supplierContactPosition: z.string().optional(),
 });
 
-export const updateProviderSchema = z.object({
-  idProvider: z.coerce.number(),
+export const updateSupplierSchema = z.object({
+  idSupplier: z.coerce.number(),
   socialReason: z.string().optional(),
   nit: z.string().optional(),
   telephone: z.string().optional(),
@@ -53,7 +53,7 @@ export const updateProviderSchema = z.object({
   observation: z.string().optional(),
 });
 
-export const providerProviderDocumentSchema = z.object({
-  idProvider: z.coerce.number(),
+export const supplierSupplierDocumentSchema = z.object({
+  idSupplier: z.coerce.number(),
   idDocumentType: z.coerce.number(),
 });

@@ -1,11 +1,11 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
 import { BankAccount, City, State } from "../models";
-import { ProviderContact } from "./provider-contact.model";
-import { ProviderProviderDocument } from "./provider-provider-document.model";
+import { SupplierContact } from "./supplier-contact.model";
+import { SupplierSupplierDocument } from "./supplier-supplier-document.model";
 
-export class Provider extends Model{
-  declare idProvider: number;
+export class Supplier extends Model {
+  declare idSupplier: number;
   declare socialReason: string;
   declare nit: string;
   declare telephone: string;
@@ -24,8 +24,8 @@ export class Provider extends Model{
   declare observation?: string;
 }
 
-Provider.init({
-  idProvider: {
+Supplier.init({
+  idSupplier: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true
@@ -96,32 +96,32 @@ Provider.init({
   },
 }, {
   sequelize: dbConnection,
-  tableName: 'TB_Provider',
+  tableName: 'TB_Supplier',
   timestamps: true,
   paranoid: true
 });
 
-Provider.hasOne(State, {
+Supplier.hasOne(State, {
   foreignKey: 'idState',
   sourceKey: 'idState'
 });
 
-Provider.hasOne(BankAccount, {
+Supplier.hasOne(BankAccount, {
   foreignKey: 'idBankAccount',
   sourceKey: 'idBankAccount'
 });
 
-Provider.hasOne(City, {
+Supplier.hasOne(City, {
   foreignKey: 'idCity',
   sourceKey: 'idCity'
 });
 
-Provider.hasMany(ProviderContact, {
-  foreignKey: 'idProvider',
-  sourceKey: 'idProvider'
+Supplier.hasMany(SupplierContact, {
+  foreignKey: 'idSupplier',
+  sourceKey: 'idSupplier'
 });
 
-Provider.hasMany(ProviderProviderDocument, {
-  foreignKey: 'idProvider',
-  sourceKey: 'idProvider'
+Supplier.hasMany(SupplierSupplierDocument, {
+  foreignKey: 'idSupplier',
+  sourceKey: 'idSupplier'
 });

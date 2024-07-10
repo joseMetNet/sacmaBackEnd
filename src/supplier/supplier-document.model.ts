@@ -1,12 +1,12 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
 
-export class ProviderDocumentType extends Model {
+export class SupplierDocumentType extends Model {
   declare idDocumentType: number;
   declare documentType: string;
 }
 
-ProviderDocumentType.init({
+SupplierDocumentType.init({
   idDocumentType: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -18,6 +18,6 @@ ProviderDocumentType.init({
   }
 }, {
   sequelize: dbConnection,
-  tableName: "TB_ProviderDocumentType",
+  tableName: "TB_SupplierDocumentType",
   timestamps: false
 });

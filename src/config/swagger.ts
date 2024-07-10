@@ -40,6 +40,6 @@ export const swaggerOptions: SwaggerOptions = {
   },
   apis: [
     "./src/routes/*.route.ts",
-    "./src/providers/*route.ts",
+    "./src/supplier/*route.ts",
   ],
 };

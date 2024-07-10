@@ -1,20 +1,24 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
 
-export class ProviderContact extends Model {
-  declare idProviderContact: number;
-  declare idProvider: number;
+export class SupplierContact extends Model {
+  declare idSupplierContact: number;
+  declare idSupplier: number;
   declare name: string;
   declare phoneNumber: string;
   declare email: string;
   declare position: string;
 }
 
-ProviderContact.init({
-  idProviderContact: {
+SupplierContact.init({
+  idSupplierContact: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true
+  },
+  idSupplier: {
+    type: DataTypes.INTEGER,
+    allowNull: false
   },
   name: {
     type: DataTypes.STRING,
@@ -34,6 +38,6 @@ ProviderContact.init({
   }
 }, {
   sequelize: dbConnection,
-  tableName: "TB_ProviderContact",
+  tableName: "TB_SupplierContact",
   timestamps: false
 });

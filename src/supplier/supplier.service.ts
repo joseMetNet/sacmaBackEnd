@@ -1,0 +1,320 @@
+import { Op, Transaction } from "sequelize";
+import { supplierRepository } from "./supplier.repository";
+import { BuildResponse } from "../services";
+import { StatusCode } from "../interfaces";
+import * as dtos from "./supplier.interface";
+import { ResponseEntity } from "../services/interface";
+import { dbConnection } from "../config";
+import { SupplierContact } from "./supplier-contact.model";
+import { Supplier } from "./supplier.model";
+import { CustomError, deleteFile, uploadFile } from "../utils";
+import { SupplierDocumentType } from "./supplier-document.model";
+import { SupplierSupplierDocument } from "./supplier-supplier-document.model";
+
+class SupplierService {
+
+  async findAll(request: dtos.FindAllDTO): Promise<ResponseEntity> {
+    let page = 1;
+    if (request.page) {
+      page = request.page;
+    }
+    let pageSize = 10;
+    if (request.pageSize) {
+      pageSize = request.pageSize;
+    }
+    const limit = pageSize;
+    const offset = (page - 1) * pageSize;
+    const filter = this.buildFindAllSupplierFilter(request);
+    try {
+      const suppliers = await supplierRepository.findAll(filter, limit, offset);
+      const response = {
+        data: suppliers.rows,
+        totalItems: suppliers.count,
+        currentPage: page,
+        totalPages: Math.ceil(suppliers.count / limit),
+      };
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
+    }
+    catch (err: any) {
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+
+  async findById(id: number): Promise<ResponseEntity> {
+    try {
+      const supplier = await supplierRepository.findById(id);
+      if (!supplier) {
+        return BuildResponse.buildErrorResponse(
+          StatusCode.NotFound,
+          { message: "Supplier not found" }
+        );
+      }
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, supplier);
+    }
+    catch (err: any) {
+      console.log(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+
+  async create(request: dtos.CreateSupplierDTO, filePath?: string): Promise<ResponseEntity> {
+    const transaction = await dbConnection.transaction();
+    try {
+      const supplier = await this.buildSupplier(request, transaction);
+
+      if (request.supplierContactName) {
+        await this.buildContactSupplier(supplier.idSupplier, request, transaction);
+      }
+
+      const identifier = crypto.randomUUID();
+      if (filePath) {
+        await uploadFile(filePath, identifier, 'image/jpg', 'image-profile');
+      }
+
+      supplier.imageProfileUrl = `https://sacmaback.blob.core.windows.net/image-profile/${identifier}.png`;
+      await supplier.save({ transaction });
+
+      await transaction.commit();
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, supplier);
+    }
+    catch (err: any) {
+      await transaction.rollback();
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+
+  async update(request: dtos.UpdateSupplierDTO, filePath?: string): Promise<ResponseEntity> {
+    const transaction: Transaction = await dbConnection.transaction();
+    try {
+      const supplier = await supplierRepository.findById(request.idSupplier);
+      if (!supplier) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(
+          StatusCode.NotFound,
+          { message: "Supplier not found" }
+        );
+      }
+
+      if (filePath) {
+        if (supplier.imageProfileUrl) {
+          const identifier = supplier.imageProfileUrl.split('/').pop()!;
+          await deleteFile(identifier, 'image-profile');
+        }
+        const identifier = crypto.randomUUID();
+        await uploadFile(filePath, identifier, 'image/jpg', 'image-profile');
+        supplier.imageProfileUrl = `https://sacmaback.blob.core.windows.net/image-profile/${identifier}.png`;
+      }
+
+      const updateSupplier = this.buildUpdateSupplier(request, supplier);
+      await supplier.update(updateSupplier, { transaction });
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, supplier);
+    } catch (err: any) {
+      await transaction.rollback();
+      console.error('Error updating supplier:', err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+
+  async delete(idSupplier: number): Promise<ResponseEntity> {
+    const transaction: Transaction = await dbConnection.transaction();
+
+    try {
+      const supplier = await supplierRepository.findById(idSupplier);
+
+      if (!supplier) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(
+          StatusCode.NotFound,
+          { message: "Supplier not found" }
+        );
+      }
+
+      await SupplierContact.destroy({
+        where: { idSupplier },
+        transaction
+      });
+
+      await supplier.destroy({ transaction });
+      if (supplier.imageProfileUrl) {
+        const identifier = supplier.imageProfileUrl.split('/').pop()!;
+        await deleteFile(identifier, 'image-profile');
+      }
+      await transaction.commit();
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { data: supplier });
+    } catch (err: any) {
+      await transaction.rollback();
+      console.error('Error deleting supplier:', err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+
+  async findDocumentTypes(): Promise<ResponseEntity> {
+    try {
+      const documentType = await SupplierDocumentType.findAll();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, documentType);
+    } catch (err: any) {
+      console.error('Error finding document type:', err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+
+  async uploadDocument(request: dtos.UploadSupplierDocumentDTO, filePath: string) {
+    const transaction: Transaction = await dbConnection.transaction();
+    try {
+      const existingDocument = await SupplierSupplierDocument.findOne({
+        where: {
+          idSupplier: request.idSupplier,
+          idSupplierDocumentType: request.idDocumentType,
+        },
+      });
+
+      if (existingDocument && existingDocument.documentUrl) {
+        const fileName = existingDocument.documentUrl.split("/").pop() as string;
+        const deleteBlobResponse = await deleteFile(fileName, "supplier-documents");
+        if (deleteBlobResponse instanceof CustomError) {
+          await transaction.rollback();
+          return BuildResponse.buildErrorResponse(StatusCode.BadRequest, {
+            message: deleteBlobResponse.message,
+          });
+        }
+      }
+
+      const identifier = crypto.randomUUID();
+      const uploadDocumentResponse = await uploadFile(filePath, identifier, "application/pdf", "supplier-documents");
+      if (uploadDocumentResponse instanceof CustomError) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(
+          uploadDocumentResponse.statusCode,
+          { message: uploadDocumentResponse.message }
+        );
+      }
+
+      const url = `https://sacmaback.blob.core.windows.net/supplier-documents/${identifier}.pdf`;
+
+      if (existingDocument) {
+        await existingDocument.update(
+          { documentUrl: url },
+          { transaction }
+        );
+      } else {
+        await SupplierSupplierDocument.create(
+          {
+            idSupplier: request.idSupplier,
+            idSupplierDocumentType: request.idDocumentType,
+            documentUrl: url,
+          },
+          { transaction }
+        );
+      }
+
+      await transaction.commit();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        document: existingDocument ? existingDocument : { idSupplier: request.idSupplier, idDocumentType: request.idDocumentType, documentUrl: url }
+      });
+    } catch (err: any) {
+      await transaction.rollback();
+      console.error('Error uploading document:', err);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async buildContactSupplier(
+    idSupplier: number,
+    supplier: dtos.CreateSupplierDTO,
+    transaction: Transaction
+  ) {
+    return SupplierContact.create({
+      idSupplier: idSupplier,
+      name: supplier.supplierContactName,
+      email: supplier.supplierContactEmail,
+      phoneNumber: supplier.supplierContactPhoneNumber,
+      position: supplier.supplierContactPosition,
+    }, { transaction })
+  }
+
+  async buildSupplier(
+    supplier: dtos.CreateSupplierDTO,
+    transaction: Transaction
+  ) {
+    return Supplier.create({
+      socialReason: supplier.socialReason,
+      nit: supplier.nit,
+      telephone: supplier.telephone,
+      phoneNumber: supplier.phoneNumber,
+      idState: supplier.idState,
+      idCity: supplier.idCity,
+      address: supplier.address,
+      status: supplier.status,
+      imageProfile: supplier.imageProfile,
+      idAccountType: supplier.idAccountType,
+      idBankAccount: supplier.idBankAccount,
+      accountNumber: supplier.accountNumber,
+      accountHolder: supplier.accountHolder,
+      accountHolderId: supplier.accountHolderId,
+      paymentMethod: supplier.paymentMethod,
+      observation: supplier.observation,
+    }, { transaction });
+  }
+
+  private async buildUpdateSupplier(
+    request: dtos.UpdateSupplierDTO,
+    supplierDb: Supplier
+  ) {
+    return {
+      socialReason: request.socialReason ?? supplierDb.socialReason,
+      nit: request.nit ?? supplierDb.nit,
+      telephone: request.telephone ?? supplierDb.telephone,
+      phoneNumber: request.phoneNumber ?? supplierDb.phoneNumber,
+      idState: request.idState ?? supplierDb.idState,
+      idCity: request.idCity ?? supplierDb.idCity,
+      address: request.address ?? supplierDb.address,
+      status: request.status ?? supplierDb.status,
+      idAccountType: request.idAccountType ?? supplierDb.idAccountType,
+      idBankAccount: request.idBankAccount ?? supplierDb.idBankAccount,
+      accountNumber: request.accountNumber ?? supplierDb.accountNumber,
+      accountHolder: request.accountHolder ?? supplierDb.accountHolder,
+      accountHolderId: request.accountHolderId ?? supplierDb.accountHolderId,
+      paymentMethod: request.paymentMethod ?? supplierDb.paymentMethod,
+      observation: request.observation ?? supplierDb.observation
+    };
+  }
+
+  private buildFindAllSupplierFilter(request: dtos.FindAllDTO) {
+    let supplierFilter = {};
+    for (const key of Object.getOwnPropertyNames(request)) {
+      if (key === "socialReason") {
+        supplierFilter = {
+          ...supplierFilter,
+          socialReason: {
+            [Op.like]: `%${request.socialReason}%`,
+          },
+        };
+      }
+    }
+    return supplierFilter;
+  }
+}
+
+const supplierService = new SupplierService();
+export { supplierService };

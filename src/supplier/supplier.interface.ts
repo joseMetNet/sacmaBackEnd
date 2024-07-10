@@ -4,7 +4,7 @@ export interface FindAllDTO {
   socialReason?: string;
 }
 
-export interface CreateProviderDTO {
+export interface CreateSupplierDTO {
   socialReason: string;
   nit: string;
   telephone: string;
@@ -21,14 +21,14 @@ export interface CreateProviderDTO {
   accountHolderId?: string;
   paymentMethod?: string;
   observation?: string;
-  providerContactName?: string;
-  providerContactEmail?: string;
-  providerContactPhoneNumber?: string;
-  providerContactPosition?: string;
+  supplierContactName?: string;
+  supplierContactEmail?: string;
+  supplierContactPhoneNumber?: string;
+  supplierContactPosition?: string;
 }
 
-export interface UpdateProviderDTO {
-  idProvider: number;
+export interface UpdateSupplierDTO {
+  idSupplier: number;
   socialReason?: string;
   nit?: string;
   telephone?: string;
@@ -47,7 +47,7 @@ export interface UpdateProviderDTO {
   observation?: string;
 }
 
-export interface UploadProviderDocumentDTO {
-  idProvider: number;
+export interface UploadSupplierDocumentDTO {
+  idSupplier: number;
   idDocumentType: number;
 }
