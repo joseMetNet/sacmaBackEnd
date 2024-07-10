@@ -7,7 +7,9 @@ import { ResponseEntity } from "../services/interface";
 import { dbConnection } from "../config";
 import { ProviderContact } from "./provider-contact.model";
 import { Provider } from "./provider.model";
-import { deleteFile, uploadFile } from "../utils";
+import { CustomError, deleteFile, uploadFile } from "../utils";
+import { ProviderDocumentType } from "./provider-document.model";
+import { ProviderProviderDocument } from "./provider-provider-document.model";
 
 class ProviderService {
 
@@ -159,6 +161,81 @@ class ProviderService {
         StatusCode.InternalErrorServer, 
         { message: err.message }
       );
+    }
+  }
+
+  async findDocumentTypes(): Promise<ResponseEntity> {
+    try {
+      const documentType = await ProviderDocumentType.findAll();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, documentType);
+    } catch (err: any) {
+      console.error('Error finding document type:', err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer, 
+        { message: err.message }
+      );
+    }
+  }
+
+  async uploadDocument(request: dtos.UploadProviderDocumentDTO, filePath: string) {
+    const transaction: Transaction = await dbConnection.transaction();
+    try {
+      const existingDocument = await ProviderProviderDocument.findOne({
+        where: {
+          idProvider: request.idProvider,
+          idProviderDocumentType: request.idDocumentType,
+        },
+      });
+
+      if (existingDocument && existingDocument.documentUrl) {
+        const fileName = existingDocument.documentUrl.split("/").pop() as string;
+        const deleteBlobResponse = await deleteFile(fileName, "provider-documents");
+        if (deleteBlobResponse instanceof CustomError) {
+          await transaction.rollback();
+          return BuildResponse.buildErrorResponse(StatusCode.BadRequest, {
+            message: deleteBlobResponse.message,
+          });
+        }
+      }
+
+      const identifier = crypto.randomUUID();
+      const uploadDocumentResponse = await uploadFile(filePath, identifier, "application/pdf", "provider-documents");
+      if (uploadDocumentResponse instanceof CustomError) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(
+          uploadDocumentResponse.statusCode,
+          { message: uploadDocumentResponse.message }
+        );
+      }
+
+      const url = `https://sacmaback.blob.core.windows.net/provider-documents/${identifier}.pdf`;
+
+      if (existingDocument) {
+        await existingDocument.update(
+          { documentUrl: url },
+          { transaction }
+        );
+      } else {
+        await ProviderProviderDocument.create(
+          {
+            idProvider: request.idProvider,
+            idProviderDocumentType: request.idDocumentType,
+            documentUrl: url,
+          },
+          { transaction }
+        );
+      }
+
+      await transaction.commit();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        document: existingDocument ? existingDocument : { idProvider: request.idProvider, idDocumentType: request.idDocumentType, documentUrl: url }
+      });
+    } catch (err: any) {
+      await transaction.rollback();
+      console.error('Error uploading document:', err);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "Internal server error",
+      });
     }
   }
 

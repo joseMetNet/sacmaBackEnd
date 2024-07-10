@@ -7,6 +7,79 @@ export function providerRoutes(app: Application): void {
 
   /**
    * @openapi
+   * /v1/providers/document-types:
+   *   get:
+   *     tags: [Provider]
+   *     summary: find document types
+   *     description: Find all document types
+   *     responses:
+   *       200:
+   *         description: A list of document types
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 $ref: '#/components/schemas/ProviderDocument'
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Not found
+   *       500:
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/failedResponse'
+   */
+  router.get(
+    "/v1/providers/document-types",
+    providerController.findDocumentTypes
+  );
+
+  /**
+   * @openapi
+   * /v1/providers/upload-document:
+   *   post:
+   *     tags: [Provider]
+   *     summary: Upload required document
+   *     description: Upload a required document for a provider
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         multipart/form-data:
+   *           schema:
+   *             $ref: '#/components/schemas/UploadDocument'
+   *     responses:
+   *       201:
+   *         description: Provider created successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ProviderDocument'
+   *       400:
+   *         description: Bad request
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       500:
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/failedResponse'
+   */
+  router.post(
+    "/v1/providers/upload-document", 
+    [verifyToken],
+    providerController.uploadRequiredDocument
+  );
+
+  /**
+   * @openapi
    * /v1/providers:
    *   get:
    *     tags: [Provider]
@@ -216,6 +289,23 @@ export function providerRoutes(app: Application): void {
  * @openapi
  * components:
  *   schemas:
+ *     UploadDocument:
+ *       type: object
+ *       properties:
+ *         idDocumentType:
+ *           type: integer
+ *         idProvider:
+ *           type: integer
+ *         document:
+ *           type: string
+ *           format: binary
+ *     ProviderDocument:
+ *       type: object
+ *       properties:
+ *         idDocumentType:
+ *           type: integer
+ *         documentType:
+ *           type: string
  *     Provider:
  *       type: object
  *       properties:

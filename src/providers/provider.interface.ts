@@ -46,3 +46,8 @@ export interface UpdateProviderDTO {
   paymentMethod?: string;
   observation?: string;
 }
+
+export interface UploadProviderDocumentDTO {
+  idProvider: number;
+  idDocumentType: number;
+}

@@ -52,3 +52,8 @@ export const updateProviderSchema = z.object({
   paymentMethod: z.string().optional(),
   observation: z.string().optional(),
 });
+
+export const providerProviderDocumentSchema = z.object({
+  idProvider: z.coerce.number(),
+  idDocumentType: z.coerce.number(),
+});

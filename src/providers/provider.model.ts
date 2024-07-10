@@ -2,6 +2,7 @@ import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
 import { BankAccount, City, State } from "../models";
 import { ProviderContact } from "./provider-contact.model";
+import { ProviderProviderDocument } from "./provider-provider-document.model";
 
 export class Provider extends Model{
   declare idProvider: number;
@@ -116,6 +117,11 @@ Provider.hasOne(City, {
 });
 
 Provider.hasMany(ProviderContact, {
+  foreignKey: 'idProvider',
+  sourceKey: 'idProvider'
+});
+
+Provider.hasMany(ProviderProviderDocument, {
   foreignKey: 'idProvider',
   sourceKey: 'idProvider'
 });
