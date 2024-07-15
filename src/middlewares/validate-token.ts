@@ -70,6 +70,7 @@ export async function verifyToken(req: Request, res: Response, next: NextFunctio
 
       next();
     } catch (error) {
+      console.error(error);
       return res.status(500).json({ message: "Internal server error." });
     }
   });

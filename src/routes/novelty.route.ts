@@ -5,6 +5,15 @@ import { noveltyController } from "../controllers";
 export function noveltyRoutes(app: Application): void {
   const routes: Router = Router();
 
+
+  routes.post("/v1/novelty", [verifyToken], noveltyController.createNovelty);
+  routes.patch("/v1/novelty", [verifyToken], noveltyController.updateNovelty);
+  routes.get("/v1/novelty/novelties", [verifyToken], noveltyController.findNovelties);
+  routes.get("/v1/novelty/types", [verifyToken], noveltyController.findNoveltyTypes);
+  routes.get("/v1/novelty/periodicities", [verifyToken], noveltyController.findPeriodicities);
+  routes.get("/v1/novelty/:idEmployeeNovelty", [verifyToken], noveltyController.findNoveltyById);
+  routes.delete("/v1/novelty/:idEmployeeNovelty", [verifyToken], noveltyController.deleteNovelty);
+
   /**
    * @openapi
    * /v1/novelty/novelties:
@@ -40,7 +49,6 @@ export function noveltyRoutes(app: Application): void {
    *             schema:
    *               $ref: '#/components/schemas/failedResponse'
    */
-  routes.get("/v1/novelty/novelties", [verifyToken], noveltyController.findNovelties);
 
 
   /**
@@ -72,7 +80,6 @@ export function noveltyRoutes(app: Application): void {
    *             schema:
    *               $ref: '#/components/schemas/failedResponse'
    */
-  routes.get("/v1/novelty/types", [verifyToken], noveltyController.findNoveltyTypes);
   
   /**
    * @openapi
@@ -103,7 +110,6 @@ export function noveltyRoutes(app: Application): void {
    *             schema:
    *               $ref: '#/components/schemas/failedResponse'
    */
-  routes.get("/v1/novelty/periodicities", [verifyToken], noveltyController.findPeriodicities);
 
   /**
    * @openapi
@@ -133,7 +139,6 @@ export function noveltyRoutes(app: Application): void {
    *             schema:
    *               $ref: '#/components/schemas/failedResponse'
    */
-  routes.get("/v1/novelty/:idEmployeeNovelty", [verifyToken], noveltyController.findNoveltyById);
 
   /**
    * @openapi
@@ -161,7 +166,6 @@ export function noveltyRoutes(app: Application): void {
    *             schema:
    *               $ref: '#/components/schemas/failedResponse'
    */
-  routes.post("/v1/novelty", [verifyToken], noveltyController.createNovelty);
 
   /**
    * @openapi
@@ -189,7 +193,6 @@ export function noveltyRoutes(app: Application): void {
    *             schema:
    *               $ref: '#/components/schemas/failedResponse'
    */
-  routes.patch("/v1/novelty", [verifyToken], noveltyController.updateNovelty);
 
   /**
    * @openapi
@@ -215,7 +218,6 @@ export function noveltyRoutes(app: Application): void {
    *             schema:
    *               $ref: '#/components/schemas/failedResponse'
    */
-  routes.delete("/v1/novelty/:idEmployeeNovelty", [verifyToken], noveltyController.deleteNovelty);
 
   /**
    * @openapi
