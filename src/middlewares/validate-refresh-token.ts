@@ -40,6 +40,7 @@ export async function verifyRefreshToken(req: Request, res: Response, next: Next
       req.body.idRefreshToken = idRefreshToken;
       next();
     } catch (error) {
+      console.log(error);
       res.status(500).json({ message: "Internal server error." });
     }
   });

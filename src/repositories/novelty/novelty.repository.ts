@@ -21,7 +21,7 @@ export class NoveltyRepository {
           {
             model: Employee,
             required: true,
-            attributes: ["idPosition", "idUser"],
+            attributes: ["idPosition", "idUser", "idEmployee"],
             include: [
               {
                 model: Position,
@@ -88,9 +88,6 @@ export class NoveltyRepository {
   ): Promise<CustomError | { rows: EmployeeNovelty[], count: number }> {
     try {
       const novelties = await EmployeeNovelty.findAndCountAll({
-        attributes: {
-          exclude: ["idNovelty", "idEmployee"]
-        },
         where: noveltyFilter[0],
         include: [
           {
@@ -104,7 +101,7 @@ export class NoveltyRepository {
           {
             model: Employee,
             required: true,
-            attributes: ["idPosition", "idUser"],
+            attributes: ["idPosition", "idUser", "idEmployee"],
             include: [
               {
                 model: Position,
