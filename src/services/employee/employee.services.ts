@@ -495,8 +495,8 @@ export class EmployeeService {
       const buffer = await workbook.xlsx.writeBuffer();
       return buffer;
     } catch (err) {
-      console.error('Error creating Excel file buffer:', err);
-      throw new Error('Internal server error');
+      console.error("Error creating Excel file buffer:", err);
+      throw new Error("Internal server error");
     }
   }
 
