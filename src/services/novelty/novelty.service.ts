@@ -1,4 +1,5 @@
 import { CustomError } from "../../utils";
+import * as ExcelJS from "exceljs";
 import { BuildResponse } from "../build-response";
 import { 
   ResponseEntity
@@ -9,7 +10,7 @@ import {
   IUpdateEmployeeNovelty,
   IFindEmployeeRequest
 } from "../../interfaces";
-import { EmployeeNovelty, Novelty, Periodicity } from "../../models";
+import * as models from "../../models";
 import { noveltyRepository } from "../../repositories";
 import sequelize, { Transaction } from "sequelize";
 import { Op } from "sequelize";
@@ -27,6 +28,86 @@ export class NoveltyService {
       }
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, novelty);
+    } catch (err: any) {
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, err);
+    }
+  }
+
+  async createExcelFileBuffer() {
+    try {
+      const employeeNovelties = await models.EmployeeNovelty.findAll({
+        include: [
+          {
+            model: models.Novelty,
+            required: true
+          },
+          {
+            model: models.Periodicity,
+            required: false
+          },
+          {
+            model: models.Employee,
+            required: true,
+            attributes: ["idPosition", "idUser", "idEmployee"],
+            include: [
+              {
+                model: models.Position,
+                attributes: ["position"],
+                required: false,
+              },
+              {
+                model: models.User,
+                attributes: ["firstName", "lastName", "identityCardNumber"],
+                required: true,
+              }
+            ]
+          }
+        ],
+      });
+
+      if(employeeNovelties instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(
+          StatusCode.InternalErrorServer, 
+          { message: employeeNovelties.message }
+        );
+      }
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Employees");
+
+      worksheet.columns = [
+        { header: "Cédula", key: "identityCardNumber", width: 20 },
+        { header: "Nombre", key: "firstName", width: 20 },
+        { header: "Apellido", key: "lastName", width: 20 },
+        { header: "Cargo", key: "position", width: 20 },
+        { header: "Novedad", key: "novelty", width: 20 },
+        { header: "Fecha de inicio", key: "createdAt", width: 20 },
+        { header: "Fecha de fin", key: "endAt", width: 20 },
+        { header: "Valor del prestamo", key: "loanValue", width: 20 },
+        { header: "Periodicidad", key: "periodicity", width: 20 },
+        { header: "Cuotas", key: "installment", width: 20 },
+        { header: "Observación", key: "observation", width: 20 },
+      ];
+
+      employeeNovelties.forEach((item) => {
+        const row = item.toJSON();
+        worksheet.addRow({
+          identityCardNumber: row.Employee.User.identityCardNumber,
+          firstName: row.Employee.User.firstName,
+          lastName: row.Employee.User.lastName,
+          position: row.Employee.Position.position,
+          novelty: row.Novelty.novelty,
+          createdAt: row.createdAt,
+          endAt: row.endAt,
+          loanValue: row.loanValue,
+          periodicity: row.Periodicity?.periodicity,
+          installment: row.installment,
+          observation: row.observation
+        });
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      return buffer;
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, err);
     }
@@ -67,7 +148,7 @@ export class NoveltyService {
 
   async findNoveltyTypes(): Promise<ResponseEntity> {
     try {
-      const novelties = await Novelty.findAll();
+      const novelties = await models.Novelty.findAll();
       if(novelties instanceof CustomError) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: novelties.message });
       }
@@ -128,7 +209,7 @@ export class NoveltyService {
     }
   }
 
-  private async uploadDocument(document: string, employeeNovelty: EmployeeNovelty, transaction: Transaction) {
+  private async uploadDocument(document: string, employeeNovelty: models.EmployeeNovelty, transaction: Transaction) {
     const identifier = crypto.randomUUID();
     if(employeeNovelty.documentUrl != null) {
       const deleteBlobResponse = await deleteDocument(employeeNovelty.documentUrl.split("/").pop() as string);
@@ -180,7 +261,7 @@ export class NoveltyService {
 
   async findPeriodicities(): Promise<ResponseEntity> {
     try {
-      const periodicities = await Periodicity.findAll();
+      const periodicities = await models.Periodicity.findAll();
       if(periodicities instanceof CustomError) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: periodicities.message });
       }
@@ -208,7 +289,7 @@ export class NoveltyService {
 
   private buildUpdateEmployeeNovelty(
     employeeNovelty: IUpdateEmployeeNovelty, 
-    dbEmployee: EmployeeNovelty
+    dbEmployee: models.EmployeeNovelty
   ) {
     return {
       idNovelty: employeeNovelty.idNovelty ?? dbEmployee.idNovelty,

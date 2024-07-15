@@ -11,6 +11,7 @@ export function noveltyRoutes(app: Application): void {
   routes.get("/v1/novelty/novelties", [verifyToken], noveltyController.findNovelties);
   routes.get("/v1/novelty/types", [verifyToken], noveltyController.findNoveltyTypes);
   routes.get("/v1/novelty/periodicities", [verifyToken], noveltyController.findPeriodicities);
+  routes.get("/v1/novelty/download", [verifyToken], noveltyController.employeeNoveltiesToExcel);
   routes.get("/v1/novelty/:idEmployeeNovelty", [verifyToken], noveltyController.findNoveltyById);
   routes.delete("/v1/novelty/:idEmployeeNovelty", [verifyToken], noveltyController.deleteNovelty);
 
@@ -49,6 +50,28 @@ export function noveltyRoutes(app: Application): void {
    *             schema:
    *               $ref: '#/components/schemas/failedResponse'
    */
+
+  /**
+  * @openapi
+  * /v1/novelty/download:
+  *   get:
+  *     tags: [Novelty]
+  *     summary: Download novelties
+  *     responses:
+  *       '200':
+  *         description: Successful response
+  *         content:
+  *           application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+  *             schema:
+  *               type: string
+  *               format: binary
+  *       '500':
+  *         description: Internal server error
+  *         content:
+  *           application/json:
+  *             schema:
+  *               $ref: "#/components/schemas/failedResponse"
+  */
 
 
   /**
