@@ -17,7 +17,7 @@ class DatabaseConnection {
         port: EnvConfig.DATABASE_PORT,
         dialectOptions: {
           instanceName: "SQLEXPRESS",
-          requestTimeout: 30000,
+          requestTimeout: 50000,
         },
         pool: {
           max: 50,
