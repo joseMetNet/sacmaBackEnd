@@ -66,7 +66,59 @@ export class EmployeeService {
     }
   }
 
+  private async findAll(): Promise<{ rows: Employee[]; count: number }> {
+    const employees: { rows: Employee[]; count: number } =
+      await Employee.findAndCountAll({
+        attributes: {
+          exclude: [
+            "idUser",
+            "idPosition",
+            "idContractType",
+            "idPaymentType",
+            "idArl",
+            "idEps",
+            "idEmergencyContact",
+            "idBankAccount",
+            "idPensionFund",
+            "idCompensationFund",
+          ],
+        },
+        include: [
+          {
+            model: User,
+            attributes: {
+              exclude: [
+                "idRole",
+                "idIdentityCard",
+                "idIdentityCardExpeditionCity",
+              ],
+            },
+            required: false,
+            include: [
+              { model: Role, required: false },
+              { model: IdentityCard, required: false },
+              { model: City, required: false },
+            ],
+          },
+          { model: Position, required: false },
+          { model: ContractType, required: false },
+          { model: PaymentType, required: false },
+          { model: Arl, required: false },
+          { model: Eps, required: false },
+          { model: EmergencyContact, required: false },
+          { model: BankAccount, required: false },
+          { model: PensionFund, required: false },
+          { model: EmployeeRequiredDocument, required: false },
+        ],
+      });
+    return employees;
+  }
+
   async findEmployees(request: IFindEmployeeRequest): Promise<ResponseEntity> {
+    if(request.pageSize===-1) {
+      const employees = await this.findAll();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, employees);
+    }
     let page = 1;
     if (request.page) {
       page = request.page;
