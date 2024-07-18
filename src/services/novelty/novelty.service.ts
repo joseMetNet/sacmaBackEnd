@@ -102,13 +102,14 @@ export class NoveltyService {
           loanValue: row.loanValue,
           periodicity: row.Periodicity?.periodicity,
           installment: row.installment,
-          observation: row.observation
+          observation: row.observation,
         });
       });
 
       const buffer = await workbook.xlsx.writeBuffer();
       return buffer;
     } catch (err: any) {
+      console.log(`error: ${JSON.stringify(err)}`);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, err);
     }
   }

@@ -12,6 +12,7 @@ import { EmergencyContact } from "./emergency-contact.model";
 import { PensionFund } from "./pension-fund.model";
 import { SeverancePay } from "./severance-pay.model";
 import { DataTypes, Model } from "sequelize";
+import { EmployeeNovelty } from "./employee-novelty.model";
 
 export class Employee extends Model {
   declare idEmployee: number;

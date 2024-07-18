@@ -1,4 +1,4 @@
-import { Op, Transaction } from "sequelize";
+import { Op, QueryTypes, Transaction } from "sequelize";
 import { dbConnection } from "../../config";
 import * as ExcelJS from "exceljs";
 import {
@@ -7,26 +7,7 @@ import {
   StatusCode,
   UpdateEmployeeRequest,
 } from "../../interfaces";
-import {
-  Arl,
-  BankAccount,
-  City,
-  CompensationFund,
-  ContractType,
-  EmergencyContact,
-  Employee,
-  EmployeeRequiredDocument,
-  Eps,
-  IdentityCard,
-  PaymentType,
-  PensionFund,
-  Position,
-  RequiredDocument,
-  Role,
-  SeverancePay,
-  State,
-  User,
-} from "../../models";
+import * as models from "../../models";
 import {
   AuthenticationRepository,
   EmployeeRepository,
@@ -66,9 +47,9 @@ export class EmployeeService {
     }
   }
 
-  private async findAll(): Promise<{ rows: Employee[]; count: number }> {
-    const employees: { rows: Employee[]; count: number } =
-      await Employee.findAndCountAll({
+  private async findAll(): Promise<{ rows: models.Employee[]; count: number }> {
+    const employees: { rows: models.Employee[]; count: number } =
+      await models.Employee.findAndCountAll({
         attributes: {
           exclude: [
             "idUser",
@@ -85,7 +66,7 @@ export class EmployeeService {
         },
         include: [
           {
-            model: User,
+            model: models.User,
             attributes: {
               exclude: [
                 "idRole",
@@ -95,20 +76,20 @@ export class EmployeeService {
             },
             required: false,
             include: [
-              { model: Role, required: false },
-              { model: IdentityCard, required: false },
-              { model: City, required: false },
+              { model: models.Role, required: false },
+              { model: models.IdentityCard, required: false },
+              { model: models.City, required: false },
             ],
           },
-          { model: Position, required: false },
-          { model: ContractType, required: false },
-          { model: PaymentType, required: false },
-          { model: Arl, required: false },
-          { model: Eps, required: false },
-          { model: EmergencyContact, required: false },
-          { model: BankAccount, required: false },
-          { model: PensionFund, required: false },
-          { model: EmployeeRequiredDocument, required: false },
+          { model: models.Position, required: false },
+          { model: models.ContractType, required: false },
+          { model: models.PaymentType, required: false },
+          { model: models.Arl, required: false },
+          { model: models.Eps, required: false },
+          { model: models.EmergencyContact, required: false },
+          { model: models.BankAccount, required: false },
+          { model: models.PensionFund, required: false },
+          { model: models.EmployeeRequiredDocument, required: false },
         ],
       });
     return employees;
@@ -131,8 +112,8 @@ export class EmployeeService {
     const offset = (page - 1) * pageSize;
     const filter = this.buildFilter(request);
     try {
-      const employees: { rows: Employee[]; count: number } =
-        await Employee.findAndCountAll({
+      const employees: { rows: models.Employee[]; count: number } =
+        await models.Employee.findAndCountAll({
           attributes: {
             exclude: [
               "idUser",
@@ -149,7 +130,7 @@ export class EmployeeService {
           },
           include: [
             {
-              model: User,
+              model: models.User,
               attributes: {
                 exclude: [
                   "idRole",
@@ -159,21 +140,21 @@ export class EmployeeService {
               },
               required: false,
               include: [
-                { model: Role, required: false },
-                { model: IdentityCard, required: false },
-                { model: City, required: false },
+                { model: models.Role, required: false },
+                { model: models.IdentityCard, required: false },
+                { model: models.City, required: false },
               ],
               where: filter,
             },
-            { model: Position, required: false },
-            { model: ContractType, required: false },
-            { model: PaymentType, required: false },
-            { model: Arl, required: false },
-            { model: Eps, required: false },
-            { model: EmergencyContact, required: false },
-            { model: BankAccount, required: false },
-            { model: PensionFund, required: false },
-            { model: EmployeeRequiredDocument, required: false },
+            { model: models.Position, required: false },
+            { model: models.ContractType, required: false },
+            { model: models.PaymentType, required: false },
+            { model: models.Arl, required: false },
+            { model: models.Eps, required: false },
+            { model: models.EmergencyContact, required: false },
+            { model: models.BankAccount, required: false },
+            { model: models.PensionFund, required: false },
+            { model: models.EmployeeRequiredDocument, required: false },
           ],
           limit: limit,
           offset: offset,
@@ -197,7 +178,7 @@ export class EmployeeService {
   async uploadDocument(request: IUploadDocument, filePath: string) {
     const transaction = await dbConnection.transaction();
     try {
-      const employeeRequiredDocument = await EmployeeRequiredDocument.findOne({
+      const employeeRequiredDocument = await models.EmployeeRequiredDocument.findOne({
         where: {
           idEmployee: request.idEmployee,
           idRequiredDocument: request.idRequiredDocument,
@@ -237,7 +218,7 @@ export class EmployeeService {
           { transaction }
         );
       } else {
-        await EmployeeRequiredDocument.create(
+        await models.EmployeeRequiredDocument.create(
           {
             idEmployee: request.idEmployee,
             idRequiredDocument: request.idRequiredDocument,
@@ -267,7 +248,7 @@ export class EmployeeService {
   ): Promise<ResponseEntity> {
     const transaction = await dbConnection.transaction();
     try {
-      const user = await User.findByPk(employee.idUser);
+      const user = await models.User.findByPk(employee.idUser);
       if (!user) {
         await transaction.rollback();
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
@@ -313,7 +294,7 @@ export class EmployeeService {
       const updatedUser = this.updateUser(employee, user);
       await user.update(updatedUser, { transaction });
 
-      const dbEmployee = await Employee.findOne({
+      const dbEmployee = await models.Employee.findOne({
         where: { idUser: employee.idUser },
         transaction,
       });
@@ -331,7 +312,7 @@ export class EmployeeService {
         const idEmergencyContact = dbEmployee.get(
           "idEmergencyContact"
         ) as number;
-        const emergencyContact = await EmergencyContact.findByPk(
+        const emergencyContact = await models.EmergencyContact.findByPk(
           idEmergencyContact,
           { transaction }
         );
@@ -363,7 +344,7 @@ export class EmployeeService {
 
   private async uploadImage(
     imageProfile: string,
-    user: User,
+    user: models.User,
     transaction: Transaction
   ) {
     const identifier = crypto.randomUUID();
@@ -450,21 +431,21 @@ export class EmployeeService {
   async deleteEmployee(id: number): Promise<ResponseEntity> {
     const transaction = await dbConnection.transaction();
     try {
-      const employee = await Employee.findByPk(id);
+      const employee = await models.Employee.findByPk(id);
       if (!employee) {
         await transaction.rollback();
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
           message: "Employee not found",
         });
       }
-      const user = await User.findByPk(employee.idUser);
+      const user = await models.User.findByPk(employee.idUser);
       if (!user) {
         await transaction.rollback();
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
           message: "User not found",
         });
       }
-      const emergencyContact = await EmergencyContact.findByPk(
+      const emergencyContact = await models.EmergencyContact.findByPk(
         employee.idEmergencyContact
       );
       if (!emergencyContact) {
@@ -491,15 +472,9 @@ export class EmployeeService {
 
   async createExcelFileBuffer() {
     try {
-      const employees = await Employee.findAll({
+      const employees = await models.Employee.findAll({
         include: [
-          { model: User },
-          { model: Eps},
-          { model: PensionFund },
-          { model: CompensationFund },
-          { model: SeverancePay },
-          { model: ContractType },
-          { model: Position },
+          { all: true, required: false }
         ],
       });
       if (employees instanceof CustomError) {
@@ -523,7 +498,28 @@ export class EmployeeService {
         { header: "Fecha inicio contrato", key: "entryDate", width: 20 },
         { header: "Tipo contrato", key: "contractType", width: 20 },
         { header: "Cargo", key: "position", width: 20 },
+        { header: "Ingreso", key: "ingreso", width: 20 },
+        { header: "Novedad", key: "novedad", width: 20 },
+        { header: "Vacación", key: "vacacion", width: 20 },
+        { header: "Permiso", key: "permiso", width: 20 },
+        { header: "Sanción", key: "sancion", width: 20 },
+        { header: "Retiro", key: "retiro", width: 20 },
+        { header: "Incapacitado", key: "incapacitado", width: 20 },
+        { header: "Prestamo", key: "prestamo", width: 20 },
       ];
+
+      const novelties = await dbConnection.query<NoveltySummary>(`
+        SELECT
+          tu.identityCardNumber,
+          tn.novelty,
+          COUNT(1) total
+        FROM mvp1.TB_EmployeeNovelty ten
+        INNER JOIN mvp1.TB_Employee te ON te.idEmployee=ten.idEmployee AND (te.deletedAt IS NULL)
+        INNER JOIN mvp1.TB_Novelty tn ON tn.idNovelty=ten.idNovelty
+        INNER JOIN mvp1.TB_User tu ON tu.idUser=te.idUser AND (tu.deletedAt IS NULL)
+        WHERE ten.deletedAt IS NULL
+        GROUP BY tu.identityCardNumber,  tn.novelty;
+        `, { type: QueryTypes.SELECT });
 
       employees.forEach((employee) => {
         const row = employee.toJSON();
@@ -541,6 +537,14 @@ export class EmployeeService {
           severancePay: row.SeverancePay?.severancePay,
           contractType: row.ContractType?.contractType,
           position: row.Position?.position,
+          ingreso: novelties.filter((item) => item.novelty === "Ingreso" && item.identityCardNumber===row.User?.identityCardNumber).length,
+          novedad: novelties.filter((item) => item.novelty === "Novedad" && item.identityCardNumber===row.User?.identityCardNumber).length,
+          vacacion: novelties.filter((item) => item.novelty === "Vacación" && item.identityCardNumber===row.User?.identityCardNumber).length,
+          permiso: novelties.filter((item) => item.novelty === "Permiso" && item.identityCardNumber===row.User?.identityCardNumber).length,
+          sancion: novelties.filter((item) => item.novelty === "Sanción" && item.identityCardNumber===row.User?.identityCardNumber).length,
+          retiro: novelties.filter((item) => item.novelty === "Retiro" && item.identityCardNumber===row.User?.identityCardNumber).length,
+          incapacitado: novelties.filter((item) => item.novelty === "Incapacitado" && item.identityCardNumber===row.User?.identityCardNumber).length,
+          prestamo: novelties.filter((item) => item.novelty === "Prestamo" && item.identityCardNumber===row.User?.identityCardNumber).length,
         });
       });
 
@@ -554,7 +558,7 @@ export class EmployeeService {
 
   async findCities(): Promise<ResponseEntity> {
     try {
-      const cities = await City.findAll({
+      const cities = await models.City.findAll({
         order: [["city", "ASC"]],
       });
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, cities);
@@ -567,7 +571,7 @@ export class EmployeeService {
 
   async findEps(): Promise<ResponseEntity> {
     try {
-      const eps = await Eps.findAll();
+      const eps = await models.Eps.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, eps);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
@@ -578,7 +582,7 @@ export class EmployeeService {
 
   async findPensionFund(): Promise<ResponseEntity> {
     try {
-      const pensionFund = await PensionFund.findAll();
+      const pensionFund = await models.PensionFund.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, pensionFund);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
@@ -589,7 +593,7 @@ export class EmployeeService {
 
   async findRoles(): Promise<ResponseEntity> {
     try {
-      const roles = await Role.findAll();
+      const roles = await models.Role.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, roles);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
@@ -600,7 +604,7 @@ export class EmployeeService {
 
   async findState(): Promise<ResponseEntity> {
     try {
-      const state = await State.findAll();
+      const state = await models.State.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, state);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
@@ -611,7 +615,7 @@ export class EmployeeService {
 
   async findArls(): Promise<ResponseEntity> {
     try {
-      const arls = await Arl.findAll();
+      const arls = await models.Arl.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, arls);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
@@ -622,7 +626,7 @@ export class EmployeeService {
 
   async findContractTypes(): Promise<ResponseEntity> {
     try {
-      const contractTypes = await ContractType.findAll();
+      const contractTypes = await models.ContractType.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, contractTypes);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
@@ -633,7 +637,7 @@ export class EmployeeService {
 
   async findSeverancePay(): Promise<ResponseEntity> {
     try {
-      const sevenracePay = await SeverancePay.findAll();
+      const sevenracePay = await models.SeverancePay.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, sevenracePay);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
@@ -644,7 +648,7 @@ export class EmployeeService {
 
   async findBanks(): Promise<ResponseEntity> {
     try {
-      const banks = await BankAccount.findAll();
+      const banks = await models.BankAccount.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, banks);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
@@ -655,7 +659,7 @@ export class EmployeeService {
 
   async findPaymentMethods(): Promise<ResponseEntity> {
     try {
-      const paymentMethods = await PaymentType.findAll();
+      const paymentMethods = await models.PaymentType.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, paymentMethods);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
@@ -666,7 +670,7 @@ export class EmployeeService {
 
   async findCompensationFunds(): Promise<ResponseEntity> {
     try {
-      const compensationFunds = await CompensationFund.findAll();
+      const compensationFunds = await models.CompensationFund.findAll();
       return BuildResponse.buildSuccessResponse(
         StatusCode.Ok,
         compensationFunds
@@ -680,7 +684,7 @@ export class EmployeeService {
 
   async findIdentificationTypes(): Promise<ResponseEntity> {
     try {
-      const identificationTypes = await IdentityCard.findAll();
+      const identificationTypes = await models.IdentityCard.findAll();
       return BuildResponse.buildSuccessResponse(
         StatusCode.Ok,
         identificationTypes
@@ -694,7 +698,7 @@ export class EmployeeService {
 
   async findPositions(): Promise<ResponseEntity> {
     try {
-      const positions = await Position.findAll();
+      const positions = await models.Position.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, positions);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
@@ -705,7 +709,7 @@ export class EmployeeService {
 
   async findRequiredDocuments(): Promise<ResponseEntity> {
     try {
-      const requiredDocuments = await RequiredDocument.findAll();
+      const requiredDocuments = await models.RequiredDocument.findAll();
       return BuildResponse.buildSuccessResponse(
         StatusCode.Ok,
         requiredDocuments
@@ -733,7 +737,7 @@ export class EmployeeService {
 
   private updateEmergencyContactRequest(
     employee: UpdateEmployeeRequest,
-    dbEmergencyContact: EmergencyContact
+    dbEmergencyContact: models.EmergencyContact
   ) {
     return {
       firstName:
@@ -746,7 +750,7 @@ export class EmployeeService {
     };
   }
 
-  private updateUser(employee: UpdateEmployeeRequest, dbUser: User) {
+  private updateUser(employee: UpdateEmployeeRequest, dbUser: models.User) {
     return {
       firstName: employee.firstName ?? dbUser.firstName,
       lastName: employee.lastName ?? dbUser.lastName,
@@ -770,7 +774,7 @@ export class EmployeeService {
 
   private updateEmployeeRequest(
     employee: UpdateEmployeeRequest,
-    dbEmployee: Employee
+    dbEmployee: models.Employee
   ) {
     return {
       idPosition: employee.idPosition ?? dbEmployee.idPosition,
@@ -814,6 +818,12 @@ interface IFindEmployeeRequest {
   pageSize?: number;
   firstName?: string;
   identityCardNumber?: string;
+}
+
+interface NoveltySummary {
+  identityCardNumber: string;
+  novelty: string;
+  total: number;
 }
 
 const employeeRepository = new EmployeeRepository();
