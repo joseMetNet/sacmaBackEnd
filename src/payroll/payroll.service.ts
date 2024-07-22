@@ -92,82 +92,27 @@ export class EmployeePayrollService {
   ): Promise<ResponseEntity> {
     const transaction = await dbConnection.transaction();
     try {
-      const dbPayroll = await models.EmployeePayroll.findOne({
-        where: {
-          idEmployee: request.idEmployee,
-          [Op.and]: [
-            {
-              paymentDate: sequelize.where(
-                sequelize.fn(
-                  "YEAR",
-                  sequelize.col("EmployeePayroll.paymentDate")
-                ),
-                sequelize.fn("YEAR", request.paymentDate)
-              ),
-            },
-            {
-              paymentDate: sequelize.where(
-                sequelize.fn(
-                  "MONTH",
-                  sequelize.col("EmployeePayroll.paymentDate")
-                ),
-                sequelize.fn("MONTH", request.paymentDate)
-              ),
-            },
-          ],
-        },
-      });
-
       const identifier = crypto.randomUUID();
 
-      if (!dbPayroll) {
-        const uploadDocumentResponse = await uploadFile(filePath, identifier, "application/pdf", "payroll");
-        if (uploadDocumentResponse instanceof CustomError) {
-          await transaction.rollback();
-          return BuildResponse.buildErrorResponse(
-            uploadDocumentResponse.statusCode,
-            {
-              message: uploadDocumentResponse.message,
-            }
-          );
-        }
-        const url = `https://sacmaback.blob.core.windows.net/payroll/${identifier}.pdf`;
-        await models.EmployeePayroll.create(
+      const uploadDocumentResponse = await uploadFile(filePath, identifier, "application/pdf", "payroll");
+      if (uploadDocumentResponse instanceof CustomError) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(
+          uploadDocumentResponse.statusCode,
           {
-            idEmployee: request.idEmployee,
-            paymentDate: request.paymentDate,
-            documentUrl: url,
-          },
-          { transaction }
-        );
-      } else {
-        const identifier = dbPayroll.documentUrl.split("/").pop() as string;
-        const deleteBlobResponse = await deleteFile(identifier, "payroll");
-        if (deleteBlobResponse instanceof CustomError) {
-          await transaction.rollback();
-          return BuildResponse.buildErrorResponse(StatusCode.BadRequest, {
-            message: deleteBlobResponse.message,
-          });
-        }
-        const uploadDocumentResponse = await uploadFile(filePath, identifier, "application/pdf", "payroll");
-        if (uploadDocumentResponse instanceof CustomError) {
-          await transaction.rollback();
-          return BuildResponse.buildErrorResponse(
-            uploadDocumentResponse.statusCode,
-            {
-              message: uploadDocumentResponse.message,
-            }
-          );
-        }
-        const url = `https://sacmaback.blob.core.windows.net/payroll/${identifier}.pdf`;
-        await dbPayroll.update(
-          {
-            documentUrl: url,
-            paymentData: request.paymentDate,
-          },
-          { transaction }
+            message: uploadDocumentResponse.message,
+          }
         );
       }
+      const url = `https://sacmaback.blob.core.windows.net/payroll/${identifier}.pdf`;
+      await models.EmployeePayroll.create(
+        {
+          idEmployee: request.idEmployee,
+          paymentDate: request.paymentDate,
+          documentUrl: url,
+        },
+        { transaction }
+      );
 
       await transaction.commit();
 
