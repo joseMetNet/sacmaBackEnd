@@ -112,33 +112,12 @@ export class EmployeeService {
     const offset = (page - 1) * pageSize;
     const filter = this.buildFilter(request);
     try {
-      const employees: { rows: models.Employee[]; count: number } =
+      const employees =
         await models.Employee.findAndCountAll({
-          attributes: {
-            exclude: [
-              "idUser",
-              "idPosition",
-              "idContractType",
-              "idPaymentType",
-              "idArl",
-              "idEps",
-              "idEmergencyContact",
-              "idBankAccount",
-              "idPensionFund",
-              "idCompensationFund",
-            ],
-          },
           include: [
             {
               model: models.User,
-              attributes: {
-                exclude: [
-                  "idRole",
-                  "idIdentityCard",
-                  "idIdentityCardExpeditionCity",
-                ],
-              },
-              required: false,
+              required: true,
               include: [
                 { model: models.Role, required: false },
                 { model: models.IdentityCard, required: false },
