@@ -1,20 +1,13 @@
 import { Op } from "sequelize";
-import { dbConnection } from "../../config";
-import {
-  IFindEmployeePayrollRequest,
-  IUpdatePayroll,
-  IUploadPayroll,
-  StatusCode,
-} from "../../interfaces";
-import * as models from "../../models";
-import {
-  EmployeePayrollRepository,
-} from "../../repositories";
-import { CustomError } from "../../utils";
-import { BuildResponse } from "../build-response";
-import { deleteDocument, uploadDocument} from "../helper";
-import { ResponseEntity } from "../interface";
+import { dbConnection } from "../config";
+import { EmployeePayrollRepository } from "./payroll.repository";
+import { ResponseEntity } from "../services/interface";
+import { IFindEmployeePayrollRequest, IUpdatePayroll, IUploadPayroll } from "./payroll.interface";
+import { CustomError, deleteFile, uploadFile } from "../utils";
+import { BuildResponse } from "../services";
+import { StatusCode } from "../interfaces";
 import sequelize from "sequelize";
+import * as models from "../models";
 
 export class EmployeePayrollService {
   constructor(
@@ -93,7 +86,7 @@ export class EmployeePayrollService {
     return employeePayrollFilter;
   }
 
-  async uploadPayroll(
+  async  uploadPayroll(
     request: IUploadPayroll,
     filePath: string
   ): Promise<ResponseEntity> {
@@ -128,10 +121,7 @@ export class EmployeePayrollService {
       const identifier = crypto.randomUUID();
 
       if (!dbPayroll) {
-        const uploadDocumentResponse = await uploadDocument(
-          filePath,
-          identifier
-        );
+        const uploadDocumentResponse = await uploadFile(filePath, identifier, "application/pdf", "payroll");
         if (uploadDocumentResponse instanceof CustomError) {
           await transaction.rollback();
           return BuildResponse.buildErrorResponse(
@@ -141,7 +131,7 @@ export class EmployeePayrollService {
             }
           );
         }
-        const url = `https://sacmaback.blob.core.windows.net/document/${identifier}.pdf`;
+        const url = `https://sacmaback.blob.core.windows.net/payroll/${identifier}.pdf`;
         await models.EmployeePayroll.create(
           {
             idEmployee: request.idEmployee,
@@ -151,19 +141,15 @@ export class EmployeePayrollService {
           { transaction }
         );
       } else {
-        const deleteBlobResponse = await deleteDocument(
-          dbPayroll.documentUrl.split("/").pop() as string
-        );
+        const identifier = dbPayroll.documentUrl.split("/").pop() as string;
+        const deleteBlobResponse = await deleteFile(identifier, "payroll");
         if (deleteBlobResponse instanceof CustomError) {
           await transaction.rollback();
           return BuildResponse.buildErrorResponse(StatusCode.BadRequest, {
             message: deleteBlobResponse.message,
           });
         }
-        const uploadDocumentResponse = await uploadDocument(
-          filePath,
-          identifier
-        );
+        const uploadDocumentResponse = await uploadFile(filePath, identifier, "application/pdf", "payroll");
         if (uploadDocumentResponse instanceof CustomError) {
           await transaction.rollback();
           return BuildResponse.buildErrorResponse(
@@ -173,7 +159,7 @@ export class EmployeePayrollService {
             }
           );
         }
-        const url = `https://sacmaback.blob.core.windows.net/document/${identifier}.pdf`;
+        const url = `https://sacmaback.blob.core.windows.net/payroll/${identifier}.pdf`;
         await dbPayroll.update(
           {
             documentUrl: url,
@@ -221,9 +207,8 @@ export class EmployeePayrollService {
           message: "Payroll not found",
         });
       }
-      const deleteBlobResponse = await deleteDocument(
-        payroll.documentUrl.split("/").pop() as string
-      );
+      const identifier = payroll.documentUrl.split("/").pop() as string;
+      const deleteBlobResponse = await deleteFile(identifier, "payroll");
 
       if (deleteBlobResponse instanceof CustomError) {
         return BuildResponse.buildErrorResponse(deleteBlobResponse.statusCode, {
@@ -258,24 +243,27 @@ export class EmployeePayrollService {
 
       if(filePath) {
         const identifier = crypto.randomUUID();
-        const deleteBlobResponse = await deleteDocument(
-          payroll.documentUrl.split("/").pop() as string
+        const deleteBlobResponse = await deleteFile(
+          payroll.documentUrl.split("/").pop() as string,
+          "payroll"
         );
         if (deleteBlobResponse instanceof CustomError) {
           return BuildResponse.buildErrorResponse(deleteBlobResponse.statusCode, {
             message: deleteBlobResponse.message,
           });
         }
-        const uploadDocumentResponse = await uploadDocument(
+        const uploadDocumentResponse = await uploadFile(
           filePath,
-          identifier
+          identifier,
+          "application/pdf",
+          "payroll"
         );
         if (uploadDocumentResponse instanceof CustomError) {
           return BuildResponse.buildErrorResponse(uploadDocumentResponse.statusCode, {
             message: uploadDocumentResponse.message,
           });
         }
-        const url = `https://sacmaback.blob.core.windows.net/document/${identifier}.pdf`;
+        const url = `https://sacmaback.blob.core.windows.net/payroll/${identifier}.pdf`;
         await payroll.update({
           documentUrl: url,
         });

@@ -5,6 +5,36 @@ import { verifyToken } from "../middlewares";
 export function employeePayrollRoutes(app: Application): void {
   const routes: Router = Router();
 
+  routes.get(
+    "/v1/payroll/find-all", 
+    verifyToken,
+    employeePayrollController.findAll
+  );
+
+  routes.patch(
+    "/v1/payroll",
+    [verifyToken],
+    employeePayrollController.updateById
+  );
+
+  routes.post(
+    "/v1/payroll",
+    [verifyToken],
+    employeePayrollController.uploadPayroll
+  );
+
+  routes.get(
+    "/v1/payroll/:idEmployeePayroll", 
+    [verifyToken], 
+    employeePayrollController.findById
+  );
+  
+  routes.delete(
+    "/v1/payroll/:idEmployeePayroll",
+    [verifyToken],
+    employeePayrollController.deleteById
+  );
+
   /**
    * @openapi
    * /v1/payroll/find-all:
@@ -39,11 +69,6 @@ export function employeePayrollRoutes(app: Application): void {
    *             schema:
    *               $ref: '#/components/schemas/failedResponse'
    */
-  routes.get(
-    "/v1/payroll/find-all", 
-    verifyToken,
-    employeePayrollController.findAll
-  );
 
   /**
    * @openapi
@@ -56,7 +81,7 @@ export function employeePayrollRoutes(app: Application): void {
    *       content:
    *         multipart/form-data:
    *           schema:
-   *             $ref: '#/components/schemas/uploadPayroll'
+   *             $ref: '#/components/schemas/updatePayroll'
    *     responses:
    *       '201':
    *         description: Successful updated payroll
@@ -71,11 +96,6 @@ export function employeePayrollRoutes(app: Application): void {
    *             schema:
    *               $ref: "#/components/schemas/failedResponse"
    */
-  routes.patch(
-    "/v1/payroll",
-    [verifyToken],
-    employeePayrollController.updateById
-  );
 
   /**
    * @openapi
@@ -103,11 +123,6 @@ export function employeePayrollRoutes(app: Application): void {
    *             schema:
    *               $ref: "#/components/schemas/failedResponse"
    */
-  routes.post(
-    "/v1/payroll",
-    [verifyToken],
-    employeePayrollController.uploadPayroll
-  );
 
   /**
    * @openapi
@@ -137,11 +152,6 @@ export function employeePayrollRoutes(app: Application): void {
    *             schema:
    *               $ref: '#/components/schemas/failedResponse'
    */
-  routes.get(
-    "/v1/payroll/:idEmployeePayroll", 
-    [verifyToken], 
-    employeePayrollController.findById
-  );
 
   /**
    * @openapi
@@ -161,11 +171,6 @@ export function employeePayrollRoutes(app: Application): void {
    *             schema:
    *               $ref: "#/components/schemas/failedResponse"
    */
-  routes.delete(
-    "/v1/payroll/:idEmployeePayroll",
-    [verifyToken],
-    employeePayrollController.deleteById
-  );
 
 
   /**

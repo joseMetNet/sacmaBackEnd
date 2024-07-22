@@ -1,5 +1,5 @@
-import { EmployeePayroll } from "../../models";
-import { CustomError } from "../../utils";
+import { EmployeePayroll } from "../models";
+import { CustomError } from "../utils";
 
 export class EmployeePayrollRepository {
   constructor() {}

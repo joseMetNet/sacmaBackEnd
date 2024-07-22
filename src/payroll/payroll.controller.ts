@@ -1,10 +1,10 @@
 import { ZodError } from "zod";
-import { StatusCode, StatusValue } from "../../interfaces";
-import { formatZodError } from "../utils";
+import { StatusCode, StatusValue } from "../interfaces";
+import { formatZodError } from "../controllers/utils";
 import { Request, Response } from "express";
-import { employeePayrollService } from "../../services";
 import * as schemas from "./payroll.schema";
 import { UploadedFile } from "express-fileupload";
+import { employeePayrollService } from "./payroll.service";
 
 class EmployeePayrollController {
   private handleError = (res: Response, error: ZodError): void => {
@@ -21,7 +21,7 @@ class EmployeePayrollController {
   async findAll(req: Request, res: Response): Promise<void> {
     try {
       const request = schemas.findAllPayrollSchema.safeParse(req.query);
-      if(!request.success || !request.data) {
+      if (!request.success || !request.data) {
         res.status(StatusCode.BadRequest)
           .json({
             status: StatusValue.Failed,
@@ -59,7 +59,7 @@ class EmployeePayrollController {
   async uploadPayroll(req: Request, res: Response): Promise<void> {
     try {
       const request = schemas.uploadPayrollSchema.safeParse(req.body);
-      if(!request.success) {
+      if (!request.success) {
         res.status(StatusCode.BadRequest)
           .json({
             status: StatusValue.Failed,
@@ -67,7 +67,7 @@ class EmployeePayrollController {
           });
         return;
       }
-      if(!req.files || !req.files.document) {
+      if (!req.files || !req.files.document) {
         res.status(StatusCode.BadRequest)
           .json({
             status: StatusValue.Failed,
@@ -79,7 +79,7 @@ class EmployeePayrollController {
       const response = await employeePayrollService.uploadPayroll(request.data, payrollPath);
       res.status(response.code)
         .json({ status: response.status, data: response.data });
-    }catch (err: any) {
+    } catch (err: any) {
       res.status(StatusCode.BadRequest)
         .json({
           status: StatusValue.Failed,
@@ -91,7 +91,7 @@ class EmployeePayrollController {
   async deleteById(req: Request, res: Response): Promise<void> {
     try {
       const request = schemas.findPayrollByIdSchema.safeParse(req.params);
-      if(!request.success) {
+      if (!request.success) {
         res.status(StatusCode.BadRequest)
           .json({
             status: StatusValue.Failed,
@@ -114,7 +114,7 @@ class EmployeePayrollController {
   async updateById(req: Request, res: Response): Promise<void> {
     try {
       const request = schemas.updatePayrollSchema.safeParse(req.body);
-      if(!request.success) {
+      if (!request.success) {
         res.status(StatusCode.BadRequest)
           .json({
             status: StatusValue.Failed,
@@ -123,7 +123,7 @@ class EmployeePayrollController {
         return;
       }
 
-      const filePath = (req.files?.document as UploadedFile).tempFilePath ?? undefined ;
+      const filePath = (req.files?.document as UploadedFile).tempFilePath ?? undefined;
 
       const response = await employeePayrollService.updateById(request.data, filePath);
       res.status(response.code)
