@@ -10,7 +10,8 @@ class SupplierRepository {
       nest: true,
       where: filter,
       limit,
-      offset
+      offset,
+      distinct: true
     });
     return suppliers;
   }

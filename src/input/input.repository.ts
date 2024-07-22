@@ -11,7 +11,8 @@ class InputRepository {
       nest: true,
       where: filter,
       limit,
-      offset
+      offset,
+      distinct: true
     });
     return inputs;
   }

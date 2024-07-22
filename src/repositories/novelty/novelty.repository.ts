@@ -118,7 +118,8 @@ export class NoveltyRepository {
           }
         ],
         limit,
-        offset
+        offset,
+        distinct: true
       });
       return novelties;
     }

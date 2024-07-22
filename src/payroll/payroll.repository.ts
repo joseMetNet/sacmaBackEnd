@@ -27,7 +27,8 @@ export class EmployeePayrollRepository {
       const employeePayrolls = await EmployeePayroll.findAndCountAll({
         where: payrollFilter,
         limit,
-        offset
+        offset,
+        distinct: true
       });
       return employeePayrolls;
     }

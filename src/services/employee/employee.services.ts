@@ -91,6 +91,7 @@ export class EmployeeService {
           { model: models.PensionFund, required: false },
           { model: models.EmployeeRequiredDocument, required: false },
         ],
+        distinct: true,
       });
     return employees;
   }
@@ -137,6 +138,7 @@ export class EmployeeService {
           ],
           limit: limit,
           offset: offset,
+          distinct: true,
         });
       const totalItems = employees.count;
       const currentPage = page;
@@ -780,11 +782,11 @@ export class EmployeeService {
       filter = {
         [Op.and]: [
           { firstName: { [Op.substring]: request.firstName } },
-          { identityCardNumber: request.identityCardNumber },
+          { identityCardNumber: { [Op.substring]: request.identityCardNumber} },
         ],
       };
     } else if (request.identityCardNumber) {
-      filter = { identityCardNumber: request.identityCardNumber };
+      filter = { identityCardNumber: { [Op.substring]: request.identityCardNumber} };
     } else if (request.firstName) {
       filter = { firstName: { [Op.substring]: request.firstName } };
     }
