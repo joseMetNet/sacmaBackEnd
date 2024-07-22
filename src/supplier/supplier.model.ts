@@ -96,32 +96,32 @@ Supplier.init({
   },
 }, {
   sequelize: dbConnection,
-  tableName: 'TB_Supplier',
+  tableName: "TB_Supplier",
   timestamps: true,
   paranoid: true
 });
 
 Supplier.hasOne(State, {
-  foreignKey: 'idState',
-  sourceKey: 'idState'
+  foreignKey: "idState",
+  sourceKey: "idState"
 });
 
 Supplier.hasOne(BankAccount, {
-  foreignKey: 'idBankAccount',
-  sourceKey: 'idBankAccount'
+  foreignKey: "idBankAccount",
+  sourceKey: "idBankAccount"
 });
 
 Supplier.hasOne(City, {
-  foreignKey: 'idCity',
-  sourceKey: 'idCity'
+  foreignKey: "idCity",
+  sourceKey: "idCity"
 });
 
 Supplier.hasMany(SupplierContact, {
-  foreignKey: 'idSupplier',
-  sourceKey: 'idSupplier'
+  foreignKey: "idSupplier",
+  sourceKey: "idSupplier"
 });
 
 Supplier.hasMany(SupplierSupplierDocument, {
-  foreignKey: 'idSupplier',
-  sourceKey: 'idSupplier'
+  foreignKey: "idSupplier",
+  sourceKey: "idSupplier"
 });

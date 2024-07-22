@@ -74,7 +74,7 @@ class SupplierService {
 
       const identifier = crypto.randomUUID();
       if (filePath) {
-        await uploadFile(filePath, identifier, 'image/jpg', 'image-profile');
+        await uploadFile(filePath, identifier, "image/jpg", "image-profile");
       }
 
       supplier.imageProfileUrl = `https://sacmaback.blob.core.windows.net/image-profile/${identifier}.png`;
@@ -106,11 +106,11 @@ class SupplierService {
 
       if (filePath) {
         if (supplier.imageProfileUrl) {
-          const identifier = supplier.imageProfileUrl.split('/').pop()!;
-          await deleteFile(identifier, 'image-profile');
+          const identifier = supplier.imageProfileUrl.split("/").pop()!;
+          await deleteFile(identifier, "image-profile");
         }
         const identifier = crypto.randomUUID();
-        await uploadFile(filePath, identifier, 'image/jpg', 'image-profile');
+        await uploadFile(filePath, identifier, "image/jpg", "image-profile");
         supplier.imageProfileUrl = `https://sacmaback.blob.core.windows.net/image-profile/${identifier}.png`;
       }
 
@@ -119,7 +119,7 @@ class SupplierService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, supplier);
     } catch (err: any) {
       await transaction.rollback();
-      console.error('Error updating supplier:', err);
+      console.error("Error updating supplier:", err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -148,15 +148,15 @@ class SupplierService {
 
       await supplier.destroy({ transaction });
       if (supplier.imageProfileUrl) {
-        const identifier = supplier.imageProfileUrl.split('/').pop()!;
-        await deleteFile(identifier, 'image-profile');
+        const identifier = supplier.imageProfileUrl.split("/").pop()!;
+        await deleteFile(identifier, "image-profile");
       }
       await transaction.commit();
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, { data: supplier });
     } catch (err: any) {
       await transaction.rollback();
-      console.error('Error deleting supplier:', err);
+      console.error("Error deleting supplier:", err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -169,7 +169,7 @@ class SupplierService {
       const documentType = await SupplierDocumentType.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, documentType);
     } catch (err: any) {
-      console.error('Error finding document type:', err);
+      console.error("Error finding document type:", err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -232,7 +232,7 @@ class SupplierService {
       });
     } catch (err: any) {
       await transaction.rollback();
-      console.error('Error uploading document:', err);
+      console.error("Error uploading document:", err);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
         message: "Internal server error",
       });
@@ -250,7 +250,7 @@ class SupplierService {
       email: supplier.supplierContactEmail,
       phoneNumber: supplier.supplierContactPhoneNumber,
       position: supplier.supplierContactPosition,
-    }, { transaction })
+    }, { transaction });
   }
 
   async buildSupplier(
