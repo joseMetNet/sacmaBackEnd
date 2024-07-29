@@ -85,7 +85,9 @@ class SupplierService {
       await supplier.save({ transaction });
 
       await transaction.commit();
-      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, supplier);
+
+      const supplierResponse = await supplierRepository.findById(supplier.idSupplier);
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, supplierResponse!);
     }
     catch (err: any) {
       await transaction.rollback();
