@@ -1,7 +1,7 @@
 export interface FindAllDTO {
   page?: number;
   pageSize?: number;
-  socialReason?: string;
+  name?: string;
 }
 
 export interface CreateInputDTO {

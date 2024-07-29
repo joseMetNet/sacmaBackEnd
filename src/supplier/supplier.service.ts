@@ -26,7 +26,11 @@ class SupplierService {
     const offset = (page - 1) * pageSize;
     const filter = this.buildFindAllSupplierFilter(request);
     try {
-      const suppliers = await supplierRepository.findAll(filter, limit, offset);
+      if(request.pageSize === -1) {
+        const suppliers = await supplierRepository.findAll();
+        return BuildResponse.buildSuccessResponse(StatusCode.Ok, { data: suppliers.rows });
+      }
+      const suppliers = await supplierRepository.findAllAndSearch(filter, limit, offset);
       const response = {
         data: suppliers.rows,
         totalItems: suppliers.count,
@@ -68,7 +72,7 @@ class SupplierService {
     try {
       const supplier = await this.buildSupplier(request, transaction);
 
-      if (request.supplierContactName) {
+      if (request.contactInfo) {
         await this.buildContactSupplier(supplier.idSupplier, request, transaction);
       }
 
@@ -81,7 +85,9 @@ class SupplierService {
       await supplier.save({ transaction });
 
       await transaction.commit();
-      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, supplier);
+
+      const supplierResponse = await supplierRepository.findById(supplier.idSupplier);
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, supplierResponse!);
     }
     catch (err: any) {
       await transaction.rollback();
@@ -244,13 +250,16 @@ class SupplierService {
     supplier: dtos.CreateSupplierDTO,
     transaction: Transaction
   ) {
-    return SupplierContact.create({
-      idSupplier: idSupplier,
-      name: supplier.supplierContactName,
-      email: supplier.supplierContactEmail,
-      phoneNumber: supplier.supplierContactPhoneNumber,
-      position: supplier.supplierContactPosition,
-    }, { transaction });
+    return supplier.contactInfo?.map(item => {
+      SupplierContact.create({
+        idSupplier: idSupplier,
+        name: item.supplierContactName,
+        email: item.supplierContactEmail,
+        phoneNumber: item.supplierContactPhoneNumber,
+        position: item.supplierContactPosition,
+
+      }, { transaction });
+    });
   }
 
   async buildSupplier(

@@ -2,7 +2,7 @@ import { Input } from "./input.model";
 
 class InputRepository {
 
-  async findAll(
+  async findAllAndSearch(
     filter: { [key: string]: any },
     limit: number, offset: number
   ): Promise<{ rows: Input[], count: number }> {
@@ -12,6 +12,16 @@ class InputRepository {
       where: filter,
       limit,
       offset,
+      distinct: true
+    });
+    return inputs;
+  }
+
+  async findAll(): 
+  Promise<{ rows: Input[], count: number }> {
+    const inputs = await Input.findAndCountAll({
+      include: [{ all: true }],
+      nest: true,
       distinct: true
     });
     return inputs;
