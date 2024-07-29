@@ -9,7 +9,6 @@ import {
 } from "../../interfaces";
 import * as models from "../../models";
 import {
-  AuthenticationRepository,
   EmployeeRepository,
 } from "../../repositories";
 import { CustomError } from "../../utils";
@@ -19,8 +18,9 @@ import {
   deleteImageProfile,
   uploadDocument,
   uploadImageProfile,
-} from "../helper";
+} from "../../utils/helper";
 import { ResponseEntity } from "../interface";
+import { AuthenticationRepository, Role, User } from "../../authentication";
 
 export class EmployeeService {
   constructor(
@@ -66,7 +66,7 @@ export class EmployeeService {
         },
         include: [
           {
-            model: models.User,
+            model: User,
             attributes: {
               exclude: [
                 "idRole",
@@ -76,7 +76,7 @@ export class EmployeeService {
             },
             required: false,
             include: [
-              { model: models.Role, required: false },
+              { model: Role, required: false },
               { model: models.IdentityCard, required: false },
               { model: models.City, required: false },
             ],
@@ -97,7 +97,7 @@ export class EmployeeService {
   }
 
   async findEmployees(request: IFindEmployeeRequest): Promise<ResponseEntity> {
-    if(request.pageSize===-1) {
+    if (request.pageSize === -1) {
       const employees = await this.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, employees);
     }
@@ -117,10 +117,10 @@ export class EmployeeService {
         await models.Employee.findAndCountAll({
           include: [
             {
-              model: models.User,
+              model: User,
               required: true,
               include: [
-                { model: models.Role, required: false },
+                { model: Role, required: false },
                 { model: models.IdentityCard, required: false },
                 { model: models.City, required: false },
               ],
@@ -229,7 +229,7 @@ export class EmployeeService {
   ): Promise<ResponseEntity> {
     const transaction = await dbConnection.transaction();
     try {
-      const user = await models.User.findByPk(employee.idUser);
+      const user = await User.findByPk(employee.idUser);
       if (!user) {
         await transaction.rollback();
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
@@ -325,7 +325,7 @@ export class EmployeeService {
 
   private async uploadImage(
     imageProfile: string,
-    user: models.User,
+    user: User,
     transaction: Transaction
   ) {
     const identifier = crypto.randomUUID();
@@ -419,7 +419,7 @@ export class EmployeeService {
           message: "Employee not found",
         });
       }
-      const user = await models.User.findByPk(employee.idUser);
+      const user = await User.findByPk(employee.idUser);
       if (!user) {
         await transaction.rollback();
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
@@ -518,14 +518,14 @@ export class EmployeeService {
           severancePay: row.SeverancePay?.severancePay,
           contractType: row.ContractType?.contractType,
           position: row.Position?.position,
-          ingreso: novelties.filter((item) => item.novelty === "Ingreso" && item.identityCardNumber===row.User?.identityCardNumber).length,
-          novedad: novelties.filter((item) => item.novelty === "Novedad" && item.identityCardNumber===row.User?.identityCardNumber).length,
-          vacacion: novelties.filter((item) => item.novelty === "Vacación" && item.identityCardNumber===row.User?.identityCardNumber).length,
-          permiso: novelties.filter((item) => item.novelty === "Permiso" && item.identityCardNumber===row.User?.identityCardNumber).length,
-          sancion: novelties.filter((item) => item.novelty === "Sanción" && item.identityCardNumber===row.User?.identityCardNumber).length,
-          retiro: novelties.filter((item) => item.novelty === "Retiro" && item.identityCardNumber===row.User?.identityCardNumber).length,
-          incapacitado: novelties.filter((item) => item.novelty === "Incapacitado" && item.identityCardNumber===row.User?.identityCardNumber).length,
-          prestamo: novelties.filter((item) => item.novelty === "Prestamo" && item.identityCardNumber===row.User?.identityCardNumber).length,
+          ingreso: novelties.filter((item) => item.novelty === "Ingreso" && item.identityCardNumber === row.User?.identityCardNumber).length,
+          novedad: novelties.filter((item) => item.novelty === "Novedad" && item.identityCardNumber === row.User?.identityCardNumber).length,
+          vacacion: novelties.filter((item) => item.novelty === "Vacación" && item.identityCardNumber === row.User?.identityCardNumber).length,
+          permiso: novelties.filter((item) => item.novelty === "Permiso" && item.identityCardNumber === row.User?.identityCardNumber).length,
+          sancion: novelties.filter((item) => item.novelty === "Sanción" && item.identityCardNumber === row.User?.identityCardNumber).length,
+          retiro: novelties.filter((item) => item.novelty === "Retiro" && item.identityCardNumber === row.User?.identityCardNumber).length,
+          incapacitado: novelties.filter((item) => item.novelty === "Incapacitado" && item.identityCardNumber === row.User?.identityCardNumber).length,
+          prestamo: novelties.filter((item) => item.novelty === "Prestamo" && item.identityCardNumber === row.User?.identityCardNumber).length,
         });
       });
 
@@ -574,7 +574,7 @@ export class EmployeeService {
 
   async findRoles(): Promise<ResponseEntity> {
     try {
-      const roles = await models.Role.findAll();
+      const roles = await Role.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, roles);
     } catch (err: any) {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
@@ -706,7 +706,7 @@ export class EmployeeService {
   async findNoveltiesByEmployee(idEmployee: number): Promise<ResponseEntity> {
     try {
       const novelties = await employeeRepository.findEmployeeNoveltiesByEmployeeId(idEmployee);
-      if(novelties instanceof CustomError) {
+      if (novelties instanceof CustomError) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: novelties.message });
       }
 
@@ -731,7 +731,7 @@ export class EmployeeService {
     };
   }
 
-  private updateUser(employee: UpdateEmployeeRequest, dbUser: models.User) {
+  private updateUser(employee: UpdateEmployeeRequest, dbUser: User) {
     return {
       firstName: employee.firstName ?? dbUser.firstName,
       lastName: employee.lastName ?? dbUser.lastName,
@@ -782,11 +782,11 @@ export class EmployeeService {
       filter = {
         [Op.and]: [
           { firstName: { [Op.substring]: request.firstName } },
-          { identityCardNumber: { [Op.substring]: request.identityCardNumber} },
+          { identityCardNumber: { [Op.substring]: request.identityCardNumber } },
         ],
       };
     } else if (request.identityCardNumber) {
-      filter = { identityCardNumber: { [Op.substring]: request.identityCardNumber} };
+      filter = { identityCardNumber: { [Op.substring]: request.identityCardNumber } };
     } else if (request.firstName) {
       filter = { firstName: { [Op.substring]: request.firstName } };
     }

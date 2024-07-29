@@ -1,7 +1,9 @@
 import { Transaction } from "sequelize";
 import { ICreateEmployeeNovelty } from "../../interfaces/novelty.interface";
-import { Employee, EmployeeNovelty, Novelty, Periodicity, Position, User } from "../../models";
+import { Employee, EmployeeNovelty, Novelty, Periodicity, Position } from "../../models";
 import { CustomError } from "../../utils";
+import { User } from "../../authentication";
+
 
 export class NoveltyRepository {
   constructor() { }

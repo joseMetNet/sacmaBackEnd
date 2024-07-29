@@ -1,13 +1,8 @@
-import { EnvConfig } from "../../config";
-import { CustomError } from "../../utils";
-import { 
-  ChagePasswordRequest, 
-  AuthenticationRequest, 
-  RegisterRequest,
-  UpdateEmployeeRequest, 
-} from "../../interfaces";
-import { RefreshToken } from "../../models";
 import { Transaction } from "sequelize";
+import { EnvConfig } from "../config";
+import { AuthenticationRequest, ChagePasswordRequest, RegisterRequest, UpdateEmployeeRequest } from "../interfaces";
+import { CustomError } from "../utils";
+import { RefreshToken } from "./refresh-token.model";
 
 export class AuthenticationRepository {
   private readonly headers = new Headers();

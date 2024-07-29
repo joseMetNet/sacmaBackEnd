@@ -1,8 +1,8 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
-import { Role } from "./role.model";
-import { IdentityCard } from "./identity-card.model";
-import { City } from "./city.model";
+import { Role } from "../authentication/role.model";
+import { IdentityCard } from "../models/identity-card.model";
+import { City } from "../models/city.model";
 
 export class User extends Model {
   declare idUser: number;

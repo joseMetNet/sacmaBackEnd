@@ -1,16 +1,16 @@
-import {
-  AuthenticationRequest,
-  RegisterRequest,
-  StatusCode,
-} from "../interfaces";
-import { AuthenticationRepository } from "../repositories";
-import { CustomError } from "../utils";
-import { BuildResponse } from "./build-response";
-import { AuthTokenPayload, ResponseEntity } from "./interface";
-import * as helper from "./helper";
-import { EmergencyContact, Employee, User } from "../models";
-import { dbConnection } from "../config";
 import { Transaction } from "sequelize";
+import { dbConnection } from "../config";
+import { AuthenticationRequest, RegisterRequest, StatusCode } from "../interfaces";
+import { BuildResponse } from "../services";
+import { AuthTokenPayload, ResponseEntity } from "../services/interface";
+import { CustomError } from "../utils";
+import { AuthenticationRepository } from "./authentication.repository";
+import { User } from "./user.model";
+import { EmergencyContact, Employee } from "../models";
+import * as helper from "../utils";
+import { Role } from "./role.model";
+import { PermissionRoleModel } from "./permission-role.model";
+import { PermissionModel } from "./permission.model";
 
 export class AuthenticationService {
   constructor(private readonly authRepository: AuthenticationRepository) {
@@ -43,6 +43,8 @@ export class AuthenticationService {
           message: idRefreshToken.message,
         });
       }
+
+      const role = await Role.findByPk(user.idRole);
   
       const payload: AuthTokenPayload = {
         idUser: user.get("idUser"),
@@ -59,6 +61,17 @@ export class AuthenticationService {
         token,
         refreshToken,
         userName: `${user.get("firstName")} ${user.get("lastName")}`,
+        user: {
+          idUser: user.idUser,
+          userName: user.userName,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: {
+            idRole: role!.idRole,
+            roleName: role!.role
+          }
+        }
       });
     } catch (err: any) {
       console.log(err);
@@ -112,6 +125,20 @@ export class AuthenticationService {
         });
       }
 
+      const role = await Role.findByPk(user.idRole);
+      const permissions = await PermissionRoleModel.findAll({
+        where: {
+          idRole: user.idRole,
+        },
+        include: [
+          {
+            model: PermissionModel,
+            attributes: ["permission"],
+            required: true
+          }
+        ]
+      });
+
       const payload: AuthTokenPayload = {
         idUser: user.get("idUser"),
         idRole: user.get("idRole"),
@@ -125,11 +152,24 @@ export class AuthenticationService {
       const token = helper.signAuthToken(payload);
 
       await transaction.commit();
+      console.log(`Response \n ${JSON.stringify(permissions)}`);
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         token,
         refreshToken,
         userName: user.get("firstName") + " " + user.get("lastName"),
+        user: {
+          idUser: user.idUser,
+          userName: user.userName,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: {
+            idRole: role!.idRole,
+            roleName: role!.role
+          },
+          permissions: permissions.map((item) => (item.get("PermissionModel") as PermissionModel).permission),
+        }
       });
     } catch (err: any) {
       console.log(err);

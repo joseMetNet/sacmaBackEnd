@@ -1,15 +1,11 @@
-import { ZodError } from "zod";
-import { StatusCode, StatusValue } from "../../interfaces";
 import { Request, Response } from "express";
-import { formatZodError } from "../utils";
-import {
-  createRefreshTokenSchema,
-  loginSchema,
-  registerSchema,
-  revokeRefreshTokenSchema,
-} from "./authentication-schemas";
-import { authService } from "../../services";
+import { ZodError } from "zod";
+import { formatZodError } from "../controllers/utils";
+import { createRefreshTokenSchema, loginSchema, registerSchema, revokeRefreshTokenSchema } from "./authentication-schemas";
+import { StatusCode, StatusValue } from "../interfaces";
 import { UploadedFile } from "express-fileupload";
+import { authService } from "./authentication.service";
+
 
 class AuthenticationController {
   private handleError = (res: Response, error: ZodError): void => {

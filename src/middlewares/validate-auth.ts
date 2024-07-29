@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
-import { User } from "../models";
-import { AuthenticationRepository } from "../repositories";
 import { StatusValue } from "../interfaces";
+import { AuthenticationRepository, User } from "../authentication";
 
 export async function verifyAuthRequest(req: Request, res: Response, next: NextFunction) {
   const { userName, email } = req.body;

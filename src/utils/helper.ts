@@ -1,6 +1,6 @@
 import { EnvConfig } from "../config";
-import { AuthRefreshTokenPayload, AuthTokenPayload } from "./interface";
-import { CustomError } from "../utils";
+import { AuthRefreshTokenPayload, AuthTokenPayload } from "../services/interface";
+import { CustomError } from ".";
 import {
   BlobServiceClient,
   BlobUploadCommonResponse,
@@ -71,7 +71,7 @@ export async function uploadImageProfile(
   }
 }
 
-export async function deleteImageProfile (
+export async function deleteImageProfile(
   blobName: string
 ): Promise<CustomError | BlobUploadCommonResponse> {
   try {

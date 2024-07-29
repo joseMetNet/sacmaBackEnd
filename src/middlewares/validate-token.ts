@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { RefreshToken, User } from "../models";
 import { EnvConfig } from "../config";
+import { RefreshToken, User } from "../authentication";
 
 function removeBlankAttributes(obj: { [key: string]: any }) {
   const result: { [key: string]: any } = {};
@@ -50,7 +50,7 @@ export async function verifyToken(req: Request, res: Response, next: NextFunctio
       return;
     }
 
-    const { idUser, idRefreshToken } = payload as JwtPayload & { idUser: number; idRefreshToken: number };
+    const { idUser, idRefreshToken, idRole } = payload as JwtPayload & { idUser: number; idRefreshToken: number, idRole: number };
 
     try {
       const user = await User.findOne({ where: { idUser } });
@@ -64,7 +64,8 @@ export async function verifyToken(req: Request, res: Response, next: NextFunctio
         res.status(401).json({ message: "Refresh token not found." });
         return;
       }
-
+      
+      req.user = { idUser, idRole };
       const body = removeBlankAttributes(req.body);
       req.body = body;
 

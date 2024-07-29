@@ -1,5 +1,4 @@
 import { dbConnection } from "../config";
-import { User } from "./user.model";
 import { Position } from "./position.model";
 import { ContractType } from "./contract-type.model";
 import { PaymentType } from "./payment-type.model";
@@ -13,6 +12,7 @@ import { PensionFund } from "./pension-fund.model";
 import { SeverancePay } from "./severance-pay.model";
 import { DataTypes, Model } from "sequelize";
 import { EmployeeNovelty } from "./employee-novelty.model";
+import { User } from "../authentication";
 
 export class Employee extends Model {
   declare idEmployee: number;
