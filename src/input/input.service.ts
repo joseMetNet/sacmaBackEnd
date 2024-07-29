@@ -23,7 +23,11 @@ class InputService {
     const filter = this.buildFindAllInputFilter(request);
 
     try {
-      const suppliers = await inputRepository.findAll(filter, limit, offset);
+      if(pageSize === -1) {
+        const suppliers = await inputRepository.findAll();
+        return BuildResponse.buildSuccessResponse(StatusCode.Ok, {data: suppliers.rows });
+      }
+      const suppliers = await inputRepository.findAllAndSearch(filter, limit, offset);
       const response = {
         data: suppliers.rows,
         totalItems: suppliers.count,
