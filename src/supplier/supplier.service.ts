@@ -26,7 +26,11 @@ class SupplierService {
     const offset = (page - 1) * pageSize;
     const filter = this.buildFindAllSupplierFilter(request);
     try {
-      const suppliers = await supplierRepository.findAll(filter, limit, offset);
+      if(request.pageSize === -1) {
+        const suppliers = await supplierRepository.findAll();
+        return BuildResponse.buildSuccessResponse(StatusCode.Ok, { data: suppliers.rows });
+      }
+      const suppliers = await supplierRepository.findAllAndSearch(filter, limit, offset);
       const response = {
         data: suppliers.rows,
         totalItems: suppliers.count,
