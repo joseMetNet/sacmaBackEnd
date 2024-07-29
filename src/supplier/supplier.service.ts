@@ -72,7 +72,7 @@ class SupplierService {
     try {
       const supplier = await this.buildSupplier(request, transaction);
 
-      if (request.supplierContactName) {
+      if (request.contactInfo) {
         await this.buildContactSupplier(supplier.idSupplier, request, transaction);
       }
 
@@ -248,13 +248,16 @@ class SupplierService {
     supplier: dtos.CreateSupplierDTO,
     transaction: Transaction
   ) {
-    return SupplierContact.create({
-      idSupplier: idSupplier,
-      name: supplier.supplierContactName,
-      email: supplier.supplierContactEmail,
-      phoneNumber: supplier.supplierContactPhoneNumber,
-      position: supplier.supplierContactPosition,
-    }, { transaction });
+    return supplier.contactInfo?.map(item => {
+      SupplierContact.create({
+        idSupplier: idSupplier,
+        name: item.supplierContactName,
+        email: item.supplierContactEmail,
+        phoneNumber: item.supplierContactPhoneNumber,
+        position: item.supplierContactPosition,
+
+      }, { transaction });
+    });
   }
 
   async buildSupplier(

@@ -46,6 +46,7 @@ class SupplierController {
 
   async create(req: Request, res: Response): Promise<void> {
     try {
+      req.body.contactInfo = JSON.parse(req.body.contactInfo);
       const request = createSupplierSchema.safeParse(req.body);
       if (!request.success) {
         res.status(StatusCode.BadRequest)
@@ -59,6 +60,7 @@ class SupplierController {
         ? (req.files.imageProfile as UploadedFile).tempFilePath
         : undefined;
       request.data.imageProfile = filePath;
+      request.data.contactInfo = request.data.contactInfo?.filter(contact => contact != null);
       const response = await supplierService.create(request.data, filePath);
       res
         .status(response.code)

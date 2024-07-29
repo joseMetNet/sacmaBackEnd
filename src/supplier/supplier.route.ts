@@ -415,6 +415,13 @@ export function supplierRoutes(app: Application): void {
  *         observation:
  *           type: string
  *           nullable: true
+ *         contactInfo:
+ *           type: string
+ *           nullable: true
+ * 
+ *     CreateContactSupplier:
+ *       type: object
+ *       properties:
  *         supplierContactName:
  *           type: string
  *           nullable: true
@@ -483,5 +490,5 @@ export function supplierRoutes(app: Application): void {
  *           type: string
  *           nullable: true
  */
-  app.use("/api/", router)
+  app.use("/api/", router);
 }
