@@ -65,7 +65,7 @@ class InputService {
       const inputTypes = await InputType.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, inputTypes);
     } catch (err: any) {
-      console.error('Error finding document type:', err);
+      console.error("Error finding document type:", err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -78,7 +78,7 @@ class InputService {
       const response = await InputUnitOfMeasure.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
     } catch (err: any) {
-      console.error('Error finding document type:', err);
+      console.error("Error finding document type:", err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -98,7 +98,7 @@ class InputService {
       await input.destroy();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Input deleted" });
     } catch (err: any) {
-      console.error('Error finding document type:', err);
+      console.error("Error finding document type:", err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -120,7 +120,7 @@ class InputService {
       });
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, input);
     } catch (err: any) {
-      console.error('Error finding document type:', err);
+      console.error("Error finding document type:", err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -148,7 +148,7 @@ class InputService {
       await input.save();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, input);
     } catch (err: any) {
-      console.error('Error finding document type:', err);
+      console.error("Error finding document type:", err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -162,8 +162,8 @@ class InputService {
       if (key === "name") {
         inputFilter = {
           ...inputFilter,
-          socialReason: {
-            [Op.like]: `%${request.socialReason}%`,
+          name: {
+            [Op.like]: `%${request.name}%`,
           },
         };
       }
