@@ -73,6 +73,9 @@ class SupplierController {
   }
 
   async update(req: Request, res: Response): Promise<void> {
+    if(req.body.contactInfo) {
+      req.body.contactInfo = JSON.parse(req.body.contactInfo);
+    }
     try {
       const request = updateSupplierSchema.safeParse(req.body);
       if (!request.success) {
@@ -122,6 +125,19 @@ class SupplierController {
   async findDocumentTypes(req: Request, res: Response): Promise<void> {
     try {
       const response = await supplierService.findDocumentTypes();
+      res
+        .status(response.code)
+        .json({ status: response.status, data: response.data });
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({ message: err.message });
+    }
+  }
+
+  async findAccountTypes(req: Request, res: Response): Promise<void> {
+    try {
+      const response = await supplierService.findAccountTypes();
       res
         .status(response.code)
         .json({ status: response.status, data: response.data });
