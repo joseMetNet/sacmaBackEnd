@@ -34,7 +34,6 @@ class SupplierService {
       const suppliers = await supplierRepository.findAllAndSearch(filter, limit, offset);
       const rows = suppliers.rows.map(supplier => {
         const supplierContacts = supplier.get("SupplierContacts") as SupplierContact[];
-        console.log(supplierContacts);
         return {
           idSupplier: supplier.idSupplier,
           socialReason: supplier.socialReason,
@@ -63,6 +62,7 @@ class SupplierService {
               supplierContactPosition: contact.position,
             };
           }),
+          SupplierSupplierDocuments: supplier.get("SupplierSupplierDocuments"),
         };
       });
       const response = {
@@ -119,6 +119,7 @@ class SupplierService {
             supplierContactPosition: contact.position,
           };
         }),
+        SupplierSupplierDocuments: supplier.get("SupplierSupplierDocuments"),
       };
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, supplierResponse);
     }
