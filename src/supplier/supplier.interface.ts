@@ -49,6 +49,7 @@ export interface UpdateSupplierDTO {
   accountHolderId?: string;
   paymentMethod?: string;
   observation?: string;
+  contactInfo?: CreateContactSupplierDTO[];
 }
 
 export interface UploadSupplierDocumentDTO {

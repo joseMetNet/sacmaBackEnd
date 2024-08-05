@@ -10,6 +10,7 @@ import { Supplier } from "./supplier.model";
 import { CustomError, deleteFile, uploadFile } from "../utils";
 import { SupplierDocumentType } from "./supplier-document.model";
 import { SupplierSupplierDocument } from "./supplier-supplier-document.model";
+import { AccountType } from "./account-types.model";
 
 class SupplierService {
 
@@ -31,8 +32,41 @@ class SupplierService {
         return BuildResponse.buildSuccessResponse(StatusCode.Ok, { data: suppliers.rows });
       }
       const suppliers = await supplierRepository.findAllAndSearch(filter, limit, offset);
+      const rows = suppliers.rows.map(supplier => {
+        const supplierContacts = supplier.get("SupplierContacts") as SupplierContact[];
+        console.log(supplierContacts);
+        return {
+          idSupplier: supplier.idSupplier,
+          socialReason: supplier.socialReason,
+          nit: supplier.nit,
+          telephone: supplier.telephone,
+          phoneNumber: supplier.phoneNumber,
+          idState: supplier.idState,
+          idCity: supplier.idCity,
+          address: supplier.address,
+          status: supplier.status,
+          imageProfileUrl: supplier.imageProfileUrl,
+          idAccountType: supplier.idAccountType,
+          idBankAccount: supplier.idBankAccount,
+          accountNumber: supplier.accountNumber,
+          accountHolder: supplier.accountHolder,
+          accountHolderId: supplier.accountHolderId,
+          paymentMethod: supplier.paymentMethod,
+          observation: supplier.observation,
+          supplierContact: supplierContacts.map((contact: SupplierContact) => {
+            return {
+              idSupplierContact: contact.idSupplierContact,
+              idSupplier: contact.idSupplier,
+              supplierContactName: contact.name,
+              supplierContactEmail: contact.email,
+              supplierContactPhoneNumber: contact.phoneNumber,
+              supplierContactPosition: contact.position,
+            };
+          }),
+        };
+      });
       const response = {
-        data: suppliers.rows,
+        data: rows,
         totalItems: suppliers.count,
         currentPage: page,
         totalPages: Math.ceil(suppliers.count / limit),
@@ -56,7 +90,37 @@ class SupplierService {
           { message: "Supplier not found" }
         );
       }
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, supplier);
+      const supplierContacts = supplier.get("SupplierContacts") as SupplierContact[];
+      const supplierResponse = {
+        idSupplier: supplier.idSupplier,
+        socialReason: supplier.socialReason,
+        nit: supplier.nit,
+        telephone: supplier.telephone,
+        phoneNumber: supplier.phoneNumber,
+        idState: supplier.idState,
+        idCity: supplier.idCity,
+        address: supplier.address,
+        status: supplier.status,
+        imageProfileUrl: supplier.imageProfileUrl,
+        idAccountType: supplier.idAccountType,
+        idBankAccount: supplier.idBankAccount,
+        accountNumber: supplier.accountNumber,
+        accountHolder: supplier.accountHolder,
+        accountHolderId: supplier.accountHolderId,
+        paymentMethod: supplier.paymentMethod,
+        observation: supplier.observation,
+        supplierContact: supplierContacts.map((contact: SupplierContact) => {
+          return {
+            idSupplierContact: contact.idSupplierContact,
+            idSupplier: contact.idSupplier,
+            supplierContactName: contact.name,
+            supplierContactEmail: contact.email,
+            supplierContactPhoneNumber: contact.phoneNumber,
+            supplierContactPosition: contact.position,
+          };
+        }),
+      };
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, supplierResponse);
     }
     catch (err: any) {
       console.log(err);
@@ -112,17 +176,80 @@ class SupplierService {
 
       if (filePath) {
         if (supplier.imageProfileUrl) {
-          const identifier = supplier.imageProfileUrl.split("/").pop()!;
-          await deleteFile(identifier, "image-profile");
+          const identifier = new URL(supplier.imageProfileUrl).pathname.split("/").pop();
+          const deleteRequest = await deleteFile(identifier!, "image-profile");
+          if(deleteRequest instanceof CustomError) {
+            await transaction.rollback();
+            return BuildResponse.buildErrorResponse(
+              deleteRequest.statusCode,
+              { message: deleteRequest.message }
+            );
+          }
         }
         const identifier = crypto.randomUUID();
-        await uploadFile(filePath, identifier, "image/jpg", "image-profile");
-        supplier.imageProfileUrl = `https://sacmaback.blob.core.windows.net/image-profile/${identifier}.png`;
+        const uploadRequest = await uploadFile(filePath, identifier, "image/jpg", "image-profile");
+        if(uploadRequest instanceof CustomError) {
+          await transaction.rollback();
+          return BuildResponse.buildErrorResponse(
+            uploadRequest.statusCode,
+            { message: uploadRequest.message }
+          );
+        }
+        request.imageProfile = `https://sacmaback.blob.core.windows.net/image-profile/${identifier}.png`;
+      }
+      if(request.contactInfo) {
+        await SupplierContact.destroy({
+          where: { idSupplier: request.idSupplier },
+          transaction
+        });
+        await this.buildContactSupplier(request.idSupplier, request, transaction);
       }
 
       const updateSupplier = this.buildUpdateSupplier(request, supplier);
+      console.log(`updateSupplier ===============>: ${JSON.stringify(updateSupplier)}`);
       await supplier.update(updateSupplier, { transaction });
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, supplier);
+
+      await transaction.commit();
+
+      const supplierDb = await supplierRepository.findById(request.idSupplier);
+      if(!supplierDb) {
+        return BuildResponse.buildErrorResponse(
+          StatusCode.NotFound,
+          { message: "Supplier not found" }
+        );
+      }
+      const supplierContacts = supplier.get("SupplierContacts") as SupplierContact[];
+      const supplierResponse = {
+        idSupplier: supplier.idSupplier,
+        socialReason: supplier.socialReason,
+        nit: supplier.nit,
+        telephone: supplier.telephone,
+        phoneNumber: supplier.phoneNumber,
+        idState: supplier.idState,
+        idCity: supplier.idCity,
+        address: supplier.address,
+        status: supplier.status,
+        imageProfileUrl: supplier.imageProfileUrl,
+        idAccountType: supplier.idAccountType,
+        idBankAccount: supplier.idBankAccount,
+        accountNumber: supplier.accountNumber,
+        accountHolder: supplier.accountHolder,
+        accountHolderId: supplier.accountHolderId,
+        paymentMethod: supplier.paymentMethod,
+        observation: supplier.observation,
+        supplierContact: supplierContacts.map((contact: SupplierContact) => {
+          return {
+            idSupplierContact: contact.idSupplierContact,
+            idSupplier: contact.idSupplier,
+            supplierContactName: contact.name,
+            supplierContactEmail: contact.email,
+            supplierContactPhoneNumber: contact.phoneNumber,
+            supplierContactPosition: contact.position,
+          };
+        }),
+      };
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, supplierResponse);
     } catch (err: any) {
       await transaction.rollback();
       console.error("Error updating supplier:", err);
@@ -174,6 +301,18 @@ class SupplierService {
     try {
       const documentType = await SupplierDocumentType.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, documentType);
+    } catch (err: any) {
+      console.error("Error finding document type:", err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+  async findAccountTypes(): Promise<ResponseEntity> {
+    try {
+      const accountType = await AccountType.findAll();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, accountType);
     } catch (err: any) {
       console.error("Error finding document type:", err);
       return BuildResponse.buildErrorResponse(
@@ -247,7 +386,7 @@ class SupplierService {
 
   async buildContactSupplier(
     idSupplier: number,
-    supplier: dtos.CreateSupplierDTO,
+    supplier: dtos.CreateSupplierDTO | dtos.UpdateSupplierDTO,
     transaction: Transaction
   ) {
     return supplier.contactInfo?.map(item => {
@@ -286,7 +425,7 @@ class SupplierService {
     }, { transaction });
   }
 
-  private async buildUpdateSupplier(
+  private buildUpdateSupplier(
     request: dtos.UpdateSupplierDTO,
     supplierDb: Supplier
   ) {
@@ -296,6 +435,7 @@ class SupplierService {
       telephone: request.telephone ?? supplierDb.telephone,
       phoneNumber: request.phoneNumber ?? supplierDb.phoneNumber,
       idState: request.idState ?? supplierDb.idState,
+      imageProfileUrl: request.imageProfile ?? supplierDb.imageProfileUrl,
       idCity: request.idCity ?? supplierDb.idCity,
       address: request.address ?? supplierDb.address,
       status: request.status ?? supplierDb.status,
