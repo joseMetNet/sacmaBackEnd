@@ -11,6 +11,7 @@ import { CustomError, deleteFile, uploadFile } from "../utils";
 import { SupplierDocumentType } from "./supplier-document.model";
 import { SupplierSupplierDocument } from "./supplier-supplier-document.model";
 import { AccountType } from "./account-types.model";
+import { BankAccount } from "../models";
 
 class SupplierService {
 
@@ -63,6 +64,9 @@ class SupplierService {
             };
           }),
           SupplierSupplierDocuments: supplier.get("SupplierSupplierDocuments"),
+          City: supplier.get("City"),
+          BankAccount: supplier.get("BankAccount"),
+          State: supplier.get("State")
         };
       });
       const response = {
@@ -120,6 +124,9 @@ class SupplierService {
           };
         }),
         SupplierSupplierDocuments: supplier.get("SupplierSupplierDocuments"),
+        City: supplier.get("City"),
+        BankAccount: supplier.get("BankAccount"),
+        State: supplier.get("State")
       };
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, supplierResponse);
     }
