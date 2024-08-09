@@ -100,6 +100,24 @@ class SupplierController {
     }
   }
 
+
+  async download(req: Request, res: Response): Promise<void> {
+    try {
+      const buffer = await supplierService.download();
+      res.setHeader("Content-Disposition", "attachment; filename=\"suppliers.xlsx\"");
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.end(buffer, "binary");
+
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: err.message },
+        });
+    }
+  }
+
   async delete(req: Request, res: Response): Promise<void> {
     try {
       const request = supplierIdSchema.safeParse(req.params);

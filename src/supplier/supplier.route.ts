@@ -113,6 +113,33 @@ export function supplierRoutes(app: Application): void {
   );
 
   /**
+  * @openapi
+  * /v1/suppliers/download:
+  *   get:
+  *     tags: [Supplier]
+  *     summary: Download suppliers
+  *     responses:
+  *       '200':
+  *         description: Successful response
+  *         content:
+  *           application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+  *             schema:
+  *               type: string
+  *               format: binary
+  *       '500':
+  *         description: Internal server error
+  *         content:
+  *           application/json:
+  *             schema:
+  *               $ref: "#/components/schemas/failedResponse"
+  */
+  router.get(
+    "/v1/suppliers/download", 
+    [verifyToken], 
+    supplierController.download
+  );
+
+  /**
    * @openapi
    * /v1/suppliers:
    *   get:

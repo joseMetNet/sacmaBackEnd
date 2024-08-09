@@ -11,7 +11,8 @@ import { CustomError, deleteFile, uploadFile } from "../utils";
 import { SupplierDocumentType } from "./supplier-document.model";
 import { SupplierSupplierDocument } from "./supplier-supplier-document.model";
 import { AccountType } from "./account-types.model";
-import { BankAccount } from "../models";
+import * as ExcelJS from "exceljs";
+import { BankAccount, City, State } from "../models";
 
 class SupplierService {
 
@@ -214,7 +215,6 @@ class SupplierService {
       }
 
       const updateSupplier = this.buildUpdateSupplier(request, supplier);
-      console.log(`updateSupplier ===============>: ${JSON.stringify(updateSupplier)}`);
       await supplier.update(updateSupplier, { transaction });
 
       await transaction.commit();
@@ -261,6 +261,105 @@ class SupplierService {
     } catch (err: any) {
       await transaction.rollback();
       console.error("Error updating supplier:", err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+
+  async download() {
+    try {
+      const suppliers = await supplierRepository.findAll();
+      const rows = suppliers.rows.map(supplier => {
+        const supplierContacts = supplier.get("SupplierContacts") as SupplierContact[];
+        return {
+          idSupplier: supplier.idSupplier,
+          socialReason: supplier.socialReason,
+          nit: supplier.nit,
+          telephone: supplier.telephone,
+          phoneNumber: supplier.phoneNumber,
+          idState: supplier.idState,
+          idCity: supplier.idCity,
+          address: supplier.address,
+          status: supplier.status,
+          imageProfileUrl: supplier.imageProfileUrl,
+          idAccountType: supplier.idAccountType,
+          idBankAccount: supplier.idBankAccount,
+          accountNumber: supplier.accountNumber,
+          accountHolder: supplier.accountHolder,
+          accountHolderId: supplier.accountHolderId,
+          paymentMethod: supplier.paymentMethod,
+          observation: supplier.observation,
+          supplierContact: supplierContacts.map((contact: SupplierContact) => {
+            return {
+              idSupplierContact: contact.idSupplierContact,
+              idSupplier: contact.idSupplier,
+              supplierContactName: contact.name,
+              supplierContactEmail: contact.email,
+              supplierContactPhoneNumber: contact.phoneNumber,
+              supplierContactPosition: contact.position,
+            };
+          }),
+          SupplierSupplierDocuments: supplier.get("SupplierSupplierDocuments"),
+          City: supplier.get("City"),
+          BankAccount: supplier.get("BankAccount"),
+          State: supplier.get("State")
+        };
+      });
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Suppliers");
+
+      worksheet.columns = [
+        { header: "Social Reason", key: "socialReason", width: 30 },
+        { header: "NIT", key: "nit", width: 20 },
+        { header: "Telephone", key: "telephone", width: 20 },
+        { header: "Phone Number", key: "phoneNumber", width: 20 },
+        { header: "State", key: "state", width: 20 },
+        { header: "City", key: "city", width: 20 },
+        { header: "Address", key: "address", width: 20 },
+        { header: "Status", key: "status", width: 20 },
+        { header: "Image Profile", key: "imageProfile", width: 20 },
+        { header: "Account Type", key: "accountType", width: 20 },
+        { header: "Bank Account", key: "bankAccount", width: 20 },
+        { header: "Account Number", key: "accountNumber", width: 20 },
+        { header: "Account Holder", key: "accountHolder", width: 20 },
+        { header: "Account Holder ID", key: "accountHolderId", width: 20 },
+        { header: "Payment Method", key: "paymentMethod", width: 20 },
+        { header: "Observation", key: "observation", width: 20 },
+        { header: "Contact Name", key: "contactInfo", width: 20 },
+      ];
+
+      rows.forEach(supplier => {
+        worksheet.addRow({
+          idSupplier: supplier.idSupplier,
+          socialReason: supplier.socialReason,
+          nit: supplier.nit,
+          telephone: supplier.telephone,
+          phoneNumber: supplier.phoneNumber,
+          state: (supplier.State as State).state ?? null,
+          city: (supplier.City as City).city ?? null,
+          address: supplier.address,
+          status: supplier.status,
+          imageProfile: supplier.imageProfileUrl,
+          bankAccount: (supplier.BankAccount as BankAccount | null)?.bankAccount ?? null,
+          accountNumber: supplier.accountNumber,
+          accountHolder: supplier.accountHolder,
+          accountHolderId: supplier.accountHolderId,
+          paymentMethod: supplier.paymentMethod,
+          observation: supplier.observation,
+          contactInfo: supplier.supplierContact.map((item) => { 
+            return item.supplierContactEmail;
+          }).join(", "),
+        });
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      return buffer;
+
+    } catch (err: any) {
+      console.error("Error downloading suppliers:", err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }

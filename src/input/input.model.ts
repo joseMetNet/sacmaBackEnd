@@ -48,21 +48,21 @@ Input.init({
   }
 }, {
   sequelize: dbConnection,
-  tableName: 'TB_Input',
+  tableName: "TB_Input",
   timestamps: false,
 });
 
 Input.hasOne(InputType, {
-  foreignKey: 'idInputType',
-  sourceKey: 'idInput'
+  foreignKey: "idInputType",
+  sourceKey: "idInputType"
 });
 
 Input.hasOne(Supplier, {
-  foreignKey: 'idSupplier',
-  sourceKey: 'idSupplier'
+  foreignKey: "idSupplier",
+  sourceKey: "idSupplier"
 });
 
 Input.hasOne(InputUnitOfMeasure, {
-  foreignKey: 'idInputUnitOfMeasure',
-  sourceKey: 'idInputUnitOfMeasure'
+  foreignKey: "idInputUnitOfMeasure",
+  sourceKey: "idInputUnitOfMeasure"
 });
