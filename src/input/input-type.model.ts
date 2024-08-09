@@ -17,6 +17,6 @@ InputType.init({
   }
 }, {
   sequelize: dbConnection,
-  tableName: 'TB_InputType',
+  tableName: "TB_InputType",
   timestamps: false,
 });
