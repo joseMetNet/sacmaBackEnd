@@ -8,6 +8,7 @@ export function inputRoutes(app: Application): void {
   router.get("/v1/inputs", [verifyToken], inputController.findAll);
   router.get("/v1/inputs/types", [verifyToken], inputController.findInputTypes);
   router.get("/v1/inputs/units-of-measure", [verifyToken], inputController.findUnitOfMeasures);
+  router.get("/v1/inputs/download", [verifyToken], inputController.download);
   router.get("/v1/inputs/:idInput", [verifyToken], inputController.findById);
   router.delete("/v1/inputs/:idInput", [verifyToken], inputController.delete);
   router.post("/v1/input", [verifyToken], inputController.create);
@@ -155,6 +156,29 @@ export function inputRoutes(app: Application): void {
  *             schema:
  *               $ref: '#/components/schemas/failedResponse'
  */
+
+
+/**
+  * @openapi
+  * /v1/inputs/download:
+  *   get:
+  *     tags: [Input]
+  *     summary: Download inputs
+  *     responses:
+  *       '200':
+  *         description: Successful response
+  *         content:
+  *           application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+  *             schema:
+  *               type: string
+  *               format: binary
+  *       '500':
+  *         description: Internal server error
+  *         content:
+  *           application/json:
+  *             schema:
+  *               $ref: "#/components/schemas/failedResponse"
+  */
 
 /**
  * @openapi

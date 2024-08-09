@@ -7,6 +7,7 @@ import { StatusCode } from "../interfaces";
 import { InputType } from "./input-type.model";
 import { InputUnitOfMeasure } from "./input-unit-of-measure.model";
 import { Input } from "./input.model";
+import * as ExcelJS from "exceljs";
 
 class InputService {
   async findAll(request: dtos.FindAllDTO): Promise<ResponseEntity> {
@@ -151,6 +152,49 @@ class InputService {
       input.price = request.price ?? input.price;
       await input.save();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, input);
+    } catch (err: any) {
+      console.error("Error finding document type:", err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+
+  async download() {
+    try {
+      const inputs = await inputRepository.findAll();
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Inputs");
+
+      worksheet.columns = [
+        { header: "Name", key: "name", width: 32 },
+        { header: "Input Type", key: "inputType", width: 32 },
+        { header: "Code", key: "code", width: 32 },
+        { header: "Unit of Measure", key: "unitOfMeasure", width: 32 },
+        { header: "Cost", key: "cost", width: 32 },
+        { header: "Supplier", key: "supplier", width: 32 },
+        { header: "VAT", key: "vat", width: 32 },
+        { header: "Price", key: "price", width: 32 },
+      ];
+
+      inputs.rows.forEach((item) => {
+        const input = item.toJSON();
+        worksheet.addRow({
+          name: input.name,
+          inputType: input.InputType.inputType ?? null,
+          code: input.code,
+          unitOfMeasure: input.InputUnitOfMeasure.unitOfMeasure ?? null,
+          cost: input.cost,
+          supplier: input.Supplier.socialReason ?? null,
+          vat: input.vat,
+          price: input.price,
+        });
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      return buffer;
     } catch (err: any) {
       console.error("Error finding document type:", err);
       return BuildResponse.buildErrorResponse(

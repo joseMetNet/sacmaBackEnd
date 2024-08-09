@@ -134,6 +134,24 @@ class InputController {
         .json({ message: err.message });
     }
   }
+
+  async download(req: Request, res: Response): Promise<void> {
+    try {
+      const buffer = await inputService.download();
+      res.setHeader("Content-Disposition", "attachment; filename=\"summary.xlsx\"");
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.end(buffer, "binary");
+
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: err.message },
+        });
+    }
+  }
+
 }
 
 const inputController = new InputController();
