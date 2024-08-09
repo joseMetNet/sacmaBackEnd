@@ -11,7 +11,8 @@ class SupplierRepository {
       where: filter,
       limit,
       offset,
-      distinct: true
+      distinct: true,
+      order: [["idSupplier", "DESC"]]
     });
     return suppliers;
   }
@@ -21,7 +22,8 @@ class SupplierRepository {
     const suppliers = await Supplier.findAndCountAll({
       include: [{ all: true }],
       nest: true,
-      distinct: true
+      distinct: true,
+      order: [["idSupplier", "DESC"]]
     });
     return suppliers;
   }

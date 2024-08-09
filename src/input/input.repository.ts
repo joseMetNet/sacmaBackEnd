@@ -12,7 +12,8 @@ class InputRepository {
       where: filter,
       limit,
       offset,
-      distinct: true
+      distinct: true,
+      order: [["idInput", "DESC"]]
     });
     return inputs;
   }
@@ -22,7 +23,8 @@ class InputRepository {
     const inputs = await Input.findAndCountAll({
       include: [{ all: true }],
       nest: true,
-      distinct: true
+      distinct: true,
+      order: [["idInput", "DESC"]]
     });
     return inputs;
   }
