@@ -138,7 +138,7 @@ class InputController {
   async download(req: Request, res: Response): Promise<void> {
     try {
       const buffer = await inputService.download();
-      res.setHeader("Content-Disposition", "attachment; filename=\"summary.xlsx\"");
+      res.setHeader("Content-Disposition", "attachment; filename=\"insumos.xlsx\"");
       res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
       res.end(buffer, "binary");
 

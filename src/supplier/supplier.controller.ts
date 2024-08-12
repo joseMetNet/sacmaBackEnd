@@ -104,7 +104,7 @@ class SupplierController {
   async download(req: Request, res: Response): Promise<void> {
     try {
       const buffer = await supplierService.download();
-      res.setHeader("Content-Disposition", "attachment; filename=\"suppliers.xlsx\"");
+      res.setHeader("Content-Disposition", "attachment; filename=\"proveedores.xlsx\"");
       res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
       res.end(buffer, "binary");
 

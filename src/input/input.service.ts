@@ -169,14 +169,14 @@ class InputService {
       const worksheet = workbook.addWorksheet("Inputs");
 
       worksheet.columns = [
-        { header: "Name", key: "name", width: 32 },
-        { header: "Input Type", key: "inputType", width: 32 },
-        { header: "Code", key: "code", width: 32 },
-        { header: "Unit of Measure", key: "unitOfMeasure", width: 32 },
-        { header: "Cost", key: "cost", width: 32 },
-        { header: "Supplier", key: "supplier", width: 32 },
-        { header: "VAT", key: "vat", width: 32 },
-        { header: "Price", key: "price", width: 32 },
+        { header: "Nombre", key: "name", width: 32 },
+        { header: "Tipo de insumo", key: "inputType", width: 32 },
+        { header: "Código", key: "code", width: 32 },
+        { header: "Unidad de medida", key: "unitOfMeasure", width: 32 },
+        { header: "Costo", key: "cost", width: 32 },
+        { header: "Proveedor", key: "supplier", width: 32 },
+        { header: "IVA", key: "vat", width: 32 },
+        { header: "Precio", key: "price", width: 32 },
       ];
 
       inputs.rows.forEach((item) => {
