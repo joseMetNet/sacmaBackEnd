@@ -30,6 +30,7 @@ export interface UpdateEmployeeRequest {
   emergencyContactkinship?: string;
   idPensionFund?: number;
   idCompensationFund?: number;
+  status?: boolean;
 }
 
 export interface IUploadDocument {

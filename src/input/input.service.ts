@@ -174,9 +174,7 @@ class InputService {
         { header: "Código", key: "code", width: 32 },
         { header: "Unidad de medida", key: "unitOfMeasure", width: 32 },
         { header: "Costo", key: "cost", width: 32 },
-        { header: "Proveedor", key: "supplier", width: 32 },
-        { header: "IVA", key: "vat", width: 32 },
-        { header: "Precio", key: "price", width: 32 },
+        { header: "Proveedor", key: "supplier", width: 32 }
       ];
 
       inputs.rows.forEach((item) => {
@@ -188,8 +186,6 @@ class InputService {
           unitOfMeasure: input.InputUnitOfMeasure.unitOfMeasure ?? null,
           cost: input.cost,
           supplier: input.Supplier.socialReason ?? null,
-          vat: input.vat,
-          price: input.price,
         });
       });
 
