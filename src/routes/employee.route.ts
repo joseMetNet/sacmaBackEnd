@@ -694,6 +694,31 @@ export function employeeRoutes(app: Application): void {
     employeeController.deleteEmployee
   );
 
+  // definition to change the status of an employee
+  /**
+   * @openapi
+   * /v1/employee/{idEmployee}/status:
+   *   patch:
+   *     tags: [Employee]
+   *     summary: Change the status of an employee
+   *     parameters:
+   *       - $ref: "#/components/parameters/idEmployee"
+   *     responses:
+   *       '200':
+   *         description: Successful updated status
+   *       '500':
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/failedResponse"
+   */
+  routes.patch(
+    "/v1/employee/:idEmployee/status",
+    [verifyToken],
+    employeeController.changeEmployeeStatus
+  );
+
   /**
    * @openapi
    * /v1/employee/basic-info:

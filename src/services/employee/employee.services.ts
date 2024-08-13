@@ -323,6 +323,36 @@ export class EmployeeService {
     }
   }
 
+  async changeEmployeeStatus(idEmployee: number): Promise<ResponseEntity> {
+    try {
+      const employee = await models.Employee.findByPk(idEmployee);
+      if (!employee) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
+          message: "Employee not found",
+        });
+      }
+
+      const user = await models.User.findByPk(employee.idUser);
+      if (!user) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
+          message: "User not found",
+        });
+      }
+
+      // Toggle the user status
+      await user.update({ status: !user.status });
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        message: "User status updated successfully",
+      });
+    } catch (err: any) {
+      console.error("Error changing employee status:", err); // Improved logging
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "Internal server error",
+      });
+    }
+  }
+
   private async uploadImage(
     imageProfile: string,
     user: models.User,
@@ -750,6 +780,7 @@ export class EmployeeService {
         employee.idIdentityCardExpeditionCity ??
         dbUser.idIdentityCardExpeditionCity,
       idRole: employee.idRole ?? dbUser.idRole,
+      status: employee.status ?? dbUser.status,
     };
   }
 

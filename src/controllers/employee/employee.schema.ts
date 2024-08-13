@@ -39,6 +39,7 @@ export const updateEmployeeSchema = z.object({
   emergencyContactkinship: z.string().optional(),
   idPensionFund: z.coerce.number().optional(),
   idCompensationFund: z.coerce.number().optional(),
+  status: z.boolean().optional(),
 });
 
 export const querySchema = z.object({

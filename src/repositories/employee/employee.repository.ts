@@ -12,7 +12,7 @@ export class EmployeeRepository {
         include: [
           {
             model: User,
-            attributes: ["firstName", "lastName"],
+            attributes: ["firstName", "lastName", "status"],
             required: true,
             include: [
               {
