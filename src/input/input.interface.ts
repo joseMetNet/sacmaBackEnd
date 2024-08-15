@@ -2,6 +2,7 @@ export interface FindAllDTO {
   page?: number;
   pageSize?: number;
   name?: string;
+  idSupplier?: number;
 }
 
 export interface CreateInputDTO {
@@ -11,7 +12,7 @@ export interface CreateInputDTO {
   idInputUnitOfMeasure: number;
   cost: string;
   idSupplier: number;
-  vat: string;
+  performance: string;
   price: string;
 }
 
@@ -23,6 +24,6 @@ export interface UpdateInputDTO {
   idInputUnitOfMeasure?: number;
   cost?: string;
   idSupplier?: number;
-  vat?: string;
+  performance?: string;
   price?: string;
 }

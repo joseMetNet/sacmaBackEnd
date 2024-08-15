@@ -39,6 +39,11 @@ export function inputRoutes(app: Application): void {
  *         schema:
  *           type: string
  *         description: Name of the input
+ *       - in: query
+ *         name: idSupplier
+ *         schema:
+ *           type: integer
+ *         description: ID of the supplier
  *     responses:
  *       200:
  *         description: A list of inputs
@@ -303,7 +308,7 @@ export function inputRoutes(app: Application): void {
  *           type: string
  *         idSupplier:
  *           type: integer
- *         vat:
+ *         performance:
  *           type: string
  *         price:
  *           type: string
@@ -314,7 +319,7 @@ export function inputRoutes(app: Application): void {
  *         - idInputUnitOfMeasure
  *         - cost
  *         - idSupplier
- *         - vat
+ *         - performance
  *         - price
  *     InputType:
  *       type: object
@@ -345,7 +350,7 @@ export function inputRoutes(app: Application): void {
  *           type: string
  *         idSupplier:
  *           type: integer
- *         vat:
+ *         performance:
  *           type: string
  *         price:
  *           type: string
@@ -356,7 +361,7 @@ export function inputRoutes(app: Application): void {
  *         - idInputUnitOfMeasure
  *         - cost
  *         - idSupplier
- *         - vat
+ *         - performance
  *         - price
  *     InputUpdate:
  *       type: object
@@ -375,7 +380,7 @@ export function inputRoutes(app: Application): void {
  *           type: string
  *         idSupplier:
  *           type: integer
- *         vat:
+ *         performance:
  *           type: string
  *         price:
  *           type: string

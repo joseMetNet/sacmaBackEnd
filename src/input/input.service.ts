@@ -24,9 +24,9 @@ class InputService {
     const filter = this.buildFindAllInputFilter(request);
 
     try {
-      if(pageSize === -1) {
+      if (pageSize === -1) {
         const suppliers = await inputRepository.findAll();
-        return BuildResponse.buildSuccessResponse(StatusCode.Ok, {data: suppliers.rows });
+        return BuildResponse.buildSuccessResponse(StatusCode.Ok, { data: suppliers.rows });
       }
       const suppliers = await inputRepository.findAllAndSearch(filter, limit, offset);
       const response = {
@@ -120,7 +120,7 @@ class InputService {
         idInputUnitOfMeasure: request.idInputUnitOfMeasure,
         cost: request.cost,
         idSupplier: request.idSupplier,
-        vat: request.vat,
+        performance: request.performance,
         price: request.price,
       });
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, input);
@@ -148,7 +148,7 @@ class InputService {
       input.idInputUnitOfMeasure = request.idInputUnitOfMeasure ?? input.idInputUnitOfMeasure;
       input.cost = request.cost ?? input.cost;
       input.idSupplier = request.idSupplier ?? input.idSupplier;
-      input.vat = request.vat ?? input.vat;
+      input.performance = request.performance ?? input.performance;
       input.price = request.price ?? input.price;
       await input.save();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, input);
@@ -174,18 +174,27 @@ class InputService {
         { header: "Código", key: "code", width: 32 },
         { header: "Unidad de medida", key: "unitOfMeasure", width: 32 },
         { header: "Costo", key: "cost", width: 32 },
-        { header: "Proveedor", key: "supplier", width: 32 }
+        { header: "Proveedor", key: "supplier", width: 32 },
+        { header: "Rendimiento", key: "performance", width: 32 },
       ];
 
       inputs.rows.forEach((item) => {
         const input = item.toJSON();
+        let supplier = input.Supplier;
+        if(supplier === null) {
+          supplier = {};
+        }
+        if(Object.getOwnPropertyNames(supplier).filter((key) => key === "socialReason").length === 0) {
+          supplier.socialReason = null;
+        }
         worksheet.addRow({
           name: input.name,
           inputType: input.InputType.inputType ?? null,
           code: input.code,
           unitOfMeasure: input.InputUnitOfMeasure.unitOfMeasure ?? null,
           cost: input.cost,
-          supplier: input.Supplier.socialReason ?? null,
+          supplier: supplier.socialReason? supplier?.socialReason : null,
+          performance: input.performance,
         });
       });
 
@@ -209,6 +218,12 @@ class InputService {
           name: {
             [Op.like]: `%${request.name}%`,
           },
+        };
+      }
+      if(key === "idSupplier") {
+        inputFilter = {
+          ...inputFilter,
+          idSupplier: request.idSupplier,
         };
       }
     }
