@@ -303,7 +303,7 @@ export function inputRoutes(app: Application): void {
  *           type: string
  *         idSupplier:
  *           type: integer
- *         vat:
+ *         performance:
  *           type: string
  *         price:
  *           type: string
@@ -314,7 +314,7 @@ export function inputRoutes(app: Application): void {
  *         - idInputUnitOfMeasure
  *         - cost
  *         - idSupplier
- *         - vat
+ *         - performance
  *         - price
  *     InputType:
  *       type: object
@@ -345,7 +345,7 @@ export function inputRoutes(app: Application): void {
  *           type: string
  *         idSupplier:
  *           type: integer
- *         vat:
+ *         performance:
  *           type: string
  *         price:
  *           type: string
@@ -356,7 +356,7 @@ export function inputRoutes(app: Application): void {
  *         - idInputUnitOfMeasure
  *         - cost
  *         - idSupplier
- *         - vat
+ *         - performance
  *         - price
  *     InputUpdate:
  *       type: object
@@ -375,7 +375,7 @@ export function inputRoutes(app: Application): void {
  *           type: string
  *         idSupplier:
  *           type: integer
- *         vat:
+ *         performance:
  *           type: string
  *         price:
  *           type: string

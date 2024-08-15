@@ -8,6 +8,7 @@ import { InputType } from "./input-type.model";
 import { InputUnitOfMeasure } from "./input-unit-of-measure.model";
 import { Input } from "./input.model";
 import * as ExcelJS from "exceljs";
+import { Supplier } from "../supplier";
 
 class InputService {
   async findAll(request: dtos.FindAllDTO): Promise<ResponseEntity> {
@@ -24,9 +25,9 @@ class InputService {
     const filter = this.buildFindAllInputFilter(request);
 
     try {
-      if(pageSize === -1) {
+      if (pageSize === -1) {
         const suppliers = await inputRepository.findAll();
-        return BuildResponse.buildSuccessResponse(StatusCode.Ok, {data: suppliers.rows });
+        return BuildResponse.buildSuccessResponse(StatusCode.Ok, { data: suppliers.rows });
       }
       const suppliers = await inputRepository.findAllAndSearch(filter, limit, offset);
       const response = {
@@ -120,7 +121,7 @@ class InputService {
         idInputUnitOfMeasure: request.idInputUnitOfMeasure,
         cost: request.cost,
         idSupplier: request.idSupplier,
-        vat: request.vat,
+        performance: request.performance,
         price: request.price,
       });
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, input);
@@ -148,7 +149,7 @@ class InputService {
       input.idInputUnitOfMeasure = request.idInputUnitOfMeasure ?? input.idInputUnitOfMeasure;
       input.cost = request.cost ?? input.cost;
       input.idSupplier = request.idSupplier ?? input.idSupplier;
-      input.vat = request.vat ?? input.vat;
+      input.performance = request.performance ?? input.performance;
       input.price = request.price ?? input.price;
       await input.save();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, input);

@@ -17,7 +17,7 @@ export const createInput = z.object({
   idInputUnitOfMeasure: z.coerce.number(),
   cost: z.string(),
   idSupplier: z.coerce.number(),
-  vat: z.string(),
+  performance: z.string(),
   price: z.string(),
 });
 
@@ -29,6 +29,6 @@ export const updateInput = z.object({
   idInputUnitOfMeasure: z.coerce.number().optional(),
   cost: z.string().optional(),
   idSupplier: z.coerce.number().optional(),
-  vat: z.string().optional(),
+  performance: z.string().optional(),
   price: z.string().optional(),
 });

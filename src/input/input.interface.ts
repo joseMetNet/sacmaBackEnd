@@ -11,7 +11,7 @@ export interface CreateInputDTO {
   idInputUnitOfMeasure: number;
   cost: string;
   idSupplier: number;
-  vat: string;
+  performance: string;
   price: string;
 }
 
@@ -23,6 +23,6 @@ export interface UpdateInputDTO {
   idInputUnitOfMeasure?: number;
   cost?: string;
   idSupplier?: number;
-  vat?: string;
+  performance?: string;
   price?: string;
 }
