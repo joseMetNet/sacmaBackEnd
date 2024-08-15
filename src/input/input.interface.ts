@@ -2,6 +2,7 @@ export interface FindAllDTO {
   page?: number;
   pageSize?: number;
   name?: string;
+  idSupplier?: number;
 }
 
 export interface CreateInputDTO {

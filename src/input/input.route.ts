@@ -39,6 +39,11 @@ export function inputRoutes(app: Application): void {
  *         schema:
  *           type: string
  *         description: Name of the input
+ *       - in: query
+ *         name: idSupplier
+ *         schema:
+ *           type: integer
+ *         description: ID of the supplier
  *     responses:
  *       200:
  *         description: A list of inputs

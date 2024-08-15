@@ -8,7 +8,6 @@ import { InputType } from "./input-type.model";
 import { InputUnitOfMeasure } from "./input-unit-of-measure.model";
 import { Input } from "./input.model";
 import * as ExcelJS from "exceljs";
-import { Supplier } from "../supplier";
 
 class InputService {
   async findAll(request: dtos.FindAllDTO): Promise<ResponseEntity> {
@@ -175,18 +174,27 @@ class InputService {
         { header: "Código", key: "code", width: 32 },
         { header: "Unidad de medida", key: "unitOfMeasure", width: 32 },
         { header: "Costo", key: "cost", width: 32 },
-        { header: "Proveedor", key: "supplier", width: 32 }
+        { header: "Proveedor", key: "supplier", width: 32 },
+        { header: "Rendimiento", key: "performance", width: 32 },
       ];
 
       inputs.rows.forEach((item) => {
         const input = item.toJSON();
+        let supplier = input.Supplier;
+        if(supplier === null) {
+          supplier = {};
+        }
+        if(Object.getOwnPropertyNames(supplier).filter((key) => key === "socialReason").length === 0) {
+          supplier.socialReason = null;
+        }
         worksheet.addRow({
           name: input.name,
           inputType: input.InputType.inputType ?? null,
           code: input.code,
           unitOfMeasure: input.InputUnitOfMeasure.unitOfMeasure ?? null,
           cost: input.cost,
-          supplier: input.Supplier.socialReason ?? null,
+          supplier: supplier.socialReason? supplier?.socialReason : null,
+          performance: input.performance,
         });
       });
 
@@ -210,6 +218,12 @@ class InputService {
           name: {
             [Op.like]: `%${request.name}%`,
           },
+        };
+      }
+      if(key === "idSupplier") {
+        inputFilter = {
+          ...inputFilter,
+          idSupplier: request.idSupplier,
         };
       }
     }

@@ -4,6 +4,7 @@ export const findAll = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
   name: z.string().optional(),
+  idSupplier: z.coerce.number().optional(),
 });
 
 export const idInput = z.object({
