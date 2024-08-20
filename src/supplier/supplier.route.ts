@@ -1,6 +1,8 @@
 import { Application, Router } from "express";
 import { supplierController } from "./supplier.controller";
-import { verifyToken } from "../middlewares";
+import { verifyAuthRequest, verifyToken } from "../middlewares";
+import { check } from "express-validator";
+import checkRole from "../middlewares/check-role";
 
 export function supplierRoutes(app: Application): void {
   const router: Router = Router();
@@ -36,6 +38,10 @@ export function supplierRoutes(app: Application): void {
    */
   router.get(
     "/v1/suppliers/document-types",
+    [
+      verifyToken,
+      checkRole(["CREATE_SUPPLIER", "UPDATE_SUPPLIER"])
+    ],
     supplierController.findDocumentTypes
   );
 

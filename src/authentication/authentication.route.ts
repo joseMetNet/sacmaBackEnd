@@ -166,7 +166,7 @@ export function authenticationRoutes(app: Application): void {
    *  /v1/auth/register:
    *    post:
    *      security: []
-   *      tags: [Authentication Controller]
+   *      tags: [Authentication]
    *      summary: Register a new user
    *      requestBody:
    *        required: true
@@ -211,7 +211,7 @@ export function authenticationRoutes(app: Application): void {
    *  /v1/auth/login:
    *    post:
    *      security: []
-   *      tags: [Authentication Controller]
+   *      tags: [Authentication]
    *      summary: Login a user
    *      requestBody:
    *        required: true
@@ -248,7 +248,7 @@ export function authenticationRoutes(app: Application): void {
    *  /v1/auth/logout:
    *    post:
    *      security: []
-   *      tags: [Authentication Controller]
+   *      tags: [Authentication]
    *      summary: Logout
    *      requestBody:
    *        required: true
@@ -279,7 +279,7 @@ export function authenticationRoutes(app: Application): void {
    *  /v1/auth/refresh-token:
    *    post:
    *      security: []
-   *      tags: [Authentication Controller]
+   *      tags: [Authentication]
    *      summary: Refresh token
    *      requestBody:
    *        required: true

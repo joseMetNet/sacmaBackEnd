@@ -332,7 +332,7 @@ export class EmployeeService {
         });
       }
 
-      const user = await models.User.findByPk(employee.idUser);
+      const user = await User.findByPk(employee.idUser);
       if (!user) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
           message: "User not found",

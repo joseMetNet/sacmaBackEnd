@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { EnvConfig } from "../config";
 import { RefreshToken, User } from "../authentication";
+import { StatusCode, StatusValue } from "../interfaces";
 
 function removeBlankAttributes(obj: { [key: string]: any }) {
   const result: { [key: string]: any } = {};
@@ -55,24 +56,46 @@ export async function verifyToken(req: Request, res: Response, next: NextFunctio
     try {
       const user = await User.findOne({ where: { idUser } });
       if (!user) {
-        res.status(401).json({ message: "User not found." });
+        res
+          .status(StatusCode.Forbidden)
+          .json({ 
+            status: StatusValue.Failed,
+            data: {
+              message: "Access forbidden"
+            }
+          });
         return;
       }
 
       const refreshToken = await RefreshToken.findOne({ where: { idRefreshToken, idUser } });
       if (!refreshToken) {
-        res.status(401).json({ message: "Refresh token not found." });
+        res
+          .status(StatusCode.Forbidden)
+          .json({ 
+            status: StatusValue.Failed,
+            data: {
+              message: "Access forbidden"
+            }
+          });
         return;
       }
       
-      req.user = { idUser, idRole };
+      req.body.userLogged = { idUser, idRole };
       const body = removeBlankAttributes(req.body);
       req.body = body;
 
       next();
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: "Internal server error." });
+    } catch (err: any) {
+      console.error(err);
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({ 
+          status: StatusValue.Failed,
+          data: {
+            message: err
+          }
+        });
+      return;
     }
   });
 }
