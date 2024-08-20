@@ -41,6 +41,40 @@ export function supplierRoutes(app: Application): void {
 
   /**
    * @openapi
+   * /v1/suppliers/account-types:
+   *   get:
+   *     tags: [Supplier]
+   *     summary: find account types for providers
+   *     description: Find all account types for providers
+   *     responses:
+   *       200:
+   *         description: A list of account types
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 $ref: '#/components/schemas/SupplierDocument'
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Not found
+   *       500:
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/failedResponse'
+   */
+  router.get(
+    "/v1/suppliers/account-types",
+    supplierController.findAccountTypes
+  );
+
+  /**
+   * @openapi
    * /v1/suppliers/upload-document:
    *   post:
    *     tags: [Supplier]
@@ -76,6 +110,33 @@ export function supplierRoutes(app: Application): void {
     "/v1/suppliers/upload-document",
     [verifyToken],
     supplierController.uploadRequiredDocument
+  );
+
+  /**
+  * @openapi
+  * /v1/suppliers/download:
+  *   get:
+  *     tags: [Supplier]
+  *     summary: Download suppliers
+  *     responses:
+  *       '200':
+  *         description: Successful response
+  *         content:
+  *           application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+  *             schema:
+  *               type: string
+  *               format: binary
+  *       '500':
+  *         description: Internal server error
+  *         content:
+  *           application/json:
+  *             schema:
+  *               $ref: "#/components/schemas/failedResponse"
+  */
+  router.get(
+    "/v1/suppliers/download", 
+    [verifyToken], 
+    supplierController.download
   );
 
   /**
@@ -415,6 +476,13 @@ export function supplierRoutes(app: Application): void {
  *         observation:
  *           type: string
  *           nullable: true
+ *         contactInfo:
+ *           type: string
+ *           nullable: true
+ * 
+ *     CreateContactSupplier:
+ *       type: object
+ *       properties:
  *         supplierContactName:
  *           type: string
  *           nullable: true
@@ -460,7 +528,7 @@ export function supplierRoutes(app: Application): void {
  *           nullable: true
  *         imageProfile:
  *           type: string
- *           nullable: true
+ *           format: binary
  *         idAccountType:
  *           type: integer
  *           nullable: true
@@ -482,6 +550,9 @@ export function supplierRoutes(app: Application): void {
  *         observation:
  *           type: string
  *           nullable: true
+ *         contactInfo:
+ *           type: string
+ *           nullable: true
  */
-  app.use("/api/", router)
+  app.use("/api/", router);
 }

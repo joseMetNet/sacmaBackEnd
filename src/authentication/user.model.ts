@@ -19,6 +19,7 @@ export class User extends Model {
   declare identityCardExpeditionDate: string;
   declare idRole: number;
   declare imageProfileUrl: string;
+  declare status: boolean;
 }
 
 User.init({
@@ -79,6 +80,11 @@ User.init({
   imageProfileUrl: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  status: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
   }
 }, {
   sequelize: dbConnection,

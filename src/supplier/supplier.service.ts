@@ -10,6 +10,9 @@ import { Supplier } from "./supplier.model";
 import { CustomError, deleteFile, uploadFile } from "../utils";
 import { SupplierDocumentType } from "./supplier-document.model";
 import { SupplierSupplierDocument } from "./supplier-supplier-document.model";
+import { AccountType } from "./account-types.model";
+import * as ExcelJS from "exceljs";
+import { BankAccount, City, State } from "../models";
 
 class SupplierService {
 
@@ -26,9 +29,49 @@ class SupplierService {
     const offset = (page - 1) * pageSize;
     const filter = this.buildFindAllSupplierFilter(request);
     try {
-      const suppliers = await supplierRepository.findAll(filter, limit, offset);
+      if(request.pageSize === -1) {
+        const suppliers = await supplierRepository.findAll();
+        return BuildResponse.buildSuccessResponse(StatusCode.Ok, { data: suppliers.rows });
+      }
+      const suppliers = await supplierRepository.findAllAndSearch(filter, limit, offset);
+      const rows = suppliers.rows.map(supplier => {
+        const supplierContacts = supplier.get("SupplierContacts") as SupplierContact[];
+        return {
+          idSupplier: supplier.idSupplier,
+          socialReason: supplier.socialReason,
+          nit: supplier.nit,
+          telephone: supplier.telephone,
+          phoneNumber: supplier.phoneNumber,
+          idState: supplier.idState,
+          idCity: supplier.idCity,
+          address: supplier.address,
+          status: supplier.status,
+          imageProfileUrl: supplier.imageProfileUrl,
+          idAccountType: supplier.idAccountType,
+          idBankAccount: supplier.idBankAccount,
+          accountNumber: supplier.accountNumber,
+          accountHolder: supplier.accountHolder,
+          accountHolderId: supplier.accountHolderId,
+          paymentMethod: supplier.paymentMethod,
+          observation: supplier.observation,
+          supplierContact: supplierContacts.map((contact: SupplierContact) => {
+            return {
+              idSupplierContact: contact.idSupplierContact,
+              idSupplier: contact.idSupplier,
+              supplierContactName: contact.name,
+              supplierContactEmail: contact.email,
+              supplierContactPhoneNumber: contact.phoneNumber,
+              supplierContactPosition: contact.position,
+            };
+          }),
+          SupplierSupplierDocuments: supplier.get("SupplierSupplierDocuments"),
+          City: supplier.get("City"),
+          BankAccount: supplier.get("BankAccount"),
+          State: supplier.get("State")
+        };
+      });
       const response = {
-        data: suppliers.rows,
+        data: rows,
         totalItems: suppliers.count,
         currentPage: page,
         totalPages: Math.ceil(suppliers.count / limit),
@@ -52,7 +95,41 @@ class SupplierService {
           { message: "Supplier not found" }
         );
       }
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, supplier);
+      const supplierContacts = supplier.get("SupplierContacts") as SupplierContact[];
+      const supplierResponse = {
+        idSupplier: supplier.idSupplier,
+        socialReason: supplier.socialReason,
+        nit: supplier.nit,
+        telephone: supplier.telephone,
+        phoneNumber: supplier.phoneNumber,
+        idState: supplier.idState,
+        idCity: supplier.idCity,
+        address: supplier.address,
+        status: supplier.status,
+        imageProfileUrl: supplier.imageProfileUrl,
+        idAccountType: supplier.idAccountType,
+        idBankAccount: supplier.idBankAccount,
+        accountNumber: supplier.accountNumber,
+        accountHolder: supplier.accountHolder,
+        accountHolderId: supplier.accountHolderId,
+        paymentMethod: supplier.paymentMethod,
+        observation: supplier.observation,
+        supplierContact: supplierContacts.map((contact: SupplierContact) => {
+          return {
+            idSupplierContact: contact.idSupplierContact,
+            idSupplier: contact.idSupplier,
+            supplierContactName: contact.name,
+            supplierContactEmail: contact.email,
+            supplierContactPhoneNumber: contact.phoneNumber,
+            supplierContactPosition: contact.position,
+          };
+        }),
+        SupplierSupplierDocuments: supplier.get("SupplierSupplierDocuments"),
+        City: supplier.get("City"),
+        BankAccount: supplier.get("BankAccount"),
+        State: supplier.get("State")
+      };
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, supplierResponse);
     }
     catch (err: any) {
       console.log(err);
@@ -68,7 +145,7 @@ class SupplierService {
     try {
       const supplier = await this.buildSupplier(request, transaction);
 
-      if (request.supplierContactName) {
+      if (request.contactInfo) {
         await this.buildContactSupplier(supplier.idSupplier, request, transaction);
       }
 
@@ -81,7 +158,9 @@ class SupplierService {
       await supplier.save({ transaction });
 
       await transaction.commit();
-      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, supplier);
+
+      const supplierResponse = await supplierRepository.findById(supplier.idSupplier);
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, supplierResponse!);
     }
     catch (err: any) {
       await transaction.rollback();
@@ -106,20 +185,181 @@ class SupplierService {
 
       if (filePath) {
         if (supplier.imageProfileUrl) {
-          const identifier = supplier.imageProfileUrl.split("/").pop()!;
-          await deleteFile(identifier, "image-profile");
+          const identifier = new URL(supplier.imageProfileUrl).pathname.split("/").pop();
+          const deleteRequest = await deleteFile(identifier!, "image-profile");
+          if(deleteRequest instanceof CustomError) {
+            await transaction.rollback();
+            return BuildResponse.buildErrorResponse(
+              deleteRequest.statusCode,
+              { message: deleteRequest.message }
+            );
+          }
         }
         const identifier = crypto.randomUUID();
-        await uploadFile(filePath, identifier, "image/jpg", "image-profile");
-        supplier.imageProfileUrl = `https://sacmaback.blob.core.windows.net/image-profile/${identifier}.png`;
+        const uploadRequest = await uploadFile(filePath, identifier, "image/jpg", "image-profile");
+        if(uploadRequest instanceof CustomError) {
+          await transaction.rollback();
+          return BuildResponse.buildErrorResponse(
+            uploadRequest.statusCode,
+            { message: uploadRequest.message }
+          );
+        }
+        request.imageProfile = `https://sacmaback.blob.core.windows.net/image-profile/${identifier}.png`;
+      }
+      if(request.contactInfo) {
+        await SupplierContact.destroy({
+          where: { idSupplier: request.idSupplier },
+          transaction
+        });
+        await this.buildContactSupplier(request.idSupplier, request, transaction);
       }
 
       const updateSupplier = this.buildUpdateSupplier(request, supplier);
       await supplier.update(updateSupplier, { transaction });
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, supplier);
+
+      await transaction.commit();
+
+      const supplierDb = await supplierRepository.findById(request.idSupplier);
+      if(!supplierDb) {
+        return BuildResponse.buildErrorResponse(
+          StatusCode.NotFound,
+          { message: "Supplier not found" }
+        );
+      }
+      const supplierContacts = supplier.get("SupplierContacts") as SupplierContact[];
+      const supplierResponse = {
+        idSupplier: supplier.idSupplier,
+        socialReason: supplier.socialReason,
+        nit: supplier.nit,
+        telephone: supplier.telephone,
+        phoneNumber: supplier.phoneNumber,
+        idState: supplier.idState,
+        idCity: supplier.idCity,
+        address: supplier.address,
+        status: supplier.status,
+        imageProfileUrl: supplier.imageProfileUrl,
+        idAccountType: supplier.idAccountType,
+        idBankAccount: supplier.idBankAccount,
+        accountNumber: supplier.accountNumber,
+        accountHolder: supplier.accountHolder,
+        accountHolderId: supplier.accountHolderId,
+        paymentMethod: supplier.paymentMethod,
+        observation: supplier.observation,
+        supplierContact: supplierContacts.map((contact: SupplierContact) => {
+          return {
+            idSupplierContact: contact.idSupplierContact,
+            idSupplier: contact.idSupplier,
+            supplierContactName: contact.name,
+            supplierContactEmail: contact.email,
+            supplierContactPhoneNumber: contact.phoneNumber,
+            supplierContactPosition: contact.position,
+          };
+        }),
+      };
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, supplierResponse);
     } catch (err: any) {
       await transaction.rollback();
       console.error("Error updating supplier:", err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+
+  async download() {
+    try {
+      const suppliers = await supplierRepository.findAll();
+      const rows = suppliers.rows.map(supplier => {
+        const supplierContacts = supplier.get("SupplierContacts") as SupplierContact[];
+        return {
+          idSupplier: supplier.idSupplier,
+          socialReason: supplier.socialReason,
+          nit: supplier.nit,
+          telephone: supplier.telephone,
+          phoneNumber: supplier.phoneNumber,
+          idState: supplier.idState,
+          idCity: supplier.idCity,
+          address: supplier.address,
+          status: supplier.status,
+          imageProfileUrl: supplier.imageProfileUrl,
+          idAccountType: supplier.idAccountType,
+          idBankAccount: supplier.idBankAccount,
+          accountNumber: supplier.accountNumber,
+          accountHolder: supplier.accountHolder,
+          accountHolderId: supplier.accountHolderId,
+          paymentMethod: supplier.paymentMethod,
+          observation: supplier.observation,
+          supplierContact: supplierContacts.map((contact: SupplierContact) => {
+            return {
+              idSupplierContact: contact.idSupplierContact,
+              idSupplier: contact.idSupplier,
+              supplierContactName: contact.name,
+              supplierContactEmail: contact.email,
+              supplierContactPhoneNumber: contact.phoneNumber,
+              supplierContactPosition: contact.position,
+            };
+          }),
+          SupplierSupplierDocuments: supplier.get("SupplierSupplierDocuments"),
+          City: supplier.get("City"),
+          BankAccount: supplier.get("BankAccount"),
+          State: supplier.get("State")
+        };
+      });
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Suppliers");
+
+      worksheet.columns = [
+        { header: "Nombre", key: "socialReason", width: 30 },
+        { header: "NIT", key: "nit", width: 20 },
+        { header: "Teléfono", key: "telephone", width: 20 },
+        { header: "Número de celular", key: "phoneNumber", width: 20 },
+        { header: "Departamento", key: "state", width: 20 },
+        { header: "Ciudad", key: "city", width: 20 },
+        { header: "Dirección", key: "address", width: 20 },
+        { header: "Estado", key: "status", width: 20 },
+        { header: "Imagen de perfil", key: "imageProfile", width: 20 },
+        { header: "Tipo de cuenta", key: "accountType", width: 20 },
+        { header: "Banco", key: "bankAccount", width: 20 },
+        { header: "Número de cuenta", key: "accountNumber", width: 20 },
+        { header: "Titular de la cuenta", key: "accountHolder", width: 20 },
+        { header: "Identificación titular de cuenta", key: "accountHolderId", width: 20 },
+        { header: "Método de pago", key: "paymentMethod", width: 20 },
+        { header: "Observación", key: "observation", width: 20 },
+        { header: "Correos de contacto", key: "contactInfo", width: 20 },
+      ];
+
+      rows.forEach(supplier => {
+        worksheet.addRow({
+          idSupplier: supplier.idSupplier,
+          socialReason: supplier.socialReason,
+          nit: supplier.nit,
+          telephone: supplier.telephone,
+          phoneNumber: supplier.phoneNumber,
+          state: (supplier.State as State).state ?? null,
+          city: (supplier.City as City).city ?? null,
+          address: supplier.address,
+          status: supplier.status,
+          imageProfile: supplier.imageProfileUrl,
+          bankAccount: (supplier.BankAccount as BankAccount | null)?.bankAccount ?? null,
+          accountNumber: supplier.accountNumber,
+          accountHolder: supplier.accountHolder,
+          accountHolderId: supplier.accountHolderId,
+          paymentMethod: supplier.paymentMethod,
+          observation: supplier.observation,
+          contactInfo: supplier.supplierContact.map((item) => { 
+            return item.supplierContactEmail;
+          }).join(", "),
+        });
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      return buffer;
+
+    } catch (err: any) {
+      console.error("Error downloading suppliers:", err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -168,6 +408,18 @@ class SupplierService {
     try {
       const documentType = await SupplierDocumentType.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, documentType);
+    } catch (err: any) {
+      console.error("Error finding document type:", err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+  async findAccountTypes(): Promise<ResponseEntity> {
+    try {
+      const accountType = await AccountType.findAll();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, accountType);
     } catch (err: any) {
       console.error("Error finding document type:", err);
       return BuildResponse.buildErrorResponse(
@@ -241,16 +493,19 @@ class SupplierService {
 
   async buildContactSupplier(
     idSupplier: number,
-    supplier: dtos.CreateSupplierDTO,
+    supplier: dtos.CreateSupplierDTO | dtos.UpdateSupplierDTO,
     transaction: Transaction
   ) {
-    return SupplierContact.create({
-      idSupplier: idSupplier,
-      name: supplier.supplierContactName,
-      email: supplier.supplierContactEmail,
-      phoneNumber: supplier.supplierContactPhoneNumber,
-      position: supplier.supplierContactPosition,
-    }, { transaction });
+    return supplier.contactInfo?.map(item => {
+      SupplierContact.create({
+        idSupplier: idSupplier,
+        name: item.supplierContactName,
+        email: item.supplierContactEmail,
+        phoneNumber: item.supplierContactPhoneNumber,
+        position: item.supplierContactPosition,
+
+      }, { transaction });
+    });
   }
 
   async buildSupplier(
@@ -277,7 +532,7 @@ class SupplierService {
     }, { transaction });
   }
 
-  private async buildUpdateSupplier(
+  private buildUpdateSupplier(
     request: dtos.UpdateSupplierDTO,
     supplierDb: Supplier
   ) {
@@ -287,6 +542,7 @@ class SupplierService {
       telephone: request.telephone ?? supplierDb.telephone,
       phoneNumber: request.phoneNumber ?? supplierDb.phoneNumber,
       idState: request.idState ?? supplierDb.idState,
+      imageProfileUrl: request.imageProfile ?? supplierDb.imageProfileUrl,
       idCity: request.idCity ?? supplierDb.idCity,
       address: request.address ?? supplierDb.address,
       status: request.status ?? supplierDb.status,

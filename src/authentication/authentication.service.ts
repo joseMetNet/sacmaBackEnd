@@ -91,33 +91,38 @@ export class AuthenticationService {
   async login(request: AuthenticationRequest): Promise<ResponseEntity> {
     const transaction = await dbConnection.transaction();
     try {
-      const userExists = await this.authRepository.findUserByEmail(
-        request.email
-      );
+      const userExists = await this.authRepository.findUserByEmail(request.email);
+    
       if (userExists instanceof CustomError) {
         return BuildResponse.buildErrorResponse(userExists.statusCode, {
           message: userExists.message,
         });
       }
-      const authStatus = await this.authRepository.authenticationRequest(
-        request
-      );
+
+      const authStatus = await this.authRepository.authenticationRequest(request);
+    
       if (authStatus instanceof CustomError) {
         return BuildResponse.buildErrorResponse(authStatus.statusCode, {
           error: authStatus.message,
         });
       }
+
       const user = await User.findOne({ where: { userName: request.email } });
+    
       if (!user) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
           message: "User not found",
         });
       }
 
-      const idRefreshToken = await this.insertRefreshToken(
-        user.get("idUser"),
-        transaction
-      );
+      if (!user.get("status")) { // simplified check
+        return BuildResponse.buildErrorResponse(StatusCode.Unauthorized, {
+          message: "User is inactive",
+        });
+      }
+
+      const idRefreshToken = await this.insertRefreshToken(user.get("idUser"), transaction);
+    
       if (idRefreshToken instanceof CustomError) {
         await transaction.rollback();
         return BuildResponse.buildErrorResponse(idRefreshToken.statusCode, {
@@ -149,6 +154,7 @@ export class AuthenticationService {
         idUser: user.get("idUser"),
         idRefreshToken,
       });
+
       const token = helper.signAuthToken(payload);
 
       await transaction.commit();
@@ -172,18 +178,21 @@ export class AuthenticationService {
         }
       });
     } catch (err: any) {
-      console.log(err);
       await transaction.rollback();
-      if(err instanceof CustomError) {
+      console.error("Login error:", err); // improved logging
+
+      if (err instanceof CustomError) {
         return BuildResponse.buildErrorResponse(err.statusCode, {
           message: err.message,
         });
       }
+
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
         message: "Internal server error",
       });
     }
   }
+
 
   async createRefreshToken(idUser: number) {
     const transaction = await dbConnection.transaction();

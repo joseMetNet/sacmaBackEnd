@@ -1,7 +1,7 @@
 import { Supplier } from "./supplier.model";
 
 class SupplierRepository {
-  async findAll(
+  async findAllAndSearch(
     filter: { [key: string]: any },
     limit: number, offset: number
   ): Promise<{ rows: Supplier[], count: number }> {
@@ -11,7 +11,19 @@ class SupplierRepository {
       where: filter,
       limit,
       offset,
-      distinct: true
+      distinct: true,
+      order: [["idSupplier", "DESC"]]
+    });
+    return suppliers;
+  }
+
+  async findAll(): 
+  Promise<{ rows: Supplier[], count: number }> {
+    const suppliers = await Supplier.findAndCountAll({
+      include: [{ all: true }],
+      nest: true,
+      distinct: true,
+      order: [["idSupplier", "DESC"]]
     });
     return suppliers;
   }

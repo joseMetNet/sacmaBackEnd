@@ -46,6 +46,7 @@ class SupplierController {
 
   async create(req: Request, res: Response): Promise<void> {
     try {
+      req.body.contactInfo = JSON.parse(req.body.contactInfo);
       const request = createSupplierSchema.safeParse(req.body);
       if (!request.success) {
         res.status(StatusCode.BadRequest)
@@ -59,6 +60,7 @@ class SupplierController {
         ? (req.files.imageProfile as UploadedFile).tempFilePath
         : undefined;
       request.data.imageProfile = filePath;
+      request.data.contactInfo = request.data.contactInfo?.filter(contact => contact != null);
       const response = await supplierService.create(request.data, filePath);
       res
         .status(response.code)
@@ -71,6 +73,9 @@ class SupplierController {
   }
 
   async update(req: Request, res: Response): Promise<void> {
+    if(req.body.contactInfo) {
+      req.body.contactInfo = JSON.parse(req.body.contactInfo);
+    }
     try {
       const request = updateSupplierSchema.safeParse(req.body);
       if (!request.success) {
@@ -92,6 +97,24 @@ class SupplierController {
       res
         .status(StatusCode.InternalErrorServer)
         .json({ message: err.message });
+    }
+  }
+
+
+  async download(req: Request, res: Response): Promise<void> {
+    try {
+      const buffer = await supplierService.download();
+      res.setHeader("Content-Disposition", "attachment; filename=\"proveedores.xlsx\"");
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.end(buffer, "binary");
+
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: err.message },
+        });
     }
   }
 
@@ -120,6 +143,19 @@ class SupplierController {
   async findDocumentTypes(req: Request, res: Response): Promise<void> {
     try {
       const response = await supplierService.findDocumentTypes();
+      res
+        .status(response.code)
+        .json({ status: response.status, data: response.data });
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({ message: err.message });
+    }
+  }
+
+  async findAccountTypes(req: Request, res: Response): Promise<void> {
+    try {
+      const response = await supplierService.findAccountTypes();
       res
         .status(response.code)
         .json({ status: response.status, data: response.data });

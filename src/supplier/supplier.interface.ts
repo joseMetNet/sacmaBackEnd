@@ -21,6 +21,10 @@ export interface CreateSupplierDTO {
   accountHolderId?: string;
   paymentMethod?: string;
   observation?: string;
+  contactInfo?: CreateContactSupplierDTO[];
+}
+
+export interface CreateContactSupplierDTO {
   supplierContactName?: string;
   supplierContactEmail?: string;
   supplierContactPhoneNumber?: string;
@@ -45,6 +49,7 @@ export interface UpdateSupplierDTO {
   accountHolderId?: string;
   paymentMethod?: string;
   observation?: string;
+  contactInfo?: CreateContactSupplierDTO[];
 }
 
 export interface UploadSupplierDocumentDTO {

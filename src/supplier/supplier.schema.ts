@@ -27,10 +27,21 @@ export const createSupplierSchema = z.object({
   accountHolderId: z.string().optional(),
   paymentMethod: z.string().optional(),
   observation: z.string().optional(),
-  supplierContactName: z.string().optional(),
-  supplierContactEmail: z.string().optional(),
-  supplierContactPhoneNumber: z.string().optional(),
-  supplierContactPosition: z.string().optional(),
+  contactInfo: z.array(z.object({
+    supplierContactName: z.string().optional(),
+    supplierContactEmail: z.string().optional(),
+    supplierContactPhoneNumber: z.string().optional(),
+    supplierContactPosition: z.string().optional(),
+  })).optional()
+});
+
+export const contactSupplierSchema = z.object({
+  contactInfo: z.array(z.object({
+    supplierContactName: z.string().optional(),
+    supplierContactEmail: z.string().optional(),
+    supplierContactPhoneNumber: z.string().optional(),
+    supplierContactPosition: z.string().optional(),
+  })).optional()
 });
 
 export const updateSupplierSchema = z.object({
@@ -51,6 +62,12 @@ export const updateSupplierSchema = z.object({
   accountHolderId: z.string().optional(),
   paymentMethod: z.string().optional(),
   observation: z.string().optional(),
+  contactInfo: z.array(z.object({
+    supplierContactName: z.string().optional(),
+    supplierContactEmail: z.string().optional(),
+    supplierContactPhoneNumber: z.string().optional(),
+    supplierContactPosition: z.string().optional(),
+  })).optional()
 });
 
 export const supplierSupplierDocumentSchema = z.object({
