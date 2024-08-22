@@ -149,12 +149,12 @@ class SupplierService {
         await this.buildContactSupplier(supplier.idSupplier, request, transaction);
       }
 
-      const identifier = crypto.randomUUID();
       if (filePath) {
+        const identifier = crypto.randomUUID();
         await uploadFile(filePath, identifier, "image/jpg", "image-profile");
+        supplier.imageProfileUrl = `https://sacmaback.blob.core.windows.net/image-profile/${identifier}.png`;
       }
 
-      supplier.imageProfileUrl = `https://sacmaback.blob.core.windows.net/image-profile/${identifier}.png`;
       await supplier.save({ transaction });
 
       await transaction.commit();
