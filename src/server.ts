@@ -1,6 +1,6 @@
 import "colors";
 import cors from "cors";
-import express, { Application } from "express";
+import express, { Application, Router } from "express";
 import fileUpload from "express-fileupload";
 import morgan from "morgan";
 import swaggerJSDoc from "swagger-jsdoc";
@@ -10,6 +10,7 @@ import { authenticationRoutes, employeeRoutes, noveltyRoutes } from "./routes";
 import { supplierRoutes } from "./supplier/supplier.route";
 import { inputRoutes } from "./input";
 import { employeePayrollRoutes } from "./payroll";
+import { machineryRoutes } from "./machinery/machinery.route";
 
 class Server {
   private app: Application;
@@ -53,6 +54,7 @@ class Server {
     noveltyRoutes(this.app);
     employeePayrollRoutes(this.app);
     supplierRoutes(this.app);
+    machineryRoutes(this.app);
     inputRoutes(this.app);
   }
 
