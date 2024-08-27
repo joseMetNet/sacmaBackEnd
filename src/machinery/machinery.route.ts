@@ -6,11 +6,19 @@ export function machineryRoutes(app: Application): void {
   const router: Router = Router();
 
   router.get("/v1/machineries", [verifyToken], machineryController.findAll);
+  router.get("/v1/machineries/machinery-maintenance", [verifyToken], machineryController.findAllMachineryMaintenance);
+  router.get("/v1/machineries/machinery-location", [verifyToken], machineryController.findAllMachineryLocation);
   router.get("/v1/machineries/types", [verifyToken], machineryController.findMachineryType);
   router.get("/v1/machineries/models", [verifyToken], machineryController.findMachineryModel);
   router.get("/v1/machineries/brands", [verifyToken], machineryController.findMachineryBrand);
+  router.get("/v1/machineries/download", [verifyToken], machineryController.download);
   router.get("/v1/machineries/:idMachinery", [verifyToken], machineryController.findById);
-  router.delete("/v1/machineries/:idMachinery", [verifyToken], machineryController.delete); // Confirm this is correct
+  router.delete("/v1/machineries/:idMachinery", [verifyToken], machineryController.delete);
+  router.delete("/v1/machineries/machinery-maintenance/:idMachineryMaintenance", [verifyToken], machineryController.deleteMachineryMaintenance);
+  router.post("/v1/machineries", [verifyToken], machineryController.create);
+  router.post("/v1/machineries/machinery-maintenance", [verifyToken], machineryController.createMachineryMaintenance);
+  router.post("/v1/machineries/location-history", [verifyToken], machineryController.createMachinerLocationHistory);
+  router.patch("/v1/machineries", [verifyToken], machineryController.update);
   app.use("/api/", router);
 }
 
@@ -33,15 +41,26 @@ export function machineryRoutes(app: Application): void {
  *           type: integer
  *         description: Number of items per page
  *       - in: query
- *         name: name
- *         schema:
- *           type: string
- *         description: Name of the machinery
- *       - in: query
- *         name: idSupplier
+ *         name: idMachineryType
  *         schema:
  *           type: integer
- *         description: ID of the supplier
+ *         description: ID of the machinery type
+ *       - in: query
+ *         name: idMachineryBrand
+ *         schema:
+ *           type: integer
+ *         description: ID of the machinery brand
+ *       - in: query
+ *         name: serial
+ *         schema:
+ *           type: string
+ *         description: Serial of the machinery
+ *       - in: query
+ *         name: idMachineryStatus
+ *         schema:
+ *           type: integer
+ *         description: ID of the machinery status
+ * 
  *     responses:
  *       200:
  *         description: A list of machineries
@@ -65,6 +84,232 @@ export function machineryRoutes(app: Application): void {
  *               $ref: '#/components/schemas/failedResponse'
  */
 
+
+
+/**
+ * @openapi
+ * /v1/machineries/machinery-maintenance:
+ *   get:
+ *     tags: [Machineries]
+ *     summary: Find machineries maintenance
+ *     description: Find all machineries maintenance
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *         description: Number of items per page
+ *       - in: query
+ *         name: idMachinery
+ *         schema:
+ *           type: integer
+ *         description: ID of the machinery
+ *     responses:
+ *       200:
+ *         description: A list of machineries maintenance
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/MachineryMaintenance'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+
+/**
+ * @openapi
+ * /v1/machineries/machinery-location:
+ *   get:
+ *     tags: [Machineries]
+ *     summary: Find machineries location
+ *     description: Find all machineries location
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *         description: Number of items per page
+ *       - in: query
+ *         name: idMachinery
+ *         schema:
+ *           type: integer
+ *         description: ID of the machinery
+ *     responses:
+ *       200:
+ *         description: History of machinery location
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/MachineryLocationHistory'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
+ * /v1/machineries/download:
+ *   get:
+ *     tags: [Machineries]
+ *     summary: Download machineries
+ *     responses:
+ *       '200':
+ *         description: Successful response
+ *         content:
+ *           application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       '500':
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/failedResponse"
+*/
+
+
+/**
+ * @openapi
+ * /v1/machineries:
+ *   patch:
+ *     tags: [Machineries]
+ *     summary: Update a machinery
+ *     description: Update a machinery
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateMachinery'
+ *     responses:
+ *       200:
+ *         description: Machinery updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Machinery'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+
+/**
+ * @openapi
+ * /v1/machineries/machinery-maintenance:
+ *   post:
+ *     tags: [Machineries]
+ *     summary: Create a machinery maintenance
+ *     description: Create a machinery maintenance
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateMachineryMaintenance'
+ *     responses:
+ *       201:
+ *         description: Machinery maintence created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MachineryMaintenance'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
+
+/**
+ * @openapi
+ * /v1/machineries/location-history:
+ *   post:
+ *     tags: [Machineries]
+ *     summary: Create a machinery location history
+ *     description: Create a machinery location history
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateMachineryLocationHistory'
+ *     responses:
+ *       201:
+ *         description: Machinery location created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MachineryLocationHistory'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
 
 /**
  * @openapi
@@ -222,7 +467,72 @@ export function machineryRoutes(app: Application): void {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/failedResponse'
- */
+*/
+
+/**
+ * @openapi
+ * /v1/machineries/machinery-maintenance/{idMachineryMaintenance}:
+ *   delete:
+ *     tags: [Machineries]
+ *     summary: Delete machinery maintenance by ID
+ *     description: Use to delete machinery maintenance by ID
+ *     parameters:
+ *       - in: path
+ *         name: idMachineryMaintenance
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the machinery maintenance to delete
+ *     responses:
+ *       204:
+ *         description: Machinery deleted
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+  * @openapi
+  * /v1/machineries:
+  *   post:
+  *     tags: [Machineries]
+  *     summary: Create a new machinery
+  *     description: Create a new machinery
+  *     requestBody:
+  *       required: true
+  *       content:
+  *         multipart/form-data:
+  *           schema:
+  *             $ref: '#/components/schemas/CreateMachinery'
+  *     responses:
+  *       201:
+  *         description: Machinery created successfully
+  *         content:
+  *           application/json:
+  *             schema:
+  *               $ref: '#/components/schemas/Machinery'
+  *       400:
+  *         description: Bad request
+  *       401:
+  *         description: Unauthorized
+  *       403:
+  *         description: Forbidden
+  *       500:
+  *         description: Internal server error
+  *         content:
+  *           application/json:
+  *             schema:
+  *               $ref: '#/components/schemas/failedResponse'
+*/
 
 /**
  * @openapi
@@ -251,6 +561,138 @@ export function machineryRoutes(app: Application): void {
  *           type: integer
  *         status:
  *           type: boolean
+ *     CreateMachinery:
+ *       type: object
+ *       properties:
+ *         serial:
+ *           type: string
+ *           example: "D4DS-1234"
+ *         description:
+ *           type: string
+ *           example: "Bulldozer"
+ *         price:
+ *           type: string
+ *           example: "100000"
+ *         imageProfile:
+ *           type: string
+ *           format: binary
+ *         idMachineryModel:
+ *           type: integer
+ *         idMachineryType:
+ *           type: integer
+ *         idMachineryBrand:
+ *           type: integer
+ *         idMachineryStatus:
+ *           type: integer
+ *         status:
+ *           type: boolean
+ *     UpdateMachinery:
+ *       type: object
+ *       properties:
+ *         idMachinery:
+ *           type: number
+ *           example: 0
+ *         serial:
+ *           type: string
+ *           example: "D4DS-1234"
+ *         description:
+ *           type: string
+ *           example: "Bulldozer"
+ *         price:
+ *           type: string
+ *           example: "100000"
+ *         imageProfile:
+ *           type: string
+ *           format: binary
+ *         idMachineryModel:
+ *           type: integer
+ *         idMachineryType:
+ *           type: integer
+ *         idMachineryBrand:
+ *           type: integer
+ *         idMachineryStatus:
+ *           type: integer
+ *         status:
+ *           type: boolean
+ *     CreateMachineryMaintenance:
+ *       type: object
+ *       properties:
+ *         idMachinery:
+ *           type: number
+ *           example: 0
+ *         maintenanceDate:
+ *           type: string
+ *           example: "2022-01-01"
+ *         maintenanceEffectiveDate:
+ *           type: string
+ *           example: "2022-01-01"
+ *         documentName:
+ *           type: string
+ *           example: "Maintenance"
+ *         document:
+ *           type: string
+ *           format: binary
+ *     CreateMachineryLocationHistory:
+ *       type: object
+ *       properties:
+ *         idMachinery:
+ *           type: number
+ *           example: 0
+ *         idProject:
+ *           type: number
+ *           example: 0
+ *         idEmployee:
+ *           type: number
+ *           example: 0
+ *         modificationDate:
+ *           type: string
+ *           example: "2022-01-01"
+ *         assignmentDate:
+ *           type: string
+ *           example: "2022-01-01"
+ *     MachineryLocationHistory:
+ *       type: object
+ *       properties:
+ *         idMachineryLocationHistory:
+ *           type: number
+ *           example: 0
+ *         idMachinery:
+ *           type: number
+ *           example: 0
+ *         idProject:
+ *           type: number
+ *           example: 0
+ *         idEmployee:
+ *           type: number
+ *           example: 0
+ *         modificationDate:
+ *           type: string
+ *           example: "2022-01-01"
+ *         assignmentDate:
+ *           type: string
+ *           example: "2022-01-01"
+ *     MachineryMaintenance:
+ *       type: object
+ *       properties:
+ *         idMachineryMaintenance:
+ *           type: number
+ *           example: 0
+ *         idMachinery:
+ *           type: number
+ *           example: 0
+ *         maintenanceDate:
+ *           type: string
+ *           example: "2022-01-01"
+ *         maintenanceEffectiveDate:
+ *           type: string
+ *           example: "2022-01-01"
+ *         documentName:
+ *           type: string
+ *           example: "Maintenance"
+ *         documentUrl:
+ *           type: string
+ *           format: binary
+ * 
  *     MachineryModel:
  *       type: object
  *       properties:
