@@ -3,6 +3,7 @@ import { formatZodError } from "../controllers/utils";
 import { StatusCode, StatusValue } from "../interfaces";
 import { inputService } from "./input.service";
 import * as schemas from "./input.schema";
+import { UploadedFile } from "express-fileupload";
 
 class InputController {
   async findAll(req: Request, res: Response): Promise<void> {
@@ -59,6 +60,20 @@ class InputController {
   async findUnitOfMeasures(req: Request, res: Response): Promise<void> {
     try {
       const response = await inputService.findUnitOfMeasures();
+      res
+        .status(response.code)
+        .json({ status: response.status, data: response.data });
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({ message: err.message });
+    }
+  }
+
+  async findInputDocumentTypes(req: Request, res: Response): Promise<void> {
+    try {
+      console.log("=======================================================");
+      const response = await inputService.findInputDocumentTypes();
       res
         .status(response.code)
         .json({ status: response.status, data: response.data });
@@ -133,6 +148,25 @@ class InputController {
         .status(StatusCode.InternalErrorServer)
         .json({ message: err.message });
     }
+  }
+
+  async uploadDocument(req: Request, res: Response): Promise<void> {
+    const request = schemas.uploadInputDocument.safeParse(req.body);
+    if(!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) },
+        });
+      return;
+    }
+
+    const filePath = req.files
+      ? (req.files.document as UploadedFile).tempFilePath
+      : undefined;
+    const response = await inputService.uploadDocument(request.data, filePath);
+    res.status(response.code)
+      .json({ status: response.status, data: response.data });
   }
 
   async download(req: Request, res: Response): Promise<void> {
