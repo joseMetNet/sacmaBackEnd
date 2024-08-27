@@ -27,3 +27,8 @@ export interface UpdateInputDTO {
   performance?: string;
   price?: string;
 }
+
+export interface UploadInputDocumentDTO {
+  idInput: number;
+  idInputDocumentType: number;
+}

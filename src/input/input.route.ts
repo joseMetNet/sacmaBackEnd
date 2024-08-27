@@ -7,12 +7,14 @@ export function inputRoutes(app: Application): void {
 
   router.get("/v1/inputs", [verifyToken], inputController.findAll);
   router.get("/v1/inputs/types", [verifyToken], inputController.findInputTypes);
+  router.get("/v1/input/document-type", [verifyToken], inputController.findInputDocumentTypes);
   router.get("/v1/inputs/units-of-measure", [verifyToken], inputController.findUnitOfMeasures);
   router.get("/v1/inputs/download", [verifyToken], inputController.download);
   router.get("/v1/inputs/:idInput", [verifyToken], inputController.findById);
   router.delete("/v1/inputs/:idInput", [verifyToken], inputController.delete);
   router.post("/v1/input", [verifyToken], inputController.create);
   router.patch("/v1/input", [verifyToken], inputController.update);
+  router.patch("/v1/input/upload-document", [verifyToken], inputController.uploadDocument);
   app.use("/api/", router);
 }
 
@@ -65,7 +67,44 @@ export function inputRoutes(app: Application): void {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/failedResponse'
- */
+*/
+
+
+/**
+ * @openapi
+ * /v1/input/upload-document:
+ *   patch:
+ *     tags: [Input]
+ *     summary: Update an input document
+ *     description: Use to update or create an input document
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateInputDocument'
+ *     responses:
+ *       200:
+ *         description: Input document updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/InputDocument'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
 
 /**
  * @openapi
@@ -160,7 +199,38 @@ export function inputRoutes(app: Application): void {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/failedResponse'
- */
+*/
+
+
+/**
+ * @openapi
+ * /v1/inputs/document-type:
+ *   get:
+ *     tags: [Input]
+ *     summary: Find input document types
+ *     description: Use to request all input document types
+ *     responses:
+ *       200:
+ *         description: A list of input document types
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/InputDocumentType'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
 
 
 /**
@@ -321,6 +391,13 @@ export function inputRoutes(app: Application): void {
  *         - idSupplier
  *         - performance
  *         - price
+ *     InputDocumentType:
+ *       type: object
+ *       properties:
+ *         idInputDocumentType:
+ *           type: integer
+ *         inputDocumentType:
+ *           type: string
  *     InputType:
  *       type: object
  *       properties:
@@ -328,6 +405,33 @@ export function inputRoutes(app: Application): void {
  *           type: integer
  *         inputType:
  *           type: string
+ *     CreateInputDocument:
+ *       type: object
+ *       properties:
+ *         idInput:
+ *           type: integer
+ *           example: 1
+ *         idInputDocumentType:
+ *           type: integer
+ *           example: 1
+ *         document:
+ *           type: string
+ *           format: binary
+ *     InputDocument:
+ *       type: object
+ *       properties:
+ *         idInputDocument:
+ *           type: integer
+ *           example: 1
+ *         idInput:
+ *           type: integer
+ *           example: 1
+ *         idInputDocumentType:
+ *           type: integer
+ *           example: 1
+ *         documentUrl:
+ *           type: string
+ *           example: "http://localhost:3000/api/v1/inputs/1/document"
  *     InputUnitOfMeasure:
  *       type: object
  *       properties:

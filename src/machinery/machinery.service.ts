@@ -311,7 +311,6 @@ class MachineryService {
 
       if (filePath) {
         if (machinery.imageUrl) {
-          console.log(`machinery.imageUrl: ${machinery.imageUrl}`);
           const identifier = new URL(machinery.imageUrl).pathname.split("/").pop();
           const deleteRequest = await deleteFile(identifier!, "machinery");
           if(deleteRequest instanceof CustomError) {
