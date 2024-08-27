@@ -1,5 +1,9 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
+import { MachineryModel } from "./machinery-model.model";
+import { MachineryType } from "./machinery-type.model";
+import { MachineryStatus } from "./machinery-status.model";
+import { MachineryBrand } from "./machinery-brand.model";
 
 export class Machinery extends Model {
   declare idMachinery: number;
@@ -60,4 +64,25 @@ Machinery.init({
   sequelize: dbConnection,
   tableName: "TB_Machinery",
   timestamps: false
+});
+
+
+Machinery.hasOne(MachineryModel, {
+  sourceKey: "idMachineryModel",
+  foreignKey: "idMachineryModel"
+});
+
+Machinery.hasOne(MachineryType, {
+  sourceKey: "idMachineryType",
+  foreignKey: "idMachineryType"
+});
+
+Machinery.hasOne(MachineryStatus, {
+  sourceKey: "idMachineryStatus",
+  foreignKey: "idMachineryStatus"
+});
+
+Machinery.hasOne(MachineryBrand, {
+  sourceKey: "idMachineryBrand",
+  foreignKey: "idMachineryBrand"
 });

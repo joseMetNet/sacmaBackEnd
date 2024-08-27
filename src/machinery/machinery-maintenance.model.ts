@@ -22,19 +22,19 @@ MachineryMaintenance.init({
   },
   documentName: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
   },
   documentUrl: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
   },
   maintenanceDate: {
     type: DataTypes.DATE,
-    allowNull: false
+    allowNull: true
   },
   maintenanceEffectiveDate: {
     type: DataTypes.DATE,
-    allowNull: false
+    allowNull: true
   }
 }, {
   sequelize: dbConnection,
