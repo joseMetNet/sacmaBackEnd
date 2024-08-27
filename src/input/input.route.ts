@@ -2,19 +2,21 @@ import { Application, Router } from "express";
 import { verifyToken } from "../middlewares";
 import { inputController } from "./input.controller";
 
+
 export function inputRoutes(app: Application): void {
   const router: Router = Router();
+  router.use(verifyToken);
 
-  router.get("/v1/inputs", [verifyToken], inputController.findAll);
-  router.get("/v1/inputs/types", [verifyToken], inputController.findInputTypes);
-  router.get("/v1/input/document-type", [verifyToken], inputController.findInputDocumentTypes);
-  router.get("/v1/inputs/units-of-measure", [verifyToken], inputController.findUnitOfMeasures);
-  router.get("/v1/inputs/download", [verifyToken], inputController.download);
-  router.get("/v1/inputs/:idInput", [verifyToken], inputController.findById);
-  router.delete("/v1/inputs/:idInput", [verifyToken], inputController.delete);
-  router.post("/v1/input", [verifyToken], inputController.create);
-  router.patch("/v1/input", [verifyToken], inputController.update);
-  router.patch("/v1/input/upload-document", [verifyToken], inputController.uploadDocument);
+  router.get("/v1/inputs/types", inputController.findInputTypes);
+  router.get("/v1/inputs/document-type", inputController.findInputDocumentTypes);
+  router.get("/v1/inputs/units-of-measure", inputController.findUnitOfMeasures);
+  router.get("/v1/inputs/download", inputController.download);
+  router.patch("/v1/input/upload-document", inputController.uploadDocument);
+  router.post("/v1/input", inputController.create);
+  router.patch("/v1/input", inputController.update);
+  router.get("/v1/inputs/:idInput", inputController.findById);
+  router.delete("/v1/inputs/:idInput", inputController.delete);
+  router.get("/v1/inputs", inputController.findAll);
   app.use("/api/", router);
 }
 

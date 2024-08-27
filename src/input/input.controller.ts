@@ -72,7 +72,6 @@ class InputController {
 
   async findInputDocumentTypes(req: Request, res: Response): Promise<void> {
     try {
-      console.log("=======================================================");
       const response = await inputService.findInputDocumentTypes();
       res
         .status(response.code)
