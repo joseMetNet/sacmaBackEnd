@@ -196,7 +196,9 @@ class MachineryService {
 
   async findMachineryModel(): Promise<ResponseEntity> {
     try {
-      const machineryModel = await MachineryModel.findAll();
+      const machineryModel = await MachineryModel.findAll({
+        order: [["machineryModel", "DESC"]]
+      });
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, machineryModel);
     }
     catch (err: any) {
@@ -249,7 +251,7 @@ class MachineryService {
           model: machinery.MachineryModel.machineryModel ?? null,
           type: machinery.MachineryType.machineryType ?? null,
           brand: machinery.MachineryBrand.machineryBrand ?? null,
-          machineryStatus: machinery.MachineryStatus.status ?? null,
+          machineryStatus: machinery.MachineryStatus.machineryStatus ?? null,
           status: machinery.status,
         });
       });

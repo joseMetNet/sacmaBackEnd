@@ -1,3 +1,4 @@
+import { Employee, User } from "../models";
 import { MachineryLocation } from "./machinery-location.model";
 import { MachineryMaintenance } from "./machinery-maintenance.model";
 import { Machinery } from "./machinery.model";
@@ -24,8 +25,14 @@ class MachineryRepository {
     limit: number, offset: number
   ): Promise<{ rows: MachineryLocation[], count: number }> {
     const machineryLocation = await MachineryLocation.findAndCountAll({
-      include: [{ 
-        all: true,
+      include: [{
+        attributes: ["idMachinery", "serial"],
+        model: Machinery,
+      },
+      {
+        attributes: ["idEmployee"],
+        model: Employee,
+        include: [ {model: User, attributes: ["firstName", "lastName"] }]
       }],
       nest: true,
       where: filter,
@@ -67,7 +74,14 @@ class MachineryRepository {
   async findAllMachineryLocation(): 
   Promise<{ rows: MachineryLocation[], count: number }> {
     const machineryLocation = await MachineryLocation.findAndCountAll({
-      include: [{ all: true }],
+      include: [{
+        attributes: ["idMachinery", "serial"],
+        model: Machinery,
+      },
+      {
+        attributes: ["idEmployee", "name"],
+        model: Employee,
+      }],
       nest: true,
       distinct: true,
       order: [["idMachineryLocationHistory", "DESC"]]

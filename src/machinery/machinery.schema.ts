@@ -3,11 +3,22 @@ import z from "zod";
 export const findAllMachinerySchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
-  idMachinery: z.coerce.number(),
   idMachineryType: z.coerce.number().optional(),
   idMachineryBrand: z.coerce.number().optional(),
   serial: z.string().optional(),
   idMachineryStatus: z.coerce.number().optional(),
+});
+
+export const findAllMachineryLocationSchema = z.object({
+  page: z.coerce.number().optional(),
+  pageSize: z.coerce.number().optional(),
+  idMachinery: z.coerce.number()
+});
+
+export const findAllMachineryMaintenanceSchema = z.object({
+  page: z.coerce.number().optional(),
+  pageSize: z.coerce.number().optional(),
+  idMachinery: z.coerce.number(),
 });
 
 export const createMachinerySchema = z.object({

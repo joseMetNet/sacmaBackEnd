@@ -23,7 +23,7 @@ class MachineryController {
   }
 
   async findAllMachineryMaintenance(req: Request, res: Response): Promise<void> {
-    const request = schemas.findAllMachinerySchema.safeParse(req.query);
+    const request = schemas.findAllMachineryMaintenanceSchema.safeParse(req.query);
     if (!request.success) {
       res.status(StatusCode.BadRequest)
         .json({
@@ -39,7 +39,7 @@ class MachineryController {
   }
 
   async findAllMachineryLocation(req: Request, res: Response): Promise<void> {
-    const request = schemas.findAllMachinerySchema.safeParse(req.query);
+    const request = schemas.findAllMachineryLocationSchema.safeParse(req.query);
     if (!request.success) {
       res.status(StatusCode.BadRequest)
         .json({
