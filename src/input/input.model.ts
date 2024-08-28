@@ -3,6 +3,7 @@ import { dbConnection } from "../config";
 import { InputType } from "./input-type.model";
 import { Supplier } from "../supplier";
 import { InputUnitOfMeasure } from "./input-unit-of-measure.model";
+import { InputDocument } from "./input-document.model";
 
 export class Input extends Model {
   declare idInput: number;
@@ -65,4 +66,9 @@ Input.hasOne(Supplier, {
 Input.hasOne(InputUnitOfMeasure, {
   foreignKey: "idInputUnitOfMeasure",
   sourceKey: "idInputUnitOfMeasure"
+});
+
+Input.hasMany(InputDocument, {
+  foreignKey: "idInput",
+  sourceKey: "idInput"
 });
