@@ -430,6 +430,26 @@ class MachineryService {
     }
   }
 
+  async deleteMachineryLocation(id: number): Promise<ResponseEntity> {
+    try {
+      const machineryLocation = await machineryRepository.findMachineryLocation(id);
+      if (!machineryLocation) {
+        return BuildResponse.buildErrorResponse(
+          StatusCode.NotFound,
+          { message: "Machinery location not found" }
+        );
+      }
+      await machineryLocation.destroy();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Machinery location deleted" });
+    }
+    catch (err: any) {
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+
 
   private buildFindAllFilter(request: dtos.FindAllDTO): { [key: string]: any } {
     let filter: { [key: string]: any } = {};

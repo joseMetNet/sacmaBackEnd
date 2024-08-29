@@ -118,6 +118,28 @@ class MachineryController {
         .json({ message: err.message });
     }
   }
+  
+  async deleteMachineryLocation(req: Request, res: Response): Promise<void> {
+    try {
+      const request = schemas.machineryLocationIdSchema.safeParse(req.params);
+      if (!request.success) {
+        res.status(StatusCode.BadRequest)
+          .json({
+            status: StatusValue.Failed,
+            data: { error: formatZodError(request.error) },
+          });
+        return;
+      }
+      const response = await machineryService.deleteMachineryLocation(request.data.idMachineryLocationHistory);
+      res
+        .status(response.code)
+        .json({ status: response.status, data: response.data });
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({ message: err.message });
+    }
+  }
 
   async findMachineryType(req: Request, res: Response): Promise<void> {
     try {

@@ -13,6 +13,7 @@ export function machineryRoutes(app: Application): void {
   router.get("/v1/machineries/:idMachinery", [verifyToken], machineryController.findById);
   router.delete("/v1/machineries/:idMachinery", [verifyToken], machineryController.delete);
   router.delete("/v1/machineries/machinery-maintenance/:idMachineryMaintenance", [verifyToken], machineryController.deleteMachineryMaintenance);
+  router.delete("/v1/machineries/machinery-location/:idMachineryLocationHistory", [verifyToken], machineryController.deleteMachineryLocation);
   router.post("/v1/machineries", [verifyToken], machineryController.create);
   router.post("/v1/machineries/machinery-maintenance", [verifyToken], machineryController.createMachineryMaintenance);
   router.post("/v1/machineries/location-history", [verifyToken], machineryController.createMachinerLocationHistory);
@@ -409,6 +410,39 @@ export function machineryRoutes(app: Application): void {
  *             schema:
  *               $ref: '#/components/schemas/failedResponse'
 */
+
+
+/**
+ * @openapi
+ * /v1/machineries/machinery-location/{idMachineryLocationHistory}:
+ *   delete:
+ *     tags: [Machineries]
+ *     summary: Delete machinery location history
+ *     description: Use to delete a location
+ *     parameters:
+ *       - in: path
+ *         name: idMachineryLocationHistory
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the machinery location to delete
+ *     responses:
+ *       204:
+ *         description: Machinery location history deleted
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
 
 /**
  * @openapi

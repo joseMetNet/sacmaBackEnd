@@ -73,3 +73,7 @@ export const machineryIdSchema = z.object({
 export const machineryMaintenanceIdSchema = z.object({
   idMachineryMaintenance: z.coerce.number(),
 });
+
+export const machineryLocationIdSchema = z.object({
+  idMachineryLocationHistory: z.coerce.number(),
+});
