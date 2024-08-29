@@ -16,6 +16,7 @@ export function machineryRoutes(app: Application): void {
   router.post("/v1/machineries", [verifyToken], machineryController.create);
   router.post("/v1/machineries/machinery-maintenance", [verifyToken], machineryController.createMachineryMaintenance);
   router.post("/v1/machineries/location-history", [verifyToken], machineryController.createMachinerLocationHistory);
+  router.patch("/v1/machineries/location-history", [verifyToken], machineryController.updateMachinerLocationHistory);
   router.patch("/v1/machineries", [verifyToken], machineryController.update);
   app.use("/api/", router);
 }
@@ -195,6 +196,42 @@ export function machineryRoutes(app: Application): void {
  *     responses:
  *       201:
  *         description: Machinery location created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MachineryLocationHistory'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
+ * /v1/machineries/location-history:
+ *   patch:
+ *     tags: [Machineries]
+ *     summary: Update a machinery location history
+ *     description: Update a machinery location history
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateMachineryLocationHistory'
+ *     responses:
+ *       201:
+ *         description: Machinery location updated successfully
  *         content:
  *           application/json:
  *             schema:
@@ -530,9 +567,6 @@ export function machineryRoutes(app: Application): void {
  *         maintenanceEffectiveDate:
  *           type: string
  *           example: "2022-01-01"
- *         documentName:
- *           type: string
- *           example: "Maintenance"
  *         document:
  *           type: string
  *           format: binary
@@ -548,9 +582,24 @@ export function machineryRoutes(app: Application): void {
  *         idEmployee:
  *           type: number
  *           example: 0
- *         modificationDate:
+ *         assignmentDate:
  *           type: string
  *           example: "2022-01-01"
+ *     UpdateMachineryLocationHistory:
+ *       type: object
+ *       properties:
+ *         idMachineryLocationHistory:
+ *           type: number
+ *           example: 0
+ *         idMachinery:
+ *           type: number
+ *           example: 0
+ *         idProject:
+ *           type: number
+ *           example: 0
+ *         idEmployee:
+ *           type: number
+ *           example: 0
  *         assignmentDate:
  *           type: string
  *           example: "2022-01-01"

@@ -23,8 +23,15 @@ export interface MachineryLocationDTO {
   idMachinery: number;
   idProject: number;
   idEmployee: number;
-  modificationDate: string;
   assignmentDate: string;
+}
+
+export interface CreateMachineryLocationDTO {
+  idMachineryLocationHistory: number;
+  idMachinery?: number;
+  idProject?: number;
+  idEmployee?: number;
+  assignmentDate?: string;
 }
 
 export interface UpdateDTO {
@@ -43,5 +50,5 @@ export interface MachineryMaintenanceDTO {
   idMachinery: number;
   maintenanceDate: string;
   maintenanceEffectiveDate: string;
-  documentName: string;
+  documentName?: string;
 }

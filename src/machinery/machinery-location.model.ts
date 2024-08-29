@@ -1,6 +1,5 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
-import { Machinery } from "./machinery.model";
 import { Employee } from "../models";
 
 export class MachineryLocation extends Model {
@@ -8,8 +7,8 @@ export class MachineryLocation extends Model {
   declare idMachinery: number;
   declare idProject: number;
   declare idEmployee: number;
-  declare modificationDate: Date;
-  declare assignmentDate: Date;
+  declare modificationDate: string;
+  declare assignmentDate: string;
 }
 
 MachineryLocation.init({
@@ -32,7 +31,7 @@ MachineryLocation.init({
   },
   modificationDate: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
   },
   assignmentDate: {
     type: DataTypes.STRING,

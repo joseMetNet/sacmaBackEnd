@@ -154,6 +154,28 @@ class MachineryController {
     }
   }
 
+  async updateMachinerLocationHistory(req: Request, res: Response): Promise<void> {
+    try {
+      const request = schemas.updateMachineryLocationSchema.safeParse(req.body);
+      if (!request.success) {
+        res.status(StatusCode.BadRequest)
+          .json({
+            status: StatusValue.Failed,
+            data: { error: formatZodError(request.error) },
+          });
+        return;
+      }
+      const response = await machineryService.updateMachineryLocation(request.data);
+      res
+        .status(response.code)
+        .json({ status: response.status, data: response.data });
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({ message: err.message });
+    }
+  }
+
   async findMachineryModel(req: Request, res: Response): Promise<void> {
     try {
       const response = await machineryService.findMachineryModel();
@@ -260,6 +282,9 @@ class MachineryController {
       }
       const filePath = req.files
         ? (req.files.document as UploadedFile).tempFilePath
+        : undefined;
+      request.data.documentName = req.files
+        ? (req.files.document as UploadedFile).name
         : undefined;
       console.log(`filePath: ${filePath}`);
       const response = await machineryService.createMachineryMaintenance(request.data, filePath);

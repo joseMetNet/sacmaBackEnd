@@ -125,6 +125,13 @@ class MachineryRepository {
     });
     return machineryMaintenance;
   }
+
+  async findMachineryLocation(id: number): Promise<MachineryLocation | null> {
+    const machineryLocation = await MachineryLocation.findByPk(id, {
+      include: [{ all: true }]
+    });
+    return machineryLocation;
+  }
 }
 
 

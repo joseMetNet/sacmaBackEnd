@@ -13,6 +13,7 @@ import { CustomError, deleteFile, uploadFile } from "../utils";
 import { dbConnection } from "../config";
 import { MachineryMaintenance } from "./machinery-maintenance.model";
 import { MachineryLocation } from "./machinery-location.model";
+import { tz } from "moment-timezone";
 
 class MachineryService {
   async findAll(request: dtos.FindAllDTO): Promise<ResponseEntity> {
@@ -180,10 +181,33 @@ class MachineryService {
           idMachinery: request.idMachinery,
           idProject: request.idProject,
           idEmployee: request.idEmployee,
-          modificationDate: request.modificationDate,
           assignmentDate: request.assignmentDate
         }
       );
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, machineryLocation);
+    }
+    catch (err: any) {
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+
+  async updateMachineryLocation(request: dtos.CreateMachineryLocationDTO): Promise<ResponseEntity> {
+    try {
+      const machineryLocation = await machineryRepository.findMachineryLocation(request.idMachineryLocationHistory);
+      if (!machineryLocation) {
+        return BuildResponse.buildErrorResponse(
+          StatusCode.NotFound,
+          { message: "Machinery Location not found" }
+        );
+      }
+      machineryLocation.idProject = request.idProject ?? machineryLocation.idProject;
+      machineryLocation.idEmployee = request.idEmployee ?? machineryLocation.idEmployee;
+      machineryLocation.assignmentDate = request.assignmentDate ? request.assignmentDate : machineryLocation.assignmentDate;
+      machineryLocation.modificationDate = tz("America/Bogota").format();
+      await machineryLocation.save();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, machineryLocation);
     }
     catch (err: any) {
