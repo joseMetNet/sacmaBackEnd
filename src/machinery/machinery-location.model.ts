@@ -44,11 +44,6 @@ MachineryLocation.init({
   timestamps: false
 });
 
-MachineryLocation.hasOne(Machinery, {
-  sourceKey: "idMachinery",
-  foreignKey: "idMachinery"
-});
-
 MachineryLocation.hasOne(Employee, {
   sourceKey: "idEmployee",
   foreignKey: "idEmployee"

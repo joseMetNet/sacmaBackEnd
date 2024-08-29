@@ -4,6 +4,8 @@ import { MachineryModel } from "./machinery-model.model";
 import { MachineryType } from "./machinery-type.model";
 import { MachineryStatus } from "./machinery-status.model";
 import { MachineryBrand } from "./machinery-brand.model";
+import { MachineryMaintenance } from "./machinery-maintenance.model";
+import { MachineryLocation } from "./machinery-location.model";
 
 export class Machinery extends Model {
   declare idMachinery: number;
@@ -85,4 +87,14 @@ Machinery.hasOne(MachineryStatus, {
 Machinery.hasOne(MachineryBrand, {
   sourceKey: "idMachineryBrand",
   foreignKey: "idMachineryBrand"
+});
+
+Machinery.hasMany(MachineryMaintenance, {
+  sourceKey: "idMachinery",
+  foreignKey: "idMachinery"
+});
+
+Machinery.hasMany(MachineryLocation, {
+  sourceKey: "idMachinery",
+  foreignKey: "idMachinery"
 });

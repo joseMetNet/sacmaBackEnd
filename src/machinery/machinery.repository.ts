@@ -102,7 +102,19 @@ class MachineryRepository {
 
   async findById(id: number): Promise<Machinery | null> {
     const machinery = await Machinery.findByPk(id, {
-      include: [{ all: true }]
+      include: [
+        { all: true },
+        {
+          model: MachineryLocation,
+          include: [
+            {
+              model: Employee,
+              attributes: ["idEmployee", "idUser"],
+              include: [ {model: User, attributes: ["firstName", "lastName"]} ]
+            }
+          ]
+        }
+      ]
     });
     return machinery;
   }

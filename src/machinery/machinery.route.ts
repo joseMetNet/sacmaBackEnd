@@ -6,8 +6,6 @@ export function machineryRoutes(app: Application): void {
   const router: Router = Router();
 
   router.get("/v1/machineries", [verifyToken], machineryController.findAll);
-  router.get("/v1/machineries/machinery-maintenance", [verifyToken], machineryController.findAllMachineryMaintenance);
-  router.get("/v1/machineries/machinery-location", [verifyToken], machineryController.findAllMachineryLocation);
   router.get("/v1/machineries/types", [verifyToken], machineryController.findMachineryType);
   router.get("/v1/machineries/models", [verifyToken], machineryController.findMachineryModel);
   router.get("/v1/machineries/brands", [verifyToken], machineryController.findMachineryBrand);
@@ -84,100 +82,6 @@ export function machineryRoutes(app: Application): void {
  *               $ref: '#/components/schemas/failedResponse'
  */
 
-
-
-/**
- * @openapi
- * /v1/machineries/machinery-maintenance:
- *   get:
- *     tags: [Machineries]
- *     summary: Find machineries maintenance
- *     description: Find all machineries maintenance
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *         description: Page number
- *       - in: query
- *         name: pageSize
- *         schema:
- *           type: integer
- *         description: Number of items per page
- *       - in: query
- *         name: idMachinery
- *         schema:
- *           type: integer
- *         description: ID of the machinery
- *     responses:
- *       200:
- *         description: A list of machineries maintenance
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/MachineryMaintenance'
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- *       404:
- *         description: Not found
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/failedResponse'
-*/
-
-
-/**
- * @openapi
- * /v1/machineries/machinery-location:
- *   get:
- *     tags: [Machineries]
- *     summary: Find machineries location
- *     description: Find all machineries location
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *         description: Page number
- *       - in: query
- *         name: pageSize
- *         schema:
- *           type: integer
- *         description: Number of items per page
- *       - in: query
- *         name: idMachinery
- *         schema:
- *           type: integer
- *         description: ID of the machinery
- *     responses:
- *       200:
- *         description: History of machinery location
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/MachineryLocationHistory'
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- *       404:
- *         description: Not found
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/failedResponse'
-*/
 
 /**
  * @openapi
