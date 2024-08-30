@@ -534,8 +534,6 @@ export function machineryRoutes(app: Application): void {
  *           type: integer
  *         idMachineryStatus:
  *           type: integer
- *         status:
- *           type: boolean
  *     CreateMachinery:
  *       type: object
  *       properties:
@@ -559,8 +557,6 @@ export function machineryRoutes(app: Application): void {
  *           type: integer
  *         idMachineryStatus:
  *           type: integer
- *         status:
- *           type: boolean
  *     UpdateMachinery:
  *       type: object
  *       properties:
@@ -587,8 +583,6 @@ export function machineryRoutes(app: Application): void {
  *           type: integer
  *         idMachineryStatus:
  *           type: integer
- *         status:
- *           type: boolean
  *     CreateMachineryMaintenance:
  *       type: object
  *       properties:
@@ -708,55 +702,4 @@ export function machineryRoutes(app: Application): void {
  *           type: integer
  *         machineryStatus:
  *           type: string
- *     InputCreate:
- *       type: object
- *       properties:
- *         name:
- *           type: string
- *         idInputType:
- *           type: integer
- *         code:
- *           type: string
- *         idInputUnitOfMeasure:
- *           type: string
- *         cost:
- *           type: string
- *         idSupplier:
- *           type: integer
- *         performance:
- *           type: string
- *         price:
- *           type: string
- *       required:
- *         - name
- *         - idInputType
- *         - code
- *         - idInputUnitOfMeasure
- *         - cost
- *         - idSupplier
- *         - performance
- *         - price
- *     InputUpdate:
- *       type: object
- *       properties:
- *         idInput:
- *           type: integer
- *         name:
- *           type: string
- *         idInputType:
- *           type: integer
- *         code:
- *           type: string
- *         idInputUnitOfMeasure:
- *           type: string
- *         cost:
- *           type: string
- *         idSupplier:
- *           type: integer
- *         performance:
- *           type: string
- *         price:
- *           type: string
- *       required:
- *         - idInput
 */

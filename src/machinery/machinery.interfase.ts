@@ -16,7 +16,6 @@ export interface CreateDTO {
   idMachineryType: number;
   idMachineryBrand: number;
   idMachineryStatus: number;
-  status?: string;
 }
 
 export interface MachineryLocationDTO {
@@ -43,7 +42,6 @@ export interface UpdateDTO {
   idMachineryType?: number;
   idMachineryBrand?: number;
   idMachineryStatus?: number;
-  status?: string;
 }
 
 export interface MachineryMaintenanceDTO {

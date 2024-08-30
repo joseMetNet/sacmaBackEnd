@@ -254,19 +254,42 @@ class MachineryService {
       const worksheet = workbook.addWorksheet("Inputs");
 
       worksheet.columns = [
-        { header: "Serial", key: "serial", width: 32 },
-        { header: "Descripción", key: "description", width: 32 },
-        { header: "Precio", key: "price", width: 32 },
-        { header: "Imagen", key: "imageUrl", width: 32 },
-        { header: "Modelo", key: "model", width: 32 },
         { header: "Tipo", key: "type", width: 32 },
+        { header: "Serial", key: "serial", width: 32 },
         { header: "Marca", key: "brand", width: 32 },
+        { header: "Modelo", key: "model", width: 32 },
+        { header: "Precio", key: "price", width: 32 },
         { header: "Estado Maquina", key: "machineryStatus", width: 32 },
-        { header: "Estado", key: "status", width: 32 },
+        { header: "Descripción", key: "description", width: 32 },
+        { header: "Ultima Ubicación", key: "lastLocation", width: 32 },
+        { header: "Responsable", key: "responsible", width: 32 },
+        { header: "Fecha de Asignación", key: "assignmentDate", width: 32 },
+        { header: "Fecha ultimo Mantenimiento", key: "lastMaintenance", width: 32 },
+        { header: "fecha de Vigencia", key: "maintenanceEffectiveDate", width: 32 },
       ];
 
       machineries.rows.forEach((item) => {
         const machinery = item.toJSON();
+        const lastLocation = machinery.MachineryLocations.reduce((location: MachineryLocation | null, currentLocation: MachineryLocation) => {
+          if (!location) {
+            return currentLocation;
+          }
+          if (currentLocation.assignmentDate > location.assignmentDate) {
+            return currentLocation;
+          }
+          return location;
+        }
+        , null);
+        const lastMaintenance = machinery.MachineryMaintenances.reduce((maintenance: MachineryMaintenance | null, currentMaintenance: MachineryMaintenance) => {
+          if (!maintenance) {
+            return currentMaintenance;
+          }
+          if (currentMaintenance.maintenanceDate > maintenance.maintenanceDate) {
+            return currentMaintenance;
+          }
+          return maintenance;
+        }
+        , null);
         worksheet.addRow({
           serial: machinery.serial,
           description: machinery.description,
@@ -276,7 +299,11 @@ class MachineryService {
           type: machinery.MachineryType.machineryType ?? null,
           brand: machinery.MachineryBrand.machineryBrand ?? null,
           machineryStatus: machinery.MachineryStatus.machineryStatus ?? null,
-          status: machinery.status,
+          lastLocation: lastLocation ? lastLocation.Project?.project : null,
+          responsible: lastLocation ? lastLocation.Employee?.name : null,
+          assignmentDate: lastLocation ? lastLocation.assignmentDate : null,
+          lastMaintenance: lastMaintenance ? lastMaintenance.maintenanceDate : null,
+          maintenanceEffectiveDate: lastMaintenance ? lastMaintenance.maintenanceEffectiveDate : null,
         });
       });
 
@@ -284,6 +311,7 @@ class MachineryService {
       return buffer;
     }
     catch (err: any) {
+      console.log(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -311,7 +339,6 @@ class MachineryService {
           idMachineryType: request.idMachineryType,
           idMachineryBrand: request.idMachineryBrand,
           idMachineryStatus: request.idMachineryStatus,
-          status: request.status,
         }
       );
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, machinery);
@@ -366,7 +393,6 @@ class MachineryService {
       machinery.idMachineryType = request.idMachineryType ?? machinery.idMachineryType;
       machinery.idMachineryBrand = request.idMachineryBrand ?? machinery.idMachineryBrand;
       machinery.idMachineryStatus = request.idMachineryStatus ?? machinery.idMachineryStatus;
-      machinery.status = Boolean(request.status) ?? machinery.status;
       await machinery.save();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, machinery);
     }

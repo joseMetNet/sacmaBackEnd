@@ -29,7 +29,6 @@ export const createMachinerySchema = z.object({
   idMachineryType: z.coerce.number(),
   idMachineryBrand: z.coerce.number(),
   idMachineryStatus: z.coerce.number(),
-  status: z.string().optional(),
 });
 
 export const createMachineryLocationSchema = z.object({
@@ -56,7 +55,6 @@ export const updateMachinerySchema = z.object({
   idMachineryType: z.coerce.number().optional(),
   idMachineryBrand: z.coerce.number().optional(),
   idMachineryStatus: z.coerce.number().optional(),
-  status: z.string().optional(),
 });
 
 export const createMachineryMaintenanceSchema = z.object({

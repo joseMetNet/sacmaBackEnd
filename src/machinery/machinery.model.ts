@@ -17,7 +17,6 @@ export class Machinery extends Model {
   declare idMachineryType: number;
   declare idMachineryBrand: number;
   declare idMachineryStatus: number;
-  declare status: boolean;
 }
 
 Machinery.init({
@@ -58,10 +57,6 @@ Machinery.init({
     type: DataTypes.INTEGER,
     allowNull: false
   },
-  status: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false
-  }
 }, {
   sequelize: dbConnection,
   tableName: "TB_Machinery",
