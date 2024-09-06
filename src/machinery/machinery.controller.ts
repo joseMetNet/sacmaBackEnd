@@ -224,6 +224,19 @@ class MachineryController {
     }
   }
 
+  async findMachineryStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const response = await machineryService.findMachineryStatus();
+      res
+        .status(response.code)
+        .json({ status: response.status, data: response.data });
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({ message: err.message });
+    }
+  }
+
   async download(req: Request, res: Response): Promise<void> {
     try {
       const buffer = await machineryService.download();

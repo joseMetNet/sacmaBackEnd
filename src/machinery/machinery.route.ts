@@ -9,6 +9,7 @@ export function machineryRoutes(app: Application): void {
   router.get("/v1/machineries/types", [verifyToken], machineryController.findMachineryType);
   router.get("/v1/machineries/models", [verifyToken], machineryController.findMachineryModel);
   router.get("/v1/machineries/brands", [verifyToken], machineryController.findMachineryBrand);
+  router.get("/v1/machineries/status", [verifyToken], machineryController.findMachineryStatus);
   router.get("/v1/machineries/download", [verifyToken], machineryController.download);
   router.get("/v1/machineries/:idMachinery", [verifyToken], machineryController.findById);
   router.delete("/v1/machineries/:idMachinery", [verifyToken], machineryController.delete);
@@ -269,6 +270,36 @@ export function machineryRoutes(app: Application): void {
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Machinery'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
+
+/**
+ * @openapi
+ * /v1/machineries/status:
+ *   get:
+ *     tags: [Machineries]
+ *     summary: Find machineries status
+ *     description: Find all machineries status
+ *     responses:
+ *       200:
+ *         description: A list of machineries status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/MachineryStatus'
  *       401:
  *         description: Unauthorized
  *       403:

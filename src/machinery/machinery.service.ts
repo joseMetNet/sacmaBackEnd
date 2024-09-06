@@ -246,6 +246,19 @@ class MachineryService {
     }
   }
 
+  async findMachineryStatus(): Promise<ResponseEntity> {
+    try {
+      const machineryStatus = await machineryRepository.findMachineryStatus();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, machineryStatus);
+    }
+    catch (err: any) {
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+
   async download() {
     try {
       const machineries = await machineryRepository.findAll();

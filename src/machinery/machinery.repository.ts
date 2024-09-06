@@ -1,6 +1,7 @@
 import { Employee, User } from "../models";
 import { MachineryLocation } from "./machinery-location.model";
 import { MachineryMaintenance } from "./machinery-maintenance.model";
+import { MachineryStatus } from "./machinery-status.model";
 import { Machinery } from "./machinery.model";
 
 class MachineryRepository {
@@ -58,6 +59,11 @@ class MachineryRepository {
       order: [["idMachineryMaintenance", "DESC"]]
     });
     return machinery;
+  }
+
+  async findMachineryStatus(): Promise<MachineryStatus[]> {
+    const machineryStatus = await MachineryStatus.findAll();
+    return machineryStatus;
   }
 
   async findAll(): 
