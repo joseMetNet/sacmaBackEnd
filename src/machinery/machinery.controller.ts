@@ -97,6 +97,27 @@ class MachineryController {
         .json({ message: err.message });
     }
   }
+
+  async uploadDocument(req: Request, res: Response): Promise<void> {
+    const request = schemas.uploadMachineryDocument.safeParse(req.body);
+    if(!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) },
+        });
+      return;
+    }
+
+    const filePath = req.files
+      ? (req.files.document as UploadedFile).tempFilePath
+      : undefined;
+    const response = await machineryService.uploadDocument(request.data, filePath);
+    res.status(response.code)
+      .json({ status: response.status, data: response.data });
+  }
+
+
   async deleteMachineryMaintenance(req: Request, res: Response): Promise<void> {
     try {
       const request = schemas.machineryMaintenanceIdSchema.safeParse(req.params);
@@ -227,6 +248,20 @@ class MachineryController {
   async findMachineryStatus(req: Request, res: Response): Promise<void> {
     try {
       const response = await machineryService.findMachineryStatus();
+      res
+        .status(response.code)
+        .json({ status: response.status, data: response.data });
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({ message: err.message });
+    }
+  }
+
+
+  async findMachineryDocumentType(req: Request, res: Response): Promise<void> {
+    try {
+      const response = await machineryService.findMachineryDocumentType();
       res
         .status(response.code)
         .json({ status: response.status, data: response.data });

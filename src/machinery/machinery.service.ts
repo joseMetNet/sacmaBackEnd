@@ -14,6 +14,8 @@ import { dbConnection } from "../config";
 import { MachineryMaintenance } from "./machinery-maintenance.model";
 import { MachineryLocation } from "./machinery-location.model";
 import { tz } from "moment-timezone";
+import { MachineryDocument } from "./machinery-document.model";
+import { MachineryDocumentType } from "./machinery-document-type.model";
 
 class MachineryService {
   async findAll(request: dtos.FindAllDTO): Promise<ResponseEntity> {
@@ -161,6 +163,71 @@ class MachineryService {
     }
   }
 
+  async uploadDocument(request: dtos.UploadMachineryDocumentDTO, filePath?: string): Promise<ResponseEntity> {
+    const transaction = await dbConnection.transaction();
+    try {
+      const documentExist = await MachineryDocument.findOne({
+        where: {
+          idMachinery: request.idMachinery,
+          idMachineryDocumentType: request.idMachineryDocumentType,
+        }
+      });
+  
+      if (documentExist && filePath) {
+        const deleteDocumentResponse = await deleteFile(
+          new URL(documentExist.documentUrl).pathname.split("/").pop()!,
+          "machinery",
+        );
+        if (deleteDocumentResponse instanceof CustomError) {
+          await transaction.rollback();
+          return BuildResponse.buildErrorResponse(deleteDocumentResponse.statusCode, { message: deleteDocumentResponse.message });
+        }
+      }
+  
+      if (filePath) {
+        const identifier = crypto.randomUUID();
+        const uploadResponse = await uploadFile(filePath, identifier, "application/pdf", "machinery");
+        if (uploadResponse instanceof CustomError) {
+          await transaction.rollback();
+          return BuildResponse.buildErrorResponse(uploadResponse.statusCode, { message: uploadResponse.message });
+        }
+        if (documentExist) {
+          await documentExist.update({
+            documentUrl: `https://sacmaback.blob.core.windows.net/machinery/${identifier}.pdf`,
+          }, { transaction });
+        } else {
+          await MachineryDocument.create({
+            idMachinery: request.idMachinery,
+            idMachineryDocumentType: request.idMachineryDocumentType,
+            documentUrl: `https://sacmaback.blob.core.windows.net/machinery/${identifier}.pdf`,
+          }, { transaction });
+        }
+      }
+  
+      await transaction.commit();
+  
+      const machineryDocument = await MachineryDocument.findOne({
+        where: {
+          idMachinery: request.idMachinery,
+          idMachineryDocumentType: request.idMachineryDocumentType,
+        },
+        include: {
+          model: MachineryDocumentType,
+          required: true,
+        },
+      });
+  
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, machineryDocument!);
+    } catch (err: any) {
+      await transaction.rollback();
+      console.error("Error uploading document:", err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+
   async findMachineryType(): Promise<ResponseEntity> {
     try {
       const machineryType = await MachineryType.findAll();
@@ -250,6 +317,19 @@ class MachineryService {
     try {
       const machineryStatus = await machineryRepository.findMachineryStatus();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, machineryStatus);
+    }
+    catch (err: any) {
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+
+  async findMachineryDocumentType(): Promise<ResponseEntity> {
+    try {
+      const machineryDocumentType = await machineryRepository.findMachineryDocumentType();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, machineryDocumentType);
     }
     catch (err: any) {
       return BuildResponse.buildErrorResponse(

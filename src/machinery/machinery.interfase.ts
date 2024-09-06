@@ -8,6 +8,11 @@ export interface FindAllDTO {
   idMachineryStatus?: number;
 }
 
+export interface UploadMachineryDocumentDTO {
+  idMachinery: number;
+  idMachineryDocumentType: number;
+}
+
 export interface CreateDTO {
   serial: string;
   description: string;

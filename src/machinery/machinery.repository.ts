@@ -1,4 +1,5 @@
 import { Employee, User } from "../models";
+import { MachineryDocumentType } from "./machinery-document-type.model";
 import { MachineryLocation } from "./machinery-location.model";
 import { MachineryMaintenance } from "./machinery-maintenance.model";
 import { MachineryStatus } from "./machinery-status.model";
@@ -64,6 +65,11 @@ class MachineryRepository {
   async findMachineryStatus(): Promise<MachineryStatus[]> {
     const machineryStatus = await MachineryStatus.findAll();
     return machineryStatus;
+  }
+
+  async findMachineryDocumentType(): Promise<MachineryDocumentType[]> {
+    const machineryDocumentType = await MachineryDocumentType.findAll();
+    return machineryDocumentType;
   }
 
   async findAll(): 

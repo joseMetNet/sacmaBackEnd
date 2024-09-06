@@ -68,6 +68,11 @@ export const machineryIdSchema = z.object({
   idMachinery: z.coerce.number(),
 });
 
+export const uploadMachineryDocument = z.object({
+  idMachinery: z.coerce.number(),
+  idMachineryDocumentType: z.coerce.number(),
+});
+
 export const machineryMaintenanceIdSchema = z.object({
   idMachineryMaintenance: z.coerce.number(),
 });

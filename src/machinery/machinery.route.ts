@@ -10,6 +10,7 @@ export function machineryRoutes(app: Application): void {
   router.get("/v1/machineries/models", [verifyToken], machineryController.findMachineryModel);
   router.get("/v1/machineries/brands", [verifyToken], machineryController.findMachineryBrand);
   router.get("/v1/machineries/status", [verifyToken], machineryController.findMachineryStatus);
+  router.get("/v1/machineries/document-types", [verifyToken], machineryController.findMachineryDocumentType);
   router.get("/v1/machineries/download", [verifyToken], machineryController.download);
   router.get("/v1/machineries/:idMachinery", [verifyToken], machineryController.findById);
   router.delete("/v1/machineries/:idMachinery", [verifyToken], machineryController.delete);
@@ -17,6 +18,7 @@ export function machineryRoutes(app: Application): void {
   router.delete("/v1/machineries/machinery-location/:idMachineryLocationHistory", [verifyToken], machineryController.deleteMachineryLocation);
   router.post("/v1/machineries", [verifyToken], machineryController.create);
   router.post("/v1/machineries/machinery-maintenance", [verifyToken], machineryController.createMachineryMaintenance);
+  router.post("/v1/machineries/upload-document", [verifyToken], machineryController.uploadDocument);
   router.post("/v1/machineries/location-history", [verifyToken], machineryController.createMachinerLocationHistory);
   router.patch("/v1/machineries/location-history", [verifyToken], machineryController.updateMachinerLocationHistory);
   router.patch("/v1/machineries", [verifyToken], machineryController.update);
@@ -218,6 +220,44 @@ export function machineryRoutes(app: Application): void {
  *               $ref: '#/components/schemas/failedResponse'
 */
 
+
+/**
+ * @openapi
+ * /v1/machineries/upload-document:
+ *   post:
+ *     tags: [Machineries]
+ *     summary: Update an machinery document
+ *     description: Use to update or create a machinery document
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateMachineryDocument'
+ *     responses:
+ *       200:
+ *         description: Input document updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MachineryDocument'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+
 /**
  * @openapi
  * /v1/machineries/location-history:
@@ -283,6 +323,37 @@ export function machineryRoutes(app: Application): void {
  *             schema:
  *               $ref: '#/components/schemas/failedResponse'
  */
+
+/**
+ * @openapi
+ * /v1/machineries/document-types:
+ *   get:
+ *     tags: [Machineries]
+ *     summary: Find machineries document types
+ *     description: Find all machineries document types
+ *     responses:
+ *       200:
+ *         description: A list of machineries document types
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/MachineryDocumentType'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
+
 
 /**
  * @openapi
@@ -704,7 +775,18 @@ export function machineryRoutes(app: Application): void {
  *         documentUrl:
  *           type: string
  *           format: binary
- * 
+ *     CreateMachineryDocument:
+ *       type: object
+ *       properties:
+ *         idMachinery:
+ *           type: integer
+ *           example: 1
+ *         idMachineryDocumentType:
+ *           type: integer
+ *           example: 1
+ *         document:
+ *           type: string
+ *           format: binary
  *     MachineryModel:
  *       type: object
  *       properties:
@@ -726,11 +808,33 @@ export function machineryRoutes(app: Application): void {
  *           type: integer
  *         machineryBrand:
  *           type: string
+ *     MachineryDocument:
+ *       type: object
+ *       properties:
+ *         idMachineryDocument:
+ *           type: integer
+ *           example: 1
+ *         idMachinery:
+ *           type: integer
+ *           example: 1
+ *         idMachineryDocumentType:
+ *           type: integer
+ *           example: 1
+ *         documentUrl:
+ *           type: string
+ *           example: "http://localhost:3000/api/v1/inputs/1/document"
  *     MachineryStatus:
  *       type: object
  *       properties:
  *         idMachineryStatus:
  *           type: integer
  *         machineryStatus:
+ *           type: string
+ *     MachineryDocumentType:
+ *       type: object
+ *       properties:
+ *         idMachineryDocumentType:
+ *           type: integer
+ *         machineryDocumentType:
  *           type: string
 */
