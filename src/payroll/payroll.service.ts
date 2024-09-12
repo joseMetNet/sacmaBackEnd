@@ -1,4 +1,3 @@
-import { Op } from "sequelize";
 import { dbConnection } from "../config";
 import { EmployeePayrollRepository } from "./payroll.repository";
 import { ResponseEntity } from "../services/interface";
@@ -8,6 +7,7 @@ import { BuildResponse } from "../services";
 import { StatusCode } from "../interfaces";
 import sequelize from "sequelize";
 import * as models from "../models";
+import moment from "moment-timezone";
 
 export class EmployeePayrollService {
   constructor(
@@ -93,6 +93,7 @@ export class EmployeePayrollService {
     const transaction = await dbConnection.transaction();
     try {
       const identifier = crypto.randomUUID();
+      request.paymentDate = this.calculateDayOfMonth();
 
       const uploadDocumentResponse = await uploadFile(filePath, identifier, "application/pdf", "payroll");
       if (uploadDocumentResponse instanceof CustomError) {
@@ -128,6 +129,27 @@ export class EmployeePayrollService {
     }
   }
 
+  calculateDayOfMonth() {
+    const currentDate = moment.tz("America/Bogota");
+    const dayOfMonth = currentDate.date();
+    let year = currentDate.year();
+    let month = currentDate.month() + 1;
+    let day;
+  
+    if (dayOfMonth <= 15) {
+      day = 30;
+      month -= 1;
+      if (month === 0) {
+        month = 12;
+        year -= 1;
+      }
+    } else {
+      day = 15;
+    }
+  
+    return `${year}/${month}/${day}`;
+  }
+  
   async findById(id: number): Promise<ResponseEntity> {
     try {
       const payroll = await this.employeePayrollRepository.findById(id);
