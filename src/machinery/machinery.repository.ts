@@ -1,3 +1,4 @@
+import { CostCenterProject } from "../cost-center/cost-center-project.model";
 import { Employee, User } from "../models";
 import { MachineryDocumentType } from "./machinery-document-type.model";
 import { MachineryLocation } from "./machinery-location.model";
@@ -11,7 +12,18 @@ class MachineryRepository {
     limit: number, offset: number
   ): Promise<{ rows: Machinery[], count: number }> {
     const machinery = await Machinery.findAndCountAll({
-      include: [{ all: true }],
+      include: [
+        { all: true },
+        {
+          model: MachineryLocation,
+          include: [
+            {
+              model: CostCenterProject,
+              attributes: ["name", "location"],
+            }
+          ]
+        }
+      ],
       nest: true,
       where: filter,
       limit,
@@ -123,6 +135,10 @@ class MachineryRepository {
               model: Employee,
               attributes: ["idEmployee", "idUser"],
               include: [ {model: User, attributes: ["firstName", "lastName"]} ]
+            },
+            {
+              model: CostCenterProject,
+              attributes: ["name", "location"],
             }
           ]
         }

@@ -298,7 +298,7 @@ export function costCenterRoutes(app: Application): void {
 
 /**
  * @openapi
- * /v1/cost-center/contacts/{idCostCenterContact}:
+ * /v1/cost-center/contact/{idCostCenterContact}:
  *   delete:
  *     tags: [Cost Center]
  *     summary: Delete cost center contact by ID
@@ -538,6 +538,42 @@ export function costCenterRoutes(app: Application): void {
  *               $ref: '#/components/schemas/failedResponse'
 */
 
+
+/**
+ * @openapi
+ * /v1/cost-center:
+ *   patch:
+ *     tags: [Cost Center]
+ *     summary: Update a cost center
+ *     description: Update a cost center
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateCostCenter'
+ *     responses:
+ *       201:
+ *         description: Updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CostCenter'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
 
 /**
  * @openapi

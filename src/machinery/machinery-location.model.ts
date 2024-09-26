@@ -1,11 +1,12 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
 import { Employee } from "../models";
+import { CostCenterProject } from "../cost-center/cost-center-project.model";
 
 export class MachineryLocation extends Model {
   declare idMachineryLocationHistory: number;
   declare idMachinery: number;
-  declare idProject: number;
+  declare idCostCenterProject: number;
   declare idEmployee: number;
   declare modificationDate: string;
   declare assignmentDate: string;
@@ -21,7 +22,7 @@ MachineryLocation.init({
     type: DataTypes.INTEGER,
     allowNull: false
   },
-  idProject: {
+  idCostCenterProject: {
     type: DataTypes.INTEGER,
     allowNull: false
   },
@@ -46,4 +47,9 @@ MachineryLocation.init({
 MachineryLocation.hasOne(Employee, {
   sourceKey: "idEmployee",
   foreignKey: "idEmployee"
+});
+
+MachineryLocation.hasOne(CostCenterProject, {
+  sourceKey: "idCostCenterProject",
+  foreignKey: "idCostCenterProject"
 });

@@ -33,7 +33,7 @@ export const createMachinerySchema = z.object({
 
 export const createMachineryLocationSchema = z.object({
   idMachinery: z.coerce.number(),
-  idProject: z.coerce.number(),
+  idCostCenterProject: z.coerce.number(),
   idEmployee: z.coerce.number(),
   assignmentDate: z.string(),
 });
@@ -41,7 +41,7 @@ export const createMachineryLocationSchema = z.object({
 export const updateMachineryLocationSchema = z.object({
   idMachineryLocationHistory: z.coerce.number(),
   idMachinery: z.coerce.number().optional(),
-  idProject: z.coerce.number().optional(),
+  idCostCenterProject: z.coerce.number().optional(),
   idEmployee: z.coerce.number().optional(),
   assignmentDate: z.string().optional(),
 });

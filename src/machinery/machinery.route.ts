@@ -706,7 +706,7 @@ export function machineryRoutes(app: Application): void {
  *         idMachinery:
  *           type: number
  *           example: 0
- *         idProject:
+ *         idCostCenterProject:
  *           type: number
  *           example: 0
  *         idEmployee:
@@ -724,7 +724,7 @@ export function machineryRoutes(app: Application): void {
  *         idMachinery:
  *           type: number
  *           example: 0
- *         idProject:
+ *         idCostCenterProject:
  *           type: number
  *           example: 0
  *         idEmployee:
@@ -742,7 +742,7 @@ export function machineryRoutes(app: Application): void {
  *         idMachinery:
  *           type: number
  *           example: 0
- *         idProject:
+ *         idCostCenterProject:
  *           type: number
  *           example: 0
  *         idEmployee:

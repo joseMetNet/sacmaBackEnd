@@ -31,7 +31,7 @@ class MachineryService {
     const offset = (page - 1) * pageSize;
     const filter = this.buildFindAllFilter(request);
     try {
-      if(request.pageSize === -1) {
+      if (request.pageSize === -1) {
         const machinery = await machineryRepository.findAll();
         return BuildResponse.buildSuccessResponse(StatusCode.Ok, { data: machinery.rows });
       }
@@ -64,9 +64,9 @@ class MachineryService {
     }
     const limit = pageSize;
     const offset = (page - 1) * pageSize;
-    const filter = { idMachinery: request.idMachinery}; // this.buildFindAllFilter(request);
+    const filter = { idMachinery: request.idMachinery }; // this.buildFindAllFilter(request);
     try {
-      if(request.pageSize === -1) {
+      if (request.pageSize === -1) {
         const machinery = await machineryRepository.findAllMachineryMaintenance();
         return BuildResponse.buildSuccessResponse(StatusCode.Ok, { data: machinery.rows });
       }
@@ -99,9 +99,9 @@ class MachineryService {
     }
     const limit = pageSize;
     const offset = (page - 1) * pageSize;
-    const filter = { idMachinery: request.idMachinery};
+    const filter = { idMachinery: request.idMachinery };
     try {
-      if(request.pageSize === -1) {
+      if (request.pageSize === -1) {
         const machineryLocation = await machineryRepository.findAllMachineryLocation();
         return BuildResponse.buildSuccessResponse(StatusCode.Ok, { data: machineryLocation.rows });
       }
@@ -172,7 +172,7 @@ class MachineryService {
           idMachineryDocumentType: request.idMachineryDocumentType,
         }
       });
-  
+
       if (documentExist && filePath) {
         const deleteDocumentResponse = await deleteFile(
           new URL(documentExist.documentUrl).pathname.split("/").pop()!,
@@ -183,7 +183,7 @@ class MachineryService {
           return BuildResponse.buildErrorResponse(deleteDocumentResponse.statusCode, { message: deleteDocumentResponse.message });
         }
       }
-  
+
       if (filePath) {
         const identifier = crypto.randomUUID();
         const uploadResponse = await uploadFile(filePath, identifier, "application/pdf", "machinery");
@@ -203,9 +203,9 @@ class MachineryService {
           }, { transaction });
         }
       }
-  
+
       await transaction.commit();
-  
+
       const machineryDocument = await MachineryDocument.findOne({
         where: {
           idMachinery: request.idMachinery,
@@ -216,7 +216,7 @@ class MachineryService {
           required: true,
         },
       });
-  
+
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, machineryDocument!);
     } catch (err: any) {
       await transaction.rollback();
@@ -246,7 +246,7 @@ class MachineryService {
       const machineryLocation = await MachineryLocation.create(
         {
           idMachinery: request.idMachinery,
-          idProject: request.idProject,
+          idCostCenterProject: request.idCostCenterProject,
           idEmployee: request.idEmployee,
           assignmentDate: request.assignmentDate
         }
@@ -270,7 +270,7 @@ class MachineryService {
           { message: "Machinery Location not found" }
         );
       }
-      machineryLocation.idProject = request.idProject ?? machineryLocation.idProject;
+      machineryLocation.idCostCenterProject = request.idCostCenterProject ?? machineryLocation.idCostCenterProject;
       machineryLocation.idEmployee = request.idEmployee ?? machineryLocation.idEmployee;
       machineryLocation.assignmentDate = request.assignmentDate ? request.assignmentDate : machineryLocation.assignmentDate;
       machineryLocation.modificationDate = tz("America/Bogota").format();
@@ -372,7 +372,7 @@ class MachineryService {
           }
           return location;
         }
-        , null);
+          , null);
         const lastMaintenance = machinery.MachineryMaintenances.reduce((maintenance: MachineryMaintenance | null, currentMaintenance: MachineryMaintenance) => {
           if (!maintenance) {
             return currentMaintenance;
@@ -382,7 +382,7 @@ class MachineryService {
           }
           return maintenance;
         }
-        , null);
+          , null);
         worksheet.addRow({
           serial: machinery.serial,
           description: machinery.description,
@@ -416,7 +416,7 @@ class MachineryService {
     try {
 
       let imageUrl = "";
-      if(filePath) {
+      if (filePath) {
         const identifier = crypto.randomUUID();
         await uploadFile(filePath, identifier, "image/jpg", "machinery");
         imageUrl = `https://sacmaback.blob.core.windows.net/machinery/${identifier}.png`;
@@ -459,7 +459,7 @@ class MachineryService {
         if (machinery.imageUrl) {
           const identifier = new URL(machinery.imageUrl).pathname.split("/").pop();
           const deleteRequest = await deleteFile(identifier!, "machinery");
-          if(deleteRequest instanceof CustomError) {
+          if (deleteRequest instanceof CustomError) {
             await transaction.rollback();
             return BuildResponse.buildErrorResponse(
               deleteRequest.statusCode,
@@ -469,7 +469,7 @@ class MachineryService {
         }
         const identifier = crypto.randomUUID();
         const uploadRequest = await uploadFile(filePath, identifier, "image/jpg", "machinery");
-        if(uploadRequest instanceof CustomError) {
+        if (uploadRequest instanceof CustomError) {
           await transaction.rollback();
           return BuildResponse.buildErrorResponse(
             uploadRequest.statusCode,
@@ -509,7 +509,7 @@ class MachineryService {
         }
       );
 
-      if(filePath) {
+      if (filePath) {
         const identifier = crypto.randomUUID();
         await uploadFile(filePath, identifier, "application/pdf", "machinery");
         machineryMaintenance.documentUrl = `https://sacmaback.blob.core.windows.net/machinery/${identifier}.pdf`;

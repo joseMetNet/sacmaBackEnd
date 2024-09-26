@@ -25,7 +25,7 @@ export interface CreateDTO {
 
 export interface MachineryLocationDTO {
   idMachinery: number;
-  idProject: number;
+  idCostCenterProject: number;
   idEmployee: number;
   assignmentDate: string;
 }
@@ -33,7 +33,7 @@ export interface MachineryLocationDTO {
 export interface CreateMachineryLocationDTO {
   idMachineryLocationHistory: number;
   idMachinery?: number;
-  idProject?: number;
+  idCostCenterProject?: number;
   idEmployee?: number;
   assignmentDate?: string;
 }

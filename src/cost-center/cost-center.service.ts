@@ -91,7 +91,7 @@ class CostCenterService {
       const buffer = await workbook.xlsx.writeBuffer();
       return buffer;
     }
-    catch(err: any) {
+    catch (err: any) {
       console.log(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
@@ -174,13 +174,25 @@ class CostCenterService {
     const filter = this.buildFindAllFilter(request);
 
     try {
-      if (request.page === -1) {
+      if (request.pageSize === -1) {
         const data = await this.costCenterRepository.findAll();
         return BuildResponse.buildSuccessResponse(StatusCode.Ok, { data: data.rows });
       }
       const data = await this.costCenterRepository.findAllAndSearch(filter, limit, offset);
+      const result = data.rows.map(item => {
+        return {
+          idCostCenter: item.idCostCenter,
+          nit: item.nit,
+          name: item.name,
+          phone: item.phone,
+          imageUrl: item.imageUrl,
+          totalProjects: item?.CostCenterProjects.length,
+          CostCenterContacts: item?.CostCenterContacts,
+          CostCenterProjects: item?.CostCenterProjects
+        };
+      });
       const response = {
-        data: data.rows,
+        data: result,
         totalItems: data.count,
         currentPage: page,
         totalPages: Math.ceil(data.count / pageSize),
@@ -209,10 +221,9 @@ class CostCenterService {
     const offset = (page - 1) * pageSize;
     const filter = this.buildFindAllCostCenterContactFilter(request);
 
-    console.log(`filter ${JSON.stringify(filter)}`);
 
     try {
-      if (request.page === -1) {
+      if (request.pageSize === -1) {
         const data = await this.costCenterRepository.findAllCostCenterContact();
         return BuildResponse.buildSuccessResponse(StatusCode.Ok, { data: data.rows });
       }
@@ -250,7 +261,7 @@ class CostCenterService {
     console.log(`filter ${JSON.stringify(filter)}`);
 
     try {
-      if (request.page === -1) {
+      if (request.pageSize === -1) {
         const data = await this.costCenterRepository.findAllCostCenterProject();
         return BuildResponse.buildSuccessResponse(StatusCode.Ok, { data: data.rows });
       }
@@ -285,12 +296,23 @@ class CostCenterService {
         );
         const identifier = crypto.randomUUID();
         const uploadResponse = await uploadFile(filePath, identifier, "image/jpg", "cost-center");
-        if (uploadResponse) {
-          await dbCostCenter.update({
-            imageUrl: `https://sacmaback.blob.core.windows.net/cost-center/${identifier}.jpg`
-          });
+        if (uploadResponse instanceof CustomError) {
           return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Error uploading image" });
         }
+        await dbCostCenter.update({
+          imageUrl: `https://sacmaback.blob.core.windows.net/cost-center/${identifier}.png`
+        });
+      }
+
+      if (filePath && !dbCostCenter.imageUrl) {
+        const identifier = crypto.randomUUID();
+        const uploadResponse = await uploadFile(filePath, identifier, "image/jpg", "cost-center");
+        if (uploadResponse instanceof CustomError) {
+          return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Error uploading image" });
+        }
+        await dbCostCenter.update({
+          imageUrl: `https://sacmaback.blob.core.windows.net/cost-center/${identifier}.png`
+        });
       }
       const data = await this.costCenterRepository.update(costCenterData);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);

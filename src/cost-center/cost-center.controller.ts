@@ -283,7 +283,7 @@ class CostCenterController {
         return;
       }
       const filePath = req.files
-        ? (req.files.document as UploadedFile).tempFilePath
+        ? (req.files.imageUrl as UploadedFile).tempFilePath
         : undefined;
       const response = await costCenterService.update(request.data, filePath);
       res

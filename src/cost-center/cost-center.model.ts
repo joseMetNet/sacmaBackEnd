@@ -4,6 +4,7 @@ import { CostCenterContact } from "./cost-center-contact.model";
 import { CostCenterProject } from "./cost-center-project.model";
 
 export class CostCenter extends Model {
+  [x: string]: any;
   declare idCostCenter: number;
   declare nit: string;
   declare name: string;
