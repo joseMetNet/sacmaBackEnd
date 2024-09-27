@@ -258,7 +258,6 @@ class CostCenterService {
     const offset = (page - 1) * pageSize;
     const filter = this.buildFindAllCostCenterProjectFilter(request);
 
-    console.log(`filter ${JSON.stringify(filter)}`);
 
     try {
       if (request.pageSize === -1) {

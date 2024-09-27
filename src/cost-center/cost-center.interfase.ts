@@ -17,6 +17,7 @@ export interface FindAllCostCenterContactDTO {
 export interface FindAllCostCenterProjectDTO {
   page?: number;
   pageSize?: number;
+  idCostCenter: number;
   name?: string;
   location?: string;
   address?: string;

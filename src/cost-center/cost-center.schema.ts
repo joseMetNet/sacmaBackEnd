@@ -20,6 +20,7 @@ export const findAllCostCenterContact = z.object({
 export const findAllCostCenterProject = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
+  idCostCenter: z.coerce.number(),
   name: z.string().optional(),
   location: z.string().optional(),
   address: z.string().optional(),
