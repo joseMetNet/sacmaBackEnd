@@ -6,6 +6,8 @@ export function machineryRoutes(app: Application): void {
   const router: Router = Router();
 
   router.get("/v1/machineries", [verifyToken], machineryController.findAll);
+  router.get("/v1/machineries/maintenance", [verifyToken], machineryController.findAllMachineryMaintenance);
+  router.get("/v1/machineries/location", [verifyToken], machineryController.findAllMachineryLocation);
   router.get("/v1/machineries/types", [verifyToken], machineryController.findMachineryType);
   router.get("/v1/machineries/models", [verifyToken], machineryController.findMachineryModel);
   router.get("/v1/machineries/brands", [verifyToken], machineryController.findMachineryBrand);
@@ -85,8 +87,111 @@ export function machineryRoutes(app: Application): void {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/failedResponse'
- */
+*/
 
+/**
+ * @openapi
+ * /v1/machineries/maintenance:
+ *   get:
+ *     tags: [Machineries]
+ *     summary: Find machineries maintenance
+ *     description: Find all machineries maintenance by ID
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *         description: Number of items per page
+ *       - in: query
+ *         name: idMachinery
+ *         schema:
+ *           type: integer
+ *         description: ID of machinery
+ *       - in: query
+ *         name: documentName
+ *         schema:
+ *           type: string
+ *         description: Name of the document
+ * 
+ *     responses:
+ *       200:
+ *         description: A list of machineries
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/MachineryMaintenance'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
+ * /v1/machineries/location:
+ *   get:
+ *     tags: [Machineries]
+ *     summary: Find machineries location
+ *     description: Find all machineries location by ID
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *         description: Number of items per page
+ *       - in: query
+ *         name: idMachinery
+ *         schema:
+ *           type: integer
+ *         description: ID of machinery
+ *       - in: query
+ *         name: idCostCenterProject
+ *         schema:
+ *           type: integer
+ *         description: ID of the cost center project
+ * 
+ *     responses:
+ *       200:
+ *         description: A list of machineries
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/MachineryLocationHistory'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
 
 /**
  * @openapi
@@ -109,7 +214,6 @@ export function machineryRoutes(app: Application): void {
  *             schema:
  *               $ref: "#/components/schemas/failedResponse"
 */
-
 
 /**
  * @openapi
@@ -146,7 +250,6 @@ export function machineryRoutes(app: Application): void {
  *             schema:
  *               $ref: '#/components/schemas/failedResponse'
 */
-
 
 /**
  * @openapi
@@ -220,7 +323,6 @@ export function machineryRoutes(app: Application): void {
  *               $ref: '#/components/schemas/failedResponse'
 */
 
-
 /**
  * @openapi
  * /v1/machineries/upload-document:
@@ -256,7 +358,6 @@ export function machineryRoutes(app: Application): void {
  *             schema:
  *               $ref: '#/components/schemas/failedResponse'
 */
-
 
 /**
  * @openapi
@@ -354,7 +455,6 @@ export function machineryRoutes(app: Application): void {
  *               $ref: '#/components/schemas/failedResponse'
  */
 
-
 /**
  * @openapi
  * /v1/machineries/status:
@@ -385,7 +485,6 @@ export function machineryRoutes(app: Application): void {
  *               $ref: '#/components/schemas/failedResponse'
  */
 
-
 /**
  * @openapi
  * /v1/machineries/brands:
@@ -415,7 +514,6 @@ export function machineryRoutes(app: Application): void {
  *             schema:
  *               $ref: '#/components/schemas/failedResponse'
  */
-
 
 /**
  * @openapi
@@ -513,7 +611,6 @@ export function machineryRoutes(app: Application): void {
  *               $ref: '#/components/schemas/failedResponse'
 */
 
-
 /**
  * @openapi
  * /v1/machineries/machinery-location/{idMachineryLocationHistory}:
@@ -544,7 +641,6 @@ export function machineryRoutes(app: Application): void {
  *             schema:
  *               $ref: '#/components/schemas/failedResponse'
 */
-
 
 /**
  * @openapi

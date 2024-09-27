@@ -12,13 +12,15 @@ export const findAllMachinerySchema = z.object({
 export const findAllMachineryLocationSchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
-  idMachinery: z.coerce.number()
+  idMachinery: z.coerce.number(),
+  idCostCenterProject: z.coerce.number().optional(),
 });
 
 export const findAllMachineryMaintenanceSchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
   idMachinery: z.coerce.number(),
+  documentName: z.string().optional(),
 });
 
 export const createMachinerySchema = z.object({

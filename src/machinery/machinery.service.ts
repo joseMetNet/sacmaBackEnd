@@ -53,7 +53,7 @@ class MachineryService {
     }
   }
 
-  async findAllMachineryMaintenance(request: dtos.FindAllDTO): Promise<ResponseEntity> {
+  async findAllMachineryMaintenance(request: dtos.FindAllMaintenanceDTO): Promise<ResponseEntity> {
     let page = 1;
     if (request.page) {
       page = request.page;
@@ -64,7 +64,7 @@ class MachineryService {
     }
     const limit = pageSize;
     const offset = (page - 1) * pageSize;
-    const filter = { idMachinery: request.idMachinery }; // this.buildFindAllFilter(request);
+    const filter = this.buildFindAllMaintenanceFilter(request);
     try {
       if (request.pageSize === -1) {
         const machinery = await machineryRepository.findAllMachineryMaintenance();
@@ -88,7 +88,7 @@ class MachineryService {
     }
   }
 
-  async findAllMachineryLocation(request: dtos.FindAllDTO): Promise<ResponseEntity> {
+  async findAllMachineryLocation(request: dtos.FindAllLocationDTO): Promise<ResponseEntity> {
     let page = 1;
     if (request.page) {
       page = request.page;
@@ -99,7 +99,7 @@ class MachineryService {
     }
     const limit = pageSize;
     const offset = (page - 1) * pageSize;
-    const filter = { idMachinery: request.idMachinery };
+    const filter = this.buildFindAllLocationFilter(request);
     try {
       if (request.pageSize === -1) {
         const machineryLocation = await machineryRepository.findAllMachineryLocation();
@@ -569,6 +569,38 @@ class MachineryService {
     }
   }
 
+  private buildFindAllMaintenanceFilter(request: dtos.FindAllMaintenanceDTO): { [key: string]: any } {
+    let filter: { [key: string]: any } = {};
+    for (const key of Object.getOwnPropertyNames(request)) {
+      if (/^id/.test(key)) {
+        filter = {
+          ...filter,
+          [key]: request[key as keyof dtos.FindAllMaintenanceDTO],
+        };
+      } else if (key === "documentName") {
+        filter = {
+          ...filter,
+          documentName: {
+            [Op.like]: `%${request.documentName}%`,
+          },
+        };
+      }
+    }
+    return filter;
+  }
+
+  private buildFindAllLocationFilter(request: dtos.FindAllLocationDTO): { [key: string]: any } {
+    let filter: { [key: string]: any } = {};
+    for (const key of Object.getOwnPropertyNames(request)) {
+      if (/^id/.test(key)) {
+        filter = {
+          ...filter,
+          [key]: request[key as keyof dtos.FindAllLocationDTO],
+        };
+      }
+    }
+    return filter;
+  }
 
   private buildFindAllFilter(request: dtos.FindAllDTO): { [key: string]: any } {
     let filter: { [key: string]: any } = {};

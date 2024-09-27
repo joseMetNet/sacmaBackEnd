@@ -8,6 +8,20 @@ export interface FindAllDTO {
   idMachineryStatus?: number;
 }
 
+export interface FindAllMaintenanceDTO {
+  page?: number;
+  pageSize?: number;
+  idMachinery: number;
+  documentName?: string;
+}
+
+export interface FindAllLocationDTO {
+  page?: number;
+  pageSize?: number;
+  idMachinery: number;
+  idCostCenterProject?: number;
+}
+
 export interface UploadMachineryDocumentDTO {
   idMachinery: number;
   idMachineryDocumentType: number;

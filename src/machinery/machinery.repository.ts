@@ -39,15 +39,12 @@ class MachineryRepository {
     limit: number, offset: number
   ): Promise<{ rows: MachineryLocation[], count: number }> {
     const machineryLocation = await MachineryLocation.findAndCountAll({
-      include: [{
-        attributes: ["idMachinery", "serial"],
-        model: Machinery,
-      },
-      {
-        attributes: ["idEmployee"],
-        model: Employee,
-        include: [ {model: User, attributes: ["firstName", "lastName"] }]
-      }],
+      include: [
+        {
+          attributes: ["idEmployee"],
+          model: Employee,
+          include: [ {model: User, attributes: ["firstName", "lastName"] }]
+        }],
       nest: true,
       where: filter,
       limit,
@@ -97,16 +94,9 @@ class MachineryRepository {
 
   async findAllMachineryLocation(): 
   Promise<{ rows: MachineryLocation[], count: number }> {
+    console.log("--------------------------------------------");
     const machineryLocation = await MachineryLocation.findAndCountAll({
-      include: [{
-        attributes: ["idMachinery", "serial"],
-        model: Machinery,
-      },
-      {
-        attributes: ["idEmployee", "name"],
-        model: Employee,
-      }],
-      nest: true,
+      include: [ { all: true } ],
       distinct: true,
       order: [["idMachineryLocationHistory", "DESC"]]
     });
