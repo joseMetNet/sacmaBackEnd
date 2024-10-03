@@ -69,29 +69,55 @@ class CostCenterService {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("Cost Centers");
       worksheet.columns = [
-        { header: "Consecutivo", key: "idCostCenter", width: 10 },
         { header: "NIT", key: "nit", width: 32 },
-        { header: "Nombre", key: "name", width: 32 },
+        { header: "Centro de Costo", key: "name", width: 32 },
         { header: "Número de celular", key: "phone", width: 32 },
-        { header: "Imagen de perfil", key: "imageUrl", width: 32 },
+        { header: "Primer Contacto - Nombre", key: "firstContactName", width: 32 },
+        { header: "Primer Contacto - Email", key: "firstContactEmail", width: 32 },
+        { header: "Proyecto - Nombre", key: "projectName", width: 32 },
+        { header: "Proyecto - Ubicación", key: "projectLocation", width: 32 },
+        { header: "Proyecto - Dirección", key: "projectAddress", width: 32 },
+        { header: "Proyecto - Teléfono", key: "projectPhone", width: 32 },
       ];
-
 
       data.rows.forEach((item) => {
         const costCenter = item.toJSON();
-        worksheet.addRow({
-          idCostCenter: costCenter.idCostCenter,
-          nit: costCenter.nit,
-          name: costCenter.name,
-          phone: costCenter.phone,
-          imageUrl: costCenter.imageUrl,
-        });
+        const firstContact = costCenter.CostCenterContacts && costCenter.CostCenterContacts.length > 0 
+          ? costCenter.CostCenterContacts[0] : {};
+        const projects = costCenter.CostCenterProjects || [];
+
+        if (projects.length > 0) {
+          projects.forEach((project: any, index: number) => {
+            worksheet.addRow({
+              nit: index === 0 ? costCenter.nit : "",
+              name: index === 0 ? costCenter.name : "",
+              phone: index === 0 ? costCenter.phone : "",
+              firstContactName: index === 0 ? firstContact.name || "" : "",
+              firstContactEmail: index === 0 ? firstContact.email || "" : "",
+              projectName: project.name,
+              projectLocation: project.location,
+              projectAddress: project.address,
+              projectPhone: project.phone,
+            });
+          });
+        } else {
+          worksheet.addRow({
+            nit: costCenter.nit,
+            name: costCenter.name,
+            phone: costCenter.phone,
+            firstContactName: firstContact.name || "",
+            firstContactEmail: firstContact.email || "",
+            projectName: "",
+            projectLocation: "",
+            projectAddress: "",
+            projectPhone: "",
+          });
+        }
       });
 
       const buffer = await workbook.xlsx.writeBuffer();
       return buffer;
-    }
-    catch (err: any) {
+    } catch (err: any) {
       console.log(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
