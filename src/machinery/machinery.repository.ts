@@ -43,7 +43,11 @@ class MachineryRepository {
         {
           attributes: ["idEmployee"],
           model: Employee,
-          include: [ {model: User, attributes: ["firstName", "lastName"] }]
+          include: [ {model: User, attributes: ["firstName", "lastName"] } ]
+        },
+        {
+          model: CostCenterProject,
+          attributes: ["name", "location"]
         }],
       nest: true,
       where: filter,
@@ -146,7 +150,13 @@ class MachineryRepository {
 
   async findMachineryLocation(id: number): Promise<MachineryLocation | null> {
     const machineryLocation = await MachineryLocation.findByPk(id, {
-      include: [{ all: true }]
+      include: [
+        { all: true },
+        {
+          model: CostCenterProject,
+          attributes: ["name", "location"],
+        }
+      ]
     });
     return machineryLocation;
   }
