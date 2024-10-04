@@ -16,6 +16,8 @@ import { MachineryLocation } from "./machinery-location.model";
 import { tz } from "moment-timezone";
 import { MachineryDocument } from "./machinery-document.model";
 import { MachineryDocumentType } from "./machinery-document-type.model";
+import { Employee, User } from "../models";
+import { CostCenterProject } from "../cost-center/cost-center-project.model";
 
 class MachineryService {
   async findAll(request: dtos.FindAllDTO): Promise<ResponseEntity> {
@@ -342,6 +344,14 @@ class MachineryService {
   async download() {
     try {
       const machineries = await machineryRepository.findAll();
+      const employees = await Employee.findAll({
+        include: [{ model: User, attributes: ["firstName", "lastName"] }],
+        attributes: ["idEmployee", "idUser"],
+      });
+
+      const projects = await CostCenterProject.findAll({
+        attributes: ["idCostCenterProject", "location"]
+      });
 
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("Inputs");
@@ -371,8 +381,8 @@ class MachineryService {
             return currentLocation;
           }
           return location;
-        }
-          , null);
+        }, null);
+
         const lastMaintenance = machinery.MachineryMaintenances.reduce((maintenance: MachineryMaintenance | null, currentMaintenance: MachineryMaintenance) => {
           if (!maintenance) {
             return currentMaintenance;
@@ -381,19 +391,26 @@ class MachineryService {
             return currentMaintenance;
           }
           return maintenance;
-        }
-          , null);
+        }, null);
+
+        const responsibleEmployee = lastLocation ? employees.find(emp => emp.idEmployee === lastLocation.idEmployee) : null;
+        const fName = responsibleEmployee ? responsibleEmployee.toJSON().User.firstName : null;
+        const lName = responsibleEmployee ? responsibleEmployee.toJSON().User.lastName : null;
+        const responsibleName = responsibleEmployee ? `${fName} ${lName}` : null;
+
+        const lastProject = lastLocation ? projects.find(proj => proj.idCostCenterProject === lastLocation.idCostCenterProject) : null;
+        const lastLocationName = lastProject ? lastProject.location : null;
+
         worksheet.addRow({
+          type: machinery.MachineryType?.machineryType ?? null,
           serial: machinery.serial,
-          description: machinery.description,
+          brand: machinery.MachineryBrand?.machineryBrand ?? null,
+          model: machinery.MachineryModel?.machineryModel ?? null,
           price: machinery.price,
-          imageUrl: machinery.imageUrl,
-          model: machinery.MachineryModel.machineryModel ?? null,
-          type: machinery.MachineryType.machineryType ?? null,
-          brand: machinery.MachineryBrand.machineryBrand ?? null,
-          machineryStatus: machinery.MachineryStatus.machineryStatus ?? null,
-          lastLocation: lastLocation ? lastLocation.Project?.project : null,
-          responsible: lastLocation ? lastLocation.Employee?.name : null,
+          machineryStatus: machinery.MachineryStatus?.machineryStatus ?? null,
+          description: machinery.description,
+          lastLocation: lastLocationName,
+          responsible: responsibleName,
           assignmentDate: lastLocation ? lastLocation.assignmentDate : null,
           lastMaintenance: lastMaintenance ? lastMaintenance.maintenanceDate : null,
           maintenanceEffectiveDate: lastMaintenance ? lastMaintenance.maintenanceEffectiveDate : null,
@@ -402,8 +419,7 @@ class MachineryService {
 
       const buffer = await workbook.xlsx.writeBuffer();
       return buffer;
-    }
-    catch (err: any) {
+    } catch (err: any) {
       console.log(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
