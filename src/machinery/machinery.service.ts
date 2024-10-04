@@ -598,6 +598,14 @@ class MachineryService {
           [key]: request[key as keyof dtos.FindAllLocationDTO],
         };
       }
+      if(key === "nameCostCenterProject") {
+        filter = {
+          ...filter,
+          "$CostCenterProject.name$": {
+            [Op.like]: `%${request.nameCostCenterProject}%`,
+          },
+        };
+      }
     }
     return filter;
   }

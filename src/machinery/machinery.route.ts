@@ -169,6 +169,11 @@ export function machineryRoutes(app: Application): void {
  *         schema:
  *           type: integer
  *         description: ID of the cost center project
+ *       - in: query
+ *         name: nameCostCenterProject
+ *         schema:
+ *           type: string
+ *         description: name of the cost center project
  * 
  *     responses:
  *       200:

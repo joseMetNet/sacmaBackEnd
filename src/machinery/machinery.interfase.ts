@@ -20,6 +20,7 @@ export interface FindAllLocationDTO {
   pageSize?: number;
   idMachinery: number;
   idCostCenterProject?: number;
+  nameCostCenterProject?: string;
 }
 
 export interface UploadMachineryDocumentDTO {

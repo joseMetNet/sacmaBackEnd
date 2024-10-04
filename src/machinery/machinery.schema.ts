@@ -14,6 +14,7 @@ export const findAllMachineryLocationSchema = z.object({
   pageSize: z.coerce.number().optional(),
   idMachinery: z.coerce.number(),
   idCostCenterProject: z.coerce.number().optional(),
+  nameCostCenterProject: z.string().optional(),
 });
 
 export const findAllMachineryMaintenanceSchema = z.object({
