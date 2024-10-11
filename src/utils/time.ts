@@ -1,19 +1,19 @@
-import { isSunday, differenceInCalendarDays, addDays, startOfMonth, endOfMonth } from "date-fns";
+import * as fns from "date-fns";
 
 export const isBusinessDay = (date: Date): boolean => {
-  return !isSunday(date);
+  return !fns.isSunday(date);
 };
 
 export const calculateBusinessDaysForCurrentMonth = (): number => {
   const today = new Date();
-  const startDate = startOfMonth(today);
-  const endDate = endOfMonth(today);
+  const startDate = fns.startOfMonth(today);
+  const endDate = fns.endOfMonth(today);
 
   let businessDays = 0;
-  const totalDays = differenceInCalendarDays(endDate, startDate);
+  const totalDays = fns.differenceInCalendarDays(endDate, startDate);
 
   for (let i = 0; i <= totalDays; i++) {
-    const currentDate = addDays(startDate, i);
+    const currentDate = fns.addDays(startDate, i);
     if (isBusinessDay(currentDate)) {
       businessDays++;
     }
