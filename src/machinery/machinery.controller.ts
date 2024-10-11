@@ -197,6 +197,28 @@ class MachineryController {
     }
   }
 
+  async createMachinerBrand(req: Request, res: Response): Promise<void> {
+    try {
+      const request = schemas.createMachineryBrandSchema.safeParse(req.body);
+      if (!request.success) {
+        res.status(StatusCode.BadRequest)
+          .json({
+            status: StatusValue.Failed,
+            data: { error: formatZodError(request.error) },
+          });
+        return;
+      }
+      const response = await machineryService.createMachineryBrand(request.data);
+      res
+        .status(response.code)
+        .json({ status: response.status, data: response.data });
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({ message: err.message });
+    }
+  }
+
   async updateMachinerLocationHistory(req: Request, res: Response): Promise<void> {
     try {
       const request = schemas.updateMachineryLocationSchema.safeParse(req.body);

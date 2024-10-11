@@ -41,6 +41,10 @@ export const createMachineryLocationSchema = z.object({
   assignmentDate: z.string(),
 });
 
+export const createMachineryBrandSchema = z.object({
+  machineryBrand: z.string(),
+});
+
 export const updateMachineryLocationSchema = z.object({
   idMachineryLocationHistory: z.coerce.number(),
   idMachinery: z.coerce.number().optional(),

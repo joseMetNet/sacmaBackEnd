@@ -1,0 +1,70 @@
+export interface CreateWorkTrackingDTO {
+  idEmployee: number;
+  idCostCenterProject: number;
+  hoursWorked: number;
+  overtimeHour?: number;
+  idNovelty?: number;
+  createdAt?: string;
+}
+
+export interface WorkTrackingDTO {
+  idEmployee: number;
+  workedDays: number;
+  idUser: number;
+  firstName: string;
+  lastName: string;
+  baseSalary: number;
+}
+
+export interface WorkTrackingFindAllDTO {
+  rows: WorkTrackingDTO[];
+  count: number;
+}
+
+export interface FindAllDTO {
+  page?: number;
+  pageSize?: number;
+  idEmployee?: number;
+  employeeName?: string;
+  idCostCenterProject?: number;
+  projectName?: string;
+  month?: number;
+  year?: number;
+}
+
+export interface WorkTrackingByEmployeeDTO {
+  projectName: string;
+  firstName: string;
+  lastName: string;
+  identityCardNumber: string;
+  position: string;
+  workedDays: number;
+  month: number;
+  year: number;
+}
+
+export interface FindAllByEmployeeDTO {
+  page?: number;
+  pageSize?: number;
+  idEmployee: number;
+  idCostCenterProject?: number;
+  projectName?: string;
+}
+
+export interface UpdateWorkTrackingDTO {
+  idWorkTracking: number;
+  idEmployee?: number;
+  idCostCenterProject?: number;
+  hoursWorked?: number;
+  overtimeHour?: number;
+  idNovelty?: number;
+}
+
+export interface WorkTrackingDTO {
+  idWorkTracking: number;
+  idEmployee: number;
+  idCostCenterProject: number;
+  hoursWorked: number;
+  overtimeHour?: number;
+  idNovelty?: number;
+}

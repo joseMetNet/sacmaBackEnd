@@ -45,6 +45,10 @@ export interface MachineryLocationDTO {
   assignmentDate: string;
 }
 
+export interface CreateMachineryBrandDTO {
+  machineryBrand: string;
+}
+
 export interface CreateMachineryLocationDTO {
   idMachineryLocationHistory: number;
   idMachinery?: number;

@@ -12,6 +12,7 @@ import { inputRoutes } from "./input";
 import { employeePayrollRoutes } from "./payroll";
 import { machineryRoutes } from "./machinery/machinery.route";
 import { costCenterRoutes } from "./cost-center/cost-center.route";
+import { workTrackingRoute } from "./work-tracking";
 
 class Server {
   private app: Application;
@@ -58,6 +59,7 @@ class Server {
     machineryRoutes(this.app);
     inputRoutes(this.app);
     costCenterRoutes(this.app);
+    workTrackingRoute(this.app);
   }
 
   public listen(): void {
