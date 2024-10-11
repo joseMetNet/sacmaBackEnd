@@ -22,6 +22,7 @@ export function machineryRoutes(app: Application): void {
   router.post("/v1/machineries/machinery-maintenance", [verifyToken], machineryController.createMachineryMaintenance);
   router.post("/v1/machineries/upload-document", [verifyToken], machineryController.uploadDocument);
   router.post("/v1/machineries/location-history", [verifyToken], machineryController.createMachinerLocationHistory);
+  router.post("/v1/machineries/brand", [verifyToken], machineryController.createMachinerBrand);
   router.patch("/v1/machineries/location-history", [verifyToken], machineryController.updateMachinerLocationHistory);
   router.patch("/v1/machineries", [verifyToken], machineryController.update);
   app.use("/api/", router);
@@ -312,6 +313,42 @@ export function machineryRoutes(app: Application): void {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/MachineryLocationHistory'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
+ * /v1/machineries/brand:
+ *   post:
+ *     tags: [Machineries]
+ *     summary: Create a machinery brand
+ *     description: Create a machinery brand
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateMachineryBrand'
+ *     responses:
+ *       201:
+ *         description: Machinery location created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MachineryBrand'
  *       400:
  *         description: Bad request
  *       401:
@@ -816,6 +853,12 @@ export function machineryRoutes(app: Application): void {
  *         assignmentDate:
  *           type: string
  *           example: "2022-01-01"
+ *     CreateMachineryBrand:
+ *       type: object
+ *       properties:
+ *         machineryBrand:
+ *           type: string
+ *           example: "Caterpillar"
  *     UpdateMachineryLocationHistory:
  *       type: object
  *       properties:

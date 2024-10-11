@@ -263,6 +263,25 @@ class MachineryService {
     }
   }
 
+  async createMachineryBrand(request: dtos.CreateMachineryBrandDTO): Promise<ResponseEntity> {
+
+    try {
+      const machineryBrand = await MachineryBrand.create(
+        {
+          machineryBrand: request.machineryBrand
+        }
+      );
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, machineryBrand);
+    }
+    catch (err: any) {
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+
+  }
+
   async updateMachineryLocation(request: dtos.CreateMachineryLocationDTO): Promise<ResponseEntity> {
     try {
       const machineryLocation = await machineryRepository.findMachineryLocation(request.idMachineryLocationHistory);
@@ -304,7 +323,9 @@ class MachineryService {
 
   async findMachineryBrand(): Promise<ResponseEntity> {
     try {
-      const machineryBrand = await MachineryBrand.findAll();
+      const machineryBrand = await MachineryBrand.findAll({
+        order: [["machineryBrand", "ASC"]]
+      });
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, machineryBrand);
     }
     catch (err: any) {
