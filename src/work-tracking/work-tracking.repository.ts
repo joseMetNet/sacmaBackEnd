@@ -1,6 +1,6 @@
 import { WorkTracking } from "./work-tracking.model";
 import * as dtos from "./work-tracking.interfase";
-import { Employee, Position, User } from "../models";
+import { Employee, User } from "../models";
 import { CostCenterProject } from "../cost-center/cost-center-project.model";
 import { WorkHour } from "./work-hour.model";
 import { dbConnection } from "../config";
@@ -42,8 +42,7 @@ export class WorkTrackingRepository {
           u.idUser, 
           u.firstName, 
           u.lastName,
-          MAX(e.baseSalary) baseSalary,
-          ccp.name AS projectName
+          MAX(e.baseSalary) baseSalary
       FROM mvp1.TB_WorkTracking wt
       INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
       INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
@@ -54,8 +53,7 @@ export class WorkTrackingRepository {
           e.idEmployee, 
           u.idUser, 
           u.firstName, 
-          u.lastName,
-          ccp.name
+          u.lastName
       ORDER BY wt.idEmployee
       OFFSET :offset ROWS
       FETCH NEXT :limit ROWS ONLY;
@@ -69,8 +67,7 @@ export class WorkTrackingRepository {
             wt.idEmployee, 
             u.idUser, 
             u.firstName, 
-            u.lastName,
-            ccp.name AS projectName
+            u.lastName
         FROM mvp1.TB_WorkTracking wt
         INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
         INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
@@ -81,8 +78,7 @@ export class WorkTrackingRepository {
             e.idEmployee, 
             u.idUser, 
             u.firstName, 
-            u.lastName,
-            ccp.name
+            u.lastName
       ) AS subquery;
     `;
 
@@ -123,7 +119,7 @@ export class WorkTrackingRepository {
         COUNT(wt.createdAt) AS workedDays,
         MONTH(wt.createdAt) AS month,
         YEAR(wt.createdAt) AS year,
-        ccp.name AS projectName
+        ccp.name AS projectName 
     FROM mvp1.TB_WorkTracking wt
         INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
         INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
