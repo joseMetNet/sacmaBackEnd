@@ -98,7 +98,6 @@ class MachineryRepository {
 
   async findAllMachineryLocation(): 
   Promise<{ rows: MachineryLocation[], count: number }> {
-    console.log("--------------------------------------------");
     const machineryLocation = await MachineryLocation.findAndCountAll({
       include: [ { all: true } ],
       distinct: true,

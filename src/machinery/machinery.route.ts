@@ -52,10 +52,10 @@ export function machineryRoutes(app: Application): void {
  *           type: integer
  *         description: ID of the machinery type
  *       - in: query
- *         name: idMachineryBrand
+ *         name: machineryBrand
  *         schema:
- *           type: integer
- *         description: ID of the machinery brand
+ *           type: string
+ *         description: Brand of the machinery
  *       - in: query
  *         name: serial
  *         schema:
@@ -770,8 +770,8 @@ export function machineryRoutes(app: Application): void {
  *           type: integer
  *         idMachineryType:
  *           type: integer
- *         idMachineryBrand:
- *           type: integer
+ *         machineryBrand:
+ *           type: string
  *         idMachineryStatus:
  *           type: integer
  *     CreateMachinery:
@@ -793,8 +793,8 @@ export function machineryRoutes(app: Application): void {
  *           type: integer
  *         idMachineryType:
  *           type: integer
- *         idMachineryBrand:
- *           type: integer
+ *         machineryBrand:
+ *           type: string
  *         idMachineryStatus:
  *           type: integer
  *     UpdateMachinery:
@@ -819,8 +819,8 @@ export function machineryRoutes(app: Application): void {
  *           type: integer
  *         idMachineryType:
  *           type: integer
- *         idMachineryBrand:
- *           type: integer
+ *         machineryBrand:
+ *           type: string
  *         idMachineryStatus:
  *           type: integer
  *     CreateMachineryMaintenance:

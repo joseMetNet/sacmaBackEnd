@@ -467,7 +467,7 @@ class MachineryService {
           imageUrl: imageUrl,
           idMachineryModel: request.idMachineryModel,
           idMachineryType: request.idMachineryType,
-          idMachineryBrand: request.idMachineryBrand,
+          machineryBrand: request.machineryBrand,
           idMachineryStatus: request.idMachineryStatus,
         }
       );
@@ -521,7 +521,7 @@ class MachineryService {
       machinery.price = request.price ?? machinery.price;
       machinery.idMachineryModel = request.idMachineryModel ?? machinery.idMachineryModel;
       machinery.idMachineryType = request.idMachineryType ?? machinery.idMachineryType;
-      machinery.idMachineryBrand = request.idMachineryBrand ?? machinery.idMachineryBrand;
+      machinery.machineryBrand = request.machineryBrand ?? machinery.machineryBrand;
       machinery.idMachineryStatus = request.idMachineryStatus ?? machinery.idMachineryStatus;
       await machinery.save();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, machinery);
@@ -660,6 +660,13 @@ class MachineryService {
           ...filter,
           serial: {
             [Op.like]: `%${request.serial}%`,
+          },
+        };
+      } else if( key === "machineryBrand") {
+        filter = {
+          ...filter,
+          machineryBrand: {
+            [Op.like]: `%${request.machineryBrand}%`,
           },
         };
       }

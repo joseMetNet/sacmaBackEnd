@@ -4,7 +4,7 @@ export const findAllMachinerySchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
   idMachineryType: z.coerce.number().optional(),
-  idMachineryBrand: z.coerce.number().optional(),
+  machineryBrand: z.string().optional(),
   serial: z.string().optional(),
   idMachineryStatus: z.coerce.number().optional(),
 });
@@ -30,7 +30,7 @@ export const createMachinerySchema = z.object({
   price: z.string(),
   idMachineryModel: z.coerce.number(),
   idMachineryType: z.coerce.number(),
-  idMachineryBrand: z.coerce.number(),
+  machineryBrand: z.string(),
   idMachineryStatus: z.coerce.number(),
 });
 
@@ -60,7 +60,7 @@ export const updateMachinerySchema = z.object({
   price: z.string().optional(),
   idMachineryModel: z.coerce.number().optional(),
   idMachineryType: z.coerce.number().optional(),
-  idMachineryBrand: z.coerce.number().optional(),
+  machineryBrand: z.string(),
   idMachineryStatus: z.coerce.number().optional(),
 });
 

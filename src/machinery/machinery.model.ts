@@ -3,10 +3,10 @@ import { dbConnection } from "../config";
 import { MachineryModel } from "./machinery-model.model";
 import { MachineryType } from "./machinery-type.model";
 import { MachineryStatus } from "./machinery-status.model";
-import { MachineryBrand } from "./machinery-brand.model";
 import { MachineryMaintenance } from "./machinery-maintenance.model";
 import { MachineryLocation } from "./machinery-location.model";
 import { MachineryDocument } from "./machinery-document.model";
+import { MachineryBrand } from "./machinery-brand.model";
 
 export class Machinery extends Model {
   declare idMachinery: number;
@@ -16,7 +16,7 @@ export class Machinery extends Model {
   declare imageUrl: string;
   declare idMachineryModel: number;
   declare idMachineryType: number;
-  declare idMachineryBrand: number;
+  declare machineryBrand: string;
   declare idMachineryStatus: number;
 }
 
@@ -50,8 +50,8 @@ Machinery.init({
     type: DataTypes.INTEGER,
     allowNull: false
   },
-  idMachineryBrand: {
-    type: DataTypes.INTEGER,
+  machineryBrand: {
+    type: DataTypes.STRING,
     allowNull: false
   },
   idMachineryStatus: {
@@ -80,10 +80,6 @@ Machinery.hasOne(MachineryStatus, {
   foreignKey: "idMachineryStatus"
 });
 
-Machinery.hasOne(MachineryBrand, {
-  sourceKey: "idMachineryBrand",
-  foreignKey: "idMachineryBrand"
-});
 
 Machinery.hasMany(MachineryMaintenance, {
   sourceKey: "idMachinery",

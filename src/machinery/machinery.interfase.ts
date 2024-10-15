@@ -3,7 +3,7 @@ export interface FindAllDTO {
   pageSize?: number;
   idMachinery?: number;
   idMachineryType?: number;
-  idMachineryBrand?: number;
+  machineryBrand?: string;
   serial?: string;
   idMachineryStatus?: number;
 }
@@ -34,7 +34,7 @@ export interface CreateDTO {
   price: string;
   idMachineryModel: number;
   idMachineryType: number;
-  idMachineryBrand: number;
+  machineryBrand: string;
   idMachineryStatus: number;
 }
 
@@ -64,7 +64,7 @@ export interface UpdateDTO {
   price?: string;
   idMachineryModel?: number;
   idMachineryType?: number;
-  idMachineryBrand?: number;
+  machineryBrand?: string;
   idMachineryStatus?: number;
 }
 
