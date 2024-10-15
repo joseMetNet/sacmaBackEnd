@@ -7,13 +7,19 @@ export interface CreateWorkTrackingDTO {
   createdAt?: string;
 }
 
-export interface WorkTrackingDTO {
+export interface WorkTrackingRDTO {
   idEmployee: number;
   workedDays: number;
   idUser: number;
   firstName: string;
   lastName: string;
   baseSalary: number;
+  projectName: string;
+}
+
+export interface WorkTrackingRFindAllDTO {
+  rows: WorkTrackingRDTO[];
+  count: number;
 }
 
 export interface WorkTrackingFindAllDTO {

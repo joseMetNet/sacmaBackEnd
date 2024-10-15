@@ -1,4 +1,3 @@
-import { Op } from "sequelize";
 import { StatusCode } from "../interfaces";
 import { BuildResponse } from "../services";
 import { ResponseEntity } from "../services/interface";
@@ -37,7 +36,7 @@ export class WorkTrackingService {
       const replacements = this.buildReplacements(request);
 
       const data = await this.workTrackingRepository.findAllAndSearch(filter, replacements, limit, offset);
-      const result = data.rows.map((item: types.WorkTrackingDTO) => {
+      const result = data.rows.map((item: types.WorkTrackingRDTO) => {
         const wage = item.baseSalary / calculateBusinessDaysForCurrentMonth();
         return {
           ...item,

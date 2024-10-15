@@ -34,7 +34,7 @@ export class WorkTrackingRepository {
     replacements: { [key: string]: any },
     limit: number, 
     offset: number
-  ): Promise<dtos.WorkTrackingFindAllDTO> {
+  ): Promise<dtos.WorkTrackingRFindAllDTO> {
     const query = `
       SELECT 
           wt.idEmployee, 
@@ -42,7 +42,8 @@ export class WorkTrackingRepository {
           u.idUser, 
           u.firstName, 
           u.lastName,
-          MAX(e.baseSalary) baseSalary
+          MAX(e.baseSalary) baseSalary,
+          ccp.name AS projectName
       FROM mvp1.TB_WorkTracking wt
       INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
       INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
@@ -53,21 +54,39 @@ export class WorkTrackingRepository {
           e.idEmployee, 
           u.idUser, 
           u.firstName, 
-          u.lastName
+          u.lastName,
+          ccp.name
       ORDER BY wt.idEmployee
       OFFSET :offset ROWS
       FETCH NEXT :limit ROWS ONLY;
     `;
-  
+ 
     const countQuery = `
-      SELECT COUNT(DISTINCT wt.idEmployee) AS total
-      FROM mvp1.TB_WorkTracking wt
-      INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
-      INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
-      INNER JOIN mvp1.TB_CostCenterProject ccp ON wt.idCostCenterProject = ccp.idCostCenterProject
-      WHERE ${filter ? filter : "1 = 1"};
-    `; 
-    const rows = await dbConnection.query<dtos.WorkTrackingDTO>(query, {
+      SELECT 
+        COUNT(*) AS total
+      FROM (
+        SELECT 
+            wt.idEmployee, 
+            u.idUser, 
+            u.firstName, 
+            u.lastName,
+            ccp.name AS projectName
+        FROM mvp1.TB_WorkTracking wt
+        INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
+        INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
+        INNER JOIN mvp1.TB_CostCenterProject ccp ON wt.idCostCenterProject = ccp.idCostCenterProject
+        WHERE ${filter ? filter : "1 = 1"} 
+        GROUP BY 
+            wt.idEmployee, 
+            e.idEmployee, 
+            u.idUser, 
+            u.firstName, 
+            u.lastName,
+            ccp.name
+      ) AS subquery;
+    `;
+
+    const rows = await dbConnection.query<dtos.WorkTrackingRDTO>(query, {
       replacements: {
         limit,
         offset,
@@ -97,14 +116,14 @@ export class WorkTrackingRepository {
     
     const query = `
     SELECT
-        ccp.name AS projectName,
         u.firstName,
         u.lastName,
         u.identityCardNumber,
         tp.position,
         COUNT(wt.createdAt) AS workedDays,
         MONTH(wt.createdAt) AS month,
-        YEAR(wt.createdAt) AS year
+        YEAR(wt.createdAt) AS year,
+        ccp.name AS projectName
     FROM mvp1.TB_WorkTracking wt
         INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
         INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
@@ -118,21 +137,39 @@ export class WorkTrackingRepository {
         u.identityCardNumber,
         tp.position,
         MONTH(wt.createdAt),
-        YEAR(wt.createdAt)
+        YEAR(wt.createdAt),
+        ccp.name
     ORDER BY YEAR(wt.createdAt) DESC, MONTH(wt.createdAt) DESC
     OFFSET :offset ROWS
     FETCH NEXT :limit ROWS ONLY;
     `;
-
     const countQuery = `
       SELECT 
-        COUNT(DISTINCT CONCAT(ccp.name, u.firstName, u.lastName, MONTH(wt.createdAt), YEAR(wt.createdAt))) AS total
-      FROM mvp1.TB_WorkTracking wt
-      INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
-      INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
-      INNER JOIN mvp1.TB_CostCenterProject ccp ON wt.idCostCenterProject = ccp.idCostCenterProject
-      INNER JOIN mvp1.TB_Position tp ON tp.idPosition=e.idPosition
-      WHERE ${filter ? filter : "1 = 1"};
+        COUNT(*) AS total
+      FROM (
+        SELECT
+            u.firstName,
+            u.lastName,
+            u.identityCardNumber,
+            tp.position,
+            MONTH(wt.createdAt) AS month,
+            YEAR(wt.createdAt) AS year,
+            ccp.name AS projectName
+        FROM mvp1.TB_WorkTracking wt
+            INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
+            INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
+            INNER JOIN mvp1.TB_CostCenterProject ccp ON wt.idCostCenterProject = ccp.idCostCenterProject
+            INNER JOIN mvp1.TB_Position tp ON tp.idPosition = e.idPosition
+        WHERE ${filter ? filter : "1 = 1"}
+        GROUP BY
+            ccp.name,
+            u.firstName,
+            u.lastName,
+            u.identityCardNumber,
+            tp.position,
+            MONTH(wt.createdAt),
+            YEAR(wt.createdAt)
+      ) AS subquery;
     `;
 
     const rows = await dbConnection.query<dtos.WorkTrackingByEmployeeDTO>(query, {
