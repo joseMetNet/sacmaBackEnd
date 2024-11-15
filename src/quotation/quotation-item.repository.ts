@@ -1,21 +1,20 @@
 import { QuotationItem } from "./quotation-item.model";
 import * as dtos from "./quotation-item.interfase";
-import { dbConnection } from "../config";
-import { QueryTypes } from "sequelize";
 
 export class QuotationItemRepository {
   async create(quotationItemData: dtos.CreateQuotationItemDTO): Promise<QuotationItem> {
-    return await QuotationItem.create(quotationItemData);
+    return await QuotationItem.create(quotationItemData as any);
   }
 
   async findById(id: number): Promise<QuotationItem | null> {
     return await QuotationItem.findByPk(id);
   }
 
-  async findAll(): Promise<dtos.QuotationItemFindAllDTO> {
+  async findAll(): Promise<{rows: QuotationItem[], count: number}> {
     const quotationItems = await QuotationItem.findAndCountAll({
       order: [["idQuotationItem", "DESC"]],
     });
+    // map quotation items to quotation item DTO
     return { rows: quotationItems.rows, count: quotationItems.count };
   }
 
