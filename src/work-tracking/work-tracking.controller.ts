@@ -97,6 +97,45 @@ export class WorkTrackingController {
       });
   };
 
+  createAll = async (req: Request, res: Response): Promise<void> => {
+    let workTrackingArray;
+    try {
+      workTrackingArray = JSON.parse(req.body.workTracking);
+    } catch (error) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: "Invalid JSON format" }
+        });
+      return;
+    }
+
+    const workTracking = workTrackingArray.map((item: any) => {
+      return {
+        idEmployee: item.idEmployee,
+        idCostCenterProject: item.idCostCenterProject,
+        hoursWorked: item.hoursWorked
+      };
+    });
+
+    const request = schemas.createWorkTrackingArray.safeParse(workTracking);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) }
+        });
+      return;
+    }
+    const response = await this.workTrackingService.createAll(request.data);
+    res
+      .status(response.code)
+      .json({
+        status: response.status,
+        data: response.data
+      });
+  };
+
   update = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.updateWorkTracking.safeParse(req.body);
     if (!request.success) {

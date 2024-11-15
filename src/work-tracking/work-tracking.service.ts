@@ -175,6 +175,27 @@ export class WorkTrackingService {
     }
   };
 
+  createAll = async (request: types.CreateWorkTrackingDTO[]): Promise<ResponseEntity> => {
+    try {
+      const createAllPromises = request.map((item) => {
+        return this.workTrackingRepository.create(item);
+      });
+
+      await Promise.all(createAllPromises);
+      return BuildResponse.buildSuccessResponse(
+        StatusCode.ResourceCreated,
+        { message: "Work Tracking created successfully" }
+      );
+    }
+    catch (error) {
+      console.error(`Error creating Work Tracking: ${error}`);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "Error creating Work Tracking" }
+      );
+    }
+  };
+
   update = async (request: types.UpdateWorkTrackingDTO): Promise<ResponseEntity> => {
     try {
       const workTracking = await this.workTrackingRepository.findById(request.idWorkTracking);

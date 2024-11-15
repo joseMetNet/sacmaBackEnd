@@ -18,6 +18,7 @@ export function workTrackingRoute(app: Application): void {
 
   // POST routes
   router.post("/v1/work-tracking", workTrackingController.create);
+  router.post("/v1/work-tracking/create-all", workTrackingController.createAll);
 
   // PATCH routes
   router.patch("/v1/work-tracking", workTrackingController.update);
@@ -220,7 +221,6 @@ export function workTrackingRoute(app: Application): void {
  *               $ref: '#/components/schemas/failedResponse'
 */
 
-
 /**
  * @openapi
  * /v1/work-tracking/{idWorkTracking}:
@@ -252,7 +252,6 @@ export function workTrackingRoute(app: Application): void {
  *               $ref: '#/components/schemas/failedResponse'
 */
 
-
 /**
  * @openapi
  * /v1/work-tracking:
@@ -266,6 +265,42 @@ export function workTrackingRoute(app: Application): void {
  *         multipart/form-data:
  *           schema:
  *             $ref: '#/components/schemas/CreateWorkTrackingDTO'
+ *     responses:
+ *       201:
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/WorkTrackingDTO'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
+ * /v1/work-tracking/create-all:
+ *   post:
+ *     tags: [Work Tracking]
+ *     summary: Create All Work Tracking
+ *     description: Create multiple Work Tracking
+ *     requestBody:
+ *       required: true
+ *       content:
+ *        multipart/form-data:
+ *         schema:
+ *           $ref: '#/components/schemas/CreateAllWorkTrackingDTO' 
  *     responses:
  *       201:
  *         description: Created
@@ -359,6 +394,13 @@ export function workTrackingRoute(app: Application): void {
  *         WorkHour:
  *           type: integer
  *           example: 1
+ *     CreateAllWorkTrackingDTO:
+ *       type: object
+ *       properties:
+ *         workTracking:
+ *           type: array
+ *           items:
+ *            $ref: '#/components/schemas/CreateWorkTrackingDTO'
  *     CreateWorkTrackingDTO:
  *       type: object
  *       required:

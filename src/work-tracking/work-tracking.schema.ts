@@ -40,3 +40,5 @@ export const updateWorkTracking = z.object({
   overtimeHour: z.coerce.number().optional(),
   idNovelty: z.coerce.number().optional(),
 });
+
+export const createWorkTrackingArray = z.array(createWorkTracking);

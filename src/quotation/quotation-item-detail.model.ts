@@ -1,0 +1,53 @@
+import { DataTypes, Model, QueryInterface } from "sequelize";
+import { dbConnection } from "../config";
+import { QuotationItem } from "./quotation-item.model";
+import { Input } from "../input/input.model";
+
+export class QuotationItemDetail extends Model {
+  declare idQuotationItemDetail: number;
+  declare idQuotationItem: number;
+  declare idInput: number;
+  declare quantity: number;
+  declare totalCost: number;
+}
+
+QuotationItemDetail.init(
+  {
+    idQuotationItemDetail: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    idQuotationItem: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    idInput: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    quantity: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    totalCost: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+    },
+  },
+  {
+    sequelize: dbConnection,
+    tableName: "TB_QuotationItemDetail",
+    timestamps: false,
+  }
+);
+
+QuotationItemDetail.hasOne(QuotationItem, {
+  sourceKey: "idQuotationItem",
+  foreignKey: "idQuotationItem",
+});
+
+QuotationItemDetail.hasOne(Input, {
+  sourceKey: "idInput",
+  foreignKey: "idInput",
+});
