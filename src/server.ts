@@ -1,4 +1,3 @@
-import "colors";
 import cors from "cors";
 import express, { Application } from "express";
 import fileUpload from "express-fileupload";
@@ -67,7 +66,7 @@ class Server {
   public listen(): void {
     console.clear();
     this.app.listen(this.port, () => {
-      console.log(` 🔥 Server in port ${this.port}`.bold);
+      console.log(`Server in port ${this.port}`);
     });
   }
 }
