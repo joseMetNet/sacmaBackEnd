@@ -3,11 +3,20 @@ import { z } from "zod";
 export const CreateQuotationSchema = z.object({
   name: z.string(),
   idResponsable: z.coerce.number(),
+  builder: z.string().optional(),
+  builderAddress: z.string().optional(),
+  projectName: z.string().optional(),
+  itemSummary: z.string().optional(),
 });
 
 export const UpdateQuotationSchema = z.object({
   idQuotation: z.coerce.number(),
+  name: z.string().optional(),
   idResponsable: z.number().optional(),
+  builder: z.string().optional(),
+  builderAddress: z.string().optional(),
+  projectName: z.string().optional(),
+  itemSummary: z.string().optional(),
 });
 
 export const QuotationSchema = z.object({

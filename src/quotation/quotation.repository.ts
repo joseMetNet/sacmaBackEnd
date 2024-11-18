@@ -5,10 +5,14 @@ import { QuotationItemDetail } from "./quotation-item-detail.model";
 import { Employee, User } from "../models";
 import { Input } from "../input/input.model";
 import { CustomError } from "../utils";
+import { Transaction } from "sequelize";
 
 export class QuotationRepository {
-  async create(quotationData: dtos.CreateQuotationDTO): Promise<Quotation> {
-    return await Quotation.create(quotationData as any);
+  async create(
+    quotationData: dtos.CreateQuotationDTO,
+    transaction: Transaction
+  ): Promise<Quotation> {
+    return await Quotation.create(quotationData as any, { transaction });
   }
 
   async findById(id: number): Promise<Quotation | null> {

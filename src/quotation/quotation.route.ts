@@ -582,6 +582,22 @@ export function quotationRoute(app: Application): void {
  * @swagger
  * components:
  *   schemas:
+ *     QuotationItemDetailDTO:
+ *       type: object
+ *       required:
+ *         - idQuotationItem
+ *         - idInput
+ *         - quantity
+ *       properties:
+ *         idQuotationItem:
+ *           type: integer
+ *           example: 1
+ *         idInput:
+ *           type: integer
+ *           example: 1
+ *         quantity:
+ *           type: integer
+ *           example: 10
  *     QuotationItemDTO:
  *       type: object
  *       properties:
@@ -618,8 +634,8 @@ export function quotationRoute(app: Application): void {
  *     CreateQuotationDTO:
  *       type: object
  *       required:
- *         - quotationName
  *         - idResponsable
+ *         - name
  *       properties:
  *         idResponsable:
  *           type: integer
@@ -627,10 +643,22 @@ export function quotationRoute(app: Application): void {
  *         name:
  *           type: string
  *           example: "Quotation name"
+ *         builder:
+ *           type: string
+ *           example: "Amarilo"
+ *         builderAddress:
+ *           type: string
+ *           example: "Calle 123"
+ *         projectName:
+ *           type: string
+ *           example: "Project name"
+ *         itemSummary:
+ *           type: string
+ *           example: "Item summary"
  *     UpdateQuotationDTO:
  *       type: object
  *       required:
- *         - id
+ *         - idQuotation
  *       properties:
  *         idQuotation:
  *           type: integer
@@ -638,9 +666,21 @@ export function quotationRoute(app: Application): void {
  *         idResponsable:
  *           type: integer
  *           example: 1
- *         quotationName:
+ *         name:
  *           type: string
  *           example: "Quotation name"
+ *         builder:
+ *           type: string
+ *           example: "Amarilo"
+ *         builderAddress:
+ *           type: string
+ *           example: "Calle 123"
+ *         projectName:
+ *           type: string
+ *           example: "Project name"
+ *         itemSummary:
+ *           type: string
+ *           example: "Item summary"
  *     CreateQuotationItemDTO:
  *       type: object
  *       required:
@@ -704,7 +744,9 @@ export function quotationRoute(app: Application): void {
  *     CreateQuotationItemDetailDTO:
  *       type: object
  *       required:
- *         - idQuotationItemDetail
+ *         - idQuotationItem
+ *         - idInput
+ *         - quantity
  *       properties:
  *         idQuotationItem:
  *           type: integer
@@ -715,15 +757,6 @@ export function quotationRoute(app: Application): void {
  *         quantity:
  *           type: integer
  *           example: 10
- *     QuotationItemDetailDTO:
- *       type: object
- *       properties:
- *         id:
- *           type: integer
- *           example: 1
- *         description:
- *           type: string
- *           example: "Detail description"
  *     UpdateQuotationItemDetailDTO:
  *       type: object
  *       required:

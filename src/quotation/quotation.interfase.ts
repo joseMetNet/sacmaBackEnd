@@ -1,16 +1,20 @@
 export interface CreateQuotationDTO {
   name: string;
   idResponsable: number;
+  builder?: string;
+  builderAddress?: string;
+  projectName?: string;
+  itemSummary?: string;
 }
 
 export interface UpdateQuotationDTO {
   idQuotation: number;
+  name?: string;
   idResponsable?: number;
-}
-
-export interface QuotationDTO {
-  idQuotation: number;
-  idResponsable: number;
+  builder?: string;
+  builderAddress?: string;
+  projectName?: string;
+  itemSummary?: string;
 }
 
 export interface findAllQuotationDTO {
