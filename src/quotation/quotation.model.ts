@@ -4,8 +4,13 @@ import { Employee } from "../models";
 
 export class Quotation extends Model {
   declare idQuotation: number;
+  declare consecutive: string;
   declare name: string;
   declare idResponsable: number;
+  declare builder: string;
+  declare builderAddress: string;
+  declare projectName: string;
+  declare itemSummary: string;
 }
 
 Quotation.init(
@@ -15,6 +20,10 @@ Quotation.init(
       primaryKey: true,
       autoIncrement: true,
     },
+    consecutive: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -22,6 +31,22 @@ Quotation.init(
     idResponsable: {
       type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    builder: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    builderAddress: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    projectName: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    itemSummary: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   },
   {

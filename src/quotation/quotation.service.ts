@@ -5,6 +5,8 @@ import { Input } from "../input/input.model";
 import { CustomError } from "../utils";
 import { ResponseEntity } from "../services/interface";
 import { BuildResponse } from "../services";
+import { dbConnection } from "../config";
+import { Quotation } from "./quotation.model";
 
 export class QuotationService {
 
@@ -15,12 +17,19 @@ export class QuotationService {
   }
 
   createQuotation = async (quotationData: dtos.CreateQuotationDTO): Promise<ResponseEntity> => {
+    const transaction = await dbConnection.transaction();
     try {
-      const quotation = await this.quotationRepository.create(quotationData);
+      const quotation = await this.quotationRepository.create(quotationData, transaction);
+      const consecutive = `COT SACIPR Nr. ${quotation.idQuotation}-${new Date().getFullYear()}`;
+      quotation.consecutive = consecutive;
+      await quotation.save({ transaction });
+
+      await transaction.commit();
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotation);
-    } catch (error) {
-      console.error(error);
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
+    } catch (err: any) {
+      await transaction.rollback();
+      console.error("Error creating quotation:", err);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to create quotation", error: err.message });
     }
   };
 
@@ -83,16 +92,27 @@ export class QuotationService {
 
   updateQuotation = async (quotationData: dtos.UpdateQuotationDTO): Promise<ResponseEntity> => {
     try {
-      const [updatedCount, updatedQuotations] = await this.quotationRepository.update(quotationData);
-      if (updatedCount > 0) {
-        return BuildResponse.buildSuccessResponse(StatusCode.Ok, updatedQuotations);
-      } else {
+      const quotation = await this.quotationRepository.findById(quotationData.idQuotation);
+      if (!quotation) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
       }
+      const updatedQuotation = this.buildQuotation(quotation, quotationData);
+      await updatedQuotation.save();
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, updatedQuotation);
     } catch (error) {
       console.error(error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
     }
+  };
+
+  private buildQuotation = (quotation: Quotation, quotationData: dtos.UpdateQuotationDTO) => {
+    quotation.name = quotationData.name ?? quotation.name;
+    quotation.builder = quotationData.builder ?? quotation.builder;
+    quotation.builderAddress = quotationData.builderAddress ?? quotation.builderAddress;
+    quotation.projectName = quotationData.projectName ?? quotation.projectName;
+    quotation.itemSummary = quotationData.itemSummary ?? quotation.itemSummary;
+    return quotation;
   };
 
   deleteQuotation = async (idQuotation: number): Promise<ResponseEntity> => {
