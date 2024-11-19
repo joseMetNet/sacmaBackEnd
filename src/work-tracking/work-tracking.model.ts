@@ -1,7 +1,7 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
 import { CostCenterProject } from "../cost-center/cost-center-project.model";
-import { Employee } from "../models";
+import { Employee, Novelty } from "../models";
 
 export class WorkTracking extends Model {
   declare idWorkTracking: number;
@@ -56,4 +56,9 @@ WorkTracking.hasOne(CostCenterProject, {
 WorkTracking.hasOne(Employee, {
   sourceKey: "idEmployee",
   foreignKey: "idEmployee"
+});
+
+WorkTracking.hasOne(Novelty, {
+  sourceKey: "idNovelty",
+  foreignKey: "idNovelty"
 });

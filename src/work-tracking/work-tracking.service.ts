@@ -63,6 +63,44 @@ export class WorkTrackingService {
     }
   };
 
+  findWorkTrackingByEmployee = async (request: types.FindAllByEmployeeDTO): Promise<ResponseEntity> => {
+    let page = 1;
+    if (request.page) {
+      page = request.page;
+    }
+    let pageSize = 10;
+    if (request.pageSize) {
+      pageSize = request.pageSize;
+    }
+    const limit = pageSize;
+    const offset = (page - 1) * pageSize;
+
+    try {
+      const filter = this.buildFindWorkTrackingByEmployeeFilter(request);
+      const replacements = this.buildReplacementsByEmployee(request);
+
+      const data = await this.workTrackingRepository.findWorkTrackingByEmployee(filter, replacements, limit, offset);
+
+      const response = {
+        data: data.rows,
+        totalItems: data.count,
+        currentPage: page,
+        totalPages: Math.ceil(data.count / pageSize),
+      };
+      return BuildResponse.buildSuccessResponse(
+        StatusCode.Ok,
+        response
+      );
+    }
+    catch (error) {
+      console.error(`Error getting Work Tracking by Employee: ${error}`);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "Error getting Work Trackings" }
+      );
+    }
+  };
+
   findAllByEmployee = async (request: types.FindAllByEmployeeDTO): Promise<ResponseEntity> => {
     let page = 1;
     if (request.page) {
@@ -333,6 +371,23 @@ export class WorkTrackingService {
     }
   
     return filters.length > 0 ? " " + filters.join(" AND ") : "";
+  }
+
+  private buildFindWorkTrackingByEmployeeFilter(request: types.FindAllByEmployeeDTO): { [key: string]: any } {
+    const filters: { [key: string]: any } = {};
+  
+    for (const key of Object.getOwnPropertyNames(request)) {
+      if (key === "idEmployee") {
+        filters.idEmployee = request.idEmployee;
+      } else if (key === "idCostCenterProject") {
+        filters.idCostCenterProject = request.idCostCenterProject;
+      } 
+      else if (key === "projectName") {
+        filters.projectName = `%${request.projectName}%`;
+      }
+    }
+  
+    return filters;
   }
 
   private buildStartDateWithMonthAndYear = (data: types.WorkTrackingByEmployeeDTO): string => {
