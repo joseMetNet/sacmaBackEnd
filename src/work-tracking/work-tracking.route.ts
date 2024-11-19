@@ -12,7 +12,8 @@ export function workTrackingRoute(app: Application): void {
 
   // GET routes
   router.get("/v1/work-tracking", workTrackingController.findAll);
-  router.get("/v1/work-tracking/employee", workTrackingController.findAllByEmployee);
+  router.get("/v1/work-tracking/employee", workTrackingController.findWorkTrackingByEmployee);
+  router.get("/v1/work-tracking/employee-summary", workTrackingController.findAllByEmployee);
   router.get("/v1/work-tracking/work-hour", workTrackingController.findAllWorkHour);
   router.get("/v1/work-tracking/:idWorkTracking", workTrackingController.findById);
 
@@ -77,6 +78,62 @@ export function workTrackingRoute(app: Application): void {
  *         schema:
  *           type: number
  *         description: Year of the Work Tracking
+ *     responses:
+ *       200:
+ *         description: A list of cost center
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/WorkTrackingDTO'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
+ * /v1/work-tracking/employee-summary:
+ *   get:
+ *     tags: [Work Tracking]
+ *     summary: Find Work Trackings by Employee
+ *     description: Find all Work Trackings by Employee
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *         description: Number of items per page
+ *       - in: query
+ *         name: idEmployee
+ *         schema:
+ *           type: int
+ *         description: Id of the employee
+ *       - in: query
+ *         name: idCostCenterProject
+ *         schema:
+ *           type: int
+ *         description: Id of the cost center project
+ *       - in: query
+ *         name: projectName
+ *         schema:
+ *           type: string
+ *         description: Name of the project
  *     responses:
  *       200:
  *         description: A list of cost center
