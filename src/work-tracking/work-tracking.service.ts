@@ -1,3 +1,4 @@
+import sequelize from "sequelize";
 import { StatusCode } from "../interfaces";
 import { BuildResponse } from "../services";
 import { ResponseEntity } from "../services/interface";
@@ -374,7 +375,7 @@ export class WorkTrackingService {
   }
 
   private buildFindWorkTrackingByEmployeeFilter(request: types.FindAllByEmployeeDTO): { [key: string]: any } {
-    const filters: { [key: string]: any } = {};
+    let filters: { [key: string]: any } = {};
   
     for (const key of Object.getOwnPropertyNames(request)) {
       if (key === "idEmployee") {
@@ -383,7 +384,10 @@ export class WorkTrackingService {
         filters.idCostCenterProject = request.idCostCenterProject;
       } 
       else if (key === "projectName") {
-        filters.projectName = `%${request.projectName}%`;
+        filters = {
+          ...filters,
+          projectName: sequelize.where(sequelize.col("CostCenterProject.name"), "LIKE", `%${request.projectName}%`)
+        };
       }
     }
   
