@@ -87,3 +87,20 @@ export interface QuotationItemDetailFindAllDTO {
   rows: QuotationItemDetailDTO[];
   count: number;
 }
+
+export interface CreateQuotationPercentageDTO {
+  idQuotation: number;
+  administration: number;
+  unforeseen: number;
+  utility: number;
+  tax: number;
+}
+
+export interface UpdateQuotationPercentageDTO {
+  idQuotationPercentage: number;
+  idQuotation?: number;
+  administration?: number;
+  unforeseen?: number;
+  utility?: number;
+  tax?: number;
+}

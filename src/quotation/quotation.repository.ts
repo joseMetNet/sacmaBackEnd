@@ -6,6 +6,7 @@ import { Employee, User } from "../models";
 import { Input } from "../input/input.model";
 import { CustomError } from "../utils";
 import { Transaction } from "sequelize";
+import { QuotationPercentage } from "./quotation-percentage.model";
 
 export class QuotationRepository {
   async create(
@@ -29,6 +30,9 @@ export class QuotationRepository {
               },
             ],
           },
+          {
+            model: QuotationPercentage,
+          }
         ],
       }
     );
@@ -50,6 +54,9 @@ export class QuotationRepository {
             },
           ],
         },
+        {
+          model: QuotationPercentage,
+        }	
       ],
       where: filter,
       limit,
@@ -163,5 +170,13 @@ export class QuotationRepository {
     return await QuotationItemDetail.destroy({
       where: { idQuotationItemDetail },
     });
+  }
+
+  async findQuotationPercentageById(idQuotationItemDetail: number): Promise<QuotationPercentage | null> {
+    return await QuotationPercentage.findByPk(idQuotationItemDetail);
+  }
+
+  async createQuotationPercentage(quotationPercentageData: dtos.CreateQuotationPercentageDTO): Promise<QuotationPercentage> {
+    return await QuotationPercentage.create(quotationPercentageData as any);
   }
 }

@@ -1,18 +1,5 @@
 import { Request, Response } from "express";
-import {
-  CreateQuotationSchema,
-  UpdateQuotationSchema,
-  CreateQuotationItemSchema,
-  UpdateQuotationItemSchema,
-  CreateQuotationItemDetailSchema,
-  UpdateQuotationItemDetailSchema,
-  QuotationSchema,
-  FindAllQuotationSchema,
-  QuotationItemSchema,
-  QuotationItemDetailSchema,
-  FindAllQuotationItemSchema,
-  FindAllQuotationItemDetailSchema,
-} from "./quotation.schema";
+import * as schemas from "./quotation.schema";
 import { QuotationService } from "./quotation.service";
 import { StatusCode, StatusValue } from "../interfaces";
 import { formatZodError } from "../controllers/utils";
@@ -24,7 +11,7 @@ export class QuotationController {
   }
 
   createQuotation = async (req: Request, res: Response): Promise<void> => {
-    const request = CreateQuotationSchema.safeParse(req.body);
+    const request = schemas.CreateQuotationSchema.safeParse(req.body);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -41,7 +28,7 @@ export class QuotationController {
   };
 
   updateQuotation = async (req: Request, res: Response): Promise<void> => {
-    const request = UpdateQuotationSchema.safeParse(req.body);
+    const request = schemas.UpdateQuotationSchema.safeParse(req.body);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -58,7 +45,7 @@ export class QuotationController {
   };
 
   createQuotationItem = async (req: Request, res: Response): Promise<void> => {
-    const request = CreateQuotationItemSchema.safeParse(req.body);
+    const request = schemas.CreateQuotationItemSchema.safeParse(req.body);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -75,7 +62,7 @@ export class QuotationController {
   };
 
   updateQuotationItem = async (req: Request, res: Response): Promise<void> => {
-    const request = UpdateQuotationItemSchema.safeParse(req.body);
+    const request = schemas.UpdateQuotationItemSchema.safeParse(req.body);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -92,7 +79,7 @@ export class QuotationController {
   };
 
   createQuotationItemDetail = async (req: Request, res: Response): Promise<void> => {
-    const request = CreateQuotationItemDetailSchema.safeParse(req.body);
+    const request = schemas.CreateQuotationItemDetailSchema.safeParse(req.body);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -109,7 +96,7 @@ export class QuotationController {
   };
 
   updateQuotationItemDetail = async (req: Request, res: Response): Promise<void> => {
-    const request = UpdateQuotationItemDetailSchema.safeParse(req.body);
+    const request = schemas.UpdateQuotationItemDetailSchema.safeParse(req.body);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -127,7 +114,7 @@ export class QuotationController {
 
   findQuotationById = async (req: Request, res: Response): Promise<void> => {
     console.log(`req.params: ${JSON.stringify(req.params)}`);
-    const request = QuotationSchema.safeParse(req.params);
+    const request = schemas.QuotationSchema.safeParse(req.params);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -144,7 +131,7 @@ export class QuotationController {
   };
 
   findAllQuotations = async (req: Request, res: Response): Promise<void> => {
-    const request = FindAllQuotationSchema.safeParse(req.query);
+    const request = schemas.FindAllQuotationSchema.safeParse(req.query);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -160,7 +147,7 @@ export class QuotationController {
   };
 
   deleteQuotation = async (req: Request, res: Response): Promise<void> => {
-    const request = QuotationSchema.safeParse(req.params);
+    const request = schemas.QuotationSchema.safeParse(req.params);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -177,7 +164,7 @@ export class QuotationController {
   };
 
   findQuotationItemById = async (req: Request, res: Response): Promise<void> => {
-    const request = QuotationItemSchema.safeParse(req.params);
+    const request = schemas.QuotationItemSchema.safeParse(req.params);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -194,7 +181,7 @@ export class QuotationController {
   };
 
   findAllQuotationItems = async (req: Request, res: Response): Promise<void> => {
-    const request = FindAllQuotationItemSchema.safeParse(req.query);
+    const request = schemas.FindAllQuotationItemSchema.safeParse(req.query);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -210,7 +197,7 @@ export class QuotationController {
   };
 
   deleteQuotationItem = async (req: Request, res: Response): Promise<void> => {
-    const request = QuotationItemSchema.safeParse(req.params);
+    const request = schemas.QuotationItemSchema.safeParse(req.params);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -227,7 +214,7 @@ export class QuotationController {
   };
 
   findQuotationItemDetailById = async (req: Request, res: Response): Promise<void> => {
-    const request = QuotationItemDetailSchema.safeParse(req.params);
+    const request = schemas.QuotationItemDetailSchema.safeParse(req.params);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -244,7 +231,7 @@ export class QuotationController {
   };
 
   findAllQuotationItemDetails = async (req: Request, res: Response): Promise<void> => {
-    const request = FindAllQuotationItemDetailSchema.safeParse(req.query);
+    const request = schemas.FindAllQuotationItemDetailSchema.safeParse(req.query);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -260,7 +247,7 @@ export class QuotationController {
   };
 
   deleteQuotationItemDetail = async (req: Request, res: Response): Promise<void> => {
-    const request = QuotationItemDetailSchema.safeParse(req.params);
+    const request = schemas.QuotationItemDetailSchema.safeParse(req.params);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -270,6 +257,40 @@ export class QuotationController {
     }
 
     const response = await this.quotationService.deleteQuotationItemDetail(request.data.idQuotationItemDetail);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data,
+    });
+  };
+
+  createQuotationPercentage = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.CreateQuotationPercentageSchema.safeParse(req.body);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+
+    const response = await this.quotationService.createQuotationPercentage(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data,
+    });
+  };
+
+  updateQuotationPercentage = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.UpdateQuotationPercentageSchema.safeParse(req.body);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+
+    const response = await this.quotationService.updateQuotationPercentage(request.data);
     res.status(response.code).json({
       status: response.status,
       data: response.data,

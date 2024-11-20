@@ -1,6 +1,7 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
 import { Employee } from "../models";
+import { QuotationPercentage } from "./quotation-percentage.model";
 
 export class Quotation extends Model {
   declare idQuotation: number;
@@ -59,4 +60,9 @@ Quotation.init(
 Quotation.hasOne(Employee, {
   sourceKey: "idResponsable",
   foreignKey: "idEmployee",
+});
+
+Quotation.hasOne(QuotationPercentage, {
+  sourceKey: "idQuotation",
+  foreignKey: "idQuotation",
 });
