@@ -22,11 +22,13 @@ export function quotationRoute(app: Application): void {
   router.post("/v1/quotation", quotationController.createQuotation);
   router.post("/v1/quotation-item", quotationController.createQuotationItem);
   router.post("/v1/quotation-item-detail", quotationController.createQuotationItemDetail);
+  router.post("/v1/quotation-percentage", quotationController.createQuotationPercentage);
 
   // PATCH routes
   router.patch("/v1/quotation", quotationController.updateQuotation);
   router.patch("/v1/quotation-item", quotationController.updateQuotationItem);
   router.patch("/v1/quotation-item-detail", quotationController.updateQuotationItemDetail);
+  router.patch("/v1/quotation-percentage", quotationController.updateQuotationPercentage);
 
   // DELETE routes
   router.delete("/v1/quotation/:idQuotation", quotationController.deleteQuotation);
@@ -385,6 +387,40 @@ export function quotationRoute(app: Application): void {
 
 /**
  * @openapi
+ * /v1/quotation-percentage:
+ *   post:
+ *     tags: [Quotation]
+ *     summary: Create a new Quotation Percentage
+ *     description: Create a new quotation percentage
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateQuotationPercentageDTO'
+ *     responses:
+ *       201:
+ *         description: Quotation Percentage created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/QuotationPercentageDTO'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
+
+/**
+ * @openapi
  * /v1/quotation-item-detail:
  *   patch:
  *     tags: [Quotation]
@@ -471,6 +507,40 @@ export function quotationRoute(app: Application): void {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/QuotationDTO'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
+
+/**
+ * @openapi
+ * /v1/quotation-percentage:
+ *   patch:
+ *     tags: [Quotation]
+ *     summary: Update an existing Quotation Percentage
+ *     description: Update an existing quotation percentage
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateQuotationPercentageDTO'
+ *     responses:
+ *       200:
+ *         description: Quotation Percentage updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/QuotationPercentageDTO'
  *       400:
  *         description: Bad request
  *       401:
@@ -655,6 +725,74 @@ export function quotationRoute(app: Application): void {
  *         itemSummary:
  *           type: string
  *           example: "Item summary"
+ *     QuotationPercentageDTO:
+ *       type: object
+ *       properties:
+ *         idQuotationPercentage:
+ *           type: integer
+ *           example: 1
+ *         idQuotation:
+ *           type: integer
+ *           example: 1
+ *         administration:
+ *           type: number
+ *           example: 10.00
+ *         utility:
+ *           type: number
+ *           example: 10.00
+ *         unforeseen:
+ *           type: number
+ *           example: 10.00
+ *         tax:
+ *           type: number
+ *           example: 10.00
+ *     CreateQuotationPercentageDTO:
+ *       type: object
+ *       required:
+ *         - idQuotation
+ *         - administration
+ *         - utility
+ *         - unforeseen
+ *         - tax
+ *       properties:
+ *         idQuotation:
+ *           type: integer
+ *           example: 1
+ *         administration:
+ *           type: number
+ *           example: 10.00
+ *         utility:
+ *           type: number
+ *           example: 10.00
+ *         unforeseen:
+ *           type: number
+ *           example: 10.00
+ *         tax:
+ *           type: number
+ *           example: 10.00
+ *     UpdateQuotationPercentageDTO:
+ *       type: object
+ *       required:
+ *         - idQuotationPercentage
+ *       properties:
+ *         idQuotationPercentage:
+ *           type: integer
+ *           example: 1
+ *         idQuotation:
+ *           type: integer
+ *           example: 1
+ *         administration:
+ *           type: number
+ *           example: 10.00
+ *         utility:
+ *           type: number
+ *           example: 10.00
+ *         unforeseen:
+ *           type: number
+ *           example: 10.00
+ *         tax:
+ *           type: number
+ *           example: 10.00
  *     UpdateQuotationDTO:
  *       type: object
  *       required:

@@ -86,3 +86,20 @@ export const QuotationItemDetailFindAllSchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
 });
+
+export const CreateQuotationPercentageSchema = z.object({
+  idQuotation: z.coerce.number(),
+  administration: z.coerce.number(),
+  unforeseen: z.coerce.number(),
+  utility: z.coerce.number(),
+  tax: z.coerce.number(),
+});
+
+export const UpdateQuotationPercentageSchema = z.object({
+  idQuotationPercentage: z.coerce.number(),
+  idQuotation: z.coerce.number().optional(),
+  administration: z.coerce.number().optional(),
+  unforeseen: z.coerce.number().optional(),
+  utility: z.coerce.number().optional(),
+  tax: z.coerce.number().optional(),
+});

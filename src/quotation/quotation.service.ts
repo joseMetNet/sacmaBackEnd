@@ -7,6 +7,7 @@ import { ResponseEntity } from "../services/interface";
 import { BuildResponse } from "../services";
 import { dbConnection } from "../config";
 import { Quotation } from "./quotation.model";
+import { QuotationPercentage } from "./quotation-percentage.model";
 
 export class QuotationService {
 
@@ -74,9 +75,11 @@ export class QuotationService {
         return {
           idQuotation: quotation.idQuotation,
           name: quotation.name,
-          responsable
+          responsable,
+          QuotationPercentage: jsonQuotation.QuotationPercentage,
         };
       });
+
       const response = {
         data,
         totalItems: quotations.count,
@@ -320,5 +323,40 @@ export class QuotationService {
       console.error(error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
     }
+  };
+
+  createQuotationPercentage = async (quotationPercentageData: dtos.CreateQuotationPercentageDTO): Promise<ResponseEntity> => {
+    try {
+      const quotationPercentage = await this.quotationRepository.createQuotationPercentage(quotationPercentageData);
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotationPercentage);
+    } catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to create quotation percentage" });
+    }
+  };
+
+  updateQuotationPercentage = async (quotationPercentageData: dtos.UpdateQuotationPercentageDTO): Promise<ResponseEntity> => {
+    try {
+      const quotationPercentage = await this.quotationRepository.findQuotationPercentageById(quotationPercentageData.idQuotationPercentage);
+      if (!quotationPercentage) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation percentage not found" });
+      }
+
+      const updatedQuotationPercentage = this.buildQuotationPercentage(quotationPercentage, quotationPercentageData);
+
+      await updatedQuotationPercentage.save();
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotationPercentage);
+    } catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
+    }
+  };
+
+  private buildQuotationPercentage = (quotationPercentage: QuotationPercentage, quotationPercentageData: dtos.UpdateQuotationPercentageDTO) => {
+    quotationPercentage.administration = quotationPercentageData.administration ?? quotationPercentage.administration;
+    quotationPercentage.unforeseen = quotationPercentageData.unforeseen ?? quotationPercentage.unforeseen;
+    quotationPercentage.utility = quotationPercentageData.utility ?? quotationPercentage.utility;
+    quotationPercentage.tax = quotationPercentageData.tax ?? quotationPercentage.tax;
+    return quotationPercentage;
   };
 }

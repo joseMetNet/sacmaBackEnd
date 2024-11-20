@@ -1,4 +1,4 @@
-import { DataTypes, Model, QueryInterface } from "sequelize";
+import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
 import { QuotationItem } from "./quotation-item.model";
 import { Input } from "../input/input.model";
