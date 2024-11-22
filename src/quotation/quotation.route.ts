@@ -13,6 +13,7 @@ export function quotationRoute(app: Application): void {
   // GET routes
   router.get("/v1/quotation-item-detail", quotationController.findAllQuotationItemDetails);
   router.get("/v1/quotation-item", quotationController.findAllQuotationItems);
+  router.get("/v1/quotation-status", quotationController.findAllQuotationStatus);
   router.get("/v1/quotation", quotationController.findAllQuotations);
   router.get("/v1/quotation-item-detail/:idQuotationItemDetail", quotationController.findQuotationItemDetailById);
   router.get("/v1/quotation-item/:idQuotationItem", quotationController.findQuotationItemById);
@@ -176,6 +177,36 @@ export function quotationRoute(app: Application): void {
  *             schema:
  *               $ref: '#/components/schemas/failedResponse'
 */
+
+/**
+ * @openapi
+ * /v1/quotation-status:
+ *   get:
+ *     tags: [Quotation]
+ *     summary: Find all Quotation Status
+ *     description: Retrieve a list of all quotation status
+ *     responses:
+ *       200:
+ *         description: A list of quotation status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/QuotationStatusDTO'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
 
 /**
  * @openapi
@@ -684,23 +715,44 @@ export function quotationRoute(app: Application): void {
  *           type: array
  *           items:
  *             $ref: '#/components/schemas/QuotationItemDetailDTO'
+ *     QuotationStatusDTO:
+ *       type: object
+ *       properties:
+ *         idQuotationStatus:
+ *           type: integer
+ *           example: 1
+ *         quotationStatus:
+ *           type: string
  *     QuotationDTO:
  *       type: object
  *       properties:
- *         id:
+ *         idQuotation:
  *           type: integer
  *           example: 1
- *         customerId:
+ *         idResponsable:
  *           type: integer
  *           example: 1
- *         quotationDate:
+ *         name:
  *           type: string
- *           format: date
- *           example: "2023-01-01"
- *         items:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/QuotationItemDTO'
+ *           example: "Quotation name"
+ *         idQuotationStatus:
+ *           type: integer
+ *           example: 1
+ *         builder:
+ *           type: string
+ *           example: "Amarilo"
+ *         builderAddress:
+ *           type: string
+ *           example: "Calle 123"
+ *         projectName:
+ *           type: string
+ *           example: "Project name"
+ *         itemSummary:
+ *           type: string
+ *           example: "Item summary"
+ *         totalCost:
+ *           type: number
+ *           example: 1000.00
  *     CreateQuotationDTO:
  *       type: object
  *       required:
@@ -807,6 +859,9 @@ export function quotationRoute(app: Application): void {
  *         name:
  *           type: string
  *           example: "Quotation name"
+ *         idQuotationStatus:
+ *           type: integer
+ *           example: 1
  *         builder:
  *           type: string
  *           example: "Amarilo"

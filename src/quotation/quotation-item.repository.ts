@@ -1,5 +1,5 @@
 import { QuotationItem } from "./quotation-item.model";
-import * as dtos from "./quotation-item.interfase";
+import * as dtos from "./quotation.interfase";
 
 export class QuotationItemRepository {
   async create(quotationItemData: dtos.CreateQuotationItemDTO): Promise<QuotationItem> {

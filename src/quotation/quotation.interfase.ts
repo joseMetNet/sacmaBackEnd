@@ -2,6 +2,7 @@ export interface CreateQuotationDTO {
   name: string;
   idResponsable: number;
   builder?: string;
+  idQuotationStatus?: number;
   builderAddress?: string;
   projectName?: string;
   itemSummary?: string;
@@ -10,6 +11,7 @@ export interface CreateQuotationDTO {
 export interface UpdateQuotationDTO {
   idQuotation: number;
   name?: string;
+  idQuotationStatus?: number;
   idResponsable?: number;
   builder?: string;
   builderAddress?: string;
@@ -103,4 +105,25 @@ export interface UpdateQuotationPercentageDTO {
   unforeseen?: number;
   utility?: number;
   tax?: number;
+}
+
+export interface UpdateQuotationItemDTO {
+  idQuotationItem: number;
+  idQuotation?: number;
+  description?: string;
+  quantity?: number;
+  price?: number;
+}
+
+export interface QuotationItemDTO {
+  idQuotationItem: number;
+  idQuotation: number;
+  description: string;
+  quantity: number;
+  price: number;
+}
+
+export interface QuotationItemFindAllDTO {
+  rows: QuotationItemDTO[];
+  count: number;
 }

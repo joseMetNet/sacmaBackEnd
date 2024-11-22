@@ -20,6 +20,10 @@ export class QuotationService {
   createQuotation = async (quotationData: dtos.CreateQuotationDTO): Promise<ResponseEntity> => {
     const transaction = await dbConnection.transaction();
     try {
+      quotationData = {
+        ...quotationData,
+        idQuotationStatus: 1,
+      };
       const quotation = await this.quotationRepository.create(quotationData, transaction);
       const consecutive = `COT SACIPR Nr. ${quotation.idQuotation}-${new Date().getFullYear()}`;
       quotation.consecutive = consecutive;
@@ -38,12 +42,20 @@ export class QuotationService {
     try {
       const quotation = await this.quotationRepository.findById(id);
       if (quotation) {
-        const responsable = quotation.toJSON().Employee.User.firstName 
-          + " " + quotation.toJSON().Employee.User.lastName;
+        const jsonQuotation = quotation.toJSON();
+        const responsable = jsonQuotation.Employee.User.firstName 
+            + " " + jsonQuotation.Employee.User.lastName;
         const data = {
           idQuotation: quotation.idQuotation,
           name: quotation.name,
-          responsable
+          responsable,
+          QuotationPercentage: jsonQuotation.QuotationPercentage,
+          QuotationStatus: jsonQuotation.QuotationStatus,
+          builder: quotation.builder,
+          builderAddress: quotation.builderAddress,
+          projectName: quotation.projectName,
+          itemSummary: quotation.itemSummary,
+          totalCost: quotation.totalCost
         };
         return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
       } else {
@@ -77,6 +89,12 @@ export class QuotationService {
           name: quotation.name,
           responsable,
           QuotationPercentage: jsonQuotation.QuotationPercentage,
+          QuotationStatus: jsonQuotation.QuotationStatus,
+          builder: quotation.builder,
+          builderAddress: quotation.builderAddress,
+          projectName: quotation.projectName,
+          itemSummary: quotation.itemSummary,
+          totalCost: quotation.totalCost
         };
       });
 
@@ -89,7 +107,7 @@ export class QuotationService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
     } catch (error) {
       console.error(error);
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get quotations" });
     }
   };
 
@@ -111,6 +129,7 @@ export class QuotationService {
 
   private buildQuotation = (quotation: Quotation, quotationData: dtos.UpdateQuotationDTO) => {
     quotation.name = quotationData.name ?? quotation.name;
+    quotation.idQuotationStatus = quotationData.idQuotationStatus ?? quotation.idQuotationStatus;
     quotation.builder = quotationData.builder ?? quotation.builder;
     quotation.builderAddress = quotationData.builderAddress ?? quotation.builderAddress;
     quotation.projectName = quotationData.projectName ?? quotation.projectName;
@@ -153,6 +172,16 @@ export class QuotationService {
     } catch (error) {
       console.error(error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
+    }
+  };
+
+  findAllQuotationStatus = async (): Promise<ResponseEntity> => {
+    try {
+      const quotationStatus = await this.quotationRepository.findAllQuotationStatus();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, quotationStatus);
+    } catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get quotation status" });
     }
   };
 

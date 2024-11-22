@@ -7,6 +7,7 @@ import { Input } from "../input/input.model";
 import { CustomError } from "../utils";
 import { Transaction } from "sequelize";
 import { QuotationPercentage } from "./quotation-percentage.model";
+import { QuotationStatus } from "./quotation-status.model";
 
 export class QuotationRepository {
   async create(
@@ -30,9 +31,8 @@ export class QuotationRepository {
               },
             ],
           },
-          {
-            model: QuotationPercentage,
-          }
+          { model: QuotationPercentage},
+          { model: QuotationStatus }
         ],
       }
     );
@@ -54,9 +54,8 @@ export class QuotationRepository {
             },
           ],
         },
-        {
-          model: QuotationPercentage,
-        }	
+        { model: QuotationPercentage },
+        { model: QuotationStatus },
       ],
       where: filter,
       limit,
@@ -65,6 +64,10 @@ export class QuotationRepository {
       order: [["idQuotation", "DESC"]],
     });
     return quotations;
+  }
+
+  async findAllQuotationStatus(): Promise<QuotationStatus[]> {
+    return await QuotationStatus.findAll();
   }
 
   async update(quotationData: dtos.UpdateQuotationDTO): Promise<[number, Quotation[]]> {
