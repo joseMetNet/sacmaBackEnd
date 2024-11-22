@@ -12,6 +12,7 @@ export const CreateQuotationSchema = z.object({
 export const UpdateQuotationSchema = z.object({
   idQuotation: z.coerce.number(),
   name: z.string().optional(),
+  idQuotationStatus: z.coerce.number().optional(),
   idResponsable: z.number().optional(),
   builder: z.string().optional(),
   builderAddress: z.string().optional(),

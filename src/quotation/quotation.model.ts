@@ -2,16 +2,19 @@ import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
 import { Employee } from "../models";
 import { QuotationPercentage } from "./quotation-percentage.model";
+import { QuotationStatus } from "./quotation-status.model";
 
 export class Quotation extends Model {
   declare idQuotation: number;
   declare consecutive: string;
   declare name: string;
+  declare idQuotationStatus: number;
   declare idResponsable: number;
   declare builder: string;
   declare builderAddress: string;
   declare projectName: string;
   declare itemSummary: string;
+  declare totalCost: string;
 }
 
 Quotation.init(
@@ -27,6 +30,10 @@ Quotation.init(
     },
     name: {
       type: DataTypes.STRING,
+      allowNull: false,
+    },
+    idQuotationStatus: {
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     idResponsable: {
@@ -49,6 +56,10 @@ Quotation.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    totalCost: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+    },
   },
   {
     sequelize: dbConnection,
@@ -65,4 +76,9 @@ Quotation.hasOne(Employee, {
 Quotation.hasOne(QuotationPercentage, {
   sourceKey: "idQuotation",
   foreignKey: "idQuotation",
+});
+
+Quotation.hasOne(QuotationStatus, {
+  sourceKey: "idQuotationStatus",
+  foreignKey: "idQuotationStatus",
 });
