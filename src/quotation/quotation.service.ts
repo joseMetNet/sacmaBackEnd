@@ -8,7 +8,7 @@ import { BuildResponse } from "../services";
 import { dbConnection } from "../config";
 import { Quotation } from "./quotation.model";
 import { QuotationPercentage } from "./quotation-percentage.model";
-import sequelize from "sequelize";
+import sequelize, { json } from "sequelize";
 
 export class QuotationService {
 
@@ -85,13 +85,16 @@ export class QuotationService {
       console.log("filter", filter);
       const quotations = await this.quotationRepository.findAll(filter, limit, offset);
       const data = quotations.rows.map((quotation) => {
+        let responsable: string | undefined;
         const jsonQuotation = quotation.toJSON();
-        const responsable = jsonQuotation.Employee.User.firstName 
+        if(jsonQuotation.Employee) {
+          responsable = jsonQuotation.Employee.User.firstName 
             + " " + jsonQuotation.Employee.User.lastName;
+        }
         return {
           idQuotation: quotation.idQuotation,
           name: quotation.name,
-          responsable,
+          responsable: responsable,
           QuotationPercentage: jsonQuotation.QuotationPercentage,
           QuotationStatus: jsonQuotation.QuotationStatus,
           builder: quotation.builder,
