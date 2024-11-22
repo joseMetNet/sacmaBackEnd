@@ -140,21 +140,10 @@ export function quotationRoute(app: Application): void {
  *           type: integer
  *         description: Number of items per page
  *       - in: query
- *         name: customerId
- *         schema:
- *           type: integer
- *         description: Id of the customer
- *       - in: query
- *         name: customerName
+ *         name: responsible
  *         schema:
  *           type: string
- *         description: Name of the customer
- *       - in: query
- *         name: quotationDate
- *         schema:
- *           type: string
- *           format: date
- *         description: Date of the quotation
+ *         description: Name of the responsable
  *     responses:
  *       200:
  *         description: A list of quotations

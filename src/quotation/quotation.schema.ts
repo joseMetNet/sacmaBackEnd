@@ -27,6 +27,7 @@ export const QuotationSchema = z.object({
 export const FindAllQuotationSchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
+  responsible: z.string().optional(),
 });
 
 export const FindAllQuotationItemSchema = z.object({

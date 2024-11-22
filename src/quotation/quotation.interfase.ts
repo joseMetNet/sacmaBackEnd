@@ -22,6 +22,7 @@ export interface UpdateQuotationDTO {
 export interface findAllQuotationDTO {
   page?: number;
   pageSize?: number;
+  responsible?: string;
 }
 
 export interface findAllQuotationItemDTO {

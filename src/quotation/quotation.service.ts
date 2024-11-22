@@ -8,6 +8,7 @@ import { BuildResponse } from "../services";
 import { dbConnection } from "../config";
 import { Quotation } from "./quotation.model";
 import { QuotationPercentage } from "./quotation-percentage.model";
+import sequelize from "sequelize";
 
 export class QuotationService {
 
@@ -79,7 +80,10 @@ export class QuotationService {
       }
       const limit = pageSize;
       const offset = (page - 1) * pageSize;
-      const quotations = await this.quotationRepository.findAll({}, limit, offset);
+      const filter = this.buildQuotationFilter(request);
+      console.log("request", request);
+      console.log("filter", filter);
+      const quotations = await this.quotationRepository.findAll(filter, limit, offset);
       const data = quotations.rows.map((quotation) => {
         const jsonQuotation = quotation.toJSON();
         const responsable = jsonQuotation.Employee.User.firstName 
@@ -387,5 +391,16 @@ export class QuotationService {
     quotationPercentage.utility = quotationPercentageData.utility ?? quotationPercentage.utility;
     quotationPercentage.tax = quotationPercentageData.tax ?? quotationPercentage.tax;
     return quotationPercentage;
+  };
+
+  private buildQuotationFilter = (filter: dtos.findAllQuotationDTO): {[key: string]: any} => {
+    let where: {[key: string]: any} = {};
+    if (filter.responsible) {
+      where = {
+        ...where,
+        responsible: sequelize.where(sequelize.col("Employee.User.firstName"), "LIKE", `%${filter.responsible}%`),
+      };
+    }
+    return where;
   };
 }
