@@ -8,7 +8,8 @@ import { BuildResponse } from "../services";
 import { dbConnection } from "../config";
 import { Quotation } from "./quotation.model";
 import { QuotationPercentage } from "./quotation-percentage.model";
-import sequelize, { json } from "sequelize";
+import sequelize from "sequelize";
+import { QuotationComment } from "./quotation-comment.model";
 
 export class QuotationService {
 
@@ -56,7 +57,8 @@ export class QuotationService {
           builderAddress: quotation.builderAddress,
           projectName: quotation.projectName,
           itemSummary: quotation.itemSummary,
-          totalCost: quotation.totalCost
+          totalCost: quotation.totalCost,
+          QuotationComments: jsonQuotation.QuotationComments,
         };
         return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
       } else {
@@ -81,8 +83,6 @@ export class QuotationService {
       const limit = pageSize;
       const offset = (page - 1) * pageSize;
       const filter = this.buildQuotationFilter(request);
-      console.log("request", request);
-      console.log("filter", filter);
       const quotations = await this.quotationRepository.findAll(filter, limit, offset);
       const data = quotations.rows.map((quotation) => {
         let responsable: string | undefined;
@@ -101,7 +101,8 @@ export class QuotationService {
           builderAddress: quotation.builderAddress,
           projectName: quotation.projectName,
           itemSummary: quotation.itemSummary,
-          totalCost: quotation.totalCost
+          totalCost: quotation.totalCost,
+          QuotationComments: jsonQuotation.QuotationComments,
         };
       });
 
@@ -132,16 +133,6 @@ export class QuotationService {
       console.error(error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
     }
-  };
-
-  private buildQuotation = (quotation: Quotation, quotationData: dtos.UpdateQuotationDTO) => {
-    quotation.name = quotationData.name ?? quotation.name;
-    quotation.idQuotationStatus = quotationData.idQuotationStatus ?? quotation.idQuotationStatus;
-    quotation.builder = quotationData.builder ?? quotation.builder;
-    quotation.builderAddress = quotationData.builderAddress ?? quotation.builderAddress;
-    quotation.projectName = quotationData.projectName ?? quotation.projectName;
-    quotation.itemSummary = quotationData.itemSummary ?? quotation.itemSummary;
-    return quotation;
   };
 
   deleteQuotation = async (idQuotation: number): Promise<ResponseEntity> => {
@@ -388,6 +379,94 @@ export class QuotationService {
     }
   };
 
+  findAllQuotationComments = async (request: dtos.FindAllQuotationCommentDTO): Promise<ResponseEntity> => {
+    try {
+      let page = 1;
+      if (request.page) {
+        page = request.page;
+      }
+      let pageSize = 10;
+      if (request.pageSize) {
+        pageSize = request.pageSize;
+      }
+      const limit = pageSize;
+      const offset = (page - 1) * pageSize;
+      const filter = this.buildQuotationCommentFilter(request);
+      const quotationComments = await this.quotationRepository.findAllQuotationComment(filter, limit, offset);
+      const response = {
+        data: quotationComments.rows,
+        totalItems: quotationComments.count,
+        currentPage: page,
+        totalPages: Math.ceil(quotationComments.count / pageSize),
+      };
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
+    } catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get quotation comments" });
+    }
+  };
+
+  createQuotationComment = async (quotationCommentData: dtos.CreateQuotationCommentDTO): Promise<ResponseEntity> => {
+    try {
+      const quotationComment = await this.quotationRepository.createQuotationComment(quotationCommentData);
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotationComment);
+    } catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to create quotation comment" });
+    }
+  };
+
+  updateQuotationComment = async (quotationCommentData: dtos.UpdateQuotationCommentDTO): Promise<ResponseEntity> => {
+    try {
+      const quotationComment = await this.quotationRepository.findQuotationCommentById(quotationCommentData.idQuotationComment);
+      if (!quotationComment) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation comment not found" });
+      }
+
+      const updatedQuotationComment = this.buildQuotationComment(quotationComment, quotationCommentData);
+
+      await updatedQuotationComment.save();
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotationComment);
+    } catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
+    }
+  };
+
+  deleteQuotationComment = async (idQuotationComment: number): Promise<ResponseEntity> => {
+    try {
+      const quotationComment = await this.findQuotationById(idQuotationComment);
+      if(!quotationComment) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation comment not found" });
+      }
+
+      await this.quotationRepository.deleteQuotationComment(idQuotationComment);
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Quotation comment deleted successfully" });
+    } catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
+    }
+  };
+
+  private buildQuotationComment = (quotationComment: QuotationComment, quotationCommentData: dtos.UpdateQuotationCommentDTO) => {
+    quotationComment.idQuotation = quotationCommentData.idQuotation ?? quotationComment.idQuotation;
+    quotationComment.idEmployee = quotationCommentData.idEmployee ?? quotationComment.idEmployee;
+    quotationComment.comment = quotationCommentData.comment ?? quotationComment.comment;
+    quotationComment.createdAt = quotationCommentData.createdAt ?? quotationComment.createdAt;
+    return quotationComment;
+  };
+
+  private buildQuotation = (quotation: Quotation, quotationData: dtos.UpdateQuotationDTO) => {
+    quotation.name = quotationData.name ?? quotation.name;
+    quotation.idQuotationStatus = quotationData.idQuotationStatus ?? quotation.idQuotationStatus;
+    quotation.builder = quotationData.builder ?? quotation.builder;
+    quotation.builderAddress = quotationData.builderAddress ?? quotation.builderAddress;
+    quotation.projectName = quotationData.projectName ?? quotation.projectName;
+    quotation.itemSummary = quotationData.itemSummary ?? quotation.itemSummary;
+    return quotation;
+  };
+
   private buildQuotationPercentage = (quotationPercentage: QuotationPercentage, quotationPercentageData: dtos.UpdateQuotationPercentageDTO) => {
     quotationPercentage.administration = quotationPercentageData.administration ?? quotationPercentage.administration;
     quotationPercentage.unforeseen = quotationPercentageData.unforeseen ?? quotationPercentage.unforeseen;
@@ -402,6 +481,17 @@ export class QuotationService {
       where = {
         ...where,
         responsible: sequelize.where(sequelize.col("Employee.User.firstName"), "LIKE", `%${filter.responsible}%`),
+      };
+    }
+    return where;
+  };
+
+  private buildQuotationCommentFilter = (filter: dtos.FindAllQuotationCommentDTO): {[key: string]: any} => {
+    let where: {[key: string]: any} = {};
+    if (filter.idQuotation) {
+      where = {
+        ...where,
+        idQuotation: filter.idQuotation,
       };
     }
     return where;

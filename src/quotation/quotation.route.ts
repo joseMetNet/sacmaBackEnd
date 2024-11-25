@@ -13,6 +13,7 @@ export function quotationRoute(app: Application): void {
   // GET routes
   router.get("/v1/quotation-item-detail", quotationController.findAllQuotationItemDetails);
   router.get("/v1/quotation-item", quotationController.findAllQuotationItems);
+  router.get("/quotation-comment", quotationController.findAllQuotationComments);
   router.get("/v1/quotation-status", quotationController.findAllQuotationStatus);
   router.get("/v1/quotation", quotationController.findAllQuotations);
   router.get("/v1/quotation-item-detail/:idQuotationItemDetail", quotationController.findQuotationItemDetailById);
@@ -23,6 +24,7 @@ export function quotationRoute(app: Application): void {
   router.post("/v1/quotation", quotationController.createQuotation);
   router.post("/v1/quotation-item", quotationController.createQuotationItem);
   router.post("/v1/quotation-item-detail", quotationController.createQuotationItemDetail);
+  router.post("/v1/quotation-comment", quotationController.createQuotationComment);
   router.post("/v1/quotation-percentage", quotationController.createQuotationPercentage);
 
   // PATCH routes
@@ -30,11 +32,13 @@ export function quotationRoute(app: Application): void {
   router.patch("/v1/quotation-item", quotationController.updateQuotationItem);
   router.patch("/v1/quotation-item-detail", quotationController.updateQuotationItemDetail);
   router.patch("/v1/quotation-percentage", quotationController.updateQuotationPercentage);
+  router.patch("/v1/quotation-comment", quotationController.updateQuotationComment);
 
   // DELETE routes
   router.delete("/v1/quotation/:idQuotation", quotationController.deleteQuotation);
   router.delete("/v1/quotation-item/:idQuotationItem", quotationController.deleteQuotationItem);
   router.delete("/v1/quotation-item-detail/:idQuotationItemDetail", quotationController.deleteQuotationItemDetail);
+  router.delete("/v1/quotation-comment/:idQuotationComment", quotationController.deleteQuotationComment);
 
   app.use("/api/", router);
 }
@@ -166,6 +170,53 @@ export function quotationRoute(app: Application): void {
  *             schema:
  *               $ref: '#/components/schemas/failedResponse'
 */
+
+/**
+ * @openapi
+ * /quotation-comment:
+ *   get:
+ *     tags: [Quotation]
+ *     summary: Find all Quotation Comments
+ *     description: Retrieve a list of all quotation comments
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *         description: Number of items per page
+ *       - in: query
+ *         name: idQuotation
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the quotation
+ *     responses:
+ *       200:
+ *         description: A list of quotation comments
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/QuotationCommentDTO'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
 
 /**
  * @openapi
@@ -441,6 +492,40 @@ export function quotationRoute(app: Application): void {
 
 /**
  * @openapi
+ * /v1/quotation-comment:
+ *   post:
+ *     tags: [Quotation]
+ *     summary: Create a new Quotation Comment
+ *     description: Create a new quotation comment
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateQuotationCommentDTO'
+ *     responses:
+ *       201:
+ *         description: Quotation Comment created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/QuotationCommentDTO'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
+
+/**
+ * @openapi
  * /v1/quotation-item-detail:
  *   patch:
  *     tags: [Quotation]
@@ -493,6 +578,40 @@ export function quotationRoute(app: Application): void {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/QuotationItemDTO'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
+
+/**
+ * @openapi
+ * /v1/quotation-comment:
+ *   patch:
+ *     tags: [Quotation]
+ *     summary: Update an existing Quotation Comment
+ *     description: Update an existing quotation comment
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateQuotationCommentDTO'
+ *     responses:
+ *       200:
+ *         description: Quotation Comment updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/QuotationCommentDTO'
  *       400:
  *         description: Bad request
  *       401:
@@ -639,6 +758,37 @@ export function quotationRoute(app: Application): void {
 
 /**
  * @openapi
+ * /v1/quotation-comment/{idQuotationComment}:
+ *   delete:
+ *     tags: [Quotation]
+ *     summary: Delete a Quotation Comment
+ *     description: Delete a specific quotation comment by ID
+ *     parameters:
+ *       - in: path
+ *         name: idQuotationComment
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the Quotation Comment to delete
+ *     responses:
+ *       204:
+ *         description: Quotation Comment deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
+
+/**
+ * @openapi
  * /v1/quotation/{idQuotation}:
  *   delete:
  *     tags: [Quotation]
@@ -712,6 +862,66 @@ export function quotationRoute(app: Application): void {
  *           example: 1
  *         quotationStatus:
  *           type: string
+ *     QuotationCommentDTO:
+ *       type: object
+ *       properties:
+ *         idQuotationComment:
+ *           type: integer
+ *           example: 1
+ *         idQuotation:
+ *           type: integer
+ *           example: 1
+ *         idEmployee:
+ *           type: integer
+ *           example: 1
+ *         comment:
+ *           type: string
+ *           example: "Comment"
+ *         createdAt:
+ *           type: string
+ *           example: "2021-01-01T00:00:00.000Z"
+ *         updatedAt:
+ *           type: string
+ *           example: "2021-01-01T00:00:00.000Z"
+ *     CreateQuotationCommentDTO:
+ *       type: object
+ *       required:
+ *         - idQuotation
+ *         - idEmployee
+ *         - comment
+ *       properties:
+ *         idQuotation:
+ *           type: integer
+ *           example: 1
+ *         idEmployee:
+ *           type: integer
+ *           example: 1
+ *         comment:
+ *           type: string
+ *           example: "Comment"
+ *         createdAt:
+ *           type: string
+ *           example: "2021-01-01T00:00:00.000Z"
+ *     UpdateQuotationCommentDTO:
+ *       type: object
+ *       required:
+ *         - idQuotationComment
+ *       properties:
+ *         idQuotationComment:
+ *           type: integer
+ *           example: 1
+ *         idQuotation:
+ *           type: integer
+ *           example: 1
+ *         idEmployee:
+ *           type: integer
+ *           example: 1
+ *         comment:
+ *           type: string
+ *           example: "Comment"
+ *         createdAt:
+ *           type: string
+ *           example: "2021-01-01T00:00:00.000Z"
  *     QuotationDTO:
  *       type: object
  *       properties:

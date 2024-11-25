@@ -105,3 +105,28 @@ export const UpdateQuotationPercentageSchema = z.object({
   utility: z.coerce.number().optional(),
   tax: z.coerce.number().optional(),
 });
+
+export const CreateQuotationCommentSchema = z.object({
+  idQuotation: z.coerce.number(),
+  idEmployee: z.coerce.number(),
+  comment: z.string(),
+  createAt: z.string().optional(),
+});
+
+export const UpdateQuotationCommentSchema = z.object({
+  idQuotationComment: z.coerce.number(),
+  idQuotation: z.coerce.number().optional(),
+  idEmployee: z.coerce.number().optional(),
+  comment: z.string().optional(),
+  createAt: z.string().optional(),
+});
+
+export const FindAllQuotationCommentSchema = z.object({
+  idQuotation: z.coerce.number(),
+  page: z.coerce.number().optional(),
+  pageSize: z.coerce.number().optional(),
+});
+
+export const QuotationCommentSchema = z.object({
+  idQuotationComment: z.coerce.number(),
+});

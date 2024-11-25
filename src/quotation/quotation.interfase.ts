@@ -128,3 +128,24 @@ export interface QuotationItemFindAllDTO {
   rows: QuotationItemDTO[];
   count: number;
 }
+
+export interface CreateQuotationCommentDTO {
+  idQuotation: number;
+  idEmployee: number;
+  comment: string;
+  createdAt?: string;
+}
+
+export interface UpdateQuotationCommentDTO {
+  idQuotationComment: number;
+  idQuotation?: number;
+  idEmployee?: number;
+  comment?: string;
+  createdAt?: string;
+}
+
+export interface FindAllQuotationCommentDTO {
+  page?: number;
+  pageSize?: number;
+  idQuotation: number;
+}

@@ -304,4 +304,71 @@ export class QuotationController {
       data: response.data,
     });
   };
+
+  createQuotationComment = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.CreateQuotationCommentSchema.safeParse(req.body);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+
+    const response = await this.quotationService.createQuotationComment(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data,
+    });
+  };
+
+  updateQuotationComment = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.UpdateQuotationCommentSchema.safeParse(req.body);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+
+    const response = await this.quotationService.updateQuotationComment(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data,
+    });
+  };
+
+  findAllQuotationComments = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.FindAllQuotationCommentSchema.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+    const response = await this.quotationService.findAllQuotationComments(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data,
+    });
+  };
+
+  deleteQuotationComment = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.QuotationCommentSchema.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+
+    const response = await this.quotationService.deleteQuotationComment(request.data.idQuotationComment);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data,
+    });
+  };  
 }

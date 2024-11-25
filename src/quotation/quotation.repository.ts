@@ -8,6 +8,7 @@ import { CustomError } from "../utils";
 import { Transaction } from "sequelize";
 import { QuotationPercentage } from "./quotation-percentage.model";
 import { QuotationStatus } from "./quotation-status.model";
+import { QuotationComment } from "./quotation-comment.model";
 
 export class QuotationRepository {
   async create(
@@ -32,7 +33,8 @@ export class QuotationRepository {
             ],
           },
           { model: QuotationPercentage},
-          { model: QuotationStatus }
+          { model: QuotationStatus },
+          { model: QuotationComment },
         ],
       }
     );
@@ -56,6 +58,7 @@ export class QuotationRepository {
         },
         { model: QuotationPercentage },
         { model: QuotationStatus },
+        { model: QuotationComment },
       ],
       where: filter,
       limit,
@@ -181,5 +184,34 @@ export class QuotationRepository {
 
   async createQuotationPercentage(quotationPercentageData: dtos.CreateQuotationPercentageDTO): Promise<QuotationPercentage> {
     return await QuotationPercentage.create(quotationPercentageData as any);
+  }
+
+  async createQuotationComment(quotationCommentData: dtos.CreateQuotationCommentDTO): Promise<QuotationComment> {
+    return await QuotationComment.create(quotationCommentData as any);
+  }
+
+  async findAllQuotationComment(
+    filter: { [key: string]: any},
+    limit: number, offset: number
+  ): Promise<{ rows: QuotationComment[], count: number }> {
+    const quotationComments = await QuotationComment.findAndCountAll({
+      include: [ {all: true} ],
+      where: filter,
+      limit,
+      offset,
+      distinct: true,
+      order: [["idQuotationComment", "DESC"]],
+    });
+    return quotationComments;
+  }
+
+  async findQuotationCommentById(idQuotationComment: number): Promise<QuotationComment | null> {
+    return await QuotationComment.findByPk(idQuotationComment);
+  }
+
+  async deleteQuotationComment(idQuotationComment: number): Promise<number> {
+    return await QuotationComment.destroy({
+      where: { idQuotationComment },
+    });
   }
 }
