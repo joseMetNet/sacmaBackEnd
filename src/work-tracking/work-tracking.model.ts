@@ -10,6 +10,9 @@ export class WorkTracking extends Model {
   declare hoursWorked?: number;
   declare overtimeHour?: number;
   declare idNovelty: number;
+  declare createdAt: string;
+  declare updatedAt: string;
+  declare deletedAt: string;
 }
 
 WorkTracking.init(

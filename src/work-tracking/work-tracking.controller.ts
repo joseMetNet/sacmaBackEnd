@@ -119,8 +119,10 @@ export class WorkTrackingController {
   createAll = async (req: Request, res: Response): Promise<void> => {
     let workTrackingArray;
     try {
-      workTrackingArray = JSON.parse(req.body.workTracking);
+      const jsonString = req.body.workTracking.replace(/,\s*$/, '');
+      workTrackingArray = JSON.parse(jsonString);
     } catch (error) {
+      console.error("Invalid JSON format", error);
       res.status(StatusCode.BadRequest)
         .json({
           status: StatusValue.Failed,
@@ -134,9 +136,9 @@ export class WorkTrackingController {
         idEmployee: item.idEmployee,
         idCostCenterProject: item.idCostCenterProject,
         hoursWorked: item.hoursWorked,
-        overtimeHour: item.overtimeHour,
-        idNovelty: item.idNovelty,
-        createAt: item.createAt
+        overtimeHour: item?.overtimeHour,
+        idNovelty: item?.idNovelty,
+        createdAt: item?.createdAt
       };
     });
 
@@ -149,7 +151,6 @@ export class WorkTrackingController {
         });
       return;
     }
-    console.log("sdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     const response = await this.workTrackingService.createAll(request.data);
     res
       .status(response.code)

@@ -64,6 +64,7 @@ export interface UpdateWorkTrackingDTO {
   hoursWorked?: number;
   overtimeHour?: number;
   idNovelty?: number;
+  createdAt?: string;
 }
 
 export interface WorkTrackingDTO {
