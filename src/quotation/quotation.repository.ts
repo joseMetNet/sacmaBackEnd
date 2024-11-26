@@ -101,7 +101,7 @@ export class QuotationRepository {
     const quotationItems = await QuotationItem.findAndCountAll({
       include: [ {all: true} ],
       where: filter,
-      limit,
+      limit: limit === -1 ? undefined : limit,
       offset,
       distinct: true,
       order: [["idQuotationItem", "DESC"]],

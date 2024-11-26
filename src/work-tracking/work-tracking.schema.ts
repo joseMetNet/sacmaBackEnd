@@ -26,7 +26,7 @@ export const idWorkTracking = z.object({
 export const createWorkTracking = z.object({
   idEmployee: z.coerce.number(),
   idCostCenterProject: z.coerce.number(),
-  hoursWorked: z.coerce.number(),
+  hoursWorked: z.coerce.number().optional(),
   overtimeHour: z.coerce.number().optional(),
   idNovelty: z.coerce.number().optional(),
   createdAt: z.coerce.string().optional()

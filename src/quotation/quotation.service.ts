@@ -43,27 +43,27 @@ export class QuotationService {
   findQuotationById = async (id: number): Promise<ResponseEntity> => {
     try {
       const quotation = await this.quotationRepository.findById(id);
-      if (quotation) {
-        const jsonQuotation = quotation.toJSON();
-        const responsable = jsonQuotation.Employee.User.firstName 
-            + " " + jsonQuotation.Employee.User.lastName;
-        const data = {
-          idQuotation: quotation.idQuotation,
-          name: quotation.name,
-          responsable,
-          QuotationPercentage: jsonQuotation.QuotationPercentage,
-          QuotationStatus: jsonQuotation.QuotationStatus,
-          builder: quotation.builder,
-          builderAddress: quotation.builderAddress,
-          projectName: quotation.projectName,
-          itemSummary: quotation.itemSummary,
-          totalCost: quotation.totalCost,
-          QuotationComments: jsonQuotation.QuotationComments,
-        };
-        return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
-      } else {
+      if(!quotation) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
       }
+      console.log(quotation);
+      const jsonQuotation = quotation.toJSON();
+      const responsable = jsonQuotation.Employee.User.firstName 
+          + " " + jsonQuotation.Employee.User.lastName;
+      const data = {
+        idQuotation: quotation.idQuotation,
+        name: quotation.name,
+        responsable,
+        QuotationPercentage: jsonQuotation.QuotationPercentage,
+        QuotationStatus: jsonQuotation.QuotationStatus,
+        builder: quotation.builder,
+        builderAddress: quotation.builderAddress,
+        projectName: quotation.projectName,
+        itemSummary: quotation.itemSummary,
+        totalCost: quotation.totalCost,
+        QuotationComments: jsonQuotation.QuotationComments,
+      };
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
     } catch (error) {
       console.error(error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
@@ -496,4 +496,24 @@ export class QuotationService {
     }
     return where;
   };
+
+  //private buildQuotationReport = async (quotation: Quotation): Promise<dtos.QuotationSummaryDTO> => {
+  //  try {
+  //    const quotationItems = await this.quotationRepository.findAllQuotationItem({ idQuotation: quotation.idQuotation }, 100, 0);
+  //    const percentage = await this.quotationRepository.findQuotationPercentageById(quotation.idQuotation) as QuotationPercentage;
+  //    const totalCost = quotationItems.rows.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
+  //    const response = {
+  //      unitValueAIU: 1,
+  //      administration: totalCost * percentage.administration,
+  //      unforeseen: totalCost * percentage.unforeseen,
+  //      utility: totalCost * percentage.utility,
+  //      tax: totalCost * percentage.tax,
+  //      unitValueAIUIncluded: (percentage.administration + percentage.unforeseen + percentage.utility + percentage.tax) * totalCost,
+  //    };
+
+  //    return response;
+  //  } catch (error) {
+  //    console.error(error);
+  //  }
+  //};
 }

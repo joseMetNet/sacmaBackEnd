@@ -29,7 +29,7 @@ WorkTracking.init(
     },
     hoursWorked: {
       type: DataTypes.DOUBLE,
-      allowNull: false,
+      allowNull: true,
     },
     overtimeHour: {
       type: DataTypes.DOUBLE,

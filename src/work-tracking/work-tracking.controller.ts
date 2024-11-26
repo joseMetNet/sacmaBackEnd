@@ -133,7 +133,8 @@ export class WorkTrackingController {
       return {
         idEmployee: item.idEmployee,
         idCostCenterProject: item.idCostCenterProject,
-        hoursWorked: item.hoursWorked
+        hoursWorked: item.hoursWorked,
+        overtimeHour: item.overtimeHour,
       };
     });
 

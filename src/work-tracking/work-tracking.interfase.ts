@@ -1,7 +1,7 @@
 export interface CreateWorkTrackingDTO {
   idEmployee: number;
   idCostCenterProject: number;
-  hoursWorked: number;
+  hoursWorked?: number;
   overtimeHour?: number;
   idNovelty?: number;
   createdAt?: string;

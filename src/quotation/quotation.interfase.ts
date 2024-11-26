@@ -149,3 +149,12 @@ export interface FindAllQuotationCommentDTO {
   pageSize?: number;
   idQuotation: number;
 }
+
+export interface QuotationSummaryDTO {
+  unitValueAIU: number;
+  administration: number;
+  unforeseen: number;
+  utility: number;
+  tax: number;
+  unitValueAIUIncluded: number;
+}
