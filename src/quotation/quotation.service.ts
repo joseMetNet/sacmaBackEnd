@@ -43,13 +43,12 @@ export class QuotationService {
   findQuotationById = async (id: number): Promise<ResponseEntity> => {
     try {
       const quotation = await this.quotationRepository.findById(id);
-      if(!quotation) {
+      if (!quotation) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
       }
-      console.log(quotation);
       const jsonQuotation = quotation.toJSON();
-      const responsable = jsonQuotation.Employee.User.firstName 
-          + " " + jsonQuotation.Employee.User.lastName;
+      const responsable = jsonQuotation.Employee.User.firstName
+        + " " + jsonQuotation.Employee.User.lastName;
       const data = {
         idQuotation: quotation.idQuotation,
         name: quotation.name,
@@ -62,6 +61,7 @@ export class QuotationService {
         itemSummary: quotation.itemSummary,
         totalCost: quotation.totalCost,
         QuotationComments: jsonQuotation.QuotationComments,
+        QuotationReport: await this.buildQuotationReport(quotation),
       };
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
     } catch (error) {
@@ -87,8 +87,8 @@ export class QuotationService {
       const data = quotations.rows.map((quotation) => {
         let responsable: string | undefined;
         const jsonQuotation = quotation.toJSON();
-        if(jsonQuotation.Employee) {
-          responsable = jsonQuotation.Employee.User.firstName 
+        if (jsonQuotation.Employee) {
+          responsable = jsonQuotation.Employee.User.firstName
             + " " + jsonQuotation.Employee.User.lastName;
         }
         return {
@@ -295,7 +295,7 @@ export class QuotationService {
       if (!input) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Input not found" });
       }
-      
+
       const data = {
         ...quotationItemDetailData,
         totalCost: parseInt(input.cost) * quotationItemDetailData.quantity,
@@ -320,8 +320,8 @@ export class QuotationService {
         if (!input) {
           return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Input not found" });
         }
-        const quantity = quotationItemDetailData.quantity? quotationItemDetailData.quantity : quotationItemDetail.quantity;
-        quotationItemDetailData.totalCost = 
+        const quantity = quotationItemDetailData.quantity ? quotationItemDetailData.quantity : quotationItemDetail.quantity;
+        quotationItemDetailData.totalCost =
           parseInt(input.cost) * quantity;
       }
       quotationItemDetailData.totalCost = quotationItemDetailData.totalCost || quotationItemDetail.totalCost;
@@ -436,7 +436,7 @@ export class QuotationService {
   deleteQuotationComment = async (idQuotationComment: number): Promise<ResponseEntity> => {
     try {
       const quotationComment = await this.findQuotationById(idQuotationComment);
-      if(!quotationComment) {
+      if (!quotationComment) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation comment not found" });
       }
 
@@ -475,8 +475,8 @@ export class QuotationService {
     return quotationPercentage;
   };
 
-  private buildQuotationFilter = (filter: dtos.findAllQuotationDTO): {[key: string]: any} => {
-    let where: {[key: string]: any} = {};
+  private buildQuotationFilter = (filter: dtos.findAllQuotationDTO): { [key: string]: any } => {
+    let where: { [key: string]: any } = {};
     if (filter.responsible) {
       where = {
         ...where,
@@ -486,8 +486,8 @@ export class QuotationService {
     return where;
   };
 
-  private buildQuotationCommentFilter = (filter: dtos.FindAllQuotationCommentDTO): {[key: string]: any} => {
-    let where: {[key: string]: any} = {};
+  private buildQuotationCommentFilter = (filter: dtos.FindAllQuotationCommentDTO): { [key: string]: any } => {
+    let where: { [key: string]: any } = {};
     if (filter.idQuotation) {
       where = {
         ...where,
@@ -497,23 +497,26 @@ export class QuotationService {
     return where;
   };
 
-  //private buildQuotationReport = async (quotation: Quotation): Promise<dtos.QuotationSummaryDTO> => {
-  //  try {
-  //    const quotationItems = await this.quotationRepository.findAllQuotationItem({ idQuotation: quotation.idQuotation }, 100, 0);
-  //    const percentage = await this.quotationRepository.findQuotationPercentageById(quotation.idQuotation) as QuotationPercentage;
-  //    const totalCost = quotationItems.rows.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
-  //    const response = {
-  //      unitValueAIU: 1,
-  //      administration: totalCost * percentage.administration,
-  //      unforeseen: totalCost * percentage.unforeseen,
-  //      utility: totalCost * percentage.utility,
-  //      tax: totalCost * percentage.tax,
-  //      unitValueAIUIncluded: (percentage.administration + percentage.unforeseen + percentage.utility + percentage.tax) * totalCost,
-  //    };
+  private buildQuotationReport = async (quotation: Quotation):
+    Promise<dtos.QuotationSummaryDTO | CustomError> => {
+    try {
+      const quotationItems = await this.quotationRepository.findAllQuotationItem({ idQuotation: quotation.idQuotation }, 100, 0);
+      const percentage = await this.quotationRepository.findQuotationPercentageById(quotation.idQuotation) as QuotationPercentage;
+      const totalCost = quotationItems.rows.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
+      const response = {
+        unitValueAIU: 1,
+        administration: totalCost * percentage.administration,
+        unforeseen: totalCost * percentage.unforeseen,
+        utility: totalCost * percentage.utility,
+        tax: totalCost * percentage.tax,
+        unitValueAIUIncluded: (percentage.administration + percentage.unforeseen + percentage.utility + percentage.tax) * totalCost,
+      };
 
-  //    return response;
-  //  } catch (error) {
-  //    console.error(error);
-  //  }
-  //};
+      console.log(`totalCost: ${totalCost}`);
+      return Promise.resolve(response);
+    } catch (error) {
+      console.error(error);
+      return CustomError.internalServer("Failed to build quotation report");
+    }
+  };
 }
