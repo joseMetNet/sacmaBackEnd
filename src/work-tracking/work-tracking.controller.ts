@@ -135,6 +135,8 @@ export class WorkTrackingController {
         idCostCenterProject: item.idCostCenterProject,
         hoursWorked: item.hoursWorked,
         overtimeHour: item.overtimeHour,
+        idNovelty: item.idNovelty,
+        createAt: item.createAt
       };
     });
 
@@ -147,6 +149,7 @@ export class WorkTrackingController {
         });
       return;
     }
+    console.log("sdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     const response = await this.workTrackingService.createAll(request.data);
     res
       .status(response.code)
