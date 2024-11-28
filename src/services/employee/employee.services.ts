@@ -21,6 +21,7 @@ import {
   uploadImageProfile,
 } from "../helper";
 import { ResponseEntity } from "../interface";
+import sequelize from "sequelize";
 
 export class EmployeeService {
   constructor(
@@ -809,17 +810,30 @@ export class EmployeeService {
 
   private buildFilter(request: IFindEmployeeRequest) {
     let filter = {};
-    if (request.firstName && request.identityCardNumber) {
+
+    if(request.identityCardNumber) {
       filter = {
-        [Op.and]: [
-          { firstName: { [Op.substring]: request.firstName } },
-          { identityCardNumber: { [Op.substring]: request.identityCardNumber} },
-        ],
+        ...filter,
+        identityCardNumber: {
+          [Op.substring]: request.identityCardNumber,
+        },
       };
-    } else if (request.identityCardNumber) {
-      filter = { identityCardNumber: { [Op.substring]: request.identityCardNumber} };
-    } else if (request.firstName) {
-      filter = { firstName: { [Op.substring]: request.firstName } };
+    }
+
+    if(request.firstName) {
+      filter = {
+        ...filter,
+        firstName: {
+          [Op.substring]: request.firstName,
+        },
+      };
+    }
+
+    if(request.idPosition) {
+      filter = {
+        ...filter,
+        idPosition: sequelize.where(sequelize.col("Employee.idPosition"), request.idPosition),
+      };
     }
     return filter;
   }
@@ -830,6 +844,7 @@ interface IFindEmployeeRequest {
   pageSize?: number;
   firstName?: string;
   identityCardNumber?: string;
+  idPosition?: number;
 }
 
 interface NoveltySummary {

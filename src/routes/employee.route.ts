@@ -565,6 +565,7 @@ export function employeeRoutes(app: Application): void {
    *       - $ref: "#/components/parameters/pageSize"
    *       - $ref: "#/components/parameters/firstName"
    *       - $ref: "#/components/parameters/identityCardNumber"
+   *       - $ref: "#/components/parameters/idPosition"
    *     responses:
    *       '200':
    *         description: Successful response
@@ -839,6 +840,14 @@ export function employeeRoutes(app: Application): void {
    *       schema:
    *         type: integer
    *       description: Employee id
+   *       required: false
+   *       default: 1
+   *     idPosition:
+   *       in: query
+   *       name: idPosition
+   *       schema:
+   *         type: integer
+   *       description: Position id
    *       required: false
    *       default: 1
    *     page:
