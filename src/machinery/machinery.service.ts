@@ -16,8 +16,9 @@ import { MachineryLocation } from "./machinery-location.model";
 import { tz } from "moment-timezone";
 import { MachineryDocument } from "./machinery-document.model";
 import { MachineryDocumentType } from "./machinery-document-type.model";
-import { Employee, User } from "../models";
+import { Employee } from "../models";
 import { CostCenterProject } from "../cost-center/cost-center-project.model";
+import { User } from "../authentication";
 
 class MachineryService {
   async findAll(request: dtos.FindAllDTO): Promise<ResponseEntity> {

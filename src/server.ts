@@ -13,6 +13,7 @@ import { machineryRoutes } from "./machinery/machinery.route";
 import { costCenterRoutes } from "./cost-center/cost-center.route";
 import { workTrackingRoute } from "./work-tracking";
 import { quotationRoute } from "./quotation";
+import { authenticationRoutes } from "./authentication";
 
 class Server {
   private app: Application;

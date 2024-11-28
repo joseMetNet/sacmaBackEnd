@@ -7,10 +7,10 @@ import { CustomError } from "../utils";
 import { AuthenticationRepository } from "./authentication.repository";
 import { User } from "./user.model";
 import { EmergencyContact, Employee } from "../models";
-import * as helper from "../utils";
 import { Role } from "./role.model";
 import { PermissionRoleModel } from "./permission-role.model";
 import { PermissionModel } from "./permission.model";
+import * as helper from "../utils/helper";
 
 export class AuthenticationService {
   constructor(private readonly authRepository: AuthenticationRepository) {
@@ -51,7 +51,7 @@ export class AuthenticationService {
         idRole: user.get("idRole"),
         idRefreshToken,
       };
-  
+
       const refreshToken = helper.signAuthRefreshToken({ idUser: user.get("idUser"), idRefreshToken });
       const token = helper.signAuthToken(payload);
   
@@ -158,7 +158,6 @@ export class AuthenticationService {
       const token = helper.signAuthToken(payload);
 
       await transaction.commit();
-      console.log(`Response \n ${JSON.stringify(permissions)}`);
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         token,

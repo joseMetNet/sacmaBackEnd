@@ -1,5 +1,6 @@
+import { User } from "../authentication";
 import { CostCenterProject } from "../cost-center/cost-center-project.model";
-import { Employee, User } from "../models";
+import { Employee } from "../models";
 import { MachineryDocumentType } from "./machinery-document-type.model";
 import { MachineryLocation } from "./machinery-location.model";
 import { MachineryMaintenance } from "./machinery-maintenance.model";

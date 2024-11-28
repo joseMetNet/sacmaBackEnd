@@ -2,13 +2,14 @@ import { Quotation } from "./quotation.model";
 import * as dtos from "./quotation.interfase";
 import { QuotationItem } from "./quotation-item.model";
 import { QuotationItemDetail } from "./quotation-item-detail.model";
-import { Employee, User } from "../models";
+import { Employee } from "../models";
 import { Input } from "../input/input.model";
 import { CustomError } from "../utils";
 import { Transaction } from "sequelize";
 import { QuotationPercentage } from "./quotation-percentage.model";
 import { QuotationStatus } from "./quotation-status.model";
 import { QuotationComment } from "./quotation-comment.model";
+import { User } from "../authentication";
 
 export class QuotationRepository {
   async create(
