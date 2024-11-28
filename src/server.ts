@@ -1,4 +1,3 @@
-import "colors";
 import cors from "cors";
 import express, { Application } from "express";
 import fileUpload from "express-fileupload";
@@ -10,7 +9,10 @@ import { employeeRoutes, noveltyRoutes } from "./routes";
 import { supplierRoutes } from "./supplier/supplier.route";
 import { inputRoutes } from "./input";
 import { employeePayrollRoutes } from "./payroll";
-import { authenticationRoutes } from "./authentication";
+import { machineryRoutes } from "./machinery/machinery.route";
+import { costCenterRoutes } from "./cost-center/cost-center.route";
+import { workTrackingRoute } from "./work-tracking";
+import { quotationRoute } from "./quotation";
 
 class Server {
   private app: Application;
@@ -54,13 +56,17 @@ class Server {
     noveltyRoutes(this.app);
     employeePayrollRoutes(this.app);
     supplierRoutes(this.app);
+    machineryRoutes(this.app);
     inputRoutes(this.app);
+    costCenterRoutes(this.app);
+    workTrackingRoute(this.app);
+    quotationRoute(this.app);
   }
 
   public listen(): void {
     console.clear();
     this.app.listen(this.port, () => {
-      console.log(` 🔥 Server in port ${this.port}`.bold);
+      console.log(`Server in port ${this.port}`);
     });
   }
 }

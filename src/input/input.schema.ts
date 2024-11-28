@@ -22,6 +22,11 @@ export const createInput = z.object({
   price: z.string(),
 });
 
+export const uploadInputDocument = z.object({
+  idInput: z.coerce.number(),
+  idInputDocumentType: z.coerce.number(),
+});
+
 export const updateInput = z.object({
   idInput: z.coerce.number(),
   name: z.string().optional(),

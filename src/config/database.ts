@@ -1,5 +1,4 @@
 import { Sequelize } from "sequelize";
-import "colors";
 import { EnvConfig } from "./config";
 
 class DatabaseConnection {

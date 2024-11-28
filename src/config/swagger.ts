@@ -43,6 +43,9 @@ export const swaggerOptions: SwaggerOptions = {
     "./src/supplier/*route.ts",
     "./src/input/*route.ts",
     "./src/payroll/*route.ts",
-    "./src/authentication/*route.ts"
+    "./src/machinery/*route.ts",
+    "./src/cost-center/*route.ts",
+    "./src/work-tracking/*route.ts",
+    "./src/quotation/*route.ts",
   ],
 };

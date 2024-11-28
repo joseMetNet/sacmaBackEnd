@@ -8,6 +8,10 @@ import { InputType } from "./input-type.model";
 import { InputUnitOfMeasure } from "./input-unit-of-measure.model";
 import { Input } from "./input.model";
 import * as ExcelJS from "exceljs";
+import { InputDocument } from "./input-document.model";
+import { CustomError, deleteFile, uploadFile } from "../utils";
+import { dbConnection } from "../config";
+import { InputDocumentType } from "./input-docyment-type.model";
 
 class InputService {
   async findAll(request: dtos.FindAllDTO): Promise<ResponseEntity> {
@@ -160,6 +164,84 @@ class InputService {
       );
     }
   }
+  async uploadDocument(request: dtos.UploadInputDocumentDTO, filePath?: string): Promise<ResponseEntity> {
+    const transaction = await dbConnection.transaction();
+    try {
+      const documentExist = await InputDocument.findOne({
+        where: {
+          idInput: request.idInput,
+          idInputDocumentType: request.idInputDocumentType,
+        }
+      });
+
+      if (documentExist && filePath) {
+        const deleteDocumentResponse = await deleteFile(
+          new URL(documentExist.documentUrl).pathname.split("/").pop()!,
+          "inputs",
+        );
+        if (deleteDocumentResponse instanceof CustomError) {
+          await transaction.rollback();
+          return BuildResponse.buildErrorResponse(deleteDocumentResponse.statusCode, { message: deleteDocumentResponse.message });
+        }
+      }
+
+      if (filePath) {
+        const identifier = crypto.randomUUID();
+        const uploadResponse = await uploadFile(filePath, identifier, "application/pdf", "inputs");
+        if (uploadResponse instanceof CustomError) {
+          await transaction.rollback();
+          return BuildResponse.buildErrorResponse(uploadResponse.statusCode, { message: uploadResponse.message });
+        }
+        if (documentExist) {
+          await documentExist.update({
+            documentUrl: `https://sacmaback.blob.core.windows.net/inputs/${identifier}.pdf`,
+          }, { transaction });
+        } else {
+          await InputDocument.create({
+            idInput: request.idInput,
+            idInputDocumentType: request.idInputDocumentType,
+            documentUrl: `https://sacmaback.blob.core.windows.net/inputs/${identifier}.pdf`,
+          }, { transaction });
+        }
+      }
+
+      await transaction.commit();
+
+      const inputDocument = await InputDocument.findOne({
+        where: {
+          idInput: request.idInput,
+          idInputDocumentType: request.idInputDocumentType,
+        },
+        include: {
+          model: InputDocumentType,
+          required: true,
+        },
+      });
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, inputDocument!);
+    } catch (err: any) {
+      await transaction.rollback();
+      console.error("Error uploading document:", err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+
+  async findInputDocumentTypes(): Promise<ResponseEntity> {
+    try {
+      const inputDocumentTypes = await InputDocumentType.findAll();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, inputDocumentTypes);
+    } catch (err: any) {
+      console.error("Error finding document type:", err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+
 
   async download() {
     try {
@@ -181,10 +263,10 @@ class InputService {
       inputs.rows.forEach((item) => {
         const input = item.toJSON();
         let supplier = input.Supplier;
-        if(supplier === null) {
+        if (supplier === null) {
           supplier = {};
         }
-        if(Object.getOwnPropertyNames(supplier).filter((key) => key === "socialReason").length === 0) {
+        if (Object.getOwnPropertyNames(supplier).filter((key) => key === "socialReason").length === 0) {
           supplier.socialReason = null;
         }
         worksheet.addRow({
@@ -193,7 +275,7 @@ class InputService {
           code: input.code,
           unitOfMeasure: input.InputUnitOfMeasure.unitOfMeasure ?? null,
           cost: input.cost,
-          supplier: supplier.socialReason? supplier?.socialReason : null,
+          supplier: supplier.socialReason ? supplier?.socialReason : null,
           performance: input.performance,
         });
       });
@@ -220,7 +302,7 @@ class InputService {
           },
         };
       }
-      if(key === "idSupplier") {
+      if (key === "idSupplier") {
         inputFilter = {
           ...inputFilter,
           idSupplier: request.idSupplier,
