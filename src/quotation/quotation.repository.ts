@@ -145,7 +145,7 @@ export class QuotationRepository {
           },
           {
             model: Input,
-            attributes: ["idInput", "name", "cost"],
+            attributes: ["idInput", "name", "cost", "performance"],
           }
         ],
         where: filter,

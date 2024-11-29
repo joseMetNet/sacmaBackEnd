@@ -77,6 +77,7 @@ export class WorkTrackingService {
     const limit = pageSize;
     const offset = (page - 1) * pageSize;
 
+
     try {
       const filter = this.buildFindWorkTrackingByEmployeeFilter(request);
       const replacements = this.buildReplacementsByEmployee(request);
@@ -395,6 +396,10 @@ export class WorkTrackingService {
     if(request.projectName) {
       replacements.projectName = `%${request.projectName}%`;
     }
+
+    if (request.createdAt) {
+      replacements.createdAt = request.createdAt;
+    }
   
     return replacements;
   };
@@ -431,12 +436,12 @@ export class WorkTrackingService {
         filters.push("wt.idEmployee = :idEmployee");
       } else if (key === "idCostCenterProject") {
         filters.push("wt.idCostCenterProject = :idCostCenterProject");
-      } 
-      else if (key === "projectName") {
+      } else if (key === "projectName") {
         filters.push("ccp.name LIKE :projectName");
+      } else if (key === "createdAt") {
+        filters.push("CONVERT(DATE, wt.createdAt) = :createdAt");
       }
     }
-  
     return filters.length > 0 ? " " + filters.join(" AND ") : "";
   }
 
@@ -453,6 +458,11 @@ export class WorkTrackingService {
         filters = {
           ...filters,
           projectName: sequelize.where(sequelize.col("CostCenterProject.name"), "LIKE", `%${request.projectName}%`)
+        };
+      }else if (key === "createdAt") {
+        filters = {
+          ...filters,
+          createdAt: sequelize.where(sequelize.literal("CONVERT(DATE, WorkTracking.createdAt)"), "=", request.createdAt)
         };
       }
     }
@@ -479,14 +489,16 @@ export class WorkTrackingService {
   private buildDailyWorkTrackingFilterConditions = (request: types.FindAllDailyWorkTrackingDTO): string => {
     let conditions = "WHERE 1=1";
     if (request.year) {
-      conditions += ` AND YEAR(wt.createdAt) = :year`;
+      conditions += " AND YEAR(wt.createdAt) = :year";
     }
-    if (request.month) {
-      conditions += ` AND MONTH(wt.createdAt) = :month`;
+    else if (request.month) {
+      conditions += " AND MONTH(wt.createdAt) = :month";
+    }
+    else if (request.createdAt) {
+      conditions += " AND CONVERT(DATE, wt.createdAt) = :createdAt";
     }
     return conditions;
   };
-
 }
 
 interface FindDailyCount {

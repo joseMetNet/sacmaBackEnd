@@ -186,6 +186,11 @@ export function workTrackingRoute(app: Application): void {
  *         schema:
  *           type: int
  *         description: Month of the Work Tracking saved
+ *       - in: query
+ *         name: createdAt
+ *         schema:
+ *           type: string
+ *         description: Date of the Work Tracking saved
  *     responses:
  *       200:
  *         description: A list of cost center
@@ -243,6 +248,11 @@ export function workTrackingRoute(app: Application): void {
  *         schema:
  *           type: string
  *         description: Name of the project
+ *       - in: query
+ *         name: createdAt
+ *         schema:
+ *           type: string
+ *         description: Date of the Work Tracking saved
  *     responses:
  *       200:
  *         description: A list of cost center

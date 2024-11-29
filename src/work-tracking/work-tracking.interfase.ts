@@ -52,9 +52,10 @@ export interface WorkTrackingByEmployeeDTO {
 export interface FindAllByEmployeeDTO {
   page?: number;
   pageSize?: number;
-  idEmployee: number;
+  idEmployee?: number;
   idCostCenterProject?: number;
   projectName?: string;
+  createdAt?: string;
 }
 
 export interface FindAllDailyWorkTrackingDTO {
@@ -62,6 +63,7 @@ export interface FindAllDailyWorkTrackingDTO {
   pageSize?: number;
   year?: string;
   month?: string;
+  createdAt?: string;
 }
 
 export interface UpdateWorkTrackingDTO {
