@@ -195,7 +195,18 @@ export class QuotationRepository {
     limit: number, offset: number
   ): Promise<{ rows: QuotationComment[], count: number }> {
     const quotationComments = await QuotationComment.findAndCountAll({
-      include: [ {all: true} ],
+      include: [
+        {
+          model: Employee,
+          attributes: ["idEmployee"],
+          include: [
+            { 
+              model: User, 
+              attributes: ["firstName", "lastName"], 
+            },
+          ],
+        },
+      ],
       where: filter,
       limit,
       offset,
