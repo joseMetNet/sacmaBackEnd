@@ -565,7 +565,8 @@ export function employeeRoutes(app: Application): void {
    *       - $ref: "#/components/parameters/pageSize"
    *       - $ref: "#/components/parameters/firstName"
    *       - $ref: "#/components/parameters/identityCardNumber"
-   *       - $ref: "#/components/parameters/idPosition"
+   *       - $ref: "#/components/parameters/idRole"
+   *       - $ref: "#/components/parameters/status"
    *     responses:
    *       '200':
    *         description: Successful response
@@ -597,7 +598,7 @@ export function employeeRoutes(app: Application): void {
    *             schema:
    *               $ref: "#/components/schemas/failedResponse"
    */
-  routes.get("/v1/employees", [verifyToken], employeeController.findEmployee);
+  routes.get("/v1/employees", [verifyToken], employeeController.findEmployees);
 
   /**
   * @openapi
@@ -842,12 +843,12 @@ export function employeeRoutes(app: Application): void {
    *       description: Employee id
    *       required: false
    *       default: 1
-   *     idPosition:
+   *     idRole:
    *       in: query
-   *       name: idPosition
+   *       name: idRole
    *       schema:
    *         type: integer
-   *       description: Position id
+   *       description: Role id
    *       required: false
    *       default: 1
    *     page:
@@ -871,6 +872,13 @@ export function employeeRoutes(app: Application): void {
    *       schema:
    *         type: string
    *       description: Name to filter
+   *       required: false
+   *     status:
+   *       in: query
+   *       name: status
+   *       schema:
+   *         type: boolean
+   *       description: Status to filter
    *       required: false
    *     identityCardNumber:
    *       in: query

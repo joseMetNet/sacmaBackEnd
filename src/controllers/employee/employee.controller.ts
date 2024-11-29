@@ -26,7 +26,7 @@ class EmployeeController {
       .json({ status: response.status, data: response.data });
   }
 
-  async findEmployee(req: Request, res: Response): Promise<void> {
+  async findEmployees(req: Request, res: Response): Promise<void> {
     const request = employeeRequestSchema.safeParse(req.query);
     if (!request.success) {
       res

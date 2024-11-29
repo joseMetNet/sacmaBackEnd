@@ -113,6 +113,7 @@ export class EmployeeService {
     const limit = pageSize;
     const offset = (page - 1) * pageSize;
     const filter = this.buildFilter(request);
+
     try {
       const employees =
         await models.Employee.findAndCountAll({
@@ -829,10 +830,17 @@ export class EmployeeService {
       };
     }
 
-    if(request.idPosition) {
+    if(request.idRole) {
       filter = {
         ...filter,
-        idPosition: sequelize.where(sequelize.col("Employee.idPosition"), request.idPosition),
+        idPosition: sequelize.where(sequelize.col("User.idRole"), request.idRole),
+      };
+    }
+
+    if(request.status) {
+      filter = {
+        ...filter,
+        status: sequelize.where(sequelize.col("User.status"), request.status),
       };
     }
     return filter;
@@ -844,7 +852,8 @@ interface IFindEmployeeRequest {
   pageSize?: number;
   firstName?: string;
   identityCardNumber?: string;
-  idPosition?: number;
+  idRole?: number;
+  status?: boolean;
 }
 
 interface NoveltySummary {
