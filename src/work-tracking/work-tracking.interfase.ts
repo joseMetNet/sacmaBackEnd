@@ -57,6 +57,13 @@ export interface FindAllByEmployeeDTO {
   projectName?: string;
 }
 
+export interface FindAllDailyWorkTrackingDTO {
+  page?: number;
+  pageSize?: number;
+  year?: string;
+  month?: string;
+}
+
 export interface UpdateWorkTrackingDTO {
   idWorkTracking: number;
   idEmployee?: number;

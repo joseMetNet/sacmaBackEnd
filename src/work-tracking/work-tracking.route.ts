@@ -12,6 +12,7 @@ export function workTrackingRoute(app: Application): void {
 
   // GET routes
   router.get("/v1/work-tracking", workTrackingController.findAll);
+  router.get("/v1/work-tracking/daily", workTrackingController.findDailyWorkTrackingByEmployee);
   router.get("/v1/work-tracking/employee", workTrackingController.findWorkTrackingByEmployee);
   router.get("/v1/work-tracking/employee-summary", workTrackingController.findAllByEmployee);
   router.get("/v1/work-tracking/work-hour", workTrackingController.findAllWorkHour);
@@ -156,6 +157,58 @@ export function workTrackingRoute(app: Application): void {
  *             schema:
  *               $ref: '#/components/schemas/failedResponse'
 */
+
+/**
+ * @openapi
+ * /v1/work-tracking/daily:
+ *   get:
+ *     tags: [Work Tracking]
+ *     summary: Find daily Work Trackings
+ *     description: Find all daily Work Trackings
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *         description: Number of items per page
+ *       - in: query
+ *         name: year
+ *         schema:
+ *           type: int
+ *         description: Year of the Work Tracking saved
+ *       - in: query
+ *         name: month
+ *         schema:
+ *           type: int
+ *         description: Month of the Work Tracking saved
+ *     responses:
+ *       200:
+ *         description: A list of cost center
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/WorkTrackingDTO'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
 
 /**
  * @openapi
