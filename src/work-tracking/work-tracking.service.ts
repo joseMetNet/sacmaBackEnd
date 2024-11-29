@@ -5,6 +5,7 @@ import { ResponseEntity } from "../services/interface";
 import { calculateBusinessDaysForCurrentMonth } from "../utils";
 import * as types from "./work-tracking.interfase";
 import { WorkTrackingRepository } from "./work-tracking.repository";
+import { dbConnection } from "../config";
 
 export class WorkTrackingService {
   private readonly workTrackingRepository: WorkTrackingRepository;
@@ -151,6 +152,70 @@ export class WorkTrackingService {
       );
     }
     catch (error) {
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "Error getting Work Trackings" }
+      );
+    }
+  };
+
+  findDailyWorkTrackingByEmployee = async (request: types.FindAllDailyWorkTrackingDTO): Promise<ResponseEntity> => {
+    try {
+      const { page, pageSize, limit, offset } = this.getPagination(request);
+      const filterConditions = this.buildDailyWorkTrackingFilterConditions(request);
+
+      const query = `
+        SELECT
+          CONVERT(DATE, wt.createdAt) AS date,
+          SUM(CASE WHEN tn.novelty = 'Ingreso' THEN 1 ELSE 0 END) AS ingresoCount,
+          SUM(CASE WHEN tn.novelty = 'Incapacitado' THEN 1 ELSE 0 END) AS incapacitatedCount,
+          SUM(CASE WHEN tn.novelty = 'Vacación' THEN 1 ELSE 0 END) AS vacationCount,
+          SUM(CASE WHEN tn.novelty = 'Sanción' THEN 1 ELSE 0 END) AS sancionadosCount,
+          SUM(CASE WHEN tn.novelty = 'Permiso' THEN 1 ELSE 0 END) AS permisoCount
+        FROM mvp1.TB_WorkTracking wt
+        INNER JOIN mvp1.TB_Novelty tn ON tn.idNovelty = wt.idNovelty
+        ${filterConditions}
+        GROUP BY CONVERT(DATE, wt.createdAt)
+        ORDER BY CONVERT(DATE, wt.createdAt) DESC
+        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY;
+      `;
+
+      const replacements = { offset, limit, ...request };
+
+      const data = await dbConnection.query(query, {
+        replacements,
+        type: sequelize.QueryTypes.SELECT,
+      });
+
+      const totalQuery = `
+        SELECT COUNT(DISTINCT CONVERT(DATE, wt.createdAt)) AS total
+        FROM mvp1.TB_WorkTracking wt
+        INNER JOIN mvp1.TB_Novelty tn ON tn.idNovelty = wt.idNovelty
+        ${filterConditions};
+      `;
+
+      const totalResult = await dbConnection.query<FindDailyCount>(totalQuery, {
+        replacements,
+        type: sequelize.QueryTypes.SELECT,
+      });
+
+      const totalItems = totalResult[0].total;
+      const totalPages = Math.ceil(totalItems / pageSize);
+
+      const response = {
+        data,
+        totalItems,
+        currentPage: page,
+        totalPages,
+      };
+
+      return BuildResponse.buildSuccessResponse(
+        StatusCode.Ok,
+        response
+      );
+    }
+    catch (error) {
+      console.error(`Error getting Daily Work Tracking by Employee: ${error}`);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: "Error getting Work Trackings" }
@@ -402,4 +467,28 @@ export class WorkTrackingService {
     const formattedStartDate = startDate.toISOString().split("T")[0];
     return formattedStartDate;
   };
+
+  private getPagination = (request: { page?: number, pageSize?: number }) => {
+    const page = request.page || 1;
+    const pageSize = request.pageSize || 10;
+    const limit = pageSize;
+    const offset = (page - 1) * pageSize;
+    return { page, pageSize, limit, offset };
+  };
+
+  private buildDailyWorkTrackingFilterConditions = (request: types.FindAllDailyWorkTrackingDTO): string => {
+    let conditions = "WHERE 1=1";
+    if (request.year) {
+      conditions += ` AND YEAR(wt.createdAt) = :year`;
+    }
+    if (request.month) {
+      conditions += ` AND MONTH(wt.createdAt) = :month`;
+    }
+    return conditions;
+  };
+
+}
+
+interface FindDailyCount {
+  total: number;
 }

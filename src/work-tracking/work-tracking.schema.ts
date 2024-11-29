@@ -19,6 +19,13 @@ export const findAllByEmployee = z.object({
   projectName: z.coerce.string().optional(),
 });
 
+export const findDailyWorkTrackingByEmployee = z.object({
+  page: z.coerce.number().optional(),
+  pageSize: z.coerce.number().optional(),
+  year: z.coerce.string().optional(),
+  month: z.coerce.string().optional(),
+});
+
 export const idWorkTracking = z.object({
   idWorkTracking: z.coerce.number(),
 });
