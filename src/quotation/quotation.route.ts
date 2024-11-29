@@ -13,7 +13,7 @@ export function quotationRoute(app: Application): void {
   // GET routes
   router.get("/v1/quotation-item-detail", quotationController.findAllQuotationItemDetails);
   router.get("/v1/quotation-item", quotationController.findAllQuotationItems);
-  router.get("/quotation-comment", quotationController.findAllQuotationComments);
+  router.get("/v1/quotation-comment", quotationController.findAllQuotationComments);
   router.get("/v1/quotation-status", quotationController.findAllQuotationStatus);
   router.get("/v1/quotation", quotationController.findAllQuotations);
   router.get("/v1/quotation-item-detail/:idQuotationItemDetail", quotationController.findQuotationItemDetailById);
@@ -173,7 +173,7 @@ export function quotationRoute(app: Application): void {
 
 /**
  * @openapi
- * /quotation-comment:
+ * /v1/quotation-comment:
  *   get:
  *     tags: [Quotation]
  *     summary: Find all Quotation Comments
