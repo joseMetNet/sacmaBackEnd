@@ -7,8 +7,8 @@ export class QuotationItemDetail extends Model {
   declare idQuotationItemDetail: number;
   declare idQuotationItem: number;
   declare idInput: number;
-  declare quantity: number;
-  declare totalCost: number;
+  declare quantity: string;
+  declare totalCost: string;
 }
 
 QuotationItemDetail.init(

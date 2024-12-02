@@ -219,7 +219,7 @@ export class QuotationService {
 
       const quantity = quotationItemData.quantity ?? data.quantity;
       const unitPrice = quotationItemData.unitPrice ?? data.unitPrice;
-      quotationItemData.total = quantity * unitPrice;
+      quotationItemData.total = String(parseFloat(quantity) * parseFloat(unitPrice));
 
       const [updatedCount, updatedQuotationItems] = await this.quotationRepository.updateQuotationItem(quotationItemData);
       if (updatedCount > 0) {
@@ -296,10 +296,15 @@ export class QuotationService {
       if (!input) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Input not found" });
       }
+      const quotationItem = await this.quotationRepository.findQuotationItemById(quotationItemDetailData.idQuotationItem);
+      if (!quotationItem) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation item not found" });
+      }
 
       const data = {
         ...quotationItemDetailData,
-        totalCost: parseInt(input.cost) * quotationItemDetailData.quantity,
+        quantity: parseFloat((parseFloat(quotationItem.quantity) / parseFloat(input.performance)).toFixed(2)),
+        totalCost: parseFloat((parseFloat(input.cost) * (parseFloat(quotationItem.quantity) / parseFloat(input.performance))).toFixed(2)),
       };
       const quotationItemDetail = await this.quotationRepository.createQuotationItemDetail(data);
       return BuildResponse.buildSuccessResponse(201, quotationItemDetail);
@@ -323,7 +328,7 @@ export class QuotationService {
         }
         const quantity = quotationItemDetailData.quantity ? quotationItemDetailData.quantity : quotationItemDetail.quantity;
         quotationItemDetailData.totalCost =
-          parseInt(input.cost) * quantity;
+          String(parseInt(input.cost) * parseFloat(quantity));
       }
       quotationItemDetailData.totalCost = quotationItemDetailData.totalCost || quotationItemDetail.totalCost;
 
@@ -503,13 +508,13 @@ export class QuotationService {
     try {
       const quotationItems = await this.quotationRepository.findAllQuotationItem({ idQuotation: quotation.idQuotation }, 100, 0);
       const percentage = await this.quotationRepository.findQuotationPercentageById(quotation.idQuotation) as QuotationPercentage;
-      const totalCost = quotationItems.rows.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
+      const totalCost = quotationItems.rows.reduce((acc, item) => acc + parseFloat(item.quantity) * parseFloat(item.unitPrice), 0);
       const response = {
         unitValueAIU: 1,
         administration: totalCost * percentage.administration,
         unforeseen: totalCost * percentage.unforeseen,
         utility: totalCost * percentage.utility,
-        tax: totalCost * percentage.tax,
+        tax: parseFloat(String(totalCost * percentage.tax*1.5390)).toFixed(2),
         unitValueAIUIncluded: (percentage.administration + percentage.unforeseen + percentage.utility + percentage.tax) * totalCost,
       };
 

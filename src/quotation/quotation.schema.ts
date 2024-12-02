@@ -45,9 +45,9 @@ export const CreateQuotationItemSchema = z.object({
   item: z.string(),
   technicalSpecification: z.string(),
   unitMeasure: z.string(),
-  quantity: z.coerce.number(),
-  unitPrice: z.coerce.number().optional(),
-  total: z.coerce.number().optional(),
+  quantity: z.string(),
+  unitPrice: z.string().optional(),
+  total: z.string().optional(),
 });
 
 export const UpdateQuotationItemSchema = z.object({
@@ -56,9 +56,9 @@ export const UpdateQuotationItemSchema = z.object({
   item: z.string().optional(),
   technicalSpecification: z.string().optional(),
   unitMeasure: z.string().optional(),
-  quantity: z.coerce.number().optional(),
-  unitPrice: z.coerce.number().optional(),
-  total: z.coerce.number().optional(),
+  quantity: z.string().optional(),
+  unitPrice: z.string().optional(),
+  total: z.string().optional(),
 });
 
 export const QuotationItemSchema = z.object({
@@ -73,15 +73,14 @@ export const QuotationItemDetailSchema = z.object({
 export const CreateQuotationItemDetailSchema = z.object({
   idQuotationItem: z.coerce.number(),
   idInput: z.coerce.number(),
-  quantity: z.coerce.number(),
 });
 
 export const UpdateQuotationItemDetailSchema = z.object({
   idQuotationItemDetail: z.coerce.number(),
   idQuotationItem: z.coerce.number().optional(),
   idInput: z.coerce.number().optional(),
-  quantity: z.coerce.number().optional(),
-  totalCost: z.coerce.number().optional(),
+  quantity: z.string().optional(),
+  totalCost: z.string().optional(),
 });
 
 export const QuotationItemDetailFindAllSchema = z.object({

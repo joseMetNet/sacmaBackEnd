@@ -35,20 +35,9 @@ export interface CreateQuotationItemDTO {
   item: string;
   technicalSpecification: string;
   unitMeasure: string;
-  quantity: number;
-  unitPrice?: number;
-  total?: number;
-}
-
-export interface UpdateQuotationItemDTO {
-  idQuotationItem: number;
-  idQuotation?: number;
-  item?: string;
-  technicalSpecification?: string;
-  unitMeasure?: string;
-  quantity?: number;
-  unitPrice?: number;
-  total?: number;
+  quantity: string;
+  unitPrice?: string;
+  total?: string;
 }
 
 export interface QuotationItemDTO {
@@ -68,22 +57,21 @@ export interface QuotationItemDetailDTO {
   idQuotationItemDetail: number;
   idQuotationItem: number;
   idInput: number;
-  quantity: number;
+  quantity: string;
   totalCost: number;
 }
 
 export interface CreateQuotationItemDetailDTO {
   idQuotationItem: number;
   idInput: number;
-  quantity: number;
 }
 
 export interface UpdateQuotationItemDetailDTO {
   idQuotationItemDetail: number;
   idQuotationItem?: number;
   idInput?: number;
-  quantity?: number;
-  totalCost?: number;
+  quantity?: string;
+  totalCost?: string;
 }
 
 export interface QuotationItemDetailFindAllDTO {
@@ -111,9 +99,12 @@ export interface UpdateQuotationPercentageDTO {
 export interface UpdateQuotationItemDTO {
   idQuotationItem: number;
   idQuotation?: number;
-  description?: string;
-  quantity?: number;
-  price?: number;
+  item?: string;
+  technicalSpecification?: string;
+  unitMeasure?: string;
+  quantity?: string;
+  unitPrice?: string;
+  total?: string;
 }
 
 export interface QuotationItemDTO {
