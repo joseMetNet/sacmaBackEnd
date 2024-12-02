@@ -142,10 +142,10 @@ export interface FindAllQuotationCommentDTO {
 }
 
 export interface QuotationSummaryDTO {
-  unitValueAIU: number;
-  administration: number;
-  unforeseen: number;
-  utility: number;
-  tax: number;
-  unitValueAIUIncluded: number;
+  unitValueAIU: string;
+  administration: string;
+  unforeseen: string;
+  utility: string;
+  tax: string;
+  unitValueAIUIncluded: string;
 }

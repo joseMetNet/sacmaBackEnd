@@ -503,23 +503,24 @@ export class QuotationService {
     return where;
   };
 
-  private buildQuotationReport = async (quotation: Quotation):
-    Promise<dtos.QuotationSummaryDTO | CustomError> => {
+  private buildQuotationReport = async (quotation: Quotation): Promise<dtos.QuotationSummaryDTO | CustomError> => {
     try {
-      const quotationItems = await this.quotationRepository.findAllQuotationItem({ idQuotation: quotation.idQuotation }, 100, 0);
-      const percentage = await this.quotationRepository.findQuotationPercentageById(quotation.idQuotation) as QuotationPercentage;
+      const [quotationItems, percentage] = await Promise.all([
+        this.quotationRepository.findAllQuotationItem({ idQuotation: quotation.idQuotation }, 100, 0),
+        this.quotationRepository.findQuotationPercentageById(quotation.idQuotation) as Promise<QuotationPercentage>
+      ]);
+
       const totalCost = quotationItems.rows.reduce((acc, item) => acc + parseFloat(item.quantity) * parseFloat(item.unitPrice), 0);
       const response = {
-        unitValueAIU: 1,
-        administration: totalCost * percentage.administration,
-        unforeseen: totalCost * percentage.unforeseen,
-        utility: totalCost * percentage.utility,
-        tax: parseFloat(String(totalCost * percentage.tax*1.5390)).toFixed(2),
-        unitValueAIUIncluded: (percentage.administration + percentage.unforeseen + percentage.utility + percentage.tax) * totalCost,
+        unitValueAIU: "1",
+        administration: String(totalCost * percentage.administration),
+        unforeseen: String(totalCost * percentage.unforeseen),
+        utility: String(totalCost * percentage.utility),
+        tax: String((totalCost * percentage.tax * 1.5390).toFixed(2)),
+        unitValueAIUIncluded: String((percentage.administration + percentage.unforeseen + percentage.utility + percentage.tax) * totalCost),
       };
 
-      console.log(`totalCost: ${totalCost}`);
-      return Promise.resolve(response);
+      return response;
     } catch (error) {
       console.error(error);
       return CustomError.internalServer("Failed to build quotation report");
