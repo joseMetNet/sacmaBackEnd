@@ -1137,7 +1137,6 @@ export function quotationRoute(app: Application): void {
  *       required:
  *         - idQuotationItem
  *         - idInput
- *         - quantity
  *       properties:
  *         idQuotationItem:
  *           type: integer
@@ -1145,9 +1144,6 @@ export function quotationRoute(app: Application): void {
  *         idInput:
  *           type: integer
  *           example: 1
- *         quantity:
- *           type: integer
- *           example: 10
  *     UpdateQuotationItemDetailDTO:
  *       type: object
  *       required:

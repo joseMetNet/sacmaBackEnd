@@ -131,7 +131,7 @@ export class QuotationRepository {
   async findAllQuotationItemDetail(
     filter: { [key: string]: any},
     limit: number, offset: number
-  ): Promise<dtos.QuotationItemDetailFindAllDTO | CustomError> {
+  ): Promise<{ rows: QuotationItemDetail[], count: number } | CustomError> {
     try {
       const quotationItemDetails = await QuotationItemDetail.findAndCountAll({
         include: [
