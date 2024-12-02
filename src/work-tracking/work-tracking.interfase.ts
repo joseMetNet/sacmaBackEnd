@@ -66,6 +66,11 @@ export interface FindAllDailyWorkTrackingDTO {
   createdAt?: string;
 }
 
+
+export interface DeleteWorkTrackingDTO {
+  createdAt: string;
+}
+
 export interface UpdateWorkTrackingDTO {
   idWorkTracking: number;
   idEmployee?: number;

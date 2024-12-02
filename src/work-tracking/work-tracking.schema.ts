@@ -28,8 +28,13 @@ export const findDailyWorkTrackingByEmployee = z.object({
   createdAt: z.coerce.string().optional(),
 });
 
+
+export const deleteWorkTracking = z.object({
+  createdAt: z.coerce.string()
+});
+
 export const idWorkTracking = z.object({
-  idWorkTracking: z.coerce.number(),
+  idWorkTracking: z.coerce.number()
 });
 
 export const createWorkTracking = z.object({

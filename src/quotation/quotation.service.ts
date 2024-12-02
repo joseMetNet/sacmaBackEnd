@@ -95,6 +95,7 @@ export class QuotationService {
           idQuotation: quotation.idQuotation,
           name: quotation.name,
           responsable: responsable,
+          idEmployee: jsonQuotation.Employee.idEmployee,
           QuotationPercentage: jsonQuotation.QuotationPercentage,
           QuotationStatus: jsonQuotation.QuotationStatus,
           builder: quotation.builder,

@@ -49,10 +49,13 @@ export class QuotationRepository {
         {
           model: Employee,
           attributes: ["idEmployee"],
+          required: true,
           include: [
             { 
               model: User, 
-              attributes: ["firstName", "lastName"], 
+              attributes: ["firstName", "lastName"],
+              required: true, 
+              where: filter
             },
           ],
         },
@@ -60,7 +63,6 @@ export class QuotationRepository {
         { model: QuotationStatus },
         { model: QuotationComment },
       ],
-      where: filter,
       limit,
       offset,
       distinct: true,

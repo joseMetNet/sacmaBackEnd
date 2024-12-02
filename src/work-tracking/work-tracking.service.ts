@@ -6,6 +6,7 @@ import { calculateBusinessDaysForCurrentMonth } from "../utils";
 import * as types from "./work-tracking.interfase";
 import { WorkTrackingRepository } from "./work-tracking.repository";
 import { dbConnection } from "../config";
+import { WorkTracking } from "./work-tracking.model";
 
 export class WorkTrackingService {
   private readonly workTrackingRepository: WorkTrackingRepository;
@@ -327,17 +328,24 @@ export class WorkTrackingService {
     }
   };
 
-  delete = async (id: number): Promise<ResponseEntity> => {
+  delete = async (data: types.DeleteWorkTrackingDTO): Promise<ResponseEntity> => {
     try {
-      const workTracking = await this.workTrackingRepository.findById(id);
-      if (!workTracking) {
+      const workTracking = await WorkTracking.findAll({
+        where: {
+          createdAt: sequelize.where(sequelize.literal("CONVERT(DATE, WorkTracking.createdAt)"), "=", data.createdAt)
+        }
+      });
+
+      if(workTracking.length === 0) {
         return BuildResponse.buildErrorResponse(
           StatusCode.NotFound,
           { message: "Work Tracking not found" }
         );
       }
-
-      await workTracking.destroy();
+      const deletePromises = workTracking.map((item) => {
+        return item.destroy();
+      });
+      Promise.all(deletePromises);
 
       return BuildResponse.buildSuccessResponse(
         StatusCode.Ok,
@@ -345,6 +353,7 @@ export class WorkTrackingService {
       );
     }
     catch (error) {
+      console.error(`Error deleting Work Tracking: ${error}`);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: "Error deleting Work Tracking" }

@@ -36,7 +36,7 @@ export interface CreateQuotationItemDTO {
   technicalSpecification: string;
   unitMeasure: string;
   quantity: number;
-  unitPrice: number;
+  unitPrice?: number;
   total?: number;
 }
 

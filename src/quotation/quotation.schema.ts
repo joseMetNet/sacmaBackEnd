@@ -46,7 +46,7 @@ export const CreateQuotationItemSchema = z.object({
   technicalSpecification: z.string(),
   unitMeasure: z.string(),
   quantity: z.coerce.number(),
-  unitPrice: z.coerce.number(),
+  unitPrice: z.coerce.number().optional(),
   total: z.coerce.number().optional(),
 });
 
