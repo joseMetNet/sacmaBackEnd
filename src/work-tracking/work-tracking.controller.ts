@@ -199,7 +199,7 @@ export class WorkTrackingController {
   };
 
   delete = async (req: Request, res: Response): Promise<void> => {
-    const request = schemas.idWorkTracking.safeParse(req.params);
+    const request = schemas.deleteWorkTracking.safeParse(req.params);
     if (!request.success) {
       res.status(StatusCode.BadRequest)
         .json({
@@ -208,7 +208,7 @@ export class WorkTrackingController {
         });
       return;
     }
-    const response = await this.workTrackingService.delete(request.data.idWorkTracking);
+    const response = await this.workTrackingService.delete(request.data);
     res
       .status(response.code)
       .json({

@@ -26,7 +26,7 @@ export function workTrackingRoute(app: Application): void {
   router.patch("/v1/work-tracking", workTrackingController.update);
 
   // DELETE routes
-  router.delete("/v1/work-tracking/:idWorkTracking", workTrackingController.delete);
+  router.delete("/v1/work-tracking/:createdAt", workTrackingController.delete);
 
   app.use("/api/", router);
 }
@@ -343,18 +343,17 @@ export function workTrackingRoute(app: Application): void {
 
 /**
  * @openapi
- * /v1/work-tracking/{idWorkTracking}:
+ * /v1/work-tracking/{createdAt}:
  *   delete:
  *     tags: [Work Tracking]
- *     summary: Delete Work Tracking by ID
- *     description: Use to delete a Work Tracking by ID
+ *     summary: Delete Work Tracking
+ *     description: Use to delete a Work Tracking
  *     parameters:
  *       - in: path
- *         name: idWorkTracking
- *         required: true
+ *         name: createdAt
  *         schema:
- *           type: integer
- *         description: ID of the Work Tracking to delete
+ *           type: string
+ *         description: Date of the Work Tracking saved
  *     responses:
  *       204:
  *         description: No Content - Work Tracking deleted
