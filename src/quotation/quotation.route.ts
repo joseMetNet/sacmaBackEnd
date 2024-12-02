@@ -1081,7 +1081,6 @@ export function quotationRoute(app: Application): void {
  *         - technicalSpecification
  *         - unitMeasure
  *         - quantity
- *         - unitPrice
  *       properties:
  *         idQuotation:
  *           type: integer
