@@ -288,23 +288,6 @@ export class QuotationController {
     });
   };
 
-  updateQuotationPercentage = async (req: Request, res: Response): Promise<void> => {
-    const request = schemas.UpdateQuotationPercentageSchema.safeParse(req.body);
-    if (!request.success) {
-      res.status(StatusCode.BadRequest).json({
-        status: StatusValue.Failed,
-        data: { error: formatZodError(request.error) },
-      });
-      return;
-    }
-
-    const response = await this.quotationService.updateQuotationPercentage(request.data);
-    res.status(response.code).json({
-      status: response.status,
-      data: response.data,
-    });
-  };
-
   createQuotationComment = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.CreateQuotationCommentSchema.safeParse(req.body);
     if (!request.success) {

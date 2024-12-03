@@ -184,6 +184,12 @@ export class QuotationRepository {
     return await QuotationPercentage.findByPk(idQuotationItemDetail);
   }
 
+  async findQuotationPercentageByQuotationId(idQuotation: number): Promise<QuotationPercentage | null> {
+    return await QuotationPercentage.findOne({
+      where: { idQuotation },
+    });
+  }
+
   async createQuotationPercentage(quotationPercentageData: dtos.CreateQuotationPercentageDTO): Promise<QuotationPercentage> {
     return await QuotationPercentage.create(quotationPercentageData as any);
   }

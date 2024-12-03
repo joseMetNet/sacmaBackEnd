@@ -66,7 +66,7 @@ export class QuotationService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
     } catch (error) {
       console.error(error);
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get quotation" });
     }
   };
 
@@ -360,7 +360,16 @@ export class QuotationService {
 
   createQuotationPercentage = async (quotationPercentageData: dtos.CreateQuotationPercentageDTO): Promise<ResponseEntity> => {
     try {
-      const quotationPercentage = await this.quotationRepository.createQuotationPercentage(quotationPercentageData);
+      const quotationPercentage = await this.quotationRepository.findQuotationPercentageByQuotationId(quotationPercentageData.idQuotation);
+      if (!quotationPercentage) {
+        const response = await this.quotationRepository.createQuotationPercentage(quotationPercentageData);
+        return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
+      }
+      quotationPercentage.administration = quotationPercentageData.administration;
+      quotationPercentage.unforeseen = quotationPercentageData.unforeseen;
+      quotationPercentage.utility = quotationPercentageData.utility;
+      quotationPercentage.tax = quotationPercentageData.tax;
+      await quotationPercentage.save();
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotationPercentage);
     } catch (error) {
       console.error(error);

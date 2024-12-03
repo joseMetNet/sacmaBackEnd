@@ -31,7 +31,6 @@ export function quotationRoute(app: Application): void {
   router.patch("/v1/quotation", quotationController.updateQuotation);
   router.patch("/v1/quotation-item", quotationController.updateQuotationItem);
   router.patch("/v1/quotation-item-detail", quotationController.updateQuotationItemDetail);
-  router.patch("/v1/quotation-percentage", quotationController.updateQuotationPercentage);
   router.patch("/v1/quotation-comment", quotationController.updateQuotationComment);
 
   // DELETE routes
@@ -662,40 +661,6 @@ export function quotationRoute(app: Application): void {
 
 /**
  * @openapi
- * /v1/quotation-percentage:
- *   patch:
- *     tags: [Quotation]
- *     summary: Update an existing Quotation Percentage
- *     description: Update an existing quotation percentage
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             $ref: '#/components/schemas/UpdateQuotationPercentageDTO'
- *     responses:
- *       200:
- *         description: Quotation Percentage updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/QuotationPercentageDTO'
- *       400:
- *         description: Bad request
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/failedResponse'
- */
-
-/**
- * @openapi
  * /v1/quotation-item-detail/{idQuotationItemDetail}:
  *   delete:
  *     tags: [Quotation]
@@ -952,6 +917,12 @@ export function quotationRoute(app: Application): void {
  *         totalCost:
  *           type: number
  *           example: 1000.00
+ *         perDiem:
+ *           type: string
+ *           example: "10000"
+ *         sisoNumber:
+ *           type: string
+ *           example: "10000"
  *     CreateQuotationDTO:
  *       type: object
  *       required:
@@ -976,6 +947,12 @@ export function quotationRoute(app: Application): void {
  *         itemSummary:
  *           type: string
  *           example: "Item summary"
+ *         perDiem:
+ *           type: string
+ *           example: "10000"
+ *         sisoNumber:
+ *           type: string
+ *           example: "10000"
  *     QuotationPercentageDTO:
  *       type: object
  *       properties:
