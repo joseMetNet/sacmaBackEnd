@@ -6,6 +6,8 @@ export interface CreateQuotationDTO {
   builderAddress?: string;
   projectName?: string;
   itemSummary?: string;
+  perDiem?: string;
+  sisoNumber?: string;
 }
 
 export interface UpdateQuotationDTO {
@@ -17,6 +19,8 @@ export interface UpdateQuotationDTO {
   builderAddress?: string;
   projectName?: string;
   itemSummary?: string;
+  perDiem?: string;
+  sisoNumber?: string;
 }
 
 export interface findAllQuotationDTO {

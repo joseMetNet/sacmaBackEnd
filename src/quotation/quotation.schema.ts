@@ -7,6 +7,8 @@ export const CreateQuotationSchema = z.object({
   builderAddress: z.string().optional(),
   projectName: z.string().optional(),
   itemSummary: z.string().optional(),
+  perDiem: z.string().optional(),
+  sisoNumber: z.string().optional(),
 });
 
 export const UpdateQuotationSchema = z.object({
@@ -18,6 +20,8 @@ export const UpdateQuotationSchema = z.object({
   builderAddress: z.string().optional(),
   projectName: z.string().optional(),
   itemSummary: z.string().optional(),
+  perDiem: z.string().optional(),
+  sisoNumber: z.string().optional(),
 });
 
 export const QuotationSchema = z.object({

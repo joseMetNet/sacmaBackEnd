@@ -4,7 +4,6 @@ import { Employee } from "../models";
 import { QuotationPercentage } from "./quotation-percentage.model";
 import { QuotationStatus } from "./quotation-status.model";
 import { QuotationComment } from "./quotation-comment.model";
-import { QuotationItem } from "./quotation-item.model";
 
 export class Quotation extends Model {
   declare idQuotation: number;
@@ -17,6 +16,8 @@ export class Quotation extends Model {
   declare projectName: string;
   declare itemSummary: string;
   declare totalCost: string;
+  declare perDiem: string;
+  declare sisoNumber: string;
 }
 
 Quotation.init(
@@ -60,6 +61,14 @@ Quotation.init(
     },
     totalCost: {
       type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+    },
+    perDiem: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+    },
+    sisoNumber: {
+      type: DataTypes.STRING,
       allowNull: true,
     },
   },
