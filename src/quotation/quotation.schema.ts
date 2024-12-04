@@ -37,6 +37,7 @@ export const FindAllQuotationSchema = z.object({
 export const FindAllQuotationItemSchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
+  idQuotation: z.coerce.number(),
 });
 
 export const FindAllQuotationItemDetailSchema = z.object({

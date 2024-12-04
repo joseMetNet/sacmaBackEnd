@@ -32,6 +32,12 @@ export interface findAllQuotationDTO {
 export interface findAllQuotationItemDTO {
   page?: number;
   pageSize?: number;
+  idQuotation: number;
+}
+
+export interface findAllQuotationItemDetailDTO {
+  page?: number;
+  pageSize?: number;
 }
 
 export interface CreateQuotationItemDTO {
@@ -152,4 +158,5 @@ export interface QuotationSummaryDTO {
   utility: string;
   tax: string;
   unitValueAIUIncluded: string;
+  totalValue: string;
 }

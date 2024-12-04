@@ -101,6 +101,11 @@ export function quotationRoute(app: Application): void {
  *         schema:
  *           type: integer
  *         description: Number of items per page
+ *       - in: query
+ *         name: idQuotation
+ *         schema:
+ *           type: integer
+ *         description: ID of the quotation
  *     responses:
  *       200:
  *         description: A list of quotation items

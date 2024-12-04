@@ -10,6 +10,8 @@ import { Quotation } from "./quotation.model";
 import { QuotationPercentage } from "./quotation-percentage.model";
 import sequelize from "sequelize";
 import { QuotationComment } from "./quotation-comment.model";
+import { QuotationItemDetail } from "./quotation-item-detail.model";
+import { QuotationItem } from "./quotation-item.model";
 
 export class QuotationService {
 
@@ -196,7 +198,8 @@ export class QuotationService {
       }
       const limit = pageSize;
       const offset = (page - 1) * pageSize;
-      const quotationItems = await this.quotationRepository.findAllQuotationItem({}, limit, offset);
+      const filter = this.buildQuotationItemFilter(request);
+      const quotationItems = await this.quotationRepository.findAllQuotationItem(filter, limit, offset);
       const response = {
         data: quotationItems.rows,
         totalItems: quotationItems.count,
@@ -261,7 +264,7 @@ export class QuotationService {
     }
   };
 
-  findAllQuotationItemDetails = async (request: dtos.findAllQuotationItemDTO): Promise<ResponseEntity> => {
+  findAllQuotationItemDetails = async (request: dtos.findAllQuotationItemDetailDTO): Promise<ResponseEntity> => {
     try {
       let page = 1;
       if (request.page) {
@@ -303,7 +306,7 @@ export class QuotationService {
 
       const data = {
         ...quotationItemDetailData,
-        quantity: parseFloat((parseFloat(quotationItem.quantity) / parseFloat(input.performance)).toFixed(2)),
+        quantity: Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(input.performance)),
         totalCost: parseFloat((parseFloat(input.cost) * (parseFloat(quotationItem.quantity) / parseFloat(input.performance))).toFixed(2)),
       };
       const quotationItemDetail = await this.quotationRepository.createQuotationItemDetail(data);
@@ -328,7 +331,7 @@ export class QuotationService {
         }
         const quantity = quotationItemDetailData.quantity ? quotationItemDetailData.quantity : quotationItemDetail.quantity;
         quotationItemDetailData.totalCost =
-          String(parseInt(input.cost) * parseFloat(quantity));
+          String(Math.ceil(parseInt(input.cost) * parseFloat(quantity)));
       }
       quotationItemDetailData.totalCost = quotationItemDetailData.totalCost || quotationItemDetail.totalCost;
 
@@ -512,23 +515,95 @@ export class QuotationService {
     return where;
   };
 
-  private buildQuotationReport = async (quotation: Quotation): Promise<dtos.QuotationSummaryDTO | CustomError> => {
+  private buildQuotationItemFilter = (filter: dtos.findAllQuotationItemDTO): { [key: string]: any } => {
+    let where: { [key: string]: any } = {};
+    if (filter.idQuotation) {
+      where = {
+        ...where,
+        idQuotation: filter.idQuotation,
+      };
+    }
+    return where;
+  };
+
+  private buildQuotationReport = async (quotationIn: Quotation): Promise<dtos.QuotationSummaryDTO | CustomError> => {
     try {
-      const [quotationItems, percentage] = await Promise.all([
-        this.quotationRepository.findAllQuotationItem({ idQuotation: quotation.idQuotation }, 100, 0),
-        this.quotationRepository.findQuotationPercentageById(quotation.idQuotation) as Promise<QuotationPercentage>
+      let [quotationItems, percentage] = await Promise.all([
+        this.quotationRepository.findAllQuotationItem({ idQuotation: quotationIn.idQuotation }, 100, 0),
+        this.quotationRepository.findQuotationPercentageByQuotationId(quotationIn.idQuotation) as Promise<QuotationPercentage>
       ]);
 
-      const totalCost = quotationItems.rows.reduce((acc, item) => acc + parseFloat(item.quantity) * parseFloat(item.unitPrice), 0);
-      const response = {
-        unitValueAIU: "1",
-        administration: String(totalCost * percentage.administration),
-        unforeseen: String(totalCost * percentage.unforeseen),
-        utility: String(totalCost * percentage.utility),
-        tax: String((totalCost * percentage.tax * 1.5390).toFixed(2)),
-        unitValueAIUIncluded: String((percentage.administration + percentage.unforeseen + percentage.utility + percentage.tax) * totalCost),
+      const quotation = await this.quotationRepository.findById(quotationIn.idQuotation);
+      if(!quotation) {
+        return CustomError.notFound("Quotation not found");
+      }
+      const quotationItemsIds = quotationItems.rows.map((item) => item.idQuotationItem);
+      const quotationItemDetails = await QuotationItemDetail.findAll({ where: { idQuotationItem: quotationItemsIds } });
+
+      if(!percentage || !quotationItems) {
+        return CustomError.notFound("Quotation percentage or items not found");
+      }
+      let total = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost), 0);
+      total = total + parseFloat(quotation.perDiem)+parseFloat(quotation.sisoNumber)*4500000;
+      const otherCost = {
+        impuesto: 0.045*total*1.5390,
+        poliza: 0.01*total*1.5390,
+        comision: 0.015*total*1.3317,
+        caja_menor: 0.02*total*1.5390,
       };
 
+      //total = total + otherCost.impuesto + otherCost.poliza + otherCost.comision + otherCost.caja_menor;
+      // returns an json object where the key is the idQuotationItem and the value is the total cost
+      const totalByQuotationItem = quotationItemDetails.reduce((acc: {[key: number]: number}, item) => {
+        acc[item.idQuotationItem] = acc[item.idQuotationItem] ? acc[item.idQuotationItem] + parseFloat(item.totalCost) : parseFloat(item.totalCost);
+        return acc;
+      }, {});
+
+      // get the percentage of each item in the total cost
+      const summary = Object.keys(totalByQuotationItem).map((key: string) => {
+        return {
+          idQuotationItem: key,
+          totalCost: totalByQuotationItem[parseInt(key)],
+          percentage: (totalByQuotationItem[parseInt(key)] / total) * 100,
+        };
+      });
+      
+      percentage.administration = percentage.administration ? parseFloat(String(percentage.administration)) : 0;
+      percentage.unforeseen = percentage.unforeseen ? parseFloat(String(percentage.unforeseen)) : 0;
+      percentage.utility = percentage.utility ? parseFloat(String(percentage.utility)) : 0;
+      percentage.tax = percentage.tax ? parseFloat(String(percentage.tax)) : 0;
+
+      const sumPercents = parseFloat(String(percentage.administration)) + 
+                          parseFloat(String(percentage.unforeseen)) + 
+                          parseFloat(String(percentage.utility)) + 
+                          parseFloat(String(percentage.utility*percentage.tax))+1; 
+      const subTotal = total + otherCost.impuesto + otherCost.poliza + otherCost.comision + otherCost.caja_menor;
+      const finalTotal = subTotal*1.25;
+      const summaryByItem = summary.map((item) => {
+        const quotationItem = quotationItems.rows.find((quotationItem) => quotationItem.idQuotationItem === parseInt(item.idQuotationItem))! as QuotationItem;
+        const unitValue = (finalTotal*(item.percentage/100))/parseFloat(quotationItem.quantity)/parseFloat(String(sumPercents))
+        return {
+          idQuotationItem: item.idQuotationItem,
+          quantity: quotationItem?.quantity,
+          percentage: item.percentage,
+          firstSum: quotationItem?.quantity ? (finalTotal*(item.percentage/100))/parseInt(quotationItem.quantity): 0,
+          unitValue,
+          totalCost: parseFloat(quotationItem.quantity)*unitValue,
+        };
+      });
+
+      const unitValueAIU = summaryByItem.reduce((acc, item) => acc + item.totalCost, 0);
+      const response = {
+        unitValueAIU: String(unitValueAIU),
+        administration: String(unitValueAIU * percentage.administration),
+        unforeseen: String(unitValueAIU * percentage.unforeseen),
+        utility: String(unitValueAIU * percentage.utility),
+        tax: String((unitValueAIU * percentage.utility)*percentage.tax),
+        unitValueAIUIncluded: String((unitValueAIU+(percentage.administration + percentage.unforeseen + percentage.utility) * unitValueAIU)
+        + (unitValueAIU * percentage.utility)*percentage.tax),
+        totalValue: String((unitValueAIU+(percentage.administration + percentage.unforeseen + percentage.utility) * unitValueAIU)
+       + (unitValueAIU * percentage.utility)*percentage.tax)
+      };
       return response;
     } catch (error) {
       console.error(error);
