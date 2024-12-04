@@ -276,7 +276,8 @@ export class QuotationService {
       }
       const limit = pageSize;
       const offset = (page - 1) * pageSize;
-      const quotationItems = await this.quotationRepository.findAllQuotationItemDetail({}, limit, offset);
+      const filter = this.buildQuotationItemDetailFilter(request);
+      const quotationItems = await this.quotationRepository.findAllQuotationItemDetail(filter, limit, offset);
       if (quotationItems instanceof CustomError) {
         return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: quotationItems.message });
       }
@@ -521,6 +522,17 @@ export class QuotationService {
       where = {
         ...where,
         idQuotation: filter.idQuotation,
+      };
+    }
+    return where;
+  };
+
+  private buildQuotationItemDetailFilter = (filter: dtos.findAllQuotationItemDetailDTO): { [key: string]: any } => {
+    let where: { [key: string]: any } = {};
+    if (filter.idQuotationItem) {
+      where = {
+        ...where,
+        idQuotationItem: filter.idQuotationItem,
       };
     }
     return where;

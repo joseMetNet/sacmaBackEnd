@@ -38,6 +38,7 @@ export interface findAllQuotationItemDTO {
 export interface findAllQuotationItemDetailDTO {
   page?: number;
   pageSize?: number;
+  idQuotationItem: number;
 }
 
 export interface CreateQuotationItemDTO {
