@@ -2,6 +2,7 @@ import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
 
 export class QuotationAdditionalCost extends Model {
+  declare idQuotationAdditionalCost: number;
   declare idQuotation: number;
   declare perDiem: number;
   declare sisoValue: number;
@@ -12,10 +13,15 @@ export class QuotationAdditionalCost extends Model {
 }
 
 QuotationAdditionalCost.init({
-  idQuotation: {
+  idQuotationAdditionalCost: {
     type: DataTypes.INTEGER,
     allowNull: false,
     primaryKey: true,
+    autoIncrement: true,
+  },
+  idQuotation: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
   },
   perDiem: {
     type: DataTypes.FLOAT,

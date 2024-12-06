@@ -42,9 +42,7 @@ export class QuotationRepository {
   }
 
   async findQuotationAdditionalCostById(idQuotation: number): Promise<QuotationAdditionalCost | null> {
-    return await QuotationAdditionalCost.findByPk(idQuotation, {
-      include: [{ model: QuotationPercentage }],
-    });
+    return await QuotationAdditionalCost.findByPk(idQuotation);
   }
 
   async findAll(

@@ -66,10 +66,12 @@ export class QuotationService {
 
   findQuotationById = async (id: number): Promise<ResponseEntity> => {
     try {
+
       const quotation = await this.quotationRepository.findById(id);
       if (!quotation) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
       }
+      
       let quotationReport = await this.buildQuotationReport(quotation);
       if (quotationReport instanceof CustomError) {
         quotationReport = this.buildEmptyQuotationReport();
