@@ -9,6 +9,7 @@ import { Transaction } from "sequelize";
 import { QuotationPercentage } from "./quotation-percentage.model";
 import { QuotationStatus } from "./quotation-status.model";
 import { QuotationComment } from "./quotation-comment.model";
+import { QuotationAdditionalCosts } from "./quotation-additional-costs.model";
 
 export class QuotationRepository {
   async create(
@@ -38,6 +39,12 @@ export class QuotationRepository {
         ],
       }
     );
+  }
+
+  async findQuotationAdditionalCostsById(idQuotation: number): Promise<QuotationAdditionalCosts | null> {
+    return await QuotationAdditionalCosts.findByPk(idQuotation, {
+      include: [ { model: QuotationPercentage } ],
+    });
   }
 
   async findAll(

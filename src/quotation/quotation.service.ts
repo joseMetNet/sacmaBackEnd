@@ -549,23 +549,29 @@ export class QuotationService {
       if(!quotation) {
         return CustomError.notFound("Quotation not found");
       }
+
       const quotationItemsIds = quotationItems.rows.map((item) => item.idQuotationItem);
       const quotationItemDetails = await QuotationItemDetail.findAll({ where: { idQuotationItem: quotationItemsIds } });
 
       if(!percentage || !quotationItems) {
         return CustomError.notFound("Quotation percentage or items not found");
       }
+      const additionalCosts = await this.quotationRepository.findQuotationAdditionalCostsById(quotationIn.idQuotation);
+
+      if (!additionalCosts) {
+        return CustomError.notFound("Quotation additional costs not found");
+      }
+
       let total = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost), 0);
-      total = total + parseFloat(quotation.perDiem)+parseFloat(quotation.sisoNumber)*4500000;
+      total = total + additionalCosts.perDiem + additionalCosts.sisoValue;
+
       const otherCost = {
-        impuesto: 0.045*total*1.5390,
-        poliza: 0.01*total*1.5390,
-        comision: 0.015*total*1.3317,
-        caja_menor: 0.02*total*1.5390,
+        impuesto: additionalCosts.tax * total * 1.5390,
+        poliza: additionalCosts.policy * total * 1.5390,
+        comision: additionalCosts.commision * total * 1.3317,
+        caja_menor: additionalCosts.pettyCash * total * 1.5390,
       };
 
-      //total = total + otherCost.impuesto + otherCost.poliza + otherCost.comision + otherCost.caja_menor;
-      // returns an json object where the key is the idQuotationItem and the value is the total cost
       const totalByQuotationItem = quotationItemDetails.reduce((acc: {[key: number]: number}, item) => {
         acc[item.idQuotationItem] = acc[item.idQuotationItem] ? acc[item.idQuotationItem] + parseFloat(item.totalCost) : parseFloat(item.totalCost);
         return acc;
@@ -589,8 +595,11 @@ export class QuotationService {
                           parseFloat(String(percentage.unforeseen)) + 
                           parseFloat(String(percentage.utility)) + 
                           parseFloat(String(percentage.utility*percentage.tax))+1; 
+
       const subTotal = total + otherCost.impuesto + otherCost.poliza + otherCost.comision + otherCost.caja_menor;
+      
       const finalTotal = subTotal*1.25;
+
       const summaryByItem = summary.map((item) => {
         const quotationItem = quotationItems.rows.find((quotationItem) => quotationItem.idQuotationItem === parseInt(item.idQuotationItem))! as QuotationItem;
         const unitValue = (finalTotal*(item.percentage/100))/parseFloat(quotationItem.quantity)/parseFloat(String(sumPercents))
@@ -605,6 +614,7 @@ export class QuotationService {
       });
 
       const unitValueAIU = summaryByItem.reduce((acc, item) => acc + item.totalCost, 0);
+
       const response = {
         unitValueAIU: String(unitValueAIU),
         administration: String(unitValueAIU * percentage.administration),
@@ -616,6 +626,7 @@ export class QuotationService {
         totalValue: String((unitValueAIU+(percentage.administration + percentage.unforeseen + percentage.utility) * unitValueAIU)
        + (unitValueAIU * percentage.utility)*percentage.tax)
       };
+
       return response;
     } catch (error) {
       console.error(error);
