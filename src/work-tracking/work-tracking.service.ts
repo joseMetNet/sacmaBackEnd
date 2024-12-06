@@ -7,6 +7,7 @@ import * as types from "./work-tracking.interfase";
 import { WorkTrackingRepository } from "./work-tracking.repository";
 import { dbConnection } from "../config";
 import { WorkTracking } from "./work-tracking.model";
+import { Employee, User } from "../models";
 
 export class WorkTrackingService {
   private readonly workTrackingRepository: WorkTrackingRepository;
@@ -283,6 +284,37 @@ export class WorkTrackingService {
 
   createAll = async (request: types.CreateWorkTrackingDTO[]): Promise<ResponseEntity> => {
     try {
+
+      // Check if there is any work tracking with the same date
+      const workTracking = await WorkTracking.findAll({
+        include: [
+          {
+            model: Employee,
+            attributes: ["idEmployee"],
+            include: [
+              {
+                model: User,
+                attributes: ["idUser", "firstName", "lastName"]
+              }
+            ]
+          }
+        ],
+        where: {
+          createdAt: sequelize.where(sequelize.literal("CONVERT(DATE, WorkTracking.createdAt)"), "=", request[0].createdAt)
+        }
+      });
+
+      // If there is any work tracking with the same date, return an error, add the name of the employee and the date
+      if(workTracking.length > 0) {
+        const namesAndDate = workTracking.map((item) => {
+          const data = item.toJSON();
+          return `${data.Employee.User.firstName} ${data.Employee.User.lastName}`;
+        });
+        return BuildResponse.buildErrorResponse(
+          StatusCode.BadRequest,
+          { message: `Work Tracking already exists for the following employees: ${namesAndDate.join(", ")} on ${request[0].createdAt}` }
+        );
+      }
       const createAllPromises = request.map((item) => {
         return this.workTrackingRepository.create(item);
       });
