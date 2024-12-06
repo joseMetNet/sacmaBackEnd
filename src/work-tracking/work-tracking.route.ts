@@ -2,9 +2,11 @@ import { Application, Router } from "express";
 import { WorkTrackingRepository } from "./work-tracking.repository";
 import { WorkTrackingService } from "./work-tracking.service";
 import { WorkTrackingController } from "./work-tracking.controller";
+import { NoveltyRepository } from "../repositories";
 
 const workTrackingRepository = new WorkTrackingRepository();
-const workTrackingService = new WorkTrackingService(workTrackingRepository);
+const noveltyRepository = new NoveltyRepository();
+const workTrackingService = new WorkTrackingService(workTrackingRepository, noveltyRepository);
 const workTrackingController = new WorkTrackingController(workTrackingService);
 
 export function workTrackingRoute(app: Application): void {

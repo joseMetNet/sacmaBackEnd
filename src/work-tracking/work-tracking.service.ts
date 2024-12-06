@@ -8,12 +8,18 @@ import { WorkTrackingRepository } from "./work-tracking.repository";
 import { dbConnection } from "../config";
 import { WorkTracking } from "./work-tracking.model";
 import { Employee, User } from "../models";
+import { NoveltyRepository } from "../repositories";
 
 export class WorkTrackingService {
   private readonly workTrackingRepository: WorkTrackingRepository;
+  private readonly novelityRepository: NoveltyRepository;
 
-  constructor(workTrackingRepository: WorkTrackingRepository) {
+  constructor(
+    workTrackingRepository: WorkTrackingRepository,
+    novelityRepository: NoveltyRepository
+  ) {
     this.workTrackingRepository = workTrackingRepository;
+    this.novelityRepository = novelityRepository;
   }
 
   findAll = async (request: types.FindAllDTO): Promise<ResponseEntity> => {
@@ -315,6 +321,25 @@ export class WorkTrackingService {
           { message: `Work Tracking already exists for the following employees: ${namesAndDate.join(", ")} on ${request[0].createdAt}` }
         );
       }
+
+      // check is there is a novelty with id distinct of 1
+      const noveltiesRequest = request.filter((item) => item.idNovelty !== 1);
+
+      if(noveltiesRequest.length > 0) {
+        // create novelties
+        const createNoveltiesPromises = noveltiesRequest.map((item) => {
+          const newNovelty = {
+            idNovelty: item.idNovelty!,
+            idEmployee: item.idEmployee,
+            createdAt: item.createdAt!,
+            endAt: item.createdAt!
+          };
+          return this.novelityRepository.createNovelty(newNovelty);
+        });
+
+        await Promise.all(createNoveltiesPromises);
+      }
+
       const createAllPromises = request.map((item) => {
         return this.workTrackingRepository.create(item);
       });

@@ -47,7 +47,7 @@ export class NoveltyRepository {
     }
   }
 
-  async createNovelty(novelty: ICreateEmployeeNovelty, transaction: Transaction): Promise<CustomError | EmployeeNovelty> {
+  async createNovelty(novelty: ICreateEmployeeNovelty, transaction?: Transaction): Promise<CustomError | EmployeeNovelty> {
     try {
       const newNovelty = await EmployeeNovelty.create({
         idNovelty: novelty.idNovelty,
