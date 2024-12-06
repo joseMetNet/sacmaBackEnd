@@ -1,7 +1,7 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
 
-export class QuotationAdditionalCosts extends Model {
+export class QuotationAdditionalCost extends Model {
   declare idQuotation: number;
   declare perDiem: number;
   declare sisoValue: number;
@@ -11,7 +11,7 @@ export class QuotationAdditionalCosts extends Model {
   declare policy: number;
 }
 
-QuotationAdditionalCosts.init({
+QuotationAdditionalCost.init({
   idQuotation: {
     type: DataTypes.INTEGER,
     allowNull: false,

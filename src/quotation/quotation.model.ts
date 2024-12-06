@@ -4,6 +4,7 @@ import { Employee } from "../models";
 import { QuotationPercentage } from "./quotation-percentage.model";
 import { QuotationStatus } from "./quotation-status.model";
 import { QuotationComment } from "./quotation-comment.model";
+import { QuotationAdditionalCost } from "./quotation-additional-costs.model";
 
 export class Quotation extends Model {
   declare idQuotation: number;
@@ -95,6 +96,11 @@ Quotation.hasOne(QuotationStatus, {
 });
 
 Quotation.hasMany(QuotationComment, {
+  sourceKey: "idQuotation",
+  foreignKey: "idQuotation",
+});
+
+Quotation.hasOne(QuotationAdditionalCost, {
   sourceKey: "idQuotation",
   foreignKey: "idQuotation",
 });

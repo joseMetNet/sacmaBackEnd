@@ -99,7 +99,17 @@ export const CreateQuotationPercentageSchema = z.object({
   administration: z.coerce.number(),
   unforeseen: z.coerce.number(),
   utility: z.coerce.number(),
+  vat: z.coerce.number(),
+});
+
+export const CreateQuotationAdditionalCostSchema = z.object({
+  idQuotation: z.coerce.number(),
+  perDiem: z.coerce.number(),
+  sisoValue: z.coerce.number(),
   tax: z.coerce.number(),
+  commision: z.coerce.number(),
+  pettyCash: z.coerce.number(),
+  policy: z.coerce.number(),
 });
 
 export const UpdateQuotationPercentageSchema = z.object({
@@ -108,7 +118,7 @@ export const UpdateQuotationPercentageSchema = z.object({
   administration: z.coerce.number().optional(),
   unforeseen: z.coerce.number().optional(),
   utility: z.coerce.number().optional(),
-  tax: z.coerce.number().optional(),
+  vat: z.coerce.number().optional(),
 });
 
 export const CreateQuotationCommentSchema = z.object({
