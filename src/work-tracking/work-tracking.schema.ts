@@ -56,3 +56,4 @@ export const updateWorkTracking = z.object({
 });
 
 export const createWorkTrackingArray = z.array(createWorkTracking);
+export const updateWorkTrackingArray = z.array(updateWorkTracking);

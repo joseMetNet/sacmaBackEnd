@@ -71,6 +71,10 @@ export interface DeleteWorkTrackingDTO {
   createdAt: string;
 }
 
+export interface DeleteById {
+  idWorkTracking: number;
+}
+
 export interface UpdateWorkTrackingDTO {
   idWorkTracking: number;
   idEmployee?: number;

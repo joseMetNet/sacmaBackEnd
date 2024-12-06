@@ -303,6 +303,48 @@ export class WorkTrackingService {
     }
   };
 
+  updateAll = async (request: types.UpdateWorkTrackingDTO[]): Promise<ResponseEntity> => {
+    try {
+      const workTrackingIds = request.map(item => item.idWorkTracking);
+      const workTrackings = await this.workTrackingRepository.findAllByIds(workTrackingIds);
+
+      if (workTrackings.length !== workTrackingIds.length) {
+        return BuildResponse.buildErrorResponse(
+          StatusCode.NotFound,
+          { message: "Work Tracking not found" }
+        );
+      }
+
+      const updateAllPromises = workTrackings.map(item => {
+        const newWorkTracking = request.find(element => element.idWorkTracking === item.idWorkTracking);
+        if (newWorkTracking) {
+          Object.assign(item, {
+            idEmployee: newWorkTracking.idEmployee || item.idEmployee,
+            idCostCenterProject: newWorkTracking.idCostCenterProject || item.idCostCenterProject,
+            hoursWorked: newWorkTracking.hoursWorked || item.hoursWorked,
+            overtimeHour: newWorkTracking.overtimeHour || item.overtimeHour,
+            idNovelty: newWorkTracking.idNovelty || item.idNovelty,
+            createdAt: newWorkTracking.createdAt || item.createdAt,
+          });
+        }
+        return item.save();
+      });
+
+      await Promise.all(updateAllPromises);
+
+      return BuildResponse.buildSuccessResponse(
+        StatusCode.Ok,
+        { message: "Work Tracking updated successfully" }
+      );
+    } catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "Error updating Work Tracking" }
+      );
+    }
+  };
+
   update = async (request: types.UpdateWorkTrackingDTO): Promise<ResponseEntity> => {
     try {
       const workTracking = await this.workTrackingRepository.findById(request.idWorkTracking);
@@ -324,6 +366,31 @@ export class WorkTrackingService {
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: "Error updating Work Tracking" }
+      );
+    }
+  };
+
+  deleteById = async (data: types.DeleteById): Promise<ResponseEntity> => {
+    try {
+      const workTracking = await this.workTrackingRepository.findById(data.idWorkTracking);
+      if (!workTracking) {
+        return BuildResponse.buildErrorResponse(
+          StatusCode.NotFound,
+          { message: "Work Tracking not found" }
+        );
+      }
+
+      await this.workTrackingRepository.delete(data.idWorkTracking);
+
+      return BuildResponse.buildSuccessResponse(
+        StatusCode.Ok,
+        { message: "Work Tracking deleted successfully" }
+      );
+    }
+    catch (error) {
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "Error deleting Work Tracking" }
       );
     }
   };

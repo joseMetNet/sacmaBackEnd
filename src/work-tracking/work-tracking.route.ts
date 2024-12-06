@@ -24,8 +24,10 @@ export function workTrackingRoute(app: Application): void {
 
   // PATCH routes
   router.patch("/v1/work-tracking", workTrackingController.update);
+  router.patch("/v1/work-tracking/update-all", workTrackingController.updateAll);
 
   // DELETE routes
+  router.delete("/v1/work-tracking/delete/:idWorkTracking", workTrackingController.deleteById);
   router.delete("/v1/work-tracking/:createdAt", workTrackingController.delete);
 
   app.use("/api/", router);
@@ -373,6 +375,36 @@ export function workTrackingRoute(app: Application): void {
 
 /**
  * @openapi
+ * /v1/work-tracking/{createdAt}:
+ *   delete:
+ *     tags: [Work Tracking]
+ *     summary: Delete Work Tracking by id
+ *     description: Use to delete a Work Tracking by id
+ *     parameters:
+ *       - in: path
+ *         name: idWorkTracking
+ *         schema:
+ *           type: integer
+ *         description: ID of the Work Tracking to delete
+ *     responses:
+ *       204:
+ *         description: No Content - Work Tracking deleted
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
  * /v1/work-tracking:
  *   post:
  *     tags: [Work Tracking]
@@ -420,6 +452,43 @@ export function workTrackingRoute(app: Application): void {
  *        multipart/form-data:
  *         schema:
  *           $ref: '#/components/schemas/CreateAllWorkTrackingDTO' 
+ *     responses:
+ *       201:
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/WorkTrackingDTO'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+
+/**
+ * @openapi
+ * /v1/work-tracking/update-all:
+ *   patch:
+ *     tags: [Work Tracking]
+ *     summary: Update Work Tracking
+ *     description: Update multiple Work Tracking
+ *     requestBody:
+ *       required: true
+ *       content:
+ *        multipart/form-data:
+ *         schema:
+ *           $ref: '#/components/schemas/UpdateAllWorkTrackingDTO' 
  *     responses:
  *       201:
  *         description: Created
@@ -520,6 +589,13 @@ export function workTrackingRoute(app: Application): void {
  *           type: array
  *           items:
  *            $ref: '#/components/schemas/CreateWorkTrackingDTO'
+ *     UpdateAllWorkTrackingDTO:
+ *       type: object
+ *       properties:
+ *         workTracking:
+ *           type: array
+ *           items:
+ *            $ref: '#/components/schemas/UpdateWorkTrackingDTO'
  *     CreateWorkTrackingDTO:
  *       type: object
  *       required:

@@ -254,4 +254,13 @@ export class WorkTrackingRepository {
       where: { idWorkTracking: id }
     });
   }
+
+  // find work tracking bu a list of ids
+  async findAllByIds(ids: number[]): Promise<WorkTracking[]> {
+    return await WorkTracking.findAll({
+      where: {
+        idWorkTracking: ids
+      }
+    });
+  }
 }

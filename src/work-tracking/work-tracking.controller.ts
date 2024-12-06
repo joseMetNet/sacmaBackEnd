@@ -138,7 +138,7 @@ export class WorkTrackingController {
   createAll = async (req: Request, res: Response): Promise<void> => {
     let workTrackingArray;
     try {
-      const jsonString = req.body.workTracking.replace(/,\s*$/, '');
+      const jsonString = req.body.workTracking.replace(/,\s*$/, "");
       workTrackingArray = JSON.parse(jsonString);
     } catch (error) {
       console.error("Invalid JSON format", error);
@@ -198,6 +198,51 @@ export class WorkTrackingController {
       });
   };
 
+  updateAll = async (req: Request, res: Response): Promise<void> => {
+    let workTrackingArray;
+    try {
+      const jsonString = req.body.workTracking.replace(/,\s*$/, "");
+      workTrackingArray = JSON.parse(jsonString);
+    } catch (error) {
+      console.error("Invalid JSON format", error);
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: "Invalid JSON format" }
+        });
+      return;
+    }
+
+    const workTracking = workTrackingArray.map((item: any) => {
+      return {
+        idWorkTracking: item.idWorkTracking,
+        idEmployee: item.idEmployee,
+        idCostCenterProject: item.idCostCenterProject,
+        hoursWorked: item.hoursWorked,
+        overtimeHour: item?.overtimeHour,
+        idNovelty: item?.idNovelty,
+        createdAt: item?.createdAt
+      };
+    });
+
+    const request = schemas.updateWorkTrackingArray.safeParse(workTracking);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) }
+        });
+      return;
+    }
+    const response = await this.workTrackingService.updateAll(request.data);
+    res
+      .status(response.code)
+      .json({
+        status: response.status,
+        data: response.data
+      });
+  };
+
   delete = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.deleteWorkTracking.safeParse(req.params);
     if (!request.success) {
@@ -216,4 +261,24 @@ export class WorkTrackingController {
         data: response.data
       });
   };
+
+  deleteById = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.idWorkTracking.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) }
+        });
+      return;
+    }
+    const response = await this.workTrackingService.deleteById(request.data);
+    res
+      .status(response.code)
+      .json({
+        status: response.status,
+        data: response.data
+      });
+  };
+
 }
