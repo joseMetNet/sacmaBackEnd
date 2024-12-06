@@ -182,7 +182,7 @@ export class WorkTrackingService {
           SUM(CASE WHEN tn.novelty = 'Sanción' THEN 1 ELSE 0 END) AS sancionadosCount,
           SUM(CASE WHEN tn.novelty = 'Permiso' THEN 1 ELSE 0 END) AS permisoCount
         FROM mvp1.TB_WorkTracking wt
-        INNER JOIN mvp1.TB_Novelty tn ON tn.idNovelty = wt.idNovelty
+        LEFT JOIN mvp1.TB_Novelty tn ON tn.idNovelty = wt.idNovelty
         ${filterConditions}
         GROUP BY CONVERT(DATE, wt.createdAt)
         ORDER BY CONVERT(DATE, wt.createdAt) DESC
@@ -199,7 +199,7 @@ export class WorkTrackingService {
       const totalQuery = `
         SELECT COUNT(DISTINCT CONVERT(DATE, wt.createdAt)) AS total
         FROM mvp1.TB_WorkTracking wt
-        INNER JOIN mvp1.TB_Novelty tn ON tn.idNovelty = wt.idNovelty
+        LEFT JOIN mvp1.TB_Novelty tn ON tn.idNovelty = wt.idNovelty
         ${filterConditions};
       `;
 
