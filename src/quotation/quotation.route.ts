@@ -26,6 +26,7 @@ export function quotationRoute(app: Application): void {
   router.post("/v1/quotation-item-detail", quotationController.createQuotationItemDetail);
   router.post("/v1/quotation-comment", quotationController.createQuotationComment);
   router.post("/v1/quotation-percentage", quotationController.createQuotationPercentage);
+  router.post("/v1/quotation-additional-cost", quotationController.createQuotationAdditionalCost);
 
   // PATCH routes
   router.patch("/v1/quotation", quotationController.updateQuotation);
@@ -480,6 +481,40 @@ export function quotationRoute(app: Application): void {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/QuotationPercentageDTO'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
+
+/**
+ * @openapi
+ * /v1/quotation-additional-cost:
+ *   post:
+ *     tags: [Quotation]
+ *     summary: Create a new Quotation Additional Cost
+ *     description: Create a new quotation additional cost
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateQuotationAdditionalCostDTO'
+ *     responses:
+ *       201:
+ *         description: Quotation Percentage created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/QuotationAdditionalCostDTO'
  *       400:
  *         description: Bad request
  *       401:
@@ -976,7 +1011,64 @@ export function quotationRoute(app: Application): void {
  *         unforeseen:
  *           type: number
  *           example: 10.00
+ *         vat:
+ *           type: number
+ *           example: 10.00
+ *     QuotationAdditionalCostDTO:
+ *       type: object
+ *       properties:
+ *         idQuotationAdditionalCost:
+ *           type: integer
+ *           example: 1
+ *         idQuotation:
+ *           type: integer
+ *           example: 1
+ *         perDiem:
+ *           type: number
+ *           example: 10.00
+ *         sisoValue:
+ *           type: number
+ *           example: 10.00
  *         tax:
+ *           type: number
+ *           example: 10.00
+ *         commision:
+ *           type: number
+ *           example: 10.00
+ *         pettyCash:
+ *           type: number
+ *           example: 10.00
+ *         policy:
+ *           type: number
+ *           example: 10.00
+ *     CreateQuotationAdditionalCostDTO:
+ *       type: object
+ *       required:
+ *         - idQuotation
+ *         - perDiem
+ *         - sisoValue
+ *         - commision
+ *         - pettyCash
+ *       properties:
+ *         idQuotation:
+ *           type: integer
+ *           example: 1
+ *         perDiem:
+ *           type: number
+ *           example: 10.00
+ *         sisoValue:
+ *           type: number
+ *           example: 10.00
+ *         tax:
+ *           type: number
+ *           example: 10.00
+ *         commision:
+ *           type: number
+ *           example: 10.00
+ *         pettyCash:
+ *           type: number
+ *           example: 10.00
+ *         policy:
  *           type: number
  *           example: 10.00
  *     CreateQuotationPercentageDTO:
@@ -986,7 +1078,7 @@ export function quotationRoute(app: Application): void {
  *         - administration
  *         - utility
  *         - unforeseen
- *         - tax
+ *         - vat
  *       properties:
  *         idQuotation:
  *           type: integer
@@ -1000,7 +1092,7 @@ export function quotationRoute(app: Application): void {
  *         unforeseen:
  *           type: number
  *           example: 10.00
- *         tax:
+ *         vat:
  *           type: number
  *           example: 10.00
  *     UpdateQuotationPercentageDTO:
@@ -1023,7 +1115,7 @@ export function quotationRoute(app: Application): void {
  *         unforeseen:
  *           type: number
  *           example: 10.00
- *         tax:
+ *         vat:
  *           type: number
  *           example: 10.00
  *     UpdateQuotationDTO:

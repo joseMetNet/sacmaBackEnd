@@ -42,12 +42,41 @@ export class QuotationService {
     }
   };
 
+  private buildEmptyQuotationReport = () => {
+    return {
+      quotationSummary: {
+        unitValueAIU: "0",
+        administration: "0",
+        unforeseen: "0",
+        utility: "0",
+        vat: "0",
+        unitValueAIUIncluded: "0",
+        totalValue: "0"
+      },
+      quotationAdditionalCost: {
+        perDiem: "0",
+        sisoValue: "0",
+        tax: "0",
+        commision: "0",
+        pettyCash: "0",
+        policy: "0"
+      },
+    };
+  };
+
   findQuotationById = async (id: number): Promise<ResponseEntity> => {
     try {
+
       const quotation = await this.quotationRepository.findById(id);
       if (!quotation) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
       }
+      
+      let quotationReport = await this.buildQuotationReport(quotation);
+      if (quotationReport instanceof CustomError) {
+        quotationReport = this.buildEmptyQuotationReport();
+      }
+
       const jsonQuotation = quotation.toJSON();
       const responsable = jsonQuotation.Employee.User.firstName
         + " " + jsonQuotation.Employee.User.lastName;
@@ -56,6 +85,7 @@ export class QuotationService {
         name: quotation.name,
         responsable,
         QuotationPercentage: jsonQuotation.QuotationPercentage,
+        QuotationAdditionalCost: jsonQuotation.QuotationAdditionalCost,
         QuotationStatus: jsonQuotation.QuotationStatus,
         builder: quotation.builder,
         builderAddress: quotation.builderAddress,
@@ -63,7 +93,8 @@ export class QuotationService {
         itemSummary: quotation.itemSummary,
         totalCost: quotation.totalCost,
         QuotationComments: jsonQuotation.QuotationComments,
-        QuotationReport: await this.buildQuotationReport(quotation),
+        QuotationReport: quotationReport.quotationSummary,
+        QuotationAdditionalCostReport: quotationReport.quotationAdditionalCost,
       };
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
     } catch (error) {
@@ -372,12 +403,33 @@ export class QuotationService {
       quotationPercentage.administration = quotationPercentageData.administration;
       quotationPercentage.unforeseen = quotationPercentageData.unforeseen;
       quotationPercentage.utility = quotationPercentageData.utility;
-      quotationPercentage.tax = quotationPercentageData.tax;
+      quotationPercentage.vat = quotationPercentageData.vat;
       await quotationPercentage.save();
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotationPercentage);
     } catch (error) {
       console.error(error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to create quotation percentage" });
+    }
+  };
+
+  createQuotationAdditionalCost = async (request: dtos.CreateQuotationAdditionalCostDTO): Promise<ResponseEntity> => {
+    try {
+      const quotationAdditionalCost = await this.quotationRepository.findQuotationAdditionalCostById(request.idQuotation);
+      if (!quotationAdditionalCost) {
+        const response = await this.quotationRepository.createQuotationAdditionalCost(request);
+        return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
+      }
+      quotationAdditionalCost.perDiem = request.perDiem;
+      quotationAdditionalCost.sisoValue = request.sisoValue;
+      quotationAdditionalCost.commision = request.commision;
+      quotationAdditionalCost.pettyCash = request.pettyCash;
+      quotationAdditionalCost.policy = request.policy;
+      await quotationAdditionalCost.save();
+      await quotationAdditionalCost.save();
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotationAdditionalCost);
+    } catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to create quotation additional cost" });
     }
   };
 
@@ -490,7 +542,7 @@ export class QuotationService {
     quotationPercentage.administration = quotationPercentageData.administration ?? quotationPercentage.administration;
     quotationPercentage.unforeseen = quotationPercentageData.unforeseen ?? quotationPercentage.unforeseen;
     quotationPercentage.utility = quotationPercentageData.utility ?? quotationPercentage.utility;
-    quotationPercentage.tax = quotationPercentageData.tax ?? quotationPercentage.tax;
+    quotationPercentage.vat = quotationPercentageData.vat ?? quotationPercentage.vat;
     return quotationPercentage;
   };
 
@@ -538,35 +590,47 @@ export class QuotationService {
     return where;
   };
 
-  private buildQuotationReport = async (quotationIn: Quotation): Promise<dtos.QuotationSummaryDTO | CustomError> => {
+  private buildQuotationReport = async (quotationIn: Quotation):
+    Promise<
+      { quotationSummary: dtos.QuotationSummaryDTO, quotationAdditionalCost: dtos.QuotationAdditionalCostSummaryDTO } |
+      CustomError
+    > => {
     try {
-      let [quotationItems, percentage] = await Promise.all([
+      const [quotationItems, percentage] = await Promise.all([
         this.quotationRepository.findAllQuotationItem({ idQuotation: quotationIn.idQuotation }, 100, 0),
         this.quotationRepository.findQuotationPercentageByQuotationId(quotationIn.idQuotation) as Promise<QuotationPercentage>
       ]);
 
       const quotation = await this.quotationRepository.findById(quotationIn.idQuotation);
-      if(!quotation) {
+      if (!quotation) {
         return CustomError.notFound("Quotation not found");
       }
+
       const quotationItemsIds = quotationItems.rows.map((item) => item.idQuotationItem);
       const quotationItemDetails = await QuotationItemDetail.findAll({ where: { idQuotationItem: quotationItemsIds } });
 
-      if(!percentage || !quotationItems) {
+      if (!percentage || !quotationItems) {
         return CustomError.notFound("Quotation percentage or items not found");
       }
+      const additionalCosts = await this.quotationRepository.findQuotationAdditionalCostById(quotationIn.idQuotation);
+
+      if (!additionalCosts) {
+        return CustomError.notFound("Quotation additional costs not found");
+      }
+
       let total = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost), 0);
-      total = total + parseFloat(quotation.perDiem)+parseFloat(quotation.sisoNumber)*4500000;
+      total = total + additionalCosts.perDiem + additionalCosts.sisoValue;
+
       const otherCost = {
-        impuesto: 0.045*total*1.5390,
-        poliza: 0.01*total*1.5390,
-        comision: 0.015*total*1.3317,
-        caja_menor: 0.02*total*1.5390,
+        impuesto: additionalCosts.tax * total * 1.5390,
+        poliza: additionalCosts.policy * total * 1.5390,
+        comision: additionalCosts.commision * total * 1.3317,
+        caja_menor: additionalCosts.pettyCash * total * 1.5390,
+        sisos: additionalCosts.sisoValue,
+        perDiem: additionalCosts.perDiem,
       };
 
-      //total = total + otherCost.impuesto + otherCost.poliza + otherCost.comision + otherCost.caja_menor;
-      // returns an json object where the key is the idQuotationItem and the value is the total cost
-      const totalByQuotationItem = quotationItemDetails.reduce((acc: {[key: number]: number}, item) => {
+      const totalByQuotationItem = quotationItemDetails.reduce((acc: { [key: number]: number }, item) => {
         acc[item.idQuotationItem] = acc[item.idQuotationItem] ? acc[item.idQuotationItem] + parseFloat(item.totalCost) : parseFloat(item.totalCost);
         return acc;
       }, {});
@@ -579,44 +643,58 @@ export class QuotationService {
           percentage: (totalByQuotationItem[parseInt(key)] / total) * 100,
         };
       });
-      
+
       percentage.administration = percentage.administration ? parseFloat(String(percentage.administration)) : 0;
       percentage.unforeseen = percentage.unforeseen ? parseFloat(String(percentage.unforeseen)) : 0;
       percentage.utility = percentage.utility ? parseFloat(String(percentage.utility)) : 0;
-      percentage.tax = percentage.tax ? parseFloat(String(percentage.tax)) : 0;
+      percentage.vat = percentage.vat ? parseFloat(String(percentage.vat)) : 0;
 
-      const sumPercents = parseFloat(String(percentage.administration)) + 
-                          parseFloat(String(percentage.unforeseen)) + 
-                          parseFloat(String(percentage.utility)) + 
-                          parseFloat(String(percentage.utility*percentage.tax))+1; 
+      const sumPercents = parseFloat(String(percentage.administration)) +
+        parseFloat(String(percentage.unforeseen)) +
+        parseFloat(String(percentage.utility)) +
+        parseFloat(String(percentage.utility * percentage.vat)) + 1;
+
       const subTotal = total + otherCost.impuesto + otherCost.poliza + otherCost.comision + otherCost.caja_menor;
-      const finalTotal = subTotal*1.25;
+
+      const finalTotal = subTotal * 1.25;
+
       const summaryByItem = summary.map((item) => {
         const quotationItem = quotationItems.rows.find((quotationItem) => quotationItem.idQuotationItem === parseInt(item.idQuotationItem))! as QuotationItem;
-        const unitValue = (finalTotal*(item.percentage/100))/parseFloat(quotationItem.quantity)/parseFloat(String(sumPercents))
+        const unitValue = (finalTotal * (item.percentage / 100)) / parseFloat(quotationItem.quantity) / parseFloat(String(sumPercents));
         return {
           idQuotationItem: item.idQuotationItem,
           quantity: quotationItem?.quantity,
           percentage: item.percentage,
-          firstSum: quotationItem?.quantity ? (finalTotal*(item.percentage/100))/parseInt(quotationItem.quantity): 0,
+          firstSum: quotationItem?.quantity ? (finalTotal * (item.percentage / 100)) / parseInt(quotationItem.quantity) : 0,
           unitValue,
-          totalCost: parseFloat(quotationItem.quantity)*unitValue,
+          totalCost: parseFloat(quotationItem.quantity) * unitValue,
         };
       });
 
       const unitValueAIU = summaryByItem.reduce((acc, item) => acc + item.totalCost, 0);
-      const response = {
+
+      const quotationSummary = {
         unitValueAIU: String(unitValueAIU),
         administration: String(unitValueAIU * percentage.administration),
         unforeseen: String(unitValueAIU * percentage.unforeseen),
         utility: String(unitValueAIU * percentage.utility),
-        tax: String((unitValueAIU * percentage.utility)*percentage.tax),
-        unitValueAIUIncluded: String((unitValueAIU+(percentage.administration + percentage.unforeseen + percentage.utility) * unitValueAIU)
-        + (unitValueAIU * percentage.utility)*percentage.tax),
-        totalValue: String((unitValueAIU+(percentage.administration + percentage.unforeseen + percentage.utility) * unitValueAIU)
-       + (unitValueAIU * percentage.utility)*percentage.tax)
+        vat: String((unitValueAIU * percentage.utility) * percentage.vat),
+        unitValueAIUIncluded: String((unitValueAIU + (percentage.administration + percentage.unforeseen + percentage.utility) * unitValueAIU)
+          + (unitValueAIU * percentage.utility) * percentage.vat),
+        totalValue: String((unitValueAIU + (percentage.administration + percentage.unforeseen + percentage.utility) * unitValueAIU)
+          + (unitValueAIU * percentage.utility) * percentage.vat)
       };
-      return response;
+
+      const quotationAdditionalCost = {
+        perDiem: String(otherCost.perDiem),
+        sisoValue: String(otherCost.sisos),
+        tax: String(otherCost.impuesto),
+        commision: String(otherCost.comision),
+        pettyCash: String(otherCost.caja_menor),
+        policy: String(otherCost.poliza),
+      };
+
+      return { quotationSummary, quotationAdditionalCost };
     } catch (error) {
       console.error(error);
       return CustomError.internalServer("Failed to build quotation report");

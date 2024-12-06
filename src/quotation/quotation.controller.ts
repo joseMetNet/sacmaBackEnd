@@ -288,6 +288,23 @@ export class QuotationController {
     });
   };
 
+  createQuotationAdditionalCost = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.CreateQuotationAdditionalCostSchema.safeParse(req.body);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+
+    const response = await this.quotationService.createQuotationAdditionalCost(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data,
+    });
+  };
+
   createQuotationComment = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.CreateQuotationCommentSchema.safeParse(req.body);
     if (!request.success) {

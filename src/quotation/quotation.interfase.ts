@@ -95,7 +95,17 @@ export interface CreateQuotationPercentageDTO {
   administration: number;
   unforeseen: number;
   utility: number;
+  vat: number;
+}
+
+export interface CreateQuotationAdditionalCostDTO {
+  idQuotation: number;
+  perDiem: number;
+  sisoValue: number;
   tax: number;
+  commision: number;
+  pettyCash: number;
+  policy: number;
 }
 
 export interface UpdateQuotationPercentageDTO {
@@ -104,7 +114,7 @@ export interface UpdateQuotationPercentageDTO {
   administration?: number;
   unforeseen?: number;
   utility?: number;
-  tax?: number;
+  vat?: number;
 }
 
 export interface UpdateQuotationItemDTO {
@@ -157,7 +167,16 @@ export interface QuotationSummaryDTO {
   administration: string;
   unforeseen: string;
   utility: string;
-  tax: string;
+  vat: string;
   unitValueAIUIncluded: string;
   totalValue: string;
+}
+
+export interface QuotationAdditionalCostSummaryDTO {
+  perDiem: string;
+  sisoValue: string;
+  tax: string;
+  commision: string;
+  pettyCash: string;
+  policy: string;
 }

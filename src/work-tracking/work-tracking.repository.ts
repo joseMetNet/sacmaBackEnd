@@ -218,7 +218,7 @@ export class WorkTrackingRepository {
       ],
       limit,
       offset,
-      order: [["createdAt", "DESC"]]
+      order: [[{model: Employee, as: "Employee"}, {model: User, as: "User"}, "firstName", "DESC"]]
     });
     return workTrackings;
   }
