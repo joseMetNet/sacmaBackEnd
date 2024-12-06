@@ -75,6 +75,7 @@ export class EmployeeService {
                 "idIdentityCardExpeditionCity",
               ],
             },
+            order: [["firstName", "ASC"]],
             required: false,
             include: [
               { model: models.Role, required: false },
@@ -127,6 +128,7 @@ export class EmployeeService {
                 { model: models.City, required: false },
               ],
               where: filter,
+              order: [["firstName", "ASC"]],
             },
             { model: models.Position, required: false },
             { model: models.ContractType, required: false },
