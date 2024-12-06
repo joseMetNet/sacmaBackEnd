@@ -218,7 +218,7 @@ export class WorkTrackingRepository {
       ],
       limit,
       offset,
-      order: [["createdAt", "DESC"]]
+      order: [["Employee", "User", "firstName", "ASC"]],
     });
     return workTrackings;
   }
