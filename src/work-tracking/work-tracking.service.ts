@@ -621,13 +621,16 @@ export class WorkTrackingService {
 
   private buildDailyWorkTrackingFilterConditions = (request: types.FindAllDailyWorkTrackingDTO): string => {
     let conditions = "WHERE 1=1";
+    console.log(`request ${JSON.stringify(request)}`);
     if (request.year) {
       conditions += " AND YEAR(wt.createdAt) = :year";
     }
-    else if (request.month) {
+    
+    if (request.month) {
       conditions += " AND MONTH(wt.createdAt) = :month";
     }
-    else if (request.createdAt) {
+    
+    if (request.createdAt) {
       conditions += " AND CONVERT(DATE, wt.createdAt) = :createdAt";
     }
     return conditions;
