@@ -176,7 +176,7 @@ export class WorkTrackingService {
       const query = `
         SELECT
           CONVERT(DATE, wt.createdAt) AS date,
-          SUM(CASE WHEN tn.novelty = 'Ingreso' THEN 1 ELSE 0 END) AS ingresoCount,
+          SUM(CASE WHEN tn.novelty = 'Asistencia' THEN 1 ELSE 0 END) AS ingresoCount,
           SUM(CASE WHEN tn.novelty = 'Incapacitado' THEN 1 ELSE 0 END) AS incapacitatedCount,
           SUM(CASE WHEN tn.novelty = 'Vacación' THEN 1 ELSE 0 END) AS vacationCount,
           SUM(CASE WHEN tn.novelty = 'Sanción' THEN 1 ELSE 0 END) AS sancionadosCount,
