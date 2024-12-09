@@ -61,6 +61,30 @@ export class QuotationController {
     });
   };
 
+  generateQuotationDocx = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.QuotationSchema.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+    const response = await this.quotationService.generateQuotationDocx(request.data.idQuotation);
+    if (response instanceof Buffer) {
+      res.set({
+        "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "Content-Disposition": "attachment; filename=\"COT_SACIPR_Generado.docx\"",
+      });
+      res.send(response);
+    } else {
+      res.status(response.code).json({
+        status: response.status,
+        data: response.data,
+      });
+    }
+  };
+
   updateQuotationItem = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.UpdateQuotationItemSchema.safeParse(req.body);
     if (!request.success) {

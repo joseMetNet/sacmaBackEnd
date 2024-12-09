@@ -12,6 +12,9 @@ import sequelize from "sequelize";
 import { QuotationComment } from "./quotation-comment.model";
 import { QuotationItemDetail } from "./quotation-item-detail.model";
 import { QuotationItem } from "./quotation-item.model";
+import {readFileSync} from "fs";
+import PizZip from "pizzip";
+import Docxtemplater from "docxtemplater";
 
 export class QuotationService {
 
@@ -101,6 +104,48 @@ export class QuotationService {
     } catch (error) {
       console.error(error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get quotation" });
+    }
+  };
+
+  generateQuotationDocx = async (id: number): Promise<ResponseEntity | Buffer> => {
+    try {
+      const quotationResponse = await this.findQuotationById(id);
+      const templatePath = "template/cotizacion.docx";
+      const content = readFileSync(templatePath, "binary");
+      if (quotationResponse.code !== 200 && quotationResponse) {
+        return quotationResponse;
+      }
+
+      const zip = new PizZip(content);
+      const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        delimiters: { start: "{{", end: "}}" },
+      });
+      const quotation = quotationResponse as ResponseEntity;
+      const additionalRepport = quotation.data? (quotation.data as any).QuotationAdditionalCostReport : {};
+
+      const data = {
+        nombre: "AMARILO",
+        fecha: "15 de Noviembre de 2024",
+        consecutivo: "114a-2024",
+        referencia: "Impermeabilización Aleros",
+        proyecto: "EL MUELLE",
+        unitValueAIU: additionalRepport.unitValueAIU,
+        administration: additionalRepport.administration,
+        unforeseen: additionalRepport.unforeseen,
+        utility: additionalRepport.utility,
+        vat: additionalRepport.vat,
+        unitValueAIUIncluded: additionalRepport.unitValueAIUIncluded,
+        totalValue: additionalRepport.totalValue,
+      };
+
+      doc.render(data);
+      const buffer = doc.getZip().generate({ type: "nodebuffer" });
+      return buffer;
+    } catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get quotation report" });
     }
   };
 
