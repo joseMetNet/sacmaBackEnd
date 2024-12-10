@@ -40,6 +40,11 @@ export const FindAllQuotationItemSchema = z.object({
   idQuotation: z.coerce.number(),
 });
 
+export const UpdateQuotationStatusSchema = z.object({
+  idQuotation: z.coerce.number(),
+  idQuotationStatus: z.coerce.number(),
+});
+
 export const FindAllQuotationItemDetailSchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
@@ -79,6 +84,8 @@ export const QuotationItemDetailSchema = z.object({
 export const CreateQuotationItemDetailSchema = z.object({
   idQuotationItem: z.coerce.number(),
   idInput: z.coerce.number(),
+  performance: z.string().optional(),
+  price: z.string().optional(),
 });
 
 export const UpdateQuotationItemDetailSchema = z.object({
@@ -110,6 +117,7 @@ export const CreateQuotationAdditionalCostSchema = z.object({
   commision: z.coerce.number(),
   pettyCash: z.coerce.number(),
   policy: z.coerce.number(),
+  utility: z.coerce.number(),
 });
 
 export const UpdateQuotationPercentageSchema = z.object({

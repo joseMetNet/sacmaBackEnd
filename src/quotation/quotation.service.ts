@@ -264,6 +264,21 @@ export class QuotationService {
     }
   };
 
+  updateQuotationStatus = async (quotationStatusData: dtos.UpdateQuotationStatusDTO): Promise<ResponseEntity> => {
+    try {
+      const quotation = await this.quotationRepository.findById(quotationStatusData.idQuotation);
+      if (!quotation) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
+      }
+      quotation.idQuotationStatus = quotationStatusData.idQuotationStatus;
+      const quotationDb = await quotation.save();
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotationDb);
+    }catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to update quotation status" });
+    }
+  };
+
   findAllQuotationItems = async (request: dtos.findAllQuotationItemDTO): Promise<ResponseEntity> => {
     try {
       let page = 1;
@@ -372,22 +387,28 @@ export class QuotationService {
     }
   };
 
-  createQuotationItemDetail = async (quotationItemDetailData: dtos.CreateQuotationItemDetailDTO): Promise<ResponseEntity> => {
+  createQuotationItemDetail = async (request: dtos.CreateQuotationItemDetailDTO): Promise<ResponseEntity> => {
     try {
-      const input = await Input.findOne({ where: { idInput: quotationItemDetailData.idInput } });
+      const input = await Input.findOne({ where: { idInput: request.idInput } });
       if (!input) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Input not found" });
       }
-      const quotationItem = await this.quotationRepository.findQuotationItemById(quotationItemDetailData.idQuotationItem);
+      const quotationItem = await this.quotationRepository.findQuotationItemById(request.idQuotationItem);
       if (!quotationItem) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation item not found" });
       }
 
       const data = {
-        ...quotationItemDetailData,
+        ...request,
         quantity: Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(input.performance)),
         totalCost: parseFloat((parseFloat(input.cost) * Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(input.performance))).toFixed(2)),
       };
+
+      if(request.performance && request.price) {
+        data.quantity = Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(request.performance));
+        data.totalCost = parseFloat((parseFloat(request.price) * Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(request.performance))).toFixed(2));
+      }
+
       const quotationItemDetail = await this.quotationRepository.createQuotationItemDetail(data);
       return BuildResponse.buildSuccessResponse(201, quotationItemDetail);
     } catch (error) {
@@ -471,8 +492,11 @@ export class QuotationService {
       quotationAdditionalCost.commision = request.commision;
       quotationAdditionalCost.pettyCash = request.pettyCash;
       quotationAdditionalCost.policy = request.policy;
+      quotationAdditionalCost.tax = request.tax;
+      quotationAdditionalCost.utility = request.utility;
+
       await quotationAdditionalCost.save();
-      await quotationAdditionalCost.save();
+
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotationAdditionalCost);
     } catch (error) {
       console.error(error);
@@ -671,6 +695,7 @@ export class QuotationService {
         caja_menor: additionalCosts.pettyCash * total * 1.5390,
         sisos: additionalCosts.sisoValue,
         perDiem: additionalCosts.perDiem,
+        utility: additionalCosts.utility + 1
       };
 
       const totalByQuotationItem = quotationItemDetails.reduce((acc: { [key: number]: number }, item) => {
@@ -699,7 +724,7 @@ export class QuotationService {
 
       const subTotal = total + otherCost.impuesto + otherCost.poliza + otherCost.comision + otherCost.caja_menor;
 
-      const finalTotal = subTotal * 1.25;
+      const finalTotal = subTotal * otherCost.utility;
 
       const summaryByItem = summary.map((item) => {
         const quotationItem = quotationItems.rows.find((quotationItem) => quotationItem.idQuotationItem === parseInt(item.idQuotationItem))! as QuotationItem;

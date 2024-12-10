@@ -32,6 +32,7 @@ export function quotationRoute(app: Application): void {
   // PATCH routes
   router.patch("/v1/quotation", quotationController.updateQuotation);
   router.patch("/v1/quotation-item", quotationController.updateQuotationItem);
+  router.patch("/v1/quotation-status", quotationController.updateQuotationStatus);
   router.patch("/v1/quotation-item-detail", quotationController.updateQuotationItemDetail);
   router.patch("/v1/quotation-comment", quotationController.updateQuotationComment);
 
@@ -210,6 +211,42 @@ export function quotationRoute(app: Application): void {
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/QuotationCommentDTO'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
+
+/**
+ * @openapi
+ * /v1/quotation-status:
+ *   patch:
+ *     tags: [Quotation]
+ *     summary: Update Quotation Status
+ *     description: Update the status of a quotation
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateQuotationStatusDTO'
+ *     responses:
+ *       200:
+ *         description: A list of quotation status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/QuotationStatusDTO'
  *       401:
  *         description: Unauthorized
  *       403:
@@ -958,12 +995,6 @@ export function quotationRoute(app: Application): void {
  *         totalCost:
  *           type: number
  *           example: 1000.00
- *         perDiem:
- *           type: string
- *           example: "10000"
- *         sisoNumber:
- *           type: string
- *           example: "10000"
  *     CreateQuotationDTO:
  *       type: object
  *       required:
@@ -1050,6 +1081,9 @@ export function quotationRoute(app: Application): void {
  *         - sisoValue
  *         - commision
  *         - pettyCash
+ *         - policy
+ *         - tax
+ *         - utility
  *       properties:
  *         idQuotation:
  *           type: integer
@@ -1070,6 +1104,9 @@ export function quotationRoute(app: Application): void {
  *           type: number
  *           example: 10.00
  *         policy:
+ *           type: number
+ *           example: 10.00
+ *         utility:
  *           type: number
  *           example: 10.00
  *     CreateQuotationPercentageDTO:
@@ -1119,6 +1156,18 @@ export function quotationRoute(app: Application): void {
  *         vat:
  *           type: number
  *           example: 10.00
+ *     UpdateQuotationStatusDTO:
+ *       type: object
+ *       required:
+ *         - idQuotation
+ *         - idQuotationStatus
+ *       properties:
+ *         idQuotation:
+ *           type: integer
+ *           example: 1
+ *         idQuotationStatus:
+ *           type: integer
+ *           example: 1
  *     UpdateQuotationDTO:
  *       type: object
  *       required:

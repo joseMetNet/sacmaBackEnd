@@ -41,6 +41,11 @@ export interface findAllQuotationItemDetailDTO {
   idQuotationItem: number;
 }
 
+export interface UpdateQuotationStatusDTO {
+	idQuotation: number;
+	idQuotationStatus: number;
+}
+
 export interface CreateQuotationItemDTO {
   idQuotation: number;
   item: string;
@@ -75,6 +80,8 @@ export interface QuotationItemDetailDTO {
 export interface CreateQuotationItemDetailDTO {
   idQuotationItem: number;
   idInput: number;
+  performance?: string;
+  price?: string;
 }
 
 export interface UpdateQuotationItemDetailDTO {
@@ -106,6 +113,7 @@ export interface CreateQuotationAdditionalCostDTO {
   commision: number;
   pettyCash: number;
   policy: number;
+  utility: number;
 }
 
 export interface UpdateQuotationPercentageDTO {

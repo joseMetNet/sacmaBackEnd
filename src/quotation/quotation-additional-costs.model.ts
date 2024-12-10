@@ -10,6 +10,7 @@ export class QuotationAdditionalCost extends Model {
   declare commision: number;
   declare pettyCash: number;
   declare policy: number;
+  declare utility: number;
 }
 
 QuotationAdditionalCost.init({
@@ -40,6 +41,10 @@ QuotationAdditionalCost.init({
     allowNull: false,
   },
   pettyCash: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+  utility: {
     type: DataTypes.FLOAT,
     allowNull: false,
   },
