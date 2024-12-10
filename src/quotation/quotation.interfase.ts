@@ -41,6 +41,11 @@ export interface findAllQuotationItemDetailDTO {
   idQuotationItem: number;
 }
 
+export interface UpdateQuotationStatusDTO {
+	idQuotation: number;
+	idQuotationStatus: number;
+}
+
 export interface CreateQuotationItemDTO {
   idQuotation: number;
   item: string;

@@ -264,6 +264,21 @@ export class QuotationService {
     }
   };
 
+  updateQuotationStatus = async (quotationStatusData: dtos.UpdateQuotationStatusDTO): Promise<ResponseEntity> => {
+    try {
+      const quotation = await this.quotationRepository.findById(quotationStatusData.idQuotation);
+      if (!quotation) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
+      }
+      quotation.idQuotationStatus = quotationStatusData.idQuotationStatus;
+      const quotationDb = await quotation.save();
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotationDb);
+    }catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to update quotation status" });
+    }
+  };
+
   findAllQuotationItems = async (request: dtos.findAllQuotationItemDTO): Promise<ResponseEntity> => {
     try {
       let page = 1;

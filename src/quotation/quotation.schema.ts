@@ -40,6 +40,11 @@ export const FindAllQuotationItemSchema = z.object({
   idQuotation: z.coerce.number(),
 });
 
+export const UpdateQuotationStatusSchema = z.object({
+  idQuotation: z.coerce.number(),
+  idQuotationStatus: z.coerce.number(),
+});
+
 export const FindAllQuotationItemDetailSchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
