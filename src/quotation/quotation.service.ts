@@ -492,8 +492,11 @@ export class QuotationService {
       quotationAdditionalCost.commision = request.commision;
       quotationAdditionalCost.pettyCash = request.pettyCash;
       quotationAdditionalCost.policy = request.policy;
+      quotationAdditionalCost.tax = request.tax;
+      quotationAdditionalCost.utility = request.utility;
+
       await quotationAdditionalCost.save();
-      await quotationAdditionalCost.save();
+
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotationAdditionalCost);
     } catch (error) {
       console.error(error);
@@ -692,6 +695,7 @@ export class QuotationService {
         caja_menor: additionalCosts.pettyCash * total * 1.5390,
         sisos: additionalCosts.sisoValue,
         perDiem: additionalCosts.perDiem,
+        utility: additionalCosts.utility + 1
       };
 
       const totalByQuotationItem = quotationItemDetails.reduce((acc: { [key: number]: number }, item) => {
@@ -720,7 +724,7 @@ export class QuotationService {
 
       const subTotal = total + otherCost.impuesto + otherCost.poliza + otherCost.comision + otherCost.caja_menor;
 
-      const finalTotal = subTotal * 1.25;
+      const finalTotal = subTotal * otherCost.utility;
 
       const summaryByItem = summary.map((item) => {
         const quotationItem = quotationItems.rows.find((quotationItem) => quotationItem.idQuotationItem === parseInt(item.idQuotationItem))! as QuotationItem;

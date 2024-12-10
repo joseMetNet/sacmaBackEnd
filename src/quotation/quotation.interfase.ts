@@ -113,6 +113,7 @@ export interface CreateQuotationAdditionalCostDTO {
   commision: number;
   pettyCash: number;
   policy: number;
+  utility: number;
 }
 
 export interface UpdateQuotationPercentageDTO {

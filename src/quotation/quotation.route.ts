@@ -995,12 +995,6 @@ export function quotationRoute(app: Application): void {
  *         totalCost:
  *           type: number
  *           example: 1000.00
- *         perDiem:
- *           type: string
- *           example: "10000"
- *         sisoNumber:
- *           type: string
- *           example: "10000"
  *     CreateQuotationDTO:
  *       type: object
  *       required:
@@ -1087,6 +1081,9 @@ export function quotationRoute(app: Application): void {
  *         - sisoValue
  *         - commision
  *         - pettyCash
+ *         - policy
+ *         - tax
+ *         - utility
  *       properties:
  *         idQuotation:
  *           type: integer
@@ -1107,6 +1104,9 @@ export function quotationRoute(app: Application): void {
  *           type: number
  *           example: 10.00
  *         policy:
+ *           type: number
+ *           example: 10.00
+ *         utility:
  *           type: number
  *           example: 10.00
  *     CreateQuotationPercentageDTO:

@@ -117,6 +117,7 @@ export const CreateQuotationAdditionalCostSchema = z.object({
   commision: z.coerce.number(),
   pettyCash: z.coerce.number(),
   policy: z.coerce.number(),
+  utility: z.coerce.number(),
 });
 
 export const UpdateQuotationPercentageSchema = z.object({
