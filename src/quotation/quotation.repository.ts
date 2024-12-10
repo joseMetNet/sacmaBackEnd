@@ -36,6 +36,7 @@ export class QuotationRepository {
           { model: QuotationPercentage },
           { model: QuotationStatus },
           { model: QuotationComment },
+          { model: QuotationAdditionalCost}
         ],
       }
     );
@@ -43,6 +44,14 @@ export class QuotationRepository {
 
   async findQuotationAdditionalCostById(idQuotation: number): Promise<QuotationAdditionalCost | null> {
     return await QuotationAdditionalCost.findByPk(idQuotation);
+  }
+
+  async findQuotationAdditionalCostByQuotationId(
+    idQuotation: number
+  ): Promise<QuotationAdditionalCost | null> {
+    return await QuotationAdditionalCost.findOne({
+      where: { idQuotation },
+    });
   }
 
   async findAll(
@@ -106,7 +115,12 @@ export class QuotationRepository {
     limit: number, offset: number
   ): Promise<{ rows: QuotationItem[], count: number }> {
     const quotationItems = await QuotationItem.findAndCountAll({
-      include: [{ all: true }],
+      include: [
+        {
+          model: Quotation,
+          attributes: ["idQuotation", "name"],
+        },
+      ],
       where: filter,
       limit: limit === -1 ? undefined : limit,
       offset,

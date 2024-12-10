@@ -386,7 +386,7 @@ export class QuotationService {
       const data = {
         ...quotationItemDetailData,
         quantity: Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(input.performance)),
-        totalCost: parseFloat((parseFloat(input.cost) * (parseFloat(quotationItem.quantity) / parseFloat(input.performance))).toFixed(2)),
+        totalCost: parseFloat((parseFloat(input.cost) * Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(input.performance))).toFixed(2)),
       };
       const quotationItemDetail = await this.quotationRepository.createQuotationItemDetail(data);
       return BuildResponse.buildSuccessResponse(201, quotationItemDetail);
@@ -643,26 +643,22 @@ export class QuotationService {
       CustomError
     > => {
     try {
-      const [quotationItems, percentage] = await Promise.all([
+      const [quotationItems, percentage, additionalCosts] = await Promise.all([
         this.quotationRepository.findAllQuotationItem({ idQuotation: quotationIn.idQuotation }, 100, 0),
-        this.quotationRepository.findQuotationPercentageByQuotationId(quotationIn.idQuotation) as Promise<QuotationPercentage>
+        this.quotationRepository.findQuotationPercentageByQuotationId(quotationIn.idQuotation) as Promise<QuotationPercentage>,
+        this.quotationRepository.findQuotationAdditionalCostByQuotationId(quotationIn.idQuotation)
       ]);
 
       const quotation = await this.quotationRepository.findById(quotationIn.idQuotation);
-      if (!quotation) {
+      if (!quotation || !quotationItems) {
         return CustomError.notFound("Quotation not found");
       }
 
       const quotationItemsIds = quotationItems.rows.map((item) => item.idQuotationItem);
       const quotationItemDetails = await QuotationItemDetail.findAll({ where: { idQuotationItem: quotationItemsIds } });
 
-      if (!percentage || !quotationItems) {
-        return CustomError.notFound("Quotation percentage or items not found");
-      }
-      const additionalCosts = await this.quotationRepository.findQuotationAdditionalCostById(quotationIn.idQuotation);
-
-      if (!additionalCosts) {
-        return CustomError.notFound("Quotation additional costs not found");
+      if (!percentage || !quotationItems || !additionalCosts) {
+        return CustomError.notFound("Quotation percentage not found");
       }
 
       let total = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost), 0);
