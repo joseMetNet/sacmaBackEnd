@@ -12,7 +12,7 @@ import sequelize from "sequelize";
 import { QuotationComment } from "./quotation-comment.model";
 import { QuotationItemDetail } from "./quotation-item-detail.model";
 import { QuotationItem } from "./quotation-item.model";
-import {readFileSync} from "fs";
+import { readFileSync } from "fs";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 
@@ -64,6 +64,7 @@ export class QuotationService {
         pettyCash: "0",
         policy: "0"
       },
+      summaryByItem: []
     };
   };
 
@@ -74,7 +75,7 @@ export class QuotationService {
       if (!quotation) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
       }
-      
+
       let quotationReport = await this.buildQuotationReport(quotation);
       if (quotationReport instanceof CustomError) {
         quotationReport = this.buildEmptyQuotationReport();
@@ -123,7 +124,7 @@ export class QuotationService {
         delimiters: { start: "{{", end: "}}" },
       });
       const quotation = quotationResponse as ResponseEntity;
-      const additionalRepport = quotation.data? (quotation.data as any).QuotationAdditionalCostReport : {};
+      const additionalRepport = quotation.data ? (quotation.data as any).QuotationAdditionalCostReport : {};
 
       const data = {
         nombre: "AMARILO",
@@ -273,7 +274,7 @@ export class QuotationService {
       quotation.idQuotationStatus = quotationStatusData.idQuotationStatus;
       const quotationDb = await quotation.save();
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotationDb);
-    }catch (error) {
+    } catch (error) {
       console.error(error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to update quotation status" });
     }
@@ -292,9 +293,34 @@ export class QuotationService {
       const limit = pageSize;
       const offset = (page - 1) * pageSize;
       const filter = this.buildQuotationItemFilter(request);
+      const quotation = await this.quotationRepository.findById(request.idQuotation);
+      if (!quotation) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
+      }
+
       const quotationItems = await this.quotationRepository.findAllQuotationItem(filter, limit, offset);
+      const summary = await this.buildQuotationReport(quotation);
+
+      if (summary instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: summary.message });
+      }
+      const summaryByItem = summary.summaryByItem;
+      const rows = quotationItems.rows.map((item) => {
+        const summaryItem = summaryByItem.find((summaryItem) => summaryItem.idQuotationItem === item.idQuotationItem);
+        return {
+          idQuotationItem: item.idQuotationItem,
+          idQuotation: item.idQuotation,
+          item: item.item,
+          technicalSpecification: item.technicalSpecification,
+          unitMeasure: item.unitMeasure,
+          quantity: item.quantity,
+          unitPrice: summaryItem?.unitValue,
+          total: summaryItem?.totalCost,
+          Quotation: item.toJSON().Quotation ?? {},
+        };
+      });
       const response = {
-        data: quotationItems.rows,
+        data: rows,
         totalItems: quotationItems.count,
         currentPage: page,
         totalPages: Math.ceil(quotationItems.count / pageSize),
@@ -404,7 +430,7 @@ export class QuotationService {
         totalCost: parseFloat((parseFloat(input.cost) * Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(input.performance))).toFixed(2)),
       };
 
-      if(request.performance && request.price) {
+      if (request.performance && request.price) {
         data.quantity = Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(request.performance));
         data.totalCost = parseFloat((parseFloat(request.price) * Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(request.performance))).toFixed(2));
       }
@@ -663,7 +689,11 @@ export class QuotationService {
 
   private buildQuotationReport = async (quotationIn: Quotation):
     Promise<
-      { quotationSummary: dtos.QuotationSummaryDTO, quotationAdditionalCost: dtos.QuotationAdditionalCostSummaryDTO } |
+      {
+        quotationSummary: dtos.QuotationSummaryDTO,
+        quotationAdditionalCost: dtos.QuotationAdditionalCostSummaryDTO,
+        summaryByItem: dtos.QuotationItemSummaryDTO[]
+      } |
       CustomError
     > => {
     try {
@@ -695,20 +725,21 @@ export class QuotationService {
         caja_menor: additionalCosts.pettyCash * total * 1.5390,
         sisos: additionalCosts.sisoValue,
         perDiem: additionalCosts.perDiem,
-        utility: additionalCosts.utility + 1
+        utility: additionalCosts.utility
       };
 
       const totalByQuotationItem = quotationItemDetails.reduce((acc: { [key: number]: number }, item) => {
         acc[item.idQuotationItem] = acc[item.idQuotationItem] ? acc[item.idQuotationItem] + parseFloat(item.totalCost) : parseFloat(item.totalCost);
         return acc;
       }, {});
+      const sumTotalItems = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost), 0);
 
       // get the percentage of each item in the total cost
       const summary = Object.keys(totalByQuotationItem).map((key: string) => {
         return {
           idQuotationItem: key,
           totalCost: totalByQuotationItem[parseInt(key)],
-          percentage: (totalByQuotationItem[parseInt(key)] / total) * 100,
+          percentage: (totalByQuotationItem[parseInt(key)] / sumTotalItems) * 100,
         };
       });
 
@@ -723,21 +754,23 @@ export class QuotationService {
         parseFloat(String(percentage.utility * percentage.vat)) + 1;
 
       const subTotal = total + otherCost.impuesto + otherCost.poliza + otherCost.comision + otherCost.caja_menor;
-
-      const finalTotal = subTotal * otherCost.utility;
-
+      const finalTotal = subTotal * otherCost.utility + subTotal;
+      console.log("finalTotal", finalTotal);
+      console.log("sumPercents", sumPercents.toFixed(2));
       const summaryByItem = summary.map((item) => {
         const quotationItem = quotationItems.rows.find((quotationItem) => quotationItem.idQuotationItem === parseInt(item.idQuotationItem))! as QuotationItem;
-        const unitValue = (finalTotal * (item.percentage / 100)) / parseFloat(quotationItem.quantity) / parseFloat(String(sumPercents));
+        const unitValue = (finalTotal * (item.percentage / 100)) / parseFloat(quotationItem.quantity) / parseFloat(sumPercents.toFixed(6));
         return {
-          idQuotationItem: item.idQuotationItem,
-          quantity: quotationItem?.quantity,
+          idQuotationItem: parseInt(item.idQuotationItem),
+          quantity: parseFloat(quotationItem?.quantity),
           percentage: item.percentage,
           firstSum: quotationItem?.quantity ? (finalTotal * (item.percentage / 100)) / parseInt(quotationItem.quantity) : 0,
           unitValue,
           totalCost: parseFloat(quotationItem.quantity) * unitValue,
         };
       });
+
+      console.log("summaryByItem", summaryByItem);
 
       const unitValueAIU = summaryByItem.reduce((acc, item) => acc + item.totalCost, 0);
 
@@ -761,8 +794,7 @@ export class QuotationService {
         pettyCash: String(otherCost.caja_menor),
         policy: String(otherCost.poliza),
       };
-
-      return { quotationSummary, quotationAdditionalCost };
+      return { quotationSummary, quotationAdditionalCost, summaryByItem };
     } catch (error) {
       console.error(error);
       return CustomError.internalServer("Failed to build quotation report");

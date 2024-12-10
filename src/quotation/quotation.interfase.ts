@@ -188,3 +188,12 @@ export interface QuotationAdditionalCostSummaryDTO {
   pettyCash: string;
   policy: string;
 }
+
+export interface QuotationItemSummaryDTO {
+  idQuotationItem: number;
+  quantity: number;
+  percentage: number;
+  firstSum: number;
+  unitValue: number;
+  totalCost: number;
+}
