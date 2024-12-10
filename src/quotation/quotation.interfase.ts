@@ -80,6 +80,8 @@ export interface QuotationItemDetailDTO {
 export interface CreateQuotationItemDetailDTO {
   idQuotationItem: number;
   idInput: number;
+  performance?: string;
+  price?: string;
 }
 
 export interface UpdateQuotationItemDetailDTO {

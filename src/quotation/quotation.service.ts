@@ -387,22 +387,28 @@ export class QuotationService {
     }
   };
 
-  createQuotationItemDetail = async (quotationItemDetailData: dtos.CreateQuotationItemDetailDTO): Promise<ResponseEntity> => {
+  createQuotationItemDetail = async (request: dtos.CreateQuotationItemDetailDTO): Promise<ResponseEntity> => {
     try {
-      const input = await Input.findOne({ where: { idInput: quotationItemDetailData.idInput } });
+      const input = await Input.findOne({ where: { idInput: request.idInput } });
       if (!input) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Input not found" });
       }
-      const quotationItem = await this.quotationRepository.findQuotationItemById(quotationItemDetailData.idQuotationItem);
+      const quotationItem = await this.quotationRepository.findQuotationItemById(request.idQuotationItem);
       if (!quotationItem) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation item not found" });
       }
 
       const data = {
-        ...quotationItemDetailData,
+        ...request,
         quantity: Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(input.performance)),
         totalCost: parseFloat((parseFloat(input.cost) * Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(input.performance))).toFixed(2)),
       };
+
+      if(request.performance && request.price) {
+        data.quantity = Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(request.performance));
+        data.totalCost = parseFloat((parseFloat(request.price) * Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(request.performance))).toFixed(2));
+      }
+
       const quotationItemDetail = await this.quotationRepository.createQuotationItemDetail(data);
       return BuildResponse.buildSuccessResponse(201, quotationItemDetail);
     } catch (error) {
