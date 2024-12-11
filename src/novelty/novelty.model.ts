@@ -1,5 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
+import { ModuleNovelty } from "./module-novelty.model";
 
 export class Novelty extends Model {
   declare idNovelty: number;
@@ -20,4 +21,9 @@ Novelty.init({
   sequelize: dbConnection,
   tableName: "TB_Novelty",
   timestamps: false
+});
+
+Novelty.hasMany(ModuleNovelty, {
+  sourceKey: "idNovelty",
+  foreignKey: "idNovelty"
 });

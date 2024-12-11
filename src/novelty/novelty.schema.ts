@@ -4,6 +4,10 @@ export const idNoveltySchema = z.object({
   idEmployeeNovelty: z.coerce.number(),
 });
 
+export const findNoveltiesByModuleSchema = z.object({
+  module: z.string(),
+});
+
 export const updateNoveltySchema = z.object({
   idEmployeeNovelty: z.coerce.number(),
   idNovelty: z.coerce.number().optional(),

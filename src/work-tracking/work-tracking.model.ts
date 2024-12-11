@@ -1,7 +1,8 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
 import { CostCenterProject } from "../cost-center/cost-center-project.model";
-import { Employee, Novelty } from "../models";
+import { Employee } from "../models";
+import { Novelty } from "../novelty";
 
 export class WorkTracking extends Model {
   declare idWorkTracking: number;

@@ -1,30 +1,33 @@
-import { CustomError } from "../../utils";
+import { CustomError } from "../utils";
 import * as ExcelJS from "exceljs";
-import { BuildResponse } from "../build-response";
-import { 
+import { BuildResponse } from "../services/build-response";
+import {
   ResponseEntity
-} from "../interface";
-import { 
+} from "../services/interface";
+import {
   StatusCode,
   ICreateEmployeeNovelty,
   IUpdateEmployeeNovelty,
   IFindEmployeeRequest
-} from "../../interfaces";
-import * as models from "../../models";
-import { noveltyRepository } from "../../repositories";
+} from "../interfaces";
 import sequelize, { Transaction } from "sequelize";
 import { Op } from "sequelize";
-import { deleteDocument, uploadDocument } from "../helper";
-import { dbConnection } from "../../config";
+import { deleteDocument, uploadDocument } from "../services/helper";
+import { dbConnection } from "../config";
+import { noveltyRepository } from "./novelty.repository";
+import { EmployeeNovelty } from "./employee-novelty.model";
+import { Periodicity } from "./periodicity.model";
+import { Novelty } from "./novelty.model";
+import { Employee, Position, User } from "../models";
 
 export class NoveltyService {
-  constructor() {}
+  constructor() { }
 
   async findNoveltyById(idEmployeeNovelty: number): Promise<ResponseEntity> {
     try {
       const novelty = await noveltyRepository.findNoveltyById(idEmployeeNovelty);
-      if(novelty instanceof CustomError) {
-        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: novelty.message} );
+      if (novelty instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: novelty.message });
       }
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, novelty);
@@ -35,28 +38,28 @@ export class NoveltyService {
 
   async createExcelFileBuffer() {
     try {
-      const employeeNovelties = await models.EmployeeNovelty.findAll({
+      const employeeNovelties = await EmployeeNovelty.findAll({
         include: [
           {
-            model: models.Novelty,
+            model: Novelty,
             required: true
           },
           {
-            model: models.Periodicity,
+            model: Periodicity,
             required: false
           },
           {
-            model: models.Employee,
+            model: Employee,
             required: true,
             attributes: ["idPosition", "idUser", "idEmployee"],
             include: [
               {
-                model: models.Position,
+                model: Position,
                 attributes: ["position"],
                 required: false,
               },
               {
-                model: models.User,
+                model: User,
                 attributes: ["firstName", "lastName", "identityCardNumber"],
                 required: true,
               }
@@ -65,9 +68,9 @@ export class NoveltyService {
         ],
       });
 
-      if(employeeNovelties instanceof CustomError) {
+      if (employeeNovelties instanceof CustomError) {
         return BuildResponse.buildErrorResponse(
-          StatusCode.InternalErrorServer, 
+          StatusCode.InternalErrorServer,
           { message: employeeNovelties.message }
         );
       }
@@ -128,8 +131,8 @@ export class NoveltyService {
     try {
       const filter = this.buildFilter(request);
       const novelties = await noveltyRepository.findEmployeeNovelties(filter, limit, offset);
-      if(novelties instanceof CustomError) {
-        return BuildResponse.buildErrorResponse(novelties.statusCode,{ message: novelties.message });
+      if (novelties instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(novelties.statusCode, { message: novelties.message });
       }
 
       const totalItems = novelties.count;
@@ -147,10 +150,32 @@ export class NoveltyService {
     }
   }
 
+  async findNoveltiesByModule(module: string): Promise<ResponseEntity> {
+    try {
+      const novelties = await noveltyRepository.findNoveltiesByModule(module);
+      if (novelties instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: novelties.message });
+      }
+
+      const response = novelties.map((novelty) => {
+        const item = novelty.toJSON();
+        return {
+          idNovelty: item.idNovelty,
+          novelty: item.novelty,
+        };
+      });
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
+    } catch (err: any) {
+      console.error(err);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, err);
+    }
+  }
+
   async findNoveltyTypes(): Promise<ResponseEntity> {
     try {
-      const novelties = await models.Novelty.findAll();
-      if(novelties instanceof CustomError) {
+      const novelties = await Novelty.findAll();
+      if (novelties instanceof CustomError) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: novelties.message });
       }
 
@@ -170,17 +195,17 @@ export class NoveltyService {
       if (key === "noveltyMonth") {
         employeeNoveltyFilter = { ...employeeNoveltyFilter, "noveltyMonth": sequelize.where(sequelize.fn("MONTH", sequelize.col("EmployeeNovelty.createdAt")), request.noveltyMonth) };
       }
-      if(key === "idNovelty") {
+      if (key === "idNovelty") {
         employeeNoveltyFilter = { ...employeeNoveltyFilter, "idNovelty": request.idNovelty };
       }
     }
 
     let userFilter = {};
     if (request.identityCardNumber) {
-      userFilter = { identityCardNumber: {[Op.substring]: request.identityCardNumber }};
+      userFilter = { identityCardNumber: { [Op.substring]: request.identityCardNumber } };
     }
-    if(request.firstName) {
-      userFilter = { ...userFilter, firstName: {[Op.substring]: request.firstName }};
+    if (request.firstName) {
+      userFilter = { ...userFilter, firstName: { [Op.substring]: request.firstName } };
     }
     return [employeeNoveltyFilter, userFilter];
   }
@@ -190,13 +215,13 @@ export class NoveltyService {
     try {
 
       const newNovelty = await noveltyRepository.createNovelty(novelty, transaction);
-      if(newNovelty instanceof CustomError) {
+      if (newNovelty instanceof CustomError) {
         await transaction.rollback();
         return BuildResponse.buildErrorResponse(StatusCode.BadRequest, newNovelty);
       }
 
 
-      if(filePath) {
+      if (filePath) {
         await this.uploadDocument(filePath, newNovelty, transaction);
       }
 
@@ -210,9 +235,9 @@ export class NoveltyService {
     }
   }
 
-  private async uploadDocument(document: string, employeeNovelty: models.EmployeeNovelty, transaction: Transaction) {
+  private async uploadDocument(document: string, employeeNovelty: EmployeeNovelty, transaction: Transaction) {
     const identifier = crypto.randomUUID();
-    if(employeeNovelty.documentUrl != null) {
+    if (employeeNovelty.documentUrl != null) {
       const deleteBlobResponse = await deleteDocument(employeeNovelty.documentUrl.split("/").pop() as string);
       if (deleteBlobResponse instanceof CustomError) {
         return BuildResponse.buildErrorResponse(StatusCode.BadRequest, { message: deleteBlobResponse.message });
@@ -241,14 +266,14 @@ export class NoveltyService {
     const transaction = await dbConnection.transaction();
     try {
       const dbEmployeeNovelty = await noveltyRepository.findEmployeeNovelty(employeeNovelty.idEmployeeNovelty);
-      if(dbEmployeeNovelty instanceof CustomError) {
-        return BuildResponse.buildErrorResponse(dbEmployeeNovelty.statusCode, {message: dbEmployeeNovelty.message} );
+      if (dbEmployeeNovelty instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(dbEmployeeNovelty.statusCode, { message: dbEmployeeNovelty.message });
       }
 
       const updateEmployeeNovelty = this.buildUpdateEmployeeNovelty(employeeNovelty, dbEmployeeNovelty);
       const newNovelty = await dbEmployeeNovelty.update(updateEmployeeNovelty, { transaction });
 
-      if(document) {
+      if (document) {
         await this.uploadDocument(document, newNovelty, transaction);
       }
 
@@ -262,8 +287,8 @@ export class NoveltyService {
 
   async findPeriodicities(): Promise<ResponseEntity> {
     try {
-      const periodicities = await models.Periodicity.findAll();
-      if(periodicities instanceof CustomError) {
+      const periodicities = await Periodicity.findAll();
+      if (periodicities instanceof CustomError) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: periodicities.message });
       }
 
@@ -276,7 +301,7 @@ export class NoveltyService {
   async deleteEmployeeNovelty(idEmployeeNovelty: number): Promise<ResponseEntity> {
     try {
       const dbEmployeeNovelty = await noveltyRepository.findNoveltyById(idEmployeeNovelty);
-      if(dbEmployeeNovelty instanceof CustomError) {
+      if (dbEmployeeNovelty instanceof CustomError) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, dbEmployeeNovelty);
       }
 
@@ -289,8 +314,8 @@ export class NoveltyService {
   }
 
   private buildUpdateEmployeeNovelty(
-    employeeNovelty: IUpdateEmployeeNovelty, 
-    dbEmployee: models.EmployeeNovelty
+    employeeNovelty: IUpdateEmployeeNovelty,
+    dbEmployee: EmployeeNovelty
   ) {
     return {
       idNovelty: employeeNovelty.idNovelty ?? dbEmployee.idNovelty,

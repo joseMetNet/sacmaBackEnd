@@ -1,16 +1,16 @@
 import { UploadedFile } from "express-fileupload";
-import { StatusCode, StatusValue } from "../../interfaces";
-import { noveltyService } from "../../services";
-import { formatZodError } from "../utils";
-import { createNoveltySchema, findEmployeeNoveltiesSchema, idNoveltySchema, updateNoveltySchema } from "./novelty.schema";
 import { Request, Response } from "express";
+import * as schemas from "./novelty.schema";
+import { StatusCode, StatusValue } from "../interfaces";
+import { formatZodError } from "../controllers/utils";
+import { noveltyService } from "./novelty.service";
 
 class NoveltyController {
   constructor() { }
 
   async createNovelty(req: Request, res: Response): Promise<void> {
     try {
-      const request = createNoveltySchema.safeParse(req.body);
+      const request = schemas.createNoveltySchema.safeParse(req.body);
       if (!request.success) {
         res
           .status(StatusCode.BadRequest)
@@ -40,7 +40,7 @@ class NoveltyController {
 
   async findNovelties(req: Request, res: Response): Promise<void> {
     try {
-      const request = findEmployeeNoveltiesSchema.safeParse(req.query);
+      const request = schemas.findEmployeeNoveltiesSchema.safeParse(req.query);
       if (!request.success) {
         res
           .status(StatusCode.BadRequest)
@@ -63,6 +63,33 @@ class NoveltyController {
           data: { error: err.message },
         });
     }
+  }
+
+  findNoveltiesByModule(req: Request, res: Response): void {
+    const request = schemas.findNoveltiesByModuleSchema.safeParse(req.query);
+    if (!request.success) {
+      res
+        .status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) },
+        });
+      return;
+    }
+    noveltyService.findNoveltiesByModule(request.data.module)
+      .then((novelties) => {
+        res
+          .status(novelties.code)
+          .json({ status: novelties.code, data: novelties.data });
+      })
+      .catch((err: any) => {
+        res
+          .status(StatusCode.InternalErrorServer)
+          .json({
+            status: StatusValue.Failed,
+            data: { error: err.message },
+          });
+      });
   }
 
   async findNoveltyTypes(req: Request, res: Response): Promise<void> {
@@ -99,7 +126,7 @@ class NoveltyController {
 
   async findNoveltyById(req: Request, res: Response): Promise<void> {
     try {
-      const request = idNoveltySchema.safeParse(req.params);
+      const request = schemas.idNoveltySchema.safeParse(req.params);
       if (!request.success) {
         res
           .status(StatusCode.BadRequest)
@@ -142,7 +169,7 @@ class NoveltyController {
 
   async updateNovelty(req: Request, res: Response): Promise<void> {
     try {
-      const request = updateNoveltySchema.safeParse(req.body);
+      const request = schemas.updateNoveltySchema.safeParse(req.body);
       if (!request.success) {
         res
           .status(StatusCode.BadRequest)
@@ -169,7 +196,7 @@ class NoveltyController {
 
   async deleteNovelty(req: Request, res: Response): Promise<void> {
     try {
-      const request = idNoveltySchema.safeParse(req.params);
+      const request = schemas.idNoveltySchema.safeParse(req.params);
       if (!request.success) {
         res
           .status(StatusCode.BadRequest)

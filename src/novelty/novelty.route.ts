@@ -1,6 +1,6 @@
 import { Application, Router } from "express";
 import { verifyToken } from "../middlewares";
-import { noveltyController } from "../controllers";
+import { noveltyController } from "./novelty.controller";
 
 export function noveltyRoutes(app: Application): void {
   const routes: Router = Router();
@@ -9,6 +9,7 @@ export function noveltyRoutes(app: Application): void {
   routes.post("/v1/novelty", [verifyToken], noveltyController.createNovelty);
   routes.patch("/v1/novelty", [verifyToken], noveltyController.updateNovelty);
   routes.get("/v1/novelty/novelties", [verifyToken], noveltyController.findNovelties);
+  routes.get("/v1/novelty", [verifyToken], noveltyController.findNoveltiesByModule);
   routes.get("/v1/novelty/types", [verifyToken], noveltyController.findNoveltyTypes);
   routes.get("/v1/novelty/periodicities", [verifyToken], noveltyController.findPeriodicities);
   routes.get("/v1/novelty/download", [verifyToken], noveltyController.employeeNoveltiesToExcel);
@@ -73,6 +74,28 @@ export function noveltyRoutes(app: Application): void {
   *               $ref: "#/components/schemas/failedResponse"
   */
 
+  /**
+  * @openapi
+  * /v1/novelty:
+  *   get:
+  *     tags: [Novelty]
+  *     summary: Find novelties by module
+  *     parameters:
+  *       - in: query
+  *         name: module
+  *         schema:
+  *           type: string
+  *         description: Module name
+  *     responses:
+  *       '200':
+  *         description: Successful response
+  *       '500':
+  *         description: Internal server error
+  *         content:
+  *           application/json:
+  *             schema:
+  *               $ref: "#/components/schemas/failedResponse"
+  */
 
   /**
    * @openapi

@@ -1,7 +1,12 @@
 import { Transaction } from "sequelize";
-import { ICreateEmployeeNovelty } from "../../interfaces/novelty.interface";
-import { Employee, EmployeeNovelty, Novelty, Periodicity, Position, User } from "../../models";
-import { CustomError } from "../../utils";
+import { EmployeeNovelty } from "./employee-novelty.model";
+import { CustomError } from "../utils";
+import { Novelty } from "./novelty.model";
+import { Periodicity } from "./periodicity.model";
+import { Employee, Position, User } from "../models";
+import { ICreateEmployeeNovelty } from "../interfaces";
+import { ModuleNovelty } from "./module-novelty.model";
+import { NoveltyKind } from "./novelty-kind.model";
 
 export class NoveltyRepository {
   constructor() { }
@@ -47,7 +52,30 @@ export class NoveltyRepository {
     }
   }
 
-  async createNovelty(novelty: ICreateEmployeeNovelty, transaction?: Transaction): Promise<CustomError | EmployeeNovelty> {
+  async findNoveltiesByModule(
+    module: string
+  ): Promise<CustomError | Novelty[]> {
+    try {
+      const novelties = await Novelty.findAll({
+        include: [
+          {
+            model: ModuleNovelty,
+            required: true,
+            where: { module },
+          },
+        ],
+      });
+      return novelties;
+    }
+    catch (err: any) {
+      return CustomError.internalServer(err);
+    }
+  }
+
+  async createNovelty(
+    novelty: ICreateEmployeeNovelty, 
+    transaction?: Transaction
+  ): Promise<CustomError | EmployeeNovelty> {
     try {
       const newNovelty = await EmployeeNovelty.create({
         idNovelty: novelty.idNovelty,

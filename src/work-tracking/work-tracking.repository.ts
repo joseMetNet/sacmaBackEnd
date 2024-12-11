@@ -1,10 +1,11 @@
 import { WorkTracking } from "./work-tracking.model";
 import * as dtos from "./work-tracking.interfase";
-import { Employee, Novelty, User } from "../models";
+import { Employee, User } from "../models";
 import { CostCenterProject } from "../cost-center/cost-center-project.model";
 import { WorkHour } from "./work-hour.model";
 import { dbConnection } from "../config";
 import { QueryTypes } from "sequelize";
+import { Novelty } from "../novelty";
 
 export class WorkTrackingRepository {
 
