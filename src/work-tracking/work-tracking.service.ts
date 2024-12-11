@@ -2,24 +2,28 @@ import sequelize from "sequelize";
 import { StatusCode } from "../interfaces";
 import { BuildResponse } from "../services";
 import { ResponseEntity } from "../services/interface";
-import { calculateBusinessDaysForCurrentMonth } from "../utils";
+import { calculateBusinessDaysForCurrentMonth, CustomError } from "../utils";
 import * as types from "./work-tracking.interfase";
 import { WorkTrackingRepository } from "./work-tracking.repository";
 import { dbConnection } from "../config";
 import { WorkTracking } from "./work-tracking.model";
 import { Employee, User } from "../models";
-import { NoveltyRepository } from "../repositories";
+import { EmployeeRepository, NoveltyRepository } from "../repositories";
+import * as ExcelJS from "exceljs";
 
 export class WorkTrackingService {
   private readonly workTrackingRepository: WorkTrackingRepository;
   private readonly novelityRepository: NoveltyRepository;
+  private readonly employeeRepository: EmployeeRepository;
 
   constructor(
     workTrackingRepository: WorkTrackingRepository,
-    novelityRepository: NoveltyRepository
+    novelityRepository: NoveltyRepository,
+    employeeRepository: EmployeeRepository
   ) {
     this.workTrackingRepository = workTrackingRepository;
     this.novelityRepository = novelityRepository;
+    this.employeeRepository = employeeRepository;
   }
 
   findAll = async (request: types.FindAllDTO): Promise<ResponseEntity> => {
@@ -359,6 +363,64 @@ export class WorkTrackingService {
       );
     }
   };
+  // method to generate an excel file, this call a store procedure called sp_FindDynamicWorkTrackingReport
+  generateReport = async (): Promise<ExcelJS.Buffer | CustomError> => {
+    try {
+      let data = await dbConnection.query<PivotResult>(
+        "EXEC mvp1.sp_FindDynamicWorkTrackingReport",
+        { type: sequelize.QueryTypes.SELECT }
+      );
+      // add the total to the returned data
+      const employees = await this.employeeRepository.findEmployeeAndRoles();
+      if(employees instanceof CustomError) {
+        return employees;
+      }
+
+      const businessDays = calculateBusinessDaysForCurrentMonth();
+      const wageEmployees = employees.map((employee) => {
+        const wage = parseFloat(employee.baseSalary) / businessDays;
+        const jsonEmployee = employee.toJSON();
+        return {
+          employeeName: `${jsonEmployee.User.firstName} ${jsonEmployee.User.lastName}`,
+          wage: parseFloat(wage.toFixed(2))
+        };
+      });
+
+      data = data.map((item) => {
+        const values = Object.values(item).filter(value => typeof value === "number");
+        const total = values.reduce((sum, value) => sum + value, 0);
+        const wage = wageEmployees.find((employee) => employee.employeeName === item.employeeName)?.wage || 0;
+        return { ...item, ValorDia: wage, Total: total };
+      });
+
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Work Tracking Report");
+      const columns = Object.keys(data[0]);
+      worksheet.columns = columns.map(
+        (column) => {
+          if (column === "employeeName") {
+            return { header: "Nombre", key: column, width: 50, style: { font: { bold: true } } };
+          }
+          if (column === "ValorDia") {
+            return { header: "Valor Dia", key: column, width: 30, style: { font: { bold: true } } };
+          }
+          return { header: column, key: column, width: 30, style: { font: { bold: true } } };
+        }
+      );
+
+      data.forEach((item) => {
+        worksheet.addRow(item);
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      return buffer;
+    }
+    catch (error) {
+      console.error(`Error generating report: ${error}`);
+      return new CustomError(StatusCode.InternalErrorServer, "Error generating report");
+    }
+  };
 
   updateAll = async (request: types.UpdateWorkTrackingDTO[]): Promise<ResponseEntity> => {
     try {
@@ -639,4 +701,9 @@ export class WorkTrackingService {
 
 interface FindDailyCount {
   total: number;
+}
+
+interface PivotResult {
+  employeeName: string;
+  [key: string]: string | number;
 }

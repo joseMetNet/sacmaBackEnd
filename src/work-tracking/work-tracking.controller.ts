@@ -3,6 +3,7 @@ import * as schemas from "./work-tracking.schema";
 import { StatusCode, StatusValue } from "../interfaces";
 import { formatZodError } from "../controllers/utils";
 import { WorkTrackingService } from "./work-tracking.service";
+import { CustomError } from "../utils";
 
 export class WorkTrackingController {
   private readonly workTrackingService: WorkTrackingService;
@@ -133,6 +134,22 @@ export class WorkTrackingController {
         status: response.status,
         data: response.data
       });
+  };
+
+  generateReport = async (req: Request, res: Response): Promise<void> => {
+    const response = await this.workTrackingService.generateReport();
+    if(response instanceof CustomError) {
+      res
+        .status(response.statusCode)
+        .json({
+          status: StatusValue.Failed,
+          data: response.message
+        });
+      return;
+    }
+    res.setHeader("Content-Disposition", "attachment; filename=\"resumen.xlsx\"");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.end(response, "binary");
   };
 
   createAll = async (req: Request, res: Response): Promise<void> => {
