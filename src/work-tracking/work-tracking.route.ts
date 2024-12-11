@@ -2,7 +2,8 @@ import { Application, Router } from "express";
 import { WorkTrackingRepository } from "./work-tracking.repository";
 import { WorkTrackingService } from "./work-tracking.service";
 import { WorkTrackingController } from "./work-tracking.controller";
-import { EmployeeRepository, NoveltyRepository } from "../repositories";
+import { EmployeeRepository } from "../repositories";
+import { NoveltyRepository } from "../novelty";
 
 const workTrackingRepository = new WorkTrackingRepository();
 const noveltyRepository = new NoveltyRepository();

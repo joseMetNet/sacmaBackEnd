@@ -8,8 +8,9 @@ import { WorkTrackingRepository } from "./work-tracking.repository";
 import { dbConnection } from "../config";
 import { WorkTracking } from "./work-tracking.model";
 import { Employee, User } from "../models";
-import { EmployeeRepository, NoveltyRepository } from "../repositories";
+import { EmployeeRepository } from "../repositories";
 import * as ExcelJS from "exceljs";
+import { NoveltyRepository } from "../novelty";
 
 export class WorkTrackingService {
   private readonly workTrackingRepository: WorkTrackingRepository;
