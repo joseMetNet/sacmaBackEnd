@@ -2,11 +2,13 @@ import { Application, Router } from "express";
 import { WorkTrackingRepository } from "./work-tracking.repository";
 import { WorkTrackingService } from "./work-tracking.service";
 import { WorkTrackingController } from "./work-tracking.controller";
-import { NoveltyRepository } from "../repositories";
+import { EmployeeRepository, NoveltyRepository } from "../repositories";
 
 const workTrackingRepository = new WorkTrackingRepository();
 const noveltyRepository = new NoveltyRepository();
-const workTrackingService = new WorkTrackingService(workTrackingRepository, noveltyRepository);
+const employeeRepository = new EmployeeRepository();
+const workTrackingService = 
+  new WorkTrackingService(workTrackingRepository, noveltyRepository, employeeRepository);
 const workTrackingController = new WorkTrackingController(workTrackingService);
 
 export function workTrackingRoute(app: Application): void {
@@ -23,6 +25,7 @@ export function workTrackingRoute(app: Application): void {
   // POST routes
   router.post("/v1/work-tracking", workTrackingController.create);
   router.post("/v1/work-tracking/create-all", workTrackingController.createAll);
+  router.post("/v1/work-tracking/generate-report", workTrackingController.generateReport);
 
   // PATCH routes
   router.patch("/v1/work-tracking", workTrackingController.update);
@@ -425,6 +428,32 @@ export function workTrackingRoute(app: Application): void {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/WorkTrackingDTO'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
+ * /v1/work-tracking/generate-report:
+ *   post:
+ *     tags: [Work Tracking]
+ *     summary: Generate Report
+ *     description: Generate a report of the Work Tracking
+ *     responses:
+ *       200:
+ *         description: Generated report
  *       400:
  *         description: Bad request
  *       401:

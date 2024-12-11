@@ -8,7 +8,7 @@ export class EmployeeRepository {
   async findEmployeeAndRoles(): Promise<Employee[] | CustomError> {
     try {
       const employees = await Employee.findAll({
-        attributes: [],
+        attributes: ["baseSalary"],
         include: [
           {
             model: User,
