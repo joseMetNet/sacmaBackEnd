@@ -720,7 +720,7 @@ export class QuotationService {
       const quotationItemDetails = await QuotationItemDetail.findAll({ where: { idQuotationItem: quotationItemsIds } });
 
       if (!percentage || !quotationItems || !additionalCosts) {
-        return CustomError.notFound("Quotation percentage not found");
+        return this.buildEmptyQuotationReport();
       }
 
       let total = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost), 0);
