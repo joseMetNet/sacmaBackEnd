@@ -111,6 +111,7 @@ export class QuotationService {
   generateQuotationDocx = async (id: number): Promise<ResponseEntity | Buffer> => {
     try {
       const quotationResponse = await this.findQuotationById(id);
+      const quotationItemsResponse = await this.findAllQuotationItems({ idQuotation: id, page: 1, pageSize: 100 });
       const templatePath = "template/cotizacion.docx";
       const content = readFileSync(templatePath, "binary");
       if (quotationResponse.code !== 200 && quotationResponse) {
@@ -124,24 +125,31 @@ export class QuotationService {
         delimiters: { start: "{{", end: "}}" },
       });
       const quotation = quotationResponse as ResponseEntity;
-      const additionalRepport = quotation.data ? (quotation.data as any).QuotationAdditionalCostReport : {};
+      const quotationItems = quotationItemsResponse as ResponseEntity;
+      const additionalRepport = quotation.data ? (quotation.data as any).QuotationReport : {};
 
-      const data = {
-        nombre: "AMARILO",
+      const currencyFormatter = new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+      });
+
+      const response = {
+        items: (quotationItems.data as any).data,
+        nombre: (quotation.data as any)?.name ?? "",
         fecha: "15 de Noviembre de 2024",
-        consecutivo: "114a-2024",
+        consecutivo: (quotation.data as any)?.consecutive ?? "",
         referencia: "Impermeabilización Aleros",
-        proyecto: "EL MUELLE",
-        unitValueAIU: additionalRepport.unitValueAIU,
-        administration: additionalRepport.administration,
-        unforeseen: additionalRepport.unforeseen,
-        utility: additionalRepport.utility,
-        vat: additionalRepport.vat,
-        unitValueAIUIncluded: additionalRepport.unitValueAIUIncluded,
-        totalValue: additionalRepport.totalValue,
+        proyecto: (quotation.data as any)?.projectName ?? "",
+        unitValueAIU: currencyFormatter.format(additionalRepport.unitValueAIU),
+        administration: currencyFormatter.format(additionalRepport.administration),
+        unforeseen: currencyFormatter.format(additionalRepport.unforeseen),
+        utility: currencyFormatter.format(additionalRepport.utility),
+        vat: currencyFormatter.format(additionalRepport.vat),
+        unitValueAIUIncluded: currencyFormatter.format(additionalRepport.unitValueAIUIncluded),
+        totalValue: currencyFormatter.format(additionalRepport.totalValue),
       };
 
-      doc.render(data);
+      doc.render(response);
       const buffer = doc.getZip().generate({ type: "nodebuffer" });
       return buffer;
     } catch (error) {
@@ -755,8 +763,7 @@ export class QuotationService {
 
       const subTotal = total + otherCost.impuesto + otherCost.poliza + otherCost.comision + otherCost.caja_menor;
       const finalTotal = subTotal * otherCost.utility + subTotal;
-      console.log("finalTotal", finalTotal);
-      console.log("sumPercents", sumPercents.toFixed(2));
+
       const summaryByItem = summary.map((item) => {
         const quotationItem = quotationItems.rows.find((quotationItem) => quotationItem.idQuotationItem === parseInt(item.idQuotationItem))! as QuotationItem;
         const unitValue = (finalTotal * (item.percentage / 100)) / parseFloat(quotationItem.quantity) / parseFloat(sumPercents.toFixed(6));
@@ -769,8 +776,6 @@ export class QuotationService {
           totalCost: parseFloat(quotationItem.quantity) * unitValue,
         };
       });
-
-      console.log("summaryByItem", summaryByItem);
 
       const unitValueAIU = summaryByItem.reduce((acc, item) => acc + item.totalCost, 0);
 
