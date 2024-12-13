@@ -43,7 +43,9 @@ export class QuotationRepository {
   }
 
   async findQuotationAdditionalCostById(idQuotation: number): Promise<QuotationAdditionalCost | null> {
-    return await QuotationAdditionalCost.findByPk(idQuotation);
+    return await QuotationAdditionalCost.findOne({
+      where: { idQuotation },
+    });
   }
 
   async findQuotationAdditionalCostByQuotationId(

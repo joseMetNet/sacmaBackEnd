@@ -529,6 +529,7 @@ export class QuotationService {
   createQuotationAdditionalCost = async (request: dtos.CreateQuotationAdditionalCostDTO): Promise<ResponseEntity> => {
     try {
       const quotationAdditionalCost = await this.quotationRepository.findQuotationAdditionalCostById(request.idQuotation);
+      console.log(quotationAdditionalCost);
       if (!quotationAdditionalCost) {
         const response = await this.quotationRepository.createQuotationAdditionalCost(request);
         return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
