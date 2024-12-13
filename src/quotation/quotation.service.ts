@@ -811,7 +811,7 @@ export class QuotationService {
         commision: String(otherCost.comision),
         pettyCash: String(otherCost.caja_menor),
         policy: String(otherCost.poliza),
-        utility: String(otherCost.utility)
+        utility: String(otherCost.utility*subTotal)
       };
       return { quotationSummary, quotationAdditionalCost, summaryByItem };
     } catch (error) {
