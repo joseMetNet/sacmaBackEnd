@@ -15,6 +15,7 @@ import { QuotationItem } from "./quotation-item.model";
 import { readFileSync } from "fs";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
+import { util } from "zod";
 
 export class QuotationService {
 
@@ -809,6 +810,7 @@ export class QuotationService {
         commision: String(otherCost.comision),
         pettyCash: String(otherCost.caja_menor),
         policy: String(otherCost.poliza),
+        utility: String(otherCost.utility)
       };
       return { quotationSummary, quotationAdditionalCost, summaryByItem };
     } catch (error) {
