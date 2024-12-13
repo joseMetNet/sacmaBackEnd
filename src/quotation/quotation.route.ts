@@ -567,6 +567,36 @@ export function quotationRoute(app: Application): void {
  *               $ref: '#/components/schemas/failedResponse'
  */
 
+
+/**
+  * @openapi
+  * /v1/quotation/generate-docx/{idQuotation}:
+  *   post:
+  *     tags: [Quotation]
+  *     summary: Generate a Quotation in DOCX format
+  *     parameters:
+  *       - in: path
+  *         name: idQuotation
+  *         required: true
+  *         schema:
+  *           type: integer
+  *         description: ID of the Quotation to get
+  *     responses:
+  *     '200':
+  *       description: Successful response
+  *       content:
+  *         application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+  *           schema:
+  *             type: string
+  *             format: binary
+  *     '500':
+  *       description: Internal server error
+  *       content:
+  *         application/json:
+  *           schema:
+  *             $ref: "#/components/schemas/failedResponse"
+  */
+
 /**
  * @openapi
  * /v1/quotation-comment:

@@ -2,7 +2,7 @@ import { QuotationRepository } from "./quotation.repository";
 import * as dtos from "./quotation.interfase";
 import { StatusCode } from "../interfaces";
 import { Input } from "../input/input.model";
-import { CustomError } from "../utils";
+import { CustomError, formatDate, getNextMonth } from "../utils";
 import { ResponseEntity } from "../services/interface";
 import { BuildResponse } from "../services";
 import { dbConnection } from "../config";
@@ -127,6 +127,14 @@ export class QuotationService {
       const quotation = quotationResponse as ResponseEntity;
       const quotationItems = quotationItemsResponse as ResponseEntity;
       const additionalRepport = quotation.data ? (quotation.data as any).QuotationReport : {};
+      // concat all item names 
+      const itemNames = (quotationItems.data as any).data
+        .map((item: QuotationItem) => item.item)
+        .join(", ");
+
+      const technicalSpecifications = (quotationItems.data as any).data
+        .map((item: QuotationItem) => item.technicalSpecification)
+        .join(", ");
 
       const currencyFormatter = new Intl.NumberFormat("es-CO", {
         style: "currency",
@@ -135,11 +143,14 @@ export class QuotationService {
 
       const response = {
         items: (quotationItems.data as any).data,
-        nombre: (quotation.data as any)?.name ?? "",
-        fecha: "15 de Noviembre de 2024",
-        consecutivo: (quotation.data as any)?.consecutive ?? "",
+        name: (quotation.data as any)?.name ?? "",
+        itemNames,
+        technicalSpecifications,
+        date: formatDate(new Date().toISOString().split("T")[0]),
+        dateUntil: formatDate(getNextMonth(new Date().toISOString().split("T")[0])),
+        consecutive: (quotation.data as any)?.consecutive ?? "",
         referencia: "Impermeabilización Aleros",
-        proyecto: (quotation.data as any)?.projectName ?? "",
+        project: (quotation.data as any)?.projectName ?? "",
         unitValueAIU: currencyFormatter.format(additionalRepport.unitValueAIU),
         administration: currencyFormatter.format(additionalRepport.administration),
         unforeseen: currencyFormatter.format(additionalRepport.unforeseen),

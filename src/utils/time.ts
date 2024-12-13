@@ -19,3 +19,35 @@ export const calculateBusinessDaysForCurrentMonth = (): number => {
 
   return businessDays;
 };
+
+export const getNextMonth = (date: string): string => {
+  const [year, month, day] = date.split("-");
+  const nextMonthDate = new Date(parseInt(year), parseInt(month), parseInt(day));
+  nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+
+  const nextYear = nextMonthDate.getFullYear();
+  const nextMonth = String(nextMonthDate.getMonth()).padStart(2, "0");
+  const nextDay = String(nextMonthDate.getDate()).padStart(2, "0");
+
+  return `${nextYear}-${nextMonth}-${nextDay}`;
+};
+
+export const formatDate = (date: string): string => {
+  const [year, month, day] = date.split("-");
+  const months = [
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
+  ];
+
+  return `${day} de ${months[parseInt(month) - 1]} de ${year}`;
+};
