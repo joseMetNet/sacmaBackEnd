@@ -133,6 +133,11 @@ export class QuotationService {
         .map((item: QuotationItem) => item.item)
         .join(", ");
 
+      const quotationItemsData = (quotationItems.data as any).data;
+      quotationItemsData.forEach((item: QuotationItem) => {
+        item.unitPrice = parseFloat(item.unitPrice).toFixed(2);
+        item.total = parseFloat(item.total).toFixed(2);
+      });
       const technicalSpecifications = (quotationItems.data as any).data
         .map((item: QuotationItem) => item.technicalSpecification)
         .join(", ");
