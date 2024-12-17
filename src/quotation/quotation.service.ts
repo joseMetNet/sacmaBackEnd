@@ -62,7 +62,9 @@ export class QuotationService {
         tax: "0",
         commision: "0",
         pettyCash: "0",
-        policy: "0"
+        policy: "0",
+        utility: "0",
+        directCost: "0",
       },
       summaryByItem: []
     };
@@ -826,6 +828,8 @@ export class QuotationService {
           + (unitValueAIU * percentage.utility) * percentage.vat)
       };
 
+      const directCost = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost)*parseFloat(item.quantity), 0);
+
       const quotationAdditionalCost = {
         perDiem: String(otherCost.perDiem),
         sisoValue: String(otherCost.sisos),
@@ -833,7 +837,8 @@ export class QuotationService {
         commision: String(otherCost.comision),
         pettyCash: String(otherCost.caja_menor),
         policy: String(otherCost.poliza),
-        utility: String(otherCost.utility*subTotal)
+        utility: String(otherCost.utility*subTotal),
+        directCost: String(directCost),
       };
       return { quotationSummary, quotationAdditionalCost, summaryByItem };
     } catch (error) {

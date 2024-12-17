@@ -190,6 +190,8 @@ export interface QuotationAdditionalCostSummaryDTO {
   commision: string;
   pettyCash: string;
   policy: string;
+  utility: string;
+  directCost: string;
 }
 
 export interface QuotationItemSummaryDTO {
