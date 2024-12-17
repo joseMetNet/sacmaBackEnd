@@ -99,7 +99,7 @@ export class EmployeeService {
   }
 
   async findEmployees(request: IFindEmployeeRequest): Promise<ResponseEntity> {
-    if(request.pageSize===-1) {
+    if (request.pageSize === -1) {
       const employees = await this.findAll();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, employees);
     }
@@ -128,7 +128,6 @@ export class EmployeeService {
                 { model: models.City, required: false },
               ],
               where: filter,
-              order: [["firstName", "ASC"]],
             },
             { model: models.Position, required: false },
             { model: models.ContractType, required: false },
@@ -142,6 +141,7 @@ export class EmployeeService {
           ],
           limit: limit,
           offset: offset,
+          order: [[sequelize.literal("[User.firstName]"), "ASC"]],
           distinct: true,
         });
       const totalItems = employees.count;
@@ -154,6 +154,7 @@ export class EmployeeService {
         currentPage,
       });
     } catch (err: any) {
+      console.error(err);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
         message: "Internal error server",
       });
@@ -552,14 +553,14 @@ export class EmployeeService {
           severancePay: row.SeverancePay?.severancePay,
           contractType: row.ContractType?.contractType,
           position: row.Position?.position,
-          ingreso: novelties.filter((item) => item.novelty === "Ingreso" && item.identityCardNumber===row.User?.identityCardNumber).length,
-          novedad: novelties.filter((item) => item.novelty === "Novedad" && item.identityCardNumber===row.User?.identityCardNumber).length,
-          vacacion: novelties.filter((item) => item.novelty === "Vacación" && item.identityCardNumber===row.User?.identityCardNumber).length,
-          permiso: novelties.filter((item) => item.novelty === "Permiso" && item.identityCardNumber===row.User?.identityCardNumber).length,
-          sancion: novelties.filter((item) => item.novelty === "Sanción" && item.identityCardNumber===row.User?.identityCardNumber).length,
-          retiro: novelties.filter((item) => item.novelty === "Retiro" && item.identityCardNumber===row.User?.identityCardNumber).length,
-          incapacitado: novelties.filter((item) => item.novelty === "Incapacitado" && item.identityCardNumber===row.User?.identityCardNumber).length,
-          prestamo: novelties.filter((item) => item.novelty === "Prestamo" && item.identityCardNumber===row.User?.identityCardNumber).length,
+          ingreso: novelties.filter((item) => item.novelty === "Ingreso" && item.identityCardNumber === row.User?.identityCardNumber).length,
+          novedad: novelties.filter((item) => item.novelty === "Novedad" && item.identityCardNumber === row.User?.identityCardNumber).length,
+          vacacion: novelties.filter((item) => item.novelty === "Vacación" && item.identityCardNumber === row.User?.identityCardNumber).length,
+          permiso: novelties.filter((item) => item.novelty === "Permiso" && item.identityCardNumber === row.User?.identityCardNumber).length,
+          sancion: novelties.filter((item) => item.novelty === "Sanción" && item.identityCardNumber === row.User?.identityCardNumber).length,
+          retiro: novelties.filter((item) => item.novelty === "Retiro" && item.identityCardNumber === row.User?.identityCardNumber).length,
+          incapacitado: novelties.filter((item) => item.novelty === "Incapacitado" && item.identityCardNumber === row.User?.identityCardNumber).length,
+          prestamo: novelties.filter((item) => item.novelty === "Prestamo" && item.identityCardNumber === row.User?.identityCardNumber).length,
         });
       });
 
@@ -740,7 +741,7 @@ export class EmployeeService {
   async findNoveltiesByEmployee(idEmployee: number): Promise<ResponseEntity> {
     try {
       const novelties = await employeeRepository.findEmployeeNoveltiesByEmployeeId(idEmployee);
-      if(novelties instanceof CustomError) {
+      if (novelties instanceof CustomError) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: novelties.message });
       }
 
@@ -814,7 +815,7 @@ export class EmployeeService {
   private buildFilter(request: IFindEmployeeRequest) {
     let filter = {};
 
-    if(request.identityCardNumber) {
+    if (request.identityCardNumber) {
       filter = {
         ...filter,
         identityCardNumber: {
@@ -823,7 +824,7 @@ export class EmployeeService {
       };
     }
 
-    if(request.firstName) {
+    if (request.firstName) {
       filter = {
         ...filter,
         firstName: {
@@ -832,14 +833,14 @@ export class EmployeeService {
       };
     }
 
-    if(request.idRole) {
+    if (request.idRole) {
       filter = {
         ...filter,
         idPosition: sequelize.where(sequelize.col("User.idRole"), request.idRole),
       };
     }
 
-    if(request.status) {
+    if (request.status) {
       filter = {
         ...filter,
         status: sequelize.where(sequelize.col("User.status"), request.status),
