@@ -1070,6 +1070,18 @@ export function quotationRoute(app: Application): void {
  *         sisoNumber:
  *           type: string
  *           example: "10000"
+ *         client:
+ *           type: string
+ *           example: "Client"
+ *         executionTime:
+ *           type: string
+ *           example: "2021-01-01T00:00:00.000Z"
+ *         policy:
+ *           type: string
+ *           example: "Policy"
+ *         technicalCondition:
+ *           type: string
+ *           example: "Technical condition"
  *     QuotationPercentageDTO:
  *       type: object
  *       properties:
@@ -1242,6 +1254,18 @@ export function quotationRoute(app: Application): void {
  *         itemSummary:
  *           type: string
  *           example: "Item summary"
+ *         client:
+ *           type: string
+ *           example: "Client"
+ *         executionTime:
+ *           type: string
+ *           example: "2021-01-01T00:00:00.000Z"
+ *         policy:
+ *           type: string
+ *           example: "Policy"
+ *         technicalCondition:
+ *           type: string
+ *           example: "Technical condition"
  *     CreateQuotationItemDTO:
  *       type: object
  *       required:
