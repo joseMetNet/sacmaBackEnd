@@ -60,6 +60,7 @@ export class QuotationRepository {
     filter: { [key: string]: any },
     limit: number, offset: number
   ): Promise<{ rows: Quotation[], count: number }> {
+    const { quotationStatus, ...otherFilter } = filter;
     const quotations = await Quotation.findAndCountAll({
       include: [
         {
@@ -71,14 +72,15 @@ export class QuotationRepository {
               model: User,
               attributes: ["firstName", "lastName"],
               required: true,
-              where: filter
+              where: otherFilter,
             },
           ],
         },
         { model: QuotationPercentage },
-        { model: QuotationStatus },
+        { model: QuotationStatus, where: quotationStatus ? { idQuotationStatus: quotationStatus } : {} },
         { model: QuotationComment },
       ],
+      where: filter,
       limit,
       offset,
       distinct: true,

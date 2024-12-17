@@ -15,7 +15,6 @@ import { QuotationItem } from "./quotation-item.model";
 import { readFileSync } from "fs";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
-import { util } from "zod";
 
 export class QuotationService {
 
@@ -33,7 +32,7 @@ export class QuotationService {
         idQuotationStatus: 1,
       };
       const quotation = await this.quotationRepository.create(quotationData, transaction);
-      const consecutive = `COT SACIPR Nr. ${quotation.idQuotation}-${new Date().getFullYear()}`;
+      const consecutive = `COT SACIPR No. ${quotation.idQuotation}-${new Date().getFullYear()}`;
       quotation.consecutive = consecutive;
       await quotation.save({ transaction });
 
@@ -675,6 +674,24 @@ export class QuotationService {
       where = {
         ...where,
         responsible: sequelize.where(sequelize.col("Employee.User.firstName"), "LIKE", `%${filter.responsible}%`),
+      };
+    }
+    if (filter.consecutive) {
+      where = {
+        ...where,
+        consecutive: sequelize.where(sequelize.col("consecutive"), "LIKE", `%${filter.consecutive}%`),
+      };
+    }
+    if (filter.quotationStatus) {
+      where = {
+        ...where,
+        quotationStatus: sequelize.where(sequelize.col("QuotationStatus.quotationStatus"), "LIKE", `%${filter.quotationStatus}%`),
+      };
+    }
+    if (filter.builder) {
+      where = {
+        ...where,
+        builder: sequelize.where(sequelize.col("builder"), "LIKE", `%${filter.builder}%`),
       };
     }
     return where;

@@ -155,6 +155,21 @@ export function quotationRoute(app: Application): void {
  *         schema:
  *           type: string
  *         description: Name of the responsable
+ *       - in: query
+ *         name: consecutive
+ *         schema:
+ *           type: string
+ *         description: Consecutive of the quotation
+ *       - in: query
+ *         name: quotationStatus
+ *         schema:
+ *           type: string
+ *         description: Status of the quotation
+ *       - in: query
+ *         name: builder
+ *         schema:
+ *           type: string
+ *         description: Builder of the quotation
  *     responses:
  *       200:
  *         description: A list of quotations
