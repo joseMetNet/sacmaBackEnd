@@ -8,6 +8,10 @@ export interface CreateQuotationDTO {
   itemSummary?: string;
   perDiem?: string;
   sisoNumber?: string;
+  client?: string;
+  executionTime?: string;
+  policy?: string;
+  techicalCondition?: string;
 }
 
 export interface UpdateQuotationDTO {
@@ -21,6 +25,10 @@ export interface UpdateQuotationDTO {
   itemSummary?: string;
   perDiem?: string;
   sisoNumber?: string;
+  client?: string;
+  executionTime?: string;
+  policy?: string;
+  techicalCondition?: string;
 }
 
 export interface findAllQuotationDTO {

@@ -13,6 +13,10 @@ export class Quotation extends Model {
   declare idQuotationStatus: number;
   declare idResponsable: number;
   declare builder: string;
+  declare client: string;
+  declare executionTime: string;
+  declare policy: string;
+  declare techicalCondition: string;
   declare builderAddress: string;
   declare projectName: string;
   declare itemSummary: string;
@@ -69,6 +73,22 @@ Quotation.init(
       allowNull: true,
     },
     sisoNumber: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    client: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    executionTime: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    policy: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    techicalCondition: {
       type: DataTypes.STRING,
       allowNull: true,
     },
