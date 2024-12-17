@@ -32,6 +32,9 @@ export const FindAllQuotationSchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
   responsible: z.string().optional(),
+  consecutive: z.string().optional(),
+  quotationStatus: z.string().optional(),
+  builder: z.string().optional(),
 });
 
 export const FindAllQuotationItemSchema = z.object({

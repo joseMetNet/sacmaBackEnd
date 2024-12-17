@@ -27,6 +27,9 @@ export interface findAllQuotationDTO {
   page?: number;
   pageSize?: number;
   responsible?: string;
+  consecutive?: string;
+  quotationStatus?: string;
+  builder?: string;
 }
 
 export interface findAllQuotationItemDTO {
@@ -187,6 +190,8 @@ export interface QuotationAdditionalCostSummaryDTO {
   commision: string;
   pettyCash: string;
   policy: string;
+  utility: string;
+  directCost: string;
 }
 
 export interface QuotationItemSummaryDTO {
