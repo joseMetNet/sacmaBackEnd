@@ -48,7 +48,7 @@ export class EmployeeService {
     }
   }
 
-  private async findAll(): Promise<{ rows: models.Employee[]; count: number }> {
+  private async findAll(request: IFindEmployeeRequest): Promise<{ rows: models.Employee[]; count: number }> {
     const employees: { rows: models.Employee[]; count: number } =
       await models.Employee.findAndCountAll({
         attributes: {
@@ -78,7 +78,7 @@ export class EmployeeService {
             order: [["firstName", "ASC"]],
             required: false,
             include: [
-              { model: models.Role, required: false },
+              { model: models.Role, required: true},
               { model: models.IdentityCard, required: false },
               { model: models.City, required: false },
             ],
@@ -93,6 +93,7 @@ export class EmployeeService {
           { model: models.PensionFund, required: false },
           { model: models.EmployeeRequiredDocument, required: false },
         ],
+        where: request.idRole? sequelize.where(sequelize.col("User.idRole"), request.idRole) : {},
         distinct: true,
       });
     return employees;
@@ -100,7 +101,7 @@ export class EmployeeService {
 
   async findEmployees(request: IFindEmployeeRequest): Promise<ResponseEntity> {
     if (request.pageSize === -1) {
-      const employees = await this.findAll();
+      const employees = await this.findAll(request);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, employees);
     }
     let page = 1;

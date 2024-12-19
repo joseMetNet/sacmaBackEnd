@@ -211,6 +211,12 @@ export class QuotationService {
           itemSummary: quotation.itemSummary,
           totalCost: quotation.totalCost,
           QuotationComments: jsonQuotation.QuotationComments,
+          createdAt: quotation.createdAt,
+          updatedAt: quotation.updatedAt,
+          client: quotation.client,
+          executionTime: quotation.executionTime,
+          policy: quotation.policy,
+          techicalCondition: quotation.techicalCondition,
         };
       });
 

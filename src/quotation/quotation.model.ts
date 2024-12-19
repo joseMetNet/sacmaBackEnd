@@ -23,6 +23,8 @@ export class Quotation extends Model {
   declare totalCost: string;
   declare perDiem: string;
   declare sisoNumber: string;
+  declare createdAt: string;
+  declare updatedAt: string;
 }
 
 Quotation.init(
@@ -92,11 +94,19 @@ Quotation.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     sequelize: dbConnection,
     tableName: "TB_Quotation",
-    timestamps: false,
+    timestamps: true,
   }
 );
 
