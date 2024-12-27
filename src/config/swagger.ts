@@ -48,5 +48,6 @@ export const swaggerOptions: SwaggerOptions = {
     "./src/work-tracking/*route.ts",
     "./src/quotation/*route.ts",
     "./src/novelty/*route.ts",
+    "./src/order/*route.ts",
   ],
 };

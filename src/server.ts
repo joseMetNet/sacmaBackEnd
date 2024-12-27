@@ -14,6 +14,7 @@ import { costCenterRoutes } from "./cost-center/cost-center.route";
 import { workTrackingRoute } from "./work-tracking";
 import { quotationRoute } from "./quotation";
 import { noveltyRoutes } from "./novelty";
+import { orderRoute } from "./order";
 
 class Server {
   private app: Application;
@@ -62,6 +63,7 @@ class Server {
     costCenterRoutes(this.app);
     workTrackingRoute(this.app);
     quotationRoute(this.app);
+    orderRoute(this.app);
   }
 
   public listen(): void {
