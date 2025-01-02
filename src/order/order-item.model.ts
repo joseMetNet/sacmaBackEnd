@@ -6,6 +6,7 @@ export class OrderItem extends Model {
   declare idOrder: number;
   declare idOrderItemStatus: number;
   declare consecutive: string;
+  declare documentUrl: string;
   declare createdAt: string;
   declare updatedAt: string;
 }
@@ -25,6 +26,10 @@ OrderItem.init({
     allowNull: false
   },
   consecutive: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  documentUrl: {
     type: DataTypes.STRING,
     allowNull: true
   },

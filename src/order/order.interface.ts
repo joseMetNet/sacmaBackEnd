@@ -31,6 +31,7 @@ export interface CreateOrder {
 export interface CreateOrderItem {
   idOrder: number;
   idOrderItemStatus: number;
+  documentUrl?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -56,6 +57,7 @@ export interface UpdateOrder {
 export interface UpdateOrderItem {
   idOrderItem: number;
   idOrder?: number;
+  documentUrl?: string;
   idOrderItemStatus?: number;
   consecutive?: string;
   createdAt?: string;

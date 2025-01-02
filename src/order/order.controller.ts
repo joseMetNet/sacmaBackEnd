@@ -3,6 +3,7 @@ import { OrderService } from "./order.service";
 import * as schemas from "./order.schema";
 import { StatusCode, StatusValue } from "../interfaces";
 import { formatZodError } from "../controllers/utils";
+import { UploadedFile } from "express-fileupload";
 
 export class OrderController {
   private readonly orderService: OrderService;
@@ -139,7 +140,11 @@ export class OrderController {
       return;
     }
 
-    const response = await this.orderService.createOrderItem(request.data);
+    const filePath = req.files
+      ? (req.files.document as UploadedFile).tempFilePath
+      : undefined;
+
+    const response = await this.orderService.createOrderItem(request.data, filePath);
     res.status(response.code).json({
       status: response.status,
       data: response.data
@@ -190,7 +195,11 @@ export class OrderController {
       return;
     }
 
-    const response = await this.orderService.updateOrderItem(request.data);
+    const filePath = req.files
+      ? (req.files.document as UploadedFile).tempFilePath
+      : undefined;
+
+    const response = await this.orderService.updateOrderItem(request.data, filePath);
     res.status(response.code).json({
       status: response.status,
       data: response.data

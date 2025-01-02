@@ -49,7 +49,7 @@ export class OrderRepository {
   };
 
   findByIdOrderItem = (id: number) => {
-    return OrderItemDetail.findByPk(id);
+    return OrderItem.findByPk(id);
   };
 
   findByIdOrderItemDetail = (id: number) => {

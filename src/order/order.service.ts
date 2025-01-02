@@ -4,6 +4,7 @@ import { ResponseEntity } from "../services/interface";
 import { StatusCode, StatusValue } from "../interfaces";
 import { BuildResponse } from "../services";
 import { or } from "sequelize";
+import { CustomError, deleteFile, uploadFile } from "../utils";
 
 export class OrderService {
   private orderRepository: OrderRepository;
@@ -169,9 +170,16 @@ export class OrderService {
     }
   };
 
-  createOrderItem = async (orderItem: dtos.CreateOrderItem): Promise<ResponseEntity> => {
+  createOrderItem = async (request: dtos.CreateOrderItem, filePath?: string): 
+  Promise<ResponseEntity> => {
     try {
-      const newOrderItem = await this.orderRepository.createOrderItem(orderItem);
+      if (filePath) {
+        const identifier = crypto.randomUUID();
+        await uploadFile(filePath, identifier, "application/pdf", "order");
+        request.documentUrl = `https://sacmaback.blob.core.windows.net/order/${identifier}.pdf`;
+      }
+
+      const newOrderItem = await this.orderRepository.createOrderItem(request);
       newOrderItem.setDataValue("consecutive", `ORD-${newOrderItem.idOrderItem}`);
       await newOrderItem.save();
 
@@ -221,9 +229,10 @@ export class OrderService {
     }
   };
 
-  updateOrderItem = async (orderItem: dtos.UpdateOrderItem): Promise<ResponseEntity> => {
+  updateOrderItem = async (request: dtos.UpdateOrderItem, filePath?: string)
+  : Promise<ResponseEntity> => {
     try {
-      const orderItemDb = await this.orderRepository.findByIdOrderItem(orderItem.idOrderItem);
+      const orderItemDb = await this.orderRepository.findByIdOrderItem(request.idOrderItem);
       if (!orderItemDb) {
         return {
           status: StatusValue.Failed,
@@ -232,7 +241,25 @@ export class OrderService {
         };
       }
 
-      const updatedOrderItem = await orderItemDb.update(orderItem);
+      if (filePath && orderItemDb.documentUrl) {
+        const identifier = new URL(orderItemDb.documentUrl).pathname.split("/").pop();
+        const deleteRequest = await deleteFile(identifier!, "order");
+        if (deleteRequest instanceof CustomError) {
+          console.error(deleteRequest);
+          return BuildResponse.buildErrorResponse(
+            StatusCode.InternalErrorServer,
+            { message: "Error while deleting file" }
+          );
+        }
+      }
+
+      if (filePath) {
+        const identifier = crypto.randomUUID();
+        await uploadFile(filePath, identifier, "application/pdf", "order");
+        request.documentUrl = `https://sacmaback.blob.core.windows.net/order/${identifier}.pdf`;
+      }
+
+      const updatedOrderItem = await orderItemDb.update(request);
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, updatedOrderItem);
     } catch (err: any) {
