@@ -766,6 +766,9 @@ export function orderRoute(app: Application) {
  *         idOrder:
  *           type: integer
  *           example: 1
+ *         document:
+ *           type: string
+ *           format: binary
  *         idOrderItemStatus:
  *           type: integer
  *           example: 1
