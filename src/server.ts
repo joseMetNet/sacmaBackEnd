@@ -5,7 +5,6 @@ import morgan from "morgan";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import { EnvConfig, swaggerOptions } from "./config";
-import { authenticationRoutes, employeeRoutes, noveltyRoutes } from "./routes";
 import { supplierRoutes } from "./supplier/supplier.route";
 import { inputRoutes } from "./input";
 import { employeePayrollRoutes } from "./payroll";
@@ -13,9 +12,10 @@ import { machineryRoutes } from "./machinery/machinery.route";
 import { costCenterRoutes } from "./cost-center/cost-center.route";
 import { workTrackingRoute } from "./work-tracking";
 import { quotationRoute } from "./quotation";
-import { noveltyRoutes } from "./novelty";
 import { orderRoute } from "./order";
 import { authenticationRoutes } from "./authentication";
+import { employeeRoutes } from "./routes";
+import { noveltyRoutes } from "./novelty";
 
 class Server {
   private app: Application;

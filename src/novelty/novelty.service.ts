@@ -12,13 +12,14 @@ import {
 } from "../interfaces";
 import sequelize, { Transaction } from "sequelize";
 import { Op } from "sequelize";
-import { deleteDocument, uploadDocument } from "../services/helper";
 import { dbConnection } from "../config";
 import { noveltyRepository } from "./novelty.repository";
 import { EmployeeNovelty } from "./employee-novelty.model";
 import { Periodicity } from "./periodicity.model";
 import { Novelty } from "./novelty.model";
-import { Employee, Position, User } from "../models";
+import { Employee, Position } from "../models";
+import { User } from "../authentication";
+import { deleteDocument, uploadDocument } from "../utils/helper";
 
 export class NoveltyService {
   constructor() { }

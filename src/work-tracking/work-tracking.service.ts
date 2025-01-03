@@ -7,10 +7,11 @@ import * as types from "./work-tracking.interfase";
 import { WorkTrackingRepository } from "./work-tracking.repository";
 import { dbConnection } from "../config";
 import { WorkTracking } from "./work-tracking.model";
-import { Employee, User } from "../models";
+import { Employee } from "../models";
 import { EmployeeRepository } from "../repositories";
 import * as ExcelJS from "exceljs";
 import { NoveltyRepository } from "../novelty";
+import { User } from "../authentication";
 
 export class WorkTrackingService {
   private readonly workTrackingRepository: WorkTrackingRepository;
@@ -394,10 +395,9 @@ export class WorkTrackingService {
         return { ...item, ValorDia: wage, Total: total };
       });
 
-
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("Work Tracking Report");
-      const columns = Object.keys(data[0]);
+      const columns = data[0]? Object.keys(data[0]): [];
       worksheet.columns = columns.map(
         (column) => {
           if (column === "employeeName") {

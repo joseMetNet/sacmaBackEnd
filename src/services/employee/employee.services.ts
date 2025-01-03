@@ -21,6 +21,7 @@ import {
 } from "../../utils/helper";
 import { ResponseEntity } from "../interface";
 import sequelize from "sequelize";
+import { AuthenticationRepository, Role, User } from "../../authentication";
 
 export class EmployeeService {
   constructor(
@@ -77,7 +78,7 @@ export class EmployeeService {
             order: [["firstName", "ASC"]],
             required: false,
             include: [
-              { model: models.Role, required: true},
+              { model: Role, required: true},
               { model: models.IdentityCard, required: false },
               { model: models.City, required: false },
             ],

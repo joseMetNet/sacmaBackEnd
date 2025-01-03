@@ -3,10 +3,10 @@ import { EmployeeNovelty } from "./employee-novelty.model";
 import { CustomError } from "../utils";
 import { Novelty } from "./novelty.model";
 import { Periodicity } from "./periodicity.model";
-import { Employee, Position, User } from "../models";
+import { Employee, Position } from "../models";
 import { ICreateEmployeeNovelty } from "../interfaces";
 import { ModuleNovelty } from "./module-novelty.model";
-import { NoveltyKind } from "./novelty-kind.model";
+import { User } from "../authentication";
 
 export class NoveltyRepository {
   constructor() { }

@@ -1,4 +1,5 @@
-import { Employee, Position, Role, User } from "../../models";
+import { Role, User } from "../../authentication";
+import { Employee, Position } from "../../models";
 import { EmployeeNovelty, Novelty } from "../../novelty";
 import { CustomError } from "../../utils";
 

@@ -1,6 +1,5 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
-import { Employee } from "../models/employee.model";
 import { Novelty } from "./novelty.model";
 import { Periodicity } from "./periodicity.model";
 
@@ -66,11 +65,6 @@ EmployeeNovelty.init({
   paranoid: true
 });
 
-
-EmployeeNovelty.hasOne(Employee, {
-  sourceKey: "idEmployee",
-  foreignKey: "idEmployee"
-});
 
 EmployeeNovelty.hasOne(Novelty, {
   sourceKey: "idNovelty",
