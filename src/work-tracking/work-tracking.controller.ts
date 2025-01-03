@@ -3,6 +3,7 @@ import * as schemas from "./work-tracking.schema";
 import { StatusCode, StatusValue } from "../interfaces";
 import { formatZodError } from "../controllers/utils";
 import { WorkTrackingService } from "./work-tracking.service";
+import { CustomError } from "../utils";
 
 export class WorkTrackingController {
   private readonly workTrackingService: WorkTrackingService;
@@ -68,6 +69,25 @@ export class WorkTrackingController {
       });
   };
 
+  findDailyWorkTrackingByEmployee = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.findDailyWorkTrackingByEmployee.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) }
+        });
+      return;
+    }
+    const response = await this.workTrackingService.findDailyWorkTrackingByEmployee(request.data);
+    res
+      .status(response.code)
+      .json({
+        status: response.status,
+        data: response.data
+      });
+  };
+
   findAllWorkHour = async (req: Request, res: Response): Promise<void> => {
     const response = await this.workTrackingService.findAllWorkHour();
     res
@@ -116,10 +136,26 @@ export class WorkTrackingController {
       });
   };
 
+  generateReport = async (req: Request, res: Response): Promise<void> => {
+    const response = await this.workTrackingService.generateReport();
+    if(response instanceof CustomError) {
+      res
+        .status(response.statusCode)
+        .json({
+          status: StatusValue.Failed,
+          data: response.message
+        });
+      return;
+    }
+    res.setHeader("Content-Disposition", "attachment; filename=\"resumen.xlsx\"");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.end(response, "binary");
+  };
+
   createAll = async (req: Request, res: Response): Promise<void> => {
     let workTrackingArray;
     try {
-      const jsonString = req.body.workTracking.replace(/,\s*$/, '');
+      const jsonString = req.body.workTracking.replace(/,\s*$/, "");
       workTrackingArray = JSON.parse(jsonString);
     } catch (error) {
       console.error("Invalid JSON format", error);
@@ -179,7 +215,71 @@ export class WorkTrackingController {
       });
   };
 
+  updateAll = async (req: Request, res: Response): Promise<void> => {
+    let workTrackingArray;
+    try {
+      const jsonString = req.body.workTracking.replace(/,\s*$/, "");
+      workTrackingArray = JSON.parse(jsonString);
+    } catch (error) {
+      console.error("Invalid JSON format", error);
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: "Invalid JSON format" }
+        });
+      return;
+    }
+
+    const workTracking = workTrackingArray.map((item: any) => {
+      return {
+        idWorkTracking: item.idWorkTracking,
+        idEmployee: item.idEmployee,
+        idCostCenterProject: item.idCostCenterProject,
+        hoursWorked: item.hoursWorked,
+        overtimeHour: item?.overtimeHour,
+        idNovelty: item?.idNovelty,
+        createdAt: item?.createdAt
+      };
+    });
+
+    const request = schemas.updateWorkTrackingArray.safeParse(workTracking);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) }
+        });
+      return;
+    }
+    const response = await this.workTrackingService.updateAll(request.data);
+    res
+      .status(response.code)
+      .json({
+        status: response.status,
+        data: response.data
+      });
+  };
+
   delete = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.deleteWorkTracking.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) }
+        });
+      return;
+    }
+    const response = await this.workTrackingService.delete(request.data);
+    res
+      .status(response.code)
+      .json({
+        status: response.status,
+        data: response.data
+      });
+  };
+
+  deleteById = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.idWorkTracking.safeParse(req.params);
     if (!request.success) {
       res.status(StatusCode.BadRequest)
@@ -189,7 +289,7 @@ export class WorkTrackingController {
         });
       return;
     }
-    const response = await this.workTrackingService.delete(request.data.idWorkTracking);
+    const response = await this.workTrackingService.deleteById(request.data);
     res
       .status(response.code)
       .json({
@@ -197,4 +297,5 @@ export class WorkTrackingController {
         data: response.data
       });
   };
+
 }

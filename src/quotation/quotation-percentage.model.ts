@@ -7,7 +7,7 @@ export class QuotationPercentage extends Model {
   declare administration: number;
   declare unforeseen: number;
   declare utility: number;
-  declare tax: number;
+  declare vat: number;
 }
 
 QuotationPercentage.init({
@@ -32,7 +32,7 @@ QuotationPercentage.init({
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
   },
-  tax: {
+  vat: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
   },

@@ -20,7 +20,7 @@ import {
   uploadImageProfile,
 } from "../../utils/helper";
 import { ResponseEntity } from "../interface";
-import { AuthenticationRepository, Role, User } from "../../authentication";
+import sequelize from "sequelize";
 
 export class EmployeeService {
   constructor(
@@ -47,7 +47,7 @@ export class EmployeeService {
     }
   }
 
-  private async findAll(): Promise<{ rows: models.Employee[]; count: number }> {
+  private async findAll(request: IFindEmployeeRequest): Promise<{ rows: models.Employee[]; count: number }> {
     const employees: { rows: models.Employee[]; count: number } =
       await models.Employee.findAndCountAll({
         attributes: {
@@ -74,9 +74,10 @@ export class EmployeeService {
                 "idIdentityCardExpeditionCity",
               ],
             },
+            order: [["firstName", "ASC"]],
             required: false,
             include: [
-              { model: Role, required: false },
+              { model: models.Role, required: true},
               { model: models.IdentityCard, required: false },
               { model: models.City, required: false },
             ],
@@ -91,6 +92,7 @@ export class EmployeeService {
           { model: models.PensionFund, required: false },
           { model: models.EmployeeRequiredDocument, required: false },
         ],
+        where: request.idRole? sequelize.where(sequelize.col("User.idRole"), request.idRole) : {},
         distinct: true,
       });
     return employees;
@@ -98,7 +100,7 @@ export class EmployeeService {
 
   async findEmployees(request: IFindEmployeeRequest): Promise<ResponseEntity> {
     if (request.pageSize === -1) {
-      const employees = await this.findAll();
+      const employees = await this.findAll(request);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, employees);
     }
     let page = 1;
@@ -112,6 +114,7 @@ export class EmployeeService {
     const limit = pageSize;
     const offset = (page - 1) * pageSize;
     const filter = this.buildFilter(request);
+
     try {
       const employees =
         await models.Employee.findAndCountAll({
@@ -138,6 +141,7 @@ export class EmployeeService {
           ],
           limit: limit,
           offset: offset,
+          order: [[sequelize.literal("[User.firstName]"), "ASC"]],
           distinct: true,
         });
       const totalItems = employees.count;
@@ -150,6 +154,7 @@ export class EmployeeService {
         currentPage,
       });
     } catch (err: any) {
+      console.error(err);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
         message: "Internal error server",
       });
@@ -809,17 +814,37 @@ export class EmployeeService {
 
   private buildFilter(request: IFindEmployeeRequest) {
     let filter = {};
-    if (request.firstName && request.identityCardNumber) {
+
+    if (request.identityCardNumber) {
       filter = {
-        [Op.and]: [
-          { firstName: { [Op.substring]: request.firstName } },
-          { identityCardNumber: { [Op.substring]: request.identityCardNumber } },
-        ],
+        ...filter,
+        identityCardNumber: {
+          [Op.substring]: request.identityCardNumber,
+        },
       };
-    } else if (request.identityCardNumber) {
-      filter = { identityCardNumber: { [Op.substring]: request.identityCardNumber } };
-    } else if (request.firstName) {
-      filter = { firstName: { [Op.substring]: request.firstName } };
+    }
+
+    if (request.firstName) {
+      filter = {
+        ...filter,
+        firstName: {
+          [Op.substring]: request.firstName,
+        },
+      };
+    }
+
+    if (request.idRole) {
+      filter = {
+        ...filter,
+        idPosition: sequelize.where(sequelize.col("User.idRole"), request.idRole),
+      };
+    }
+
+    if (request.status) {
+      filter = {
+        ...filter,
+        status: sequelize.where(sequelize.col("User.status"), request.status),
+      };
     }
     return filter;
   }
@@ -830,6 +855,8 @@ interface IFindEmployeeRequest {
   pageSize?: number;
   firstName?: string;
   identityCardNumber?: string;
+  idRole?: number;
+  status?: boolean;
 }
 
 interface NoveltySummary {

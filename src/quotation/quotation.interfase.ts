@@ -6,6 +6,12 @@ export interface CreateQuotationDTO {
   builderAddress?: string;
   projectName?: string;
   itemSummary?: string;
+  perDiem?: string;
+  sisoNumber?: string;
+  client?: string;
+  executionTime?: string;
+  policy?: string;
+  techicalCondition?: string;
 }
 
 export interface UpdateQuotationDTO {
@@ -17,17 +23,38 @@ export interface UpdateQuotationDTO {
   builderAddress?: string;
   projectName?: string;
   itemSummary?: string;
+  perDiem?: string;
+  sisoNumber?: string;
+  client?: string;
+  executionTime?: string;
+  policy?: string;
+  techicalCondition?: string;
 }
 
 export interface findAllQuotationDTO {
   page?: number;
   pageSize?: number;
   responsible?: string;
+  consecutive?: string;
+  quotationStatus?: string;
+  builder?: string;
 }
 
 export interface findAllQuotationItemDTO {
   page?: number;
   pageSize?: number;
+  idQuotation: number;
+}
+
+export interface findAllQuotationItemDetailDTO {
+  page?: number;
+  pageSize?: number;
+  idQuotationItem: number;
+}
+
+export interface UpdateQuotationStatusDTO {
+	idQuotation: number;
+	idQuotationStatus: number;
 }
 
 export interface CreateQuotationItemDTO {
@@ -35,20 +62,9 @@ export interface CreateQuotationItemDTO {
   item: string;
   technicalSpecification: string;
   unitMeasure: string;
-  quantity: number;
-  unitPrice: number;
-  total?: number;
-}
-
-export interface UpdateQuotationItemDTO {
-  idQuotationItem: number;
-  idQuotation?: number;
-  item?: string;
-  technicalSpecification?: string;
-  unitMeasure?: string;
-  quantity?: number;
-  unitPrice?: number;
-  total?: number;
+  quantity: string;
+  unitPrice?: string;
+  total?: string;
 }
 
 export interface QuotationItemDTO {
@@ -68,22 +84,23 @@ export interface QuotationItemDetailDTO {
   idQuotationItemDetail: number;
   idQuotationItem: number;
   idInput: number;
-  quantity: number;
+  quantity: string;
   totalCost: number;
 }
 
 export interface CreateQuotationItemDetailDTO {
   idQuotationItem: number;
   idInput: number;
-  quantity: number;
+  performance?: string;
+  price?: string;
 }
 
 export interface UpdateQuotationItemDetailDTO {
   idQuotationItemDetail: number;
   idQuotationItem?: number;
   idInput?: number;
-  quantity?: number;
-  totalCost?: number;
+  quantity?: string;
+  totalCost?: string;
 }
 
 export interface QuotationItemDetailFindAllDTO {
@@ -96,7 +113,18 @@ export interface CreateQuotationPercentageDTO {
   administration: number;
   unforeseen: number;
   utility: number;
+  vat: number;
+}
+
+export interface CreateQuotationAdditionalCostDTO {
+  idQuotation: number;
+  perDiem: number;
+  sisoValue: number;
   tax: number;
+  commision: number;
+  pettyCash: number;
+  policy: number;
+  utility: number;
 }
 
 export interface UpdateQuotationPercentageDTO {
@@ -105,15 +133,18 @@ export interface UpdateQuotationPercentageDTO {
   administration?: number;
   unforeseen?: number;
   utility?: number;
-  tax?: number;
+  vat?: number;
 }
 
 export interface UpdateQuotationItemDTO {
   idQuotationItem: number;
   idQuotation?: number;
-  description?: string;
-  quantity?: number;
-  price?: number;
+  item?: string;
+  technicalSpecification?: string;
+  unitMeasure?: string;
+  quantity?: string;
+  unitPrice?: string;
+  total?: string;
 }
 
 export interface QuotationItemDTO {
@@ -151,10 +182,31 @@ export interface FindAllQuotationCommentDTO {
 }
 
 export interface QuotationSummaryDTO {
-  unitValueAIU: number;
-  administration: number;
-  unforeseen: number;
-  utility: number;
-  tax: number;
-  unitValueAIUIncluded: number;
+  unitValueAIU: string;
+  administration: string;
+  unforeseen: string;
+  utility: string;
+  vat: string;
+  unitValueAIUIncluded: string;
+  totalValue: string;
+}
+
+export interface QuotationAdditionalCostSummaryDTO {
+  perDiem: string;
+  sisoValue: string;
+  tax: string;
+  commision: string;
+  pettyCash: string;
+  policy: string;
+  utility: string;
+  directCost: string;
+}
+
+export interface QuotationItemSummaryDTO {
+  idQuotationItem: number;
+  quantity: number;
+  percentage: number;
+  firstSum: number;
+  unitValue: number;
+  totalCost: number;
 }

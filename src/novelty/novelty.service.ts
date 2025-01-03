@@ -1,22 +1,24 @@
-import { CustomError } from "../../utils";
+import { CustomError } from "../utils";
 import * as ExcelJS from "exceljs";
-import { BuildResponse } from "../build-response";
+import { BuildResponse } from "../services/build-response";
 import {
   ResponseEntity
-} from "../interface";
+} from "../services/interface";
 import {
   StatusCode,
   ICreateEmployeeNovelty,
   IUpdateEmployeeNovelty,
   IFindEmployeeRequest
-} from "../../interfaces";
-import * as models from "../../models";
-import { noveltyRepository } from "../../repositories";
+} from "../interfaces";
 import sequelize, { Transaction } from "sequelize";
 import { Op } from "sequelize";
-import { deleteDocument, uploadDocument } from "../../utils/helper";
-import { dbConnection } from "../../config";
-import { User } from "../../authentication";
+import { deleteDocument, uploadDocument } from "../services/helper";
+import { dbConnection } from "../config";
+import { noveltyRepository } from "./novelty.repository";
+import { EmployeeNovelty } from "./employee-novelty.model";
+import { Periodicity } from "./periodicity.model";
+import { Novelty } from "./novelty.model";
+import { Employee, Position, User } from "../models";
 
 export class NoveltyService {
   constructor() { }
@@ -36,23 +38,23 @@ export class NoveltyService {
 
   async createExcelFileBuffer() {
     try {
-      const employeeNovelties = await models.EmployeeNovelty.findAll({
+      const employeeNovelties = await EmployeeNovelty.findAll({
         include: [
           {
-            model: models.Novelty,
+            model: Novelty,
             required: true
           },
           {
-            model: models.Periodicity,
+            model: Periodicity,
             required: false
           },
           {
-            model: models.Employee,
+            model: Employee,
             required: true,
             attributes: ["idPosition", "idUser", "idEmployee"],
             include: [
               {
-                model: models.Position,
+                model: Position,
                 attributes: ["position"],
                 required: false,
               },
@@ -148,9 +150,31 @@ export class NoveltyService {
     }
   }
 
+  async findNoveltiesByModule(module: string): Promise<ResponseEntity> {
+    try {
+      const novelties = await noveltyRepository.findNoveltiesByModule(module);
+      if (novelties instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: novelties.message });
+      }
+
+      const response = novelties.map((novelty) => {
+        const item = novelty.toJSON();
+        return {
+          idNovelty: item.idNovelty,
+          novelty: item.novelty,
+        };
+      });
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
+    } catch (err: any) {
+      console.error(err);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, err);
+    }
+  }
+
   async findNoveltyTypes(): Promise<ResponseEntity> {
     try {
-      const novelties = await models.Novelty.findAll();
+      const novelties = await Novelty.findAll();
       if (novelties instanceof CustomError) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: novelties.message });
       }
@@ -211,7 +235,7 @@ export class NoveltyService {
     }
   }
 
-  private async uploadDocument(document: string, employeeNovelty: models.EmployeeNovelty, transaction: Transaction) {
+  private async uploadDocument(document: string, employeeNovelty: EmployeeNovelty, transaction: Transaction) {
     const identifier = crypto.randomUUID();
     if (employeeNovelty.documentUrl != null) {
       const deleteBlobResponse = await deleteDocument(employeeNovelty.documentUrl.split("/").pop() as string);
@@ -263,7 +287,7 @@ export class NoveltyService {
 
   async findPeriodicities(): Promise<ResponseEntity> {
     try {
-      const periodicities = await models.Periodicity.findAll();
+      const periodicities = await Periodicity.findAll();
       if (periodicities instanceof CustomError) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: periodicities.message });
       }
@@ -291,7 +315,7 @@ export class NoveltyService {
 
   private buildUpdateEmployeeNovelty(
     employeeNovelty: IUpdateEmployeeNovelty,
-    dbEmployee: models.EmployeeNovelty
+    dbEmployee: EmployeeNovelty
   ) {
     return {
       idNovelty: employeeNovelty.idNovelty ?? dbEmployee.idNovelty,

@@ -1,11 +1,11 @@
 import { WorkTracking } from "./work-tracking.model";
 import * as dtos from "./work-tracking.interfase";
-import { Employee, Novelty } from "../models";
+import { Employee, User } from "../models";
 import { CostCenterProject } from "../cost-center/cost-center-project.model";
 import { WorkHour } from "./work-hour.model";
 import { dbConnection } from "../config";
 import { QueryTypes } from "sequelize";
-import { User } from "../authentication";
+import { Novelty } from "../novelty";
 
 export class WorkTrackingRepository {
 
@@ -219,7 +219,7 @@ export class WorkTrackingRepository {
       ],
       limit,
       offset,
-      order: [["createdAt", "DESC"]]
+      order: [[{model: Employee, as: "Employee"}, {model: User, as: "User"}, "firstName", "DESC"]]
     });
     return workTrackings;
   }
@@ -253,6 +253,15 @@ export class WorkTrackingRepository {
   async delete(id: number): Promise<number> {
     return await WorkTracking.destroy({
       where: { idWorkTracking: id }
+    });
+  }
+
+  // find work tracking bu a list of ids
+  async findAllByIds(ids: number[]): Promise<WorkTracking[]> {
+    return await WorkTracking.findAll({
+      where: {
+        idWorkTracking: ids
+      }
     });
   }
 }

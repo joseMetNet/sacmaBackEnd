@@ -52,9 +52,27 @@ export interface WorkTrackingByEmployeeDTO {
 export interface FindAllByEmployeeDTO {
   page?: number;
   pageSize?: number;
-  idEmployee: number;
+  idEmployee?: number;
   idCostCenterProject?: number;
   projectName?: string;
+  createdAt?: string;
+}
+
+export interface FindAllDailyWorkTrackingDTO {
+  page?: number;
+  pageSize?: number;
+  year?: string;
+  month?: string;
+  createdAt?: string;
+}
+
+
+export interface DeleteWorkTrackingDTO {
+  createdAt: string;
+}
+
+export interface DeleteById {
+  idWorkTracking: number;
 }
 
 export interface UpdateWorkTrackingDTO {

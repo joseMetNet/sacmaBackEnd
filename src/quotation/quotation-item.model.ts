@@ -8,9 +8,9 @@ export class QuotationItem extends Model {
   declare item: string;
   declare technicalSpecification: string;
   declare unitMeasure: string;
-  declare quantity: number;
-  declare unitPrice: number;
-  declare total: number;
+  declare quantity: string;
+  declare unitPrice: string;
+  declare total: string;
 }
 
 QuotationItem.init(
@@ -42,11 +42,11 @@ QuotationItem.init(
     },
     unitPrice: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: false,
+      allowNull: true,
     },
     total: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: false,
+      allowNull: true,
     },
   },
   {

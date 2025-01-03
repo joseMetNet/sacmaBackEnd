@@ -5,6 +5,8 @@ export const employeeRequestSchema = z.object({
   pageSize: z.coerce.number().optional(),
   firstName: z.string().optional(),
   identityCardNumber: z.string().optional(),
+  idRole: z.coerce.number().optional(),
+  status: z.coerce.boolean().optional(),
 });
 
 export const updateEmployeeSchema = z.object({

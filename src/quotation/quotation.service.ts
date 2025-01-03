@@ -2,7 +2,7 @@ import { QuotationRepository } from "./quotation.repository";
 import * as dtos from "./quotation.interfase";
 import { StatusCode } from "../interfaces";
 import { Input } from "../input/input.model";
-import { CustomError } from "../utils";
+import { CustomError, formatDate, getNextMonth } from "../utils";
 import { ResponseEntity } from "../services/interface";
 import { BuildResponse } from "../services";
 import { dbConnection } from "../config";
@@ -10,6 +10,11 @@ import { Quotation } from "./quotation.model";
 import { QuotationPercentage } from "./quotation-percentage.model";
 import sequelize from "sequelize";
 import { QuotationComment } from "./quotation-comment.model";
+import { QuotationItemDetail } from "./quotation-item-detail.model";
+import { QuotationItem } from "./quotation-item.model";
+import { readFileSync } from "fs";
+import PizZip from "pizzip";
+import Docxtemplater from "docxtemplater";
 
 export class QuotationService {
 
@@ -27,7 +32,7 @@ export class QuotationService {
         idQuotationStatus: 1,
       };
       const quotation = await this.quotationRepository.create(quotationData, transaction);
-      const consecutive = `COT SACIPR Nr. ${quotation.idQuotation}-${new Date().getFullYear()}`;
+      const consecutive = `COT SACIPR No. ${quotation.idQuotation}-${new Date().getFullYear()}`;
       quotation.consecutive = consecutive;
       await quotation.save({ transaction });
 
@@ -40,12 +45,44 @@ export class QuotationService {
     }
   };
 
+  private buildEmptyQuotationReport = () => {
+    return {
+      quotationSummary: {
+        unitValueAIU: "0",
+        administration: "0",
+        unforeseen: "0",
+        utility: "0",
+        vat: "0",
+        unitValueAIUIncluded: "0",
+        totalValue: "0"
+      },
+      quotationAdditionalCost: {
+        perDiem: "0",
+        sisoValue: "0",
+        tax: "0",
+        commision: "0",
+        pettyCash: "0",
+        policy: "0",
+        utility: "0",
+        directCost: "0",
+      },
+      summaryByItem: []
+    };
+  };
+
   findQuotationById = async (id: number): Promise<ResponseEntity> => {
     try {
+
       const quotation = await this.quotationRepository.findById(id);
       if (!quotation) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
       }
+
+      let quotationReport = await this.buildQuotationReport(quotation);
+      if (quotationReport instanceof CustomError) {
+        quotationReport = this.buildEmptyQuotationReport();
+      }
+
       const jsonQuotation = quotation.toJSON();
       const responsable = jsonQuotation.Employee.User.firstName
         + " " + jsonQuotation.Employee.User.lastName;
@@ -53,7 +90,9 @@ export class QuotationService {
         idQuotation: quotation.idQuotation,
         name: quotation.name,
         responsable,
+        consecutive: quotation.consecutive,
         QuotationPercentage: jsonQuotation.QuotationPercentage,
+        QuotationAdditionalCost: jsonQuotation.QuotationAdditionalCost,
         QuotationStatus: jsonQuotation.QuotationStatus,
         builder: quotation.builder,
         builderAddress: quotation.builderAddress,
@@ -61,12 +100,79 @@ export class QuotationService {
         itemSummary: quotation.itemSummary,
         totalCost: quotation.totalCost,
         QuotationComments: jsonQuotation.QuotationComments,
-        QuotationReport: await this.buildQuotationReport(quotation),
+        QuotationReport: quotationReport.quotationSummary,
+        QuotationAdditionalCostReport: quotationReport.quotationAdditionalCost,
       };
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
     } catch (error) {
       console.error(error);
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get quotation" });
+    }
+  };
+
+  generateQuotationDocx = async (id: number): Promise<ResponseEntity | Buffer> => {
+    try {
+      const quotationResponse = await this.findQuotationById(id);
+      const quotationItemsResponse = await this.findAllQuotationItems({ idQuotation: id, page: 1, pageSize: 100 });
+      const templatePath = "template/cotizacion.docx";
+      const content = readFileSync(templatePath, "binary");
+      if (quotationResponse.code !== 200 && quotationResponse) {
+        return quotationResponse;
+      }
+
+      const zip = new PizZip(content);
+      const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        delimiters: { start: "{{", end: "}}" },
+      });
+      const quotation = quotationResponse as ResponseEntity;
+      const quotationItems = quotationItemsResponse as ResponseEntity;
+      const additionalRepport = quotation.data ? (quotation.data as any).QuotationReport : {};
+      // concat all item names 
+      const itemNames = (quotationItems.data as any).data
+        .map((item: QuotationItem) => item.item)
+        .join(", ");
+
+      const quotationItemsData = (quotationItems.data as any).data;
+      quotationItemsData.forEach((item: QuotationItem) => {
+        item.unitPrice = parseFloat(item.unitPrice).toFixed(2);
+        item.total = parseFloat(item.total).toFixed(2);
+      });
+      const technicalSpecifications = (quotationItems.data as any).data
+        .map((item: QuotationItem) => item.technicalSpecification)
+        .join(", ");
+
+      const currencyFormatter = new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+      });
+
+      const response = {
+        items: (quotationItems.data as any).data,
+        name: (quotation.data as any)?.name ?? "",
+        itemNames,
+        technicalSpecifications,
+        date: formatDate(new Date().toISOString().split("T")[0]),
+        dateUntil: formatDate(getNextMonth(new Date().toISOString().split("T")[0])),
+        consecutive: (quotation.data as any)?.consecutive ?? "",
+        referencia: "Impermeabilización Aleros",
+        project: (quotation.data as any)?.projectName ?? "",
+        unitValueAIU: currencyFormatter.format(additionalRepport.unitValueAIU),
+        administration: currencyFormatter.format(additionalRepport.administration),
+        unforeseen: currencyFormatter.format(additionalRepport.unforeseen),
+        utility: currencyFormatter.format(additionalRepport.utility),
+        vat: currencyFormatter.format(additionalRepport.vat),
+        unitValueAIUIncluded: currencyFormatter.format(additionalRepport.unitValueAIUIncluded),
+        totalValue: currencyFormatter.format(additionalRepport.totalValue),
+      };
+
+      doc.render(response);
+      const buffer = doc.getZip().generate({ type: "nodebuffer" });
+      return buffer;
+    } catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get quotation report" });
     }
   };
 
@@ -95,6 +201,8 @@ export class QuotationService {
           idQuotation: quotation.idQuotation,
           name: quotation.name,
           responsable: responsable,
+          consecutive: quotation.consecutive,
+          idEmployee: jsonQuotation.Employee.idEmployee,
           QuotationPercentage: jsonQuotation.QuotationPercentage,
           QuotationStatus: jsonQuotation.QuotationStatus,
           builder: quotation.builder,
@@ -103,6 +211,12 @@ export class QuotationService {
           itemSummary: quotation.itemSummary,
           totalCost: quotation.totalCost,
           QuotationComments: jsonQuotation.QuotationComments,
+          createdAt: quotation.createdAt,
+          updatedAt: quotation.updatedAt,
+          client: quotation.client,
+          executionTime: quotation.executionTime,
+          policy: quotation.policy,
+          techicalCondition: quotation.techicalCondition,
         };
       });
 
@@ -183,6 +297,21 @@ export class QuotationService {
     }
   };
 
+  updateQuotationStatus = async (quotationStatusData: dtos.UpdateQuotationStatusDTO): Promise<ResponseEntity> => {
+    try {
+      const quotation = await this.quotationRepository.findById(quotationStatusData.idQuotation);
+      if (!quotation) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
+      }
+      quotation.idQuotationStatus = quotationStatusData.idQuotationStatus;
+      const quotationDb = await quotation.save();
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotationDb);
+    } catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to update quotation status" });
+    }
+  };
+
   findAllQuotationItems = async (request: dtos.findAllQuotationItemDTO): Promise<ResponseEntity> => {
     try {
       let page = 1;
@@ -195,9 +324,35 @@ export class QuotationService {
       }
       const limit = pageSize;
       const offset = (page - 1) * pageSize;
-      const quotationItems = await this.quotationRepository.findAllQuotationItem({}, limit, offset);
+      const filter = this.buildQuotationItemFilter(request);
+      const quotation = await this.quotationRepository.findById(request.idQuotation);
+      if (!quotation) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
+      }
+
+      const quotationItems = await this.quotationRepository.findAllQuotationItem(filter, limit, offset);
+      const summary = await this.buildQuotationReport(quotation);
+
+      if (summary instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: summary.message });
+      }
+      const summaryByItem = summary.summaryByItem;
+      const rows = quotationItems.rows.map((item) => {
+        const summaryItem = summaryByItem.find((summaryItem) => summaryItem.idQuotationItem === item.idQuotationItem);
+        return {
+          idQuotationItem: item.idQuotationItem,
+          idQuotation: item.idQuotation,
+          item: item.item,
+          technicalSpecification: item.technicalSpecification,
+          unitMeasure: item.unitMeasure,
+          quantity: item.quantity,
+          unitPrice: summaryItem?.unitValue,
+          total: summaryItem?.totalCost,
+          Quotation: item.toJSON().Quotation ?? {},
+        };
+      });
       const response = {
-        data: quotationItems.rows,
+        data: rows,
         totalItems: quotationItems.count,
         currentPage: page,
         totalPages: Math.ceil(quotationItems.count / pageSize),
@@ -218,7 +373,7 @@ export class QuotationService {
 
       const quantity = quotationItemData.quantity ?? data.quantity;
       const unitPrice = quotationItemData.unitPrice ?? data.unitPrice;
-      quotationItemData.total = quantity * unitPrice;
+      quotationItemData.total = String(parseFloat(quantity) * parseFloat(unitPrice));
 
       const [updatedCount, updatedQuotationItems] = await this.quotationRepository.updateQuotationItem(quotationItemData);
       if (updatedCount > 0) {
@@ -260,7 +415,7 @@ export class QuotationService {
     }
   };
 
-  findAllQuotationItemDetails = async (request: dtos.findAllQuotationItemDTO): Promise<ResponseEntity> => {
+  findAllQuotationItemDetails = async (request: dtos.findAllQuotationItemDetailDTO): Promise<ResponseEntity> => {
     try {
       let page = 1;
       if (request.page) {
@@ -272,7 +427,8 @@ export class QuotationService {
       }
       const limit = pageSize;
       const offset = (page - 1) * pageSize;
-      const quotationItems = await this.quotationRepository.findAllQuotationItemDetail({}, limit, offset);
+      const filter = this.buildQuotationItemDetailFilter(request);
+      const quotationItems = await this.quotationRepository.findAllQuotationItemDetail(filter, limit, offset);
       if (quotationItems instanceof CustomError) {
         return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: quotationItems.message });
       }
@@ -289,17 +445,28 @@ export class QuotationService {
     }
   };
 
-  createQuotationItemDetail = async (quotationItemDetailData: dtos.CreateQuotationItemDetailDTO): Promise<ResponseEntity> => {
+  createQuotationItemDetail = async (request: dtos.CreateQuotationItemDetailDTO): Promise<ResponseEntity> => {
     try {
-      const input = await Input.findOne({ where: { idInput: quotationItemDetailData.idInput } });
+      const input = await Input.findOne({ where: { idInput: request.idInput } });
       if (!input) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Input not found" });
       }
+      const quotationItem = await this.quotationRepository.findQuotationItemById(request.idQuotationItem);
+      if (!quotationItem) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation item not found" });
+      }
 
       const data = {
-        ...quotationItemDetailData,
-        totalCost: parseInt(input.cost) * quotationItemDetailData.quantity,
+        ...request,
+        quantity: Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(input.performance)),
+        totalCost: parseFloat((parseFloat(input.cost) * Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(input.performance))).toFixed(2)),
       };
+
+      if (request.performance && request.price) {
+        data.quantity = Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(request.performance));
+        data.totalCost = parseFloat((parseFloat(request.price) * Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(request.performance))).toFixed(2));
+      }
+
       const quotationItemDetail = await this.quotationRepository.createQuotationItemDetail(data);
       return BuildResponse.buildSuccessResponse(201, quotationItemDetail);
     } catch (error) {
@@ -322,7 +489,7 @@ export class QuotationService {
         }
         const quantity = quotationItemDetailData.quantity ? quotationItemDetailData.quantity : quotationItemDetail.quantity;
         quotationItemDetailData.totalCost =
-          parseInt(input.cost) * quantity;
+          String(Math.ceil(parseInt(input.cost) * parseFloat(quantity)));
       }
       quotationItemDetailData.totalCost = quotationItemDetailData.totalCost || quotationItemDetail.totalCost;
 
@@ -354,11 +521,45 @@ export class QuotationService {
 
   createQuotationPercentage = async (quotationPercentageData: dtos.CreateQuotationPercentageDTO): Promise<ResponseEntity> => {
     try {
-      const quotationPercentage = await this.quotationRepository.createQuotationPercentage(quotationPercentageData);
+      const quotationPercentage = await this.quotationRepository.findQuotationPercentageByQuotationId(quotationPercentageData.idQuotation);
+      if (!quotationPercentage) {
+        const response = await this.quotationRepository.createQuotationPercentage(quotationPercentageData);
+        return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
+      }
+      quotationPercentage.administration = quotationPercentageData.administration;
+      quotationPercentage.unforeseen = quotationPercentageData.unforeseen;
+      quotationPercentage.utility = quotationPercentageData.utility;
+      quotationPercentage.vat = quotationPercentageData.vat;
+      await quotationPercentage.save();
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotationPercentage);
     } catch (error) {
       console.error(error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to create quotation percentage" });
+    }
+  };
+
+  createQuotationAdditionalCost = async (request: dtos.CreateQuotationAdditionalCostDTO): Promise<ResponseEntity> => {
+    try {
+      const quotationAdditionalCost = await this.quotationRepository.findQuotationAdditionalCostById(request.idQuotation);
+      console.log(quotationAdditionalCost);
+      if (!quotationAdditionalCost) {
+        const response = await this.quotationRepository.createQuotationAdditionalCost(request);
+        return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
+      }
+      quotationAdditionalCost.perDiem = request.perDiem;
+      quotationAdditionalCost.sisoValue = request.sisoValue;
+      quotationAdditionalCost.commision = request.commision;
+      quotationAdditionalCost.pettyCash = request.pettyCash;
+      quotationAdditionalCost.policy = request.policy;
+      quotationAdditionalCost.tax = request.tax;
+      quotationAdditionalCost.utility = request.utility;
+
+      await quotationAdditionalCost.save();
+
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotationAdditionalCost);
+    } catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to create quotation additional cost" });
     }
   };
 
@@ -471,7 +672,7 @@ export class QuotationService {
     quotationPercentage.administration = quotationPercentageData.administration ?? quotationPercentage.administration;
     quotationPercentage.unforeseen = quotationPercentageData.unforeseen ?? quotationPercentage.unforeseen;
     quotationPercentage.utility = quotationPercentageData.utility ?? quotationPercentage.utility;
-    quotationPercentage.tax = quotationPercentageData.tax ?? quotationPercentage.tax;
+    quotationPercentage.vat = quotationPercentageData.vat ?? quotationPercentage.vat;
     return quotationPercentage;
   };
 
@@ -481,6 +682,24 @@ export class QuotationService {
       where = {
         ...where,
         responsible: sequelize.where(sequelize.col("Employee.User.firstName"), "LIKE", `%${filter.responsible}%`),
+      };
+    }
+    if (filter.consecutive) {
+      where = {
+        ...where,
+        consecutive: sequelize.where(sequelize.col("consecutive"), "LIKE", `%${filter.consecutive}%`),
+      };
+    }
+    if (filter.quotationStatus) {
+      where = {
+        ...where,
+        quotationStatus: sequelize.where(sequelize.col("QuotationStatus.quotationStatus"), "LIKE", `%${filter.quotationStatus}%`),
+      };
+    }
+    if (filter.builder) {
+      where = {
+        ...where,
+        builder: sequelize.where(sequelize.col("builder"), "LIKE", `%${filter.builder}%`),
       };
     }
     return where;
@@ -497,23 +716,137 @@ export class QuotationService {
     return where;
   };
 
-  private buildQuotationReport = async (quotation: Quotation):
-    Promise<dtos.QuotationSummaryDTO | CustomError> => {
+  private buildQuotationItemFilter = (filter: dtos.findAllQuotationItemDTO): { [key: string]: any } => {
+    let where: { [key: string]: any } = {};
+    if (filter.idQuotation) {
+      where = {
+        ...where,
+        idQuotation: filter.idQuotation,
+      };
+    }
+    return where;
+  };
+
+  private buildQuotationItemDetailFilter = (filter: dtos.findAllQuotationItemDetailDTO): { [key: string]: any } => {
+    let where: { [key: string]: any } = {};
+    if (filter.idQuotationItem) {
+      where = {
+        ...where,
+        idQuotationItem: filter.idQuotationItem,
+      };
+    }
+    return where;
+  };
+
+  private buildQuotationReport = async (quotationIn: Quotation):
+    Promise<
+      {
+        quotationSummary: dtos.QuotationSummaryDTO,
+        quotationAdditionalCost: dtos.QuotationAdditionalCostSummaryDTO,
+        summaryByItem: dtos.QuotationItemSummaryDTO[]
+      } |
+      CustomError
+    > => {
     try {
-      const quotationItems = await this.quotationRepository.findAllQuotationItem({ idQuotation: quotation.idQuotation }, 100, 0);
-      const percentage = await this.quotationRepository.findQuotationPercentageById(quotation.idQuotation) as QuotationPercentage;
-      const totalCost = quotationItems.rows.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
-      const response = {
-        unitValueAIU: 1,
-        administration: totalCost * percentage.administration,
-        unforeseen: totalCost * percentage.unforeseen,
-        utility: totalCost * percentage.utility,
-        tax: totalCost * percentage.tax,
-        unitValueAIUIncluded: (percentage.administration + percentage.unforeseen + percentage.utility + percentage.tax) * totalCost,
+      const [quotationItems, percentage, additionalCosts] = await Promise.all([
+        this.quotationRepository.findAllQuotationItem({ idQuotation: quotationIn.idQuotation }, 100, 0),
+        this.quotationRepository.findQuotationPercentageByQuotationId(quotationIn.idQuotation) as Promise<QuotationPercentage>,
+        this.quotationRepository.findQuotationAdditionalCostByQuotationId(quotationIn.idQuotation)
+      ]);
+
+      const quotation = await this.quotationRepository.findById(quotationIn.idQuotation);
+      if (!quotation || !quotationItems) {
+        return CustomError.notFound("Quotation not found");
+      }
+
+      const quotationItemsIds = quotationItems.rows.map((item) => item.idQuotationItem);
+      const quotationItemDetails = await QuotationItemDetail.findAll({ where: { idQuotationItem: quotationItemsIds } });
+
+      if (!percentage || !quotationItems || !additionalCosts) {
+        return this.buildEmptyQuotationReport();
+      }
+
+      let total = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost), 0);
+      total = total + additionalCosts.perDiem + additionalCosts.sisoValue;
+
+      const otherCost = {
+        impuesto: additionalCosts.tax * total * 1.5390,
+        poliza: additionalCosts.policy * total * 1.5390,
+        comision: additionalCosts.commision * total * 1.3317,
+        caja_menor: additionalCosts.pettyCash * total * 1.5390,
+        sisos: additionalCosts.sisoValue,
+        perDiem: additionalCosts.perDiem,
+        utility: additionalCosts.utility
       };
 
-      console.log(`totalCost: ${totalCost}`);
-      return Promise.resolve(response);
+      const totalByQuotationItem = quotationItemDetails.reduce((acc: { [key: number]: number }, item) => {
+        acc[item.idQuotationItem] = acc[item.idQuotationItem] ? acc[item.idQuotationItem] + parseFloat(item.totalCost) : parseFloat(item.totalCost);
+        return acc;
+      }, {});
+      const sumTotalItems = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost), 0);
+
+      // get the percentage of each item in the total cost
+      const summary = Object.keys(totalByQuotationItem).map((key: string) => {
+        return {
+          idQuotationItem: key,
+          totalCost: totalByQuotationItem[parseInt(key)],
+          percentage: (totalByQuotationItem[parseInt(key)] / sumTotalItems) * 100,
+        };
+      });
+
+      percentage.administration = percentage.administration ? parseFloat(String(percentage.administration)) : 0;
+      percentage.unforeseen = percentage.unforeseen ? parseFloat(String(percentage.unforeseen)) : 0;
+      percentage.utility = percentage.utility ? parseFloat(String(percentage.utility)) : 0;
+      percentage.vat = percentage.vat ? parseFloat(String(percentage.vat)) : 0;
+
+      const sumPercents = parseFloat(String(percentage.administration)) +
+        parseFloat(String(percentage.unforeseen)) +
+        parseFloat(String(percentage.utility)) +
+        parseFloat(String(percentage.utility * percentage.vat)) + 1;
+
+      const subTotal = total + otherCost.impuesto + otherCost.poliza + otherCost.comision + otherCost.caja_menor;
+      const finalTotal = subTotal * otherCost.utility + subTotal;
+
+      const summaryByItem = summary.map((item) => {
+        const quotationItem = quotationItems.rows.find((quotationItem) => quotationItem.idQuotationItem === parseInt(item.idQuotationItem))! as QuotationItem;
+        const unitValue = (finalTotal * (item.percentage / 100)) / parseFloat(quotationItem.quantity) / parseFloat(sumPercents.toFixed(6));
+        return {
+          idQuotationItem: parseInt(item.idQuotationItem),
+          quantity: parseFloat(quotationItem?.quantity),
+          percentage: item.percentage,
+          firstSum: quotationItem?.quantity ? (finalTotal * (item.percentage / 100)) / parseInt(quotationItem.quantity) : 0,
+          unitValue,
+          totalCost: parseFloat(quotationItem.quantity) * unitValue,
+        };
+      });
+
+      const unitValueAIU = summaryByItem.reduce((acc, item) => acc + item.totalCost, 0);
+
+      const quotationSummary = {
+        unitValueAIU: String(unitValueAIU),
+        administration: String(unitValueAIU * percentage.administration),
+        unforeseen: String(unitValueAIU * percentage.unforeseen),
+        utility: String(unitValueAIU * percentage.utility),
+        vat: String((unitValueAIU * percentage.utility) * percentage.vat),
+        unitValueAIUIncluded: String((unitValueAIU + (percentage.administration + percentage.unforeseen + percentage.utility) * unitValueAIU)
+          + (unitValueAIU * percentage.utility) * percentage.vat),
+        totalValue: String((unitValueAIU + (percentage.administration + percentage.unforeseen + percentage.utility) * unitValueAIU)
+          + (unitValueAIU * percentage.utility) * percentage.vat)
+      };
+
+      const directCost = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost)*parseFloat(item.quantity), 0);
+
+      const quotationAdditionalCost = {
+        perDiem: String(otherCost.perDiem),
+        sisoValue: String(otherCost.sisos),
+        tax: String(otherCost.impuesto),
+        commision: String(otherCost.comision),
+        pettyCash: String(otherCost.caja_menor),
+        policy: String(otherCost.poliza),
+        utility: String(otherCost.utility*subTotal),
+        directCost: String(directCost),
+      };
+      return { quotationSummary, quotationAdditionalCost, summaryByItem };
     } catch (error) {
       console.error(error);
       return CustomError.internalServer("Failed to build quotation report");

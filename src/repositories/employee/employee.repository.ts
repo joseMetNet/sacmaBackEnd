@@ -1,5 +1,5 @@
-import { Role, User } from "../../authentication";
-import { Employee, EmployeeNovelty, Novelty, Position } from "../../models";
+import { Employee, Position, Role, User } from "../../models";
+import { EmployeeNovelty, Novelty } from "../../novelty";
 import { CustomError } from "../../utils";
 
 export class EmployeeRepository {
@@ -9,7 +9,7 @@ export class EmployeeRepository {
   async findEmployeeAndRoles(): Promise<Employee[] | CustomError> {
     try {
       const employees = await Employee.findAll({
-        attributes: [],
+        attributes: ["baseSalary"],
         include: [
           {
             model: User,

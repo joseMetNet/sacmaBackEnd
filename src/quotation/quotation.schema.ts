@@ -7,6 +7,12 @@ export const CreateQuotationSchema = z.object({
   builderAddress: z.string().optional(),
   projectName: z.string().optional(),
   itemSummary: z.string().optional(),
+  perDiem: z.string().optional(),
+  sisoNumber: z.string().optional(),
+  client: z.string().optional(),
+  executionTime: z.string().optional(),
+  policy: z.string().optional(),
+  techicalCondition: z.string().optional(),
 });
 
 export const UpdateQuotationSchema = z.object({
@@ -18,6 +24,12 @@ export const UpdateQuotationSchema = z.object({
   builderAddress: z.string().optional(),
   projectName: z.string().optional(),
   itemSummary: z.string().optional(),
+  perDiem: z.string().optional(),
+  sisoNumber: z.string().optional(),
+  client: z.string().optional(),
+  executionTime: z.string().optional(),
+  policy: z.string().optional(),
+  techicalCondition: z.string().optional(),
 });
 
 export const QuotationSchema = z.object({
@@ -28,16 +40,26 @@ export const FindAllQuotationSchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
   responsible: z.string().optional(),
+  consecutive: z.string().optional(),
+  quotationStatus: z.string().optional(),
+  builder: z.string().optional(),
 });
 
 export const FindAllQuotationItemSchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
+  idQuotation: z.coerce.number(),
+});
+
+export const UpdateQuotationStatusSchema = z.object({
+  idQuotation: z.coerce.number(),
+  idQuotationStatus: z.coerce.number(),
 });
 
 export const FindAllQuotationItemDetailSchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
+  idQuotationItem: z.coerce.number(),
 });
 
 export const CreateQuotationItemSchema = z.object({
@@ -45,9 +67,9 @@ export const CreateQuotationItemSchema = z.object({
   item: z.string(),
   technicalSpecification: z.string(),
   unitMeasure: z.string(),
-  quantity: z.coerce.number(),
-  unitPrice: z.coerce.number(),
-  total: z.coerce.number().optional(),
+  quantity: z.string(),
+  unitPrice: z.string().optional(),
+  total: z.string().optional(),
 });
 
 export const UpdateQuotationItemSchema = z.object({
@@ -56,9 +78,9 @@ export const UpdateQuotationItemSchema = z.object({
   item: z.string().optional(),
   technicalSpecification: z.string().optional(),
   unitMeasure: z.string().optional(),
-  quantity: z.coerce.number().optional(),
-  unitPrice: z.coerce.number().optional(),
-  total: z.coerce.number().optional(),
+  quantity: z.string().optional(),
+  unitPrice: z.string().optional(),
+  total: z.string().optional(),
 });
 
 export const QuotationItemSchema = z.object({
@@ -73,15 +95,16 @@ export const QuotationItemDetailSchema = z.object({
 export const CreateQuotationItemDetailSchema = z.object({
   idQuotationItem: z.coerce.number(),
   idInput: z.coerce.number(),
-  quantity: z.coerce.number(),
+  performance: z.string().optional(),
+  price: z.string().optional(),
 });
 
 export const UpdateQuotationItemDetailSchema = z.object({
   idQuotationItemDetail: z.coerce.number(),
   idQuotationItem: z.coerce.number().optional(),
   idInput: z.coerce.number().optional(),
-  quantity: z.coerce.number().optional(),
-  totalCost: z.coerce.number().optional(),
+  quantity: z.string().optional(),
+  totalCost: z.string().optional(),
 });
 
 export const QuotationItemDetailFindAllSchema = z.object({
@@ -94,7 +117,18 @@ export const CreateQuotationPercentageSchema = z.object({
   administration: z.coerce.number(),
   unforeseen: z.coerce.number(),
   utility: z.coerce.number(),
+  vat: z.coerce.number(),
+});
+
+export const CreateQuotationAdditionalCostSchema = z.object({
+  idQuotation: z.coerce.number(),
+  perDiem: z.coerce.number(),
+  sisoValue: z.coerce.number(),
   tax: z.coerce.number(),
+  commision: z.coerce.number(),
+  pettyCash: z.coerce.number(),
+  policy: z.coerce.number(),
+  utility: z.coerce.number(),
 });
 
 export const UpdateQuotationPercentageSchema = z.object({
@@ -103,7 +137,7 @@ export const UpdateQuotationPercentageSchema = z.object({
   administration: z.coerce.number().optional(),
   unforeseen: z.coerce.number().optional(),
   utility: z.coerce.number().optional(),
-  tax: z.coerce.number().optional(),
+  vat: z.coerce.number().optional(),
 });
 
 export const CreateQuotationCommentSchema = z.object({

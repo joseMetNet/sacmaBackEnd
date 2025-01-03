@@ -61,6 +61,30 @@ export class QuotationController {
     });
   };
 
+  generateQuotationDocx = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.QuotationSchema.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+    const response = await this.quotationService.generateQuotationDocx(request.data.idQuotation);
+    if (response instanceof Buffer) {
+      res.set({
+        "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "Content-Disposition": "attachment; filename=\"COT_SACIPR_Generado.docx\"",
+      });
+      res.send(response);
+    } else {
+      res.status(response.code).json({
+        status: response.status,
+        data: response.data,
+      });
+    }
+  };
+
   updateQuotationItem = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.UpdateQuotationItemSchema.safeParse(req.body);
     if (!request.success) {
@@ -188,6 +212,22 @@ export class QuotationController {
     });
   };
 
+  updateQuotationStatus = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.UpdateQuotationStatusSchema.safeParse(req.body);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+    const response = await this.quotationService.updateQuotationStatus(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data,
+    });
+  };
+
   findAllQuotationItems = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.FindAllQuotationItemSchema.safeParse(req.query);
     if (!request.success) {
@@ -288,8 +328,8 @@ export class QuotationController {
     });
   };
 
-  updateQuotationPercentage = async (req: Request, res: Response): Promise<void> => {
-    const request = schemas.UpdateQuotationPercentageSchema.safeParse(req.body);
+  createQuotationAdditionalCost = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.CreateQuotationAdditionalCostSchema.safeParse(req.body);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -298,7 +338,7 @@ export class QuotationController {
       return;
     }
 
-    const response = await this.quotationService.updateQuotationPercentage(request.data);
+    const response = await this.quotationService.createQuotationAdditionalCost(request.data);
     res.status(response.code).json({
       status: response.status,
       data: response.data,

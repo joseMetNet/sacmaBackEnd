@@ -9,7 +9,7 @@ import { Transaction } from "sequelize";
 import { QuotationPercentage } from "./quotation-percentage.model";
 import { QuotationStatus } from "./quotation-status.model";
 import { QuotationComment } from "./quotation-comment.model";
-import { User } from "../authentication";
+import { QuotationAdditionalCost } from "./quotation-additional-costs.model";
 
 export class QuotationRepository {
   async create(
@@ -20,45 +20,64 @@ export class QuotationRepository {
   }
 
   async findById(id: number): Promise<Quotation | null> {
-    return await Quotation.findByPk(id, 
+    return await Quotation.findByPk(id,
       {
         include: [
           {
             model: Employee,
             attributes: ["idEmployee"],
             include: [
-              { 
-                model: User, 
-                attributes: ["firstName", "lastName"], 
+              {
+                model: User,
+                attributes: ["firstName", "lastName"],
               },
             ],
           },
-          { model: QuotationPercentage},
+          { model: QuotationPercentage },
           { model: QuotationStatus },
           { model: QuotationComment },
+          { model: QuotationAdditionalCost}
         ],
       }
     );
   }
 
+  async findQuotationAdditionalCostById(idQuotation: number): Promise<QuotationAdditionalCost | null> {
+    return await QuotationAdditionalCost.findOne({
+      where: { idQuotation },
+    });
+  }
+
+  async findQuotationAdditionalCostByQuotationId(
+    idQuotation: number
+  ): Promise<QuotationAdditionalCost | null> {
+    return await QuotationAdditionalCost.findOne({
+      where: { idQuotation },
+    });
+  }
+
   async findAll(
-    filter: { [key: string]: any},
+    filter: { [key: string]: any },
     limit: number, offset: number
-  ): Promise<{ rows: Quotation[], count: number}> {
+  ): Promise<{ rows: Quotation[], count: number }> {
+    const { quotationStatus, ...otherFilter } = filter;
     const quotations = await Quotation.findAndCountAll({
       include: [
         {
           model: Employee,
           attributes: ["idEmployee"],
+          required: true,
           include: [
-            { 
-              model: User, 
-              attributes: ["firstName", "lastName"], 
+            {
+              model: User,
+              attributes: ["firstName", "lastName"],
+              required: true,
+              where: otherFilter,
             },
           ],
         },
         { model: QuotationPercentage },
-        { model: QuotationStatus },
+        { model: QuotationStatus, where: quotationStatus ? { idQuotationStatus: quotationStatus } : {} },
         { model: QuotationComment },
       ],
       where: filter,
@@ -96,11 +115,16 @@ export class QuotationRepository {
   }
 
   async findAllQuotationItem(
-    filter: { [key: string]: any},
+    filter: { [key: string]: any },
     limit: number, offset: number
   ): Promise<{ rows: QuotationItem[], count: number }> {
     const quotationItems = await QuotationItem.findAndCountAll({
-      include: [ {all: true} ],
+      include: [
+        {
+          model: Quotation,
+          attributes: ["idQuotation", "name"],
+        },
+      ],
       where: filter,
       limit: limit === -1 ? undefined : limit,
       offset,
@@ -128,9 +152,9 @@ export class QuotationRepository {
   }
 
   async findAllQuotationItemDetail(
-    filter: { [key: string]: any},
+    filter: { [key: string]: any },
     limit: number, offset: number
-  ): Promise<dtos.QuotationItemDetailFindAllDTO | CustomError> {
+  ): Promise<{ rows: QuotationItemDetail[], count: number } | CustomError> {
     try {
       const quotationItemDetails = await QuotationItemDetail.findAndCountAll({
         include: [
@@ -146,7 +170,7 @@ export class QuotationRepository {
           },
           {
             model: Input,
-            attributes: ["idInput", "name", "cost"],
+            attributes: ["idInput", "name", "cost", "performance"],
           }
         ],
         where: filter,
@@ -156,7 +180,7 @@ export class QuotationRepository {
         order: [["idQuotationItemDetail", "DESC"]],
       });
       return { rows: quotationItemDetails.rows, count: quotationItemDetails.count };
-    }catch(error) {
+    } catch (error) {
       console.error(`Error: ${error}`);
       return CustomError.internalServer("Errror querying the database");
     }
@@ -183,8 +207,22 @@ export class QuotationRepository {
     return await QuotationPercentage.findByPk(idQuotationItemDetail);
   }
 
-  async createQuotationPercentage(quotationPercentageData: dtos.CreateQuotationPercentageDTO): Promise<QuotationPercentage> {
+  async findQuotationPercentageByQuotationId(idQuotation: number): Promise<QuotationPercentage | null> {
+    return await QuotationPercentage.findOne({
+      where: { idQuotation },
+    });
+  }
+
+  async createQuotationPercentage(
+    quotationPercentageData: dtos.CreateQuotationPercentageDTO
+  ): Promise<QuotationPercentage> {
     return await QuotationPercentage.create(quotationPercentageData as any);
+  }
+
+  async createQuotationAdditionalCost(
+    request: dtos.CreateQuotationAdditionalCostDTO
+  ): Promise<QuotationAdditionalCost> {
+    return await QuotationAdditionalCost.create(request as any);
   }
 
   async createQuotationComment(quotationCommentData: dtos.CreateQuotationCommentDTO): Promise<QuotationComment> {
@@ -192,11 +230,22 @@ export class QuotationRepository {
   }
 
   async findAllQuotationComment(
-    filter: { [key: string]: any},
+    filter: { [key: string]: any },
     limit: number, offset: number
   ): Promise<{ rows: QuotationComment[], count: number }> {
     const quotationComments = await QuotationComment.findAndCountAll({
-      include: [ {all: true} ],
+      include: [
+        {
+          model: Employee,
+          attributes: ["idEmployee"],
+          include: [
+            {
+              model: User,
+              attributes: ["firstName", "lastName"],
+            },
+          ],
+        },
+      ],
       where: filter,
       limit,
       offset,

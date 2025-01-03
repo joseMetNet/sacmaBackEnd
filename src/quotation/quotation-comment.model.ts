@@ -1,5 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
+import { Employee } from "../models";
 
 export class QuotationComment extends Model {
   declare idQuotationComment: number;
@@ -34,4 +35,9 @@ QuotationComment.init({
   tableName: "TB_QuotationComment",
   timestamps: true,
   paranoid: true
+});
+
+QuotationComment.hasOne(Employee, {
+  foreignKey: "idEmployee",
+  sourceKey: "idEmployee",
 });

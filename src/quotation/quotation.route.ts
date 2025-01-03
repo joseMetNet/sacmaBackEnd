@@ -13,7 +13,7 @@ export function quotationRoute(app: Application): void {
   // GET routes
   router.get("/v1/quotation-item-detail", quotationController.findAllQuotationItemDetails);
   router.get("/v1/quotation-item", quotationController.findAllQuotationItems);
-  router.get("/quotation-comment", quotationController.findAllQuotationComments);
+  router.get("/v1/quotation-comment", quotationController.findAllQuotationComments);
   router.get("/v1/quotation-status", quotationController.findAllQuotationStatus);
   router.get("/v1/quotation", quotationController.findAllQuotations);
   router.get("/v1/quotation-item-detail/:idQuotationItemDetail", quotationController.findQuotationItemDetailById);
@@ -26,12 +26,14 @@ export function quotationRoute(app: Application): void {
   router.post("/v1/quotation-item-detail", quotationController.createQuotationItemDetail);
   router.post("/v1/quotation-comment", quotationController.createQuotationComment);
   router.post("/v1/quotation-percentage", quotationController.createQuotationPercentage);
+  router.post("/v1/quotation-additional-cost", quotationController.createQuotationAdditionalCost);
+  router.post("/v1/quotation/generate-docx/:idQuotation", quotationController.generateQuotationDocx);
 
   // PATCH routes
   router.patch("/v1/quotation", quotationController.updateQuotation);
   router.patch("/v1/quotation-item", quotationController.updateQuotationItem);
+  router.patch("/v1/quotation-status", quotationController.updateQuotationStatus);
   router.patch("/v1/quotation-item-detail", quotationController.updateQuotationItemDetail);
-  router.patch("/v1/quotation-percentage", quotationController.updateQuotationPercentage);
   router.patch("/v1/quotation-comment", quotationController.updateQuotationComment);
 
   // DELETE routes
@@ -102,6 +104,11 @@ export function quotationRoute(app: Application): void {
  *         schema:
  *           type: integer
  *         description: Number of items per page
+ *       - in: query
+ *         name: idQuotation
+ *         schema:
+ *           type: integer
+ *         description: ID of the quotation
  *     responses:
  *       200:
  *         description: A list of quotation items
@@ -148,6 +155,21 @@ export function quotationRoute(app: Application): void {
  *         schema:
  *           type: string
  *         description: Name of the responsable
+ *       - in: query
+ *         name: consecutive
+ *         schema:
+ *           type: string
+ *         description: Consecutive of the quotation
+ *       - in: query
+ *         name: quotationStatus
+ *         schema:
+ *           type: string
+ *         description: Status of the quotation
+ *       - in: query
+ *         name: builder
+ *         schema:
+ *           type: string
+ *         description: Builder of the quotation
  *     responses:
  *       200:
  *         description: A list of quotations
@@ -173,7 +195,7 @@ export function quotationRoute(app: Application): void {
 
 /**
  * @openapi
- * /quotation-comment:
+ * /v1/quotation-comment:
  *   get:
  *     tags: [Quotation]
  *     summary: Find all Quotation Comments
@@ -204,6 +226,42 @@ export function quotationRoute(app: Application): void {
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/QuotationCommentDTO'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
+
+/**
+ * @openapi
+ * /v1/quotation-status:
+ *   patch:
+ *     tags: [Quotation]
+ *     summary: Update Quotation Status
+ *     description: Update the status of a quotation
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateQuotationStatusDTO'
+ *     responses:
+ *       200:
+ *         description: A list of quotation status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/QuotationStatusDTO'
  *       401:
  *         description: Unauthorized
  *       403:
@@ -492,6 +550,70 @@ export function quotationRoute(app: Application): void {
 
 /**
  * @openapi
+ * /v1/quotation-additional-cost:
+ *   post:
+ *     tags: [Quotation]
+ *     summary: Create a new Quotation Additional Cost
+ *     description: Create a new quotation additional cost
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateQuotationAdditionalCostDTO'
+ *     responses:
+ *       201:
+ *         description: Quotation Percentage created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/QuotationAdditionalCostDTO'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
+
+
+/**
+  * @openapi
+  * /v1/quotation/generate-docx/{idQuotation}:
+  *   post:
+  *     tags: [Quotation]
+  *     summary: Generate a Quotation in DOCX format
+  *     parameters:
+  *       - in: path
+  *         name: idQuotation
+  *         required: true
+  *         schema:
+  *           type: integer
+  *         description: ID of the Quotation to get
+  *     responses:
+  *     '200':
+  *       description: Successful response
+  *       content:
+  *         application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+  *           schema:
+  *             type: string
+  *             format: binary
+  *     '500':
+  *       description: Internal server error
+  *       content:
+  *         application/json:
+  *           schema:
+  *             $ref: "#/components/schemas/failedResponse"
+  */
+
+/**
+ * @openapi
  * /v1/quotation-comment:
  *   post:
  *     tags: [Quotation]
@@ -646,40 +768,6 @@ export function quotationRoute(app: Application): void {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/QuotationDTO'
- *       400:
- *         description: Bad request
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/failedResponse'
- */
-
-/**
- * @openapi
- * /v1/quotation-percentage:
- *   patch:
- *     tags: [Quotation]
- *     summary: Update an existing Quotation Percentage
- *     description: Update an existing quotation percentage
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             $ref: '#/components/schemas/UpdateQuotationPercentageDTO'
- *     responses:
- *       200:
- *         description: Quotation Percentage updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/QuotationPercentageDTO'
  *       400:
  *         description: Bad request
  *       401:
@@ -976,6 +1064,24 @@ export function quotationRoute(app: Application): void {
  *         itemSummary:
  *           type: string
  *           example: "Item summary"
+ *         perDiem:
+ *           type: string
+ *           example: "10000"
+ *         sisoNumber:
+ *           type: string
+ *           example: "10000"
+ *         client:
+ *           type: string
+ *           example: "Client"
+ *         executionTime:
+ *           type: string
+ *           example: "2021-01-01T00:00:00.000Z"
+ *         policy:
+ *           type: string
+ *           example: "Policy"
+ *         technicalCondition:
+ *           type: string
+ *           example: "Technical condition"
  *     QuotationPercentageDTO:
  *       type: object
  *       properties:
@@ -994,7 +1100,70 @@ export function quotationRoute(app: Application): void {
  *         unforeseen:
  *           type: number
  *           example: 10.00
+ *         vat:
+ *           type: number
+ *           example: 10.00
+ *     QuotationAdditionalCostDTO:
+ *       type: object
+ *       properties:
+ *         idQuotationAdditionalCost:
+ *           type: integer
+ *           example: 1
+ *         idQuotation:
+ *           type: integer
+ *           example: 1
+ *         perDiem:
+ *           type: number
+ *           example: 10.00
+ *         sisoValue:
+ *           type: number
+ *           example: 10.00
  *         tax:
+ *           type: number
+ *           example: 10.00
+ *         commision:
+ *           type: number
+ *           example: 10.00
+ *         pettyCash:
+ *           type: number
+ *           example: 10.00
+ *         policy:
+ *           type: number
+ *           example: 10.00
+ *     CreateQuotationAdditionalCostDTO:
+ *       type: object
+ *       required:
+ *         - idQuotation
+ *         - perDiem
+ *         - sisoValue
+ *         - commision
+ *         - pettyCash
+ *         - policy
+ *         - tax
+ *         - utility
+ *       properties:
+ *         idQuotation:
+ *           type: integer
+ *           example: 1
+ *         perDiem:
+ *           type: number
+ *           example: 10.00
+ *         sisoValue:
+ *           type: number
+ *           example: 10.00
+ *         tax:
+ *           type: number
+ *           example: 10.00
+ *         commision:
+ *           type: number
+ *           example: 10.00
+ *         pettyCash:
+ *           type: number
+ *           example: 10.00
+ *         policy:
+ *           type: number
+ *           example: 10.00
+ *         utility:
  *           type: number
  *           example: 10.00
  *     CreateQuotationPercentageDTO:
@@ -1004,7 +1173,7 @@ export function quotationRoute(app: Application): void {
  *         - administration
  *         - utility
  *         - unforeseen
- *         - tax
+ *         - vat
  *       properties:
  *         idQuotation:
  *           type: integer
@@ -1018,7 +1187,7 @@ export function quotationRoute(app: Application): void {
  *         unforeseen:
  *           type: number
  *           example: 10.00
- *         tax:
+ *         vat:
  *           type: number
  *           example: 10.00
  *     UpdateQuotationPercentageDTO:
@@ -1041,9 +1210,21 @@ export function quotationRoute(app: Application): void {
  *         unforeseen:
  *           type: number
  *           example: 10.00
- *         tax:
+ *         vat:
  *           type: number
  *           example: 10.00
+ *     UpdateQuotationStatusDTO:
+ *       type: object
+ *       required:
+ *         - idQuotation
+ *         - idQuotationStatus
+ *       properties:
+ *         idQuotation:
+ *           type: integer
+ *           example: 1
+ *         idQuotationStatus:
+ *           type: integer
+ *           example: 1
  *     UpdateQuotationDTO:
  *       type: object
  *       required:
@@ -1073,6 +1254,18 @@ export function quotationRoute(app: Application): void {
  *         itemSummary:
  *           type: string
  *           example: "Item summary"
+ *         client:
+ *           type: string
+ *           example: "Client"
+ *         executionTime:
+ *           type: string
+ *           example: "2021-01-01T00:00:00.000Z"
+ *         policy:
+ *           type: string
+ *           example: "Policy"
+ *         technicalCondition:
+ *           type: string
+ *           example: "Technical condition"
  *     CreateQuotationItemDTO:
  *       type: object
  *       required:
@@ -1081,7 +1274,6 @@ export function quotationRoute(app: Application): void {
  *         - technicalSpecification
  *         - unitMeasure
  *         - quantity
- *         - unitPrice
  *       properties:
  *         idQuotation:
  *           type: integer
@@ -1138,7 +1330,6 @@ export function quotationRoute(app: Application): void {
  *       required:
  *         - idQuotationItem
  *         - idInput
- *         - quantity
  *       properties:
  *         idQuotationItem:
  *           type: integer
@@ -1146,9 +1337,6 @@ export function quotationRoute(app: Application): void {
  *         idInput:
  *           type: integer
  *           example: 1
- *         quantity:
- *           type: integer
- *           example: 10
  *     UpdateQuotationItemDetailDTO:
  *       type: object
  *       required:

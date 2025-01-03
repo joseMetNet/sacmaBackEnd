@@ -2,9 +2,14 @@ import { Application, Router } from "express";
 import { WorkTrackingRepository } from "./work-tracking.repository";
 import { WorkTrackingService } from "./work-tracking.service";
 import { WorkTrackingController } from "./work-tracking.controller";
+import { EmployeeRepository } from "../repositories";
+import { NoveltyRepository } from "../novelty";
 
 const workTrackingRepository = new WorkTrackingRepository();
-const workTrackingService = new WorkTrackingService(workTrackingRepository);
+const noveltyRepository = new NoveltyRepository();
+const employeeRepository = new EmployeeRepository();
+const workTrackingService = 
+  new WorkTrackingService(workTrackingRepository, noveltyRepository, employeeRepository);
 const workTrackingController = new WorkTrackingController(workTrackingService);
 
 export function workTrackingRoute(app: Application): void {
@@ -12,6 +17,7 @@ export function workTrackingRoute(app: Application): void {
 
   // GET routes
   router.get("/v1/work-tracking", workTrackingController.findAll);
+  router.get("/v1/work-tracking/daily", workTrackingController.findDailyWorkTrackingByEmployee);
   router.get("/v1/work-tracking/employee", workTrackingController.findWorkTrackingByEmployee);
   router.get("/v1/work-tracking/employee-summary", workTrackingController.findAllByEmployee);
   router.get("/v1/work-tracking/work-hour", workTrackingController.findAllWorkHour);
@@ -20,12 +26,15 @@ export function workTrackingRoute(app: Application): void {
   // POST routes
   router.post("/v1/work-tracking", workTrackingController.create);
   router.post("/v1/work-tracking/create-all", workTrackingController.createAll);
+  router.post("/v1/work-tracking/generate-report", workTrackingController.generateReport);
 
   // PATCH routes
   router.patch("/v1/work-tracking", workTrackingController.update);
+  router.patch("/v1/work-tracking/update-all", workTrackingController.updateAll);
 
   // DELETE routes
-  router.delete("/v1/work-tracking/:idWorkTracking", workTrackingController.delete);
+  router.delete("/v1/work-tracking/delete/:idWorkTracking", workTrackingController.deleteById);
+  router.delete("/v1/work-tracking/:createdAt", workTrackingController.delete);
 
   app.use("/api/", router);
 }
@@ -159,6 +168,63 @@ export function workTrackingRoute(app: Application): void {
 
 /**
  * @openapi
+ * /v1/work-tracking/daily:
+ *   get:
+ *     tags: [Work Tracking]
+ *     summary: Find daily Work Trackings
+ *     description: Find all daily Work Trackings
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *         description: Number of items per page
+ *       - in: query
+ *         name: year
+ *         schema:
+ *           type: int
+ *         description: Year of the Work Tracking saved
+ *       - in: query
+ *         name: month
+ *         schema:
+ *           type: int
+ *         description: Month of the Work Tracking saved
+ *       - in: query
+ *         name: createdAt
+ *         schema:
+ *           type: string
+ *         description: Date of the Work Tracking saved
+ *     responses:
+ *       200:
+ *         description: A list of cost center
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/WorkTrackingDTO'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+
+/**
+ * @openapi
  * /v1/work-tracking/employee:
  *   get:
  *     tags: [Work Tracking]
@@ -190,6 +256,11 @@ export function workTrackingRoute(app: Application): void {
  *         schema:
  *           type: string
  *         description: Name of the project
+ *       - in: query
+ *         name: createdAt
+ *         schema:
+ *           type: string
+ *         description: Date of the Work Tracking saved
  *     responses:
  *       200:
  *         description: A list of cost center
@@ -280,15 +351,44 @@ export function workTrackingRoute(app: Application): void {
 
 /**
  * @openapi
- * /v1/work-tracking/{idWorkTracking}:
+ * /v1/work-tracking/{createdAt}:
  *   delete:
  *     tags: [Work Tracking]
- *     summary: Delete Work Tracking by ID
- *     description: Use to delete a Work Tracking by ID
+ *     summary: Delete Work Tracking
+ *     description: Use to delete a Work Tracking
+ *     parameters:
+ *       - in: path
+ *         name: createdAt
+ *         schema:
+ *           type: string
+ *         description: Date of the Work Tracking saved
+ *     responses:
+ *       204:
+ *         description: No Content - Work Tracking deleted
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
+ * /v1/work-tracking/{createdAt}:
+ *   delete:
+ *     tags: [Work Tracking]
+ *     summary: Delete Work Tracking by id
+ *     description: Use to delete a Work Tracking by id
  *     parameters:
  *       - in: path
  *         name: idWorkTracking
- *         required: true
  *         schema:
  *           type: integer
  *         description: ID of the Work Tracking to delete
@@ -347,6 +447,32 @@ export function workTrackingRoute(app: Application): void {
 
 /**
  * @openapi
+ * /v1/work-tracking/generate-report:
+ *   post:
+ *     tags: [Work Tracking]
+ *     summary: Generate Report
+ *     description: Generate a report of the Work Tracking
+ *     responses:
+ *       200:
+ *         description: Generated report
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
  * /v1/work-tracking/create-all:
  *   post:
  *     tags: [Work Tracking]
@@ -358,6 +484,43 @@ export function workTrackingRoute(app: Application): void {
  *        multipart/form-data:
  *         schema:
  *           $ref: '#/components/schemas/CreateAllWorkTrackingDTO' 
+ *     responses:
+ *       201:
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/WorkTrackingDTO'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+
+/**
+ * @openapi
+ * /v1/work-tracking/update-all:
+ *   patch:
+ *     tags: [Work Tracking]
+ *     summary: Update Work Tracking
+ *     description: Update multiple Work Tracking
+ *     requestBody:
+ *       required: true
+ *       content:
+ *        multipart/form-data:
+ *         schema:
+ *           $ref: '#/components/schemas/UpdateAllWorkTrackingDTO' 
  *     responses:
  *       201:
  *         description: Created
@@ -458,6 +621,13 @@ export function workTrackingRoute(app: Application): void {
  *           type: array
  *           items:
  *            $ref: '#/components/schemas/CreateWorkTrackingDTO'
+ *     UpdateAllWorkTrackingDTO:
+ *       type: object
+ *       properties:
+ *         workTracking:
+ *           type: array
+ *           items:
+ *            $ref: '#/components/schemas/UpdateWorkTrackingDTO'
  *     CreateWorkTrackingDTO:
  *       type: object
  *       required:

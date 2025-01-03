@@ -4,7 +4,7 @@ import { Employee } from "../models";
 import { QuotationPercentage } from "./quotation-percentage.model";
 import { QuotationStatus } from "./quotation-status.model";
 import { QuotationComment } from "./quotation-comment.model";
-import { QuotationItem } from "./quotation-item.model";
+import { QuotationAdditionalCost } from "./quotation-additional-costs.model";
 
 export class Quotation extends Model {
   declare idQuotation: number;
@@ -13,10 +13,18 @@ export class Quotation extends Model {
   declare idQuotationStatus: number;
   declare idResponsable: number;
   declare builder: string;
+  declare client: string;
+  declare executionTime: string;
+  declare policy: string;
+  declare techicalCondition: string;
   declare builderAddress: string;
   declare projectName: string;
   declare itemSummary: string;
   declare totalCost: string;
+  declare perDiem: string;
+  declare sisoNumber: string;
+  declare createdAt: string;
+  declare updatedAt: string;
 }
 
 Quotation.init(
@@ -62,11 +70,43 @@ Quotation.init(
       type: DataTypes.DECIMAL(10, 2),
       allowNull: true,
     },
+    perDiem: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+    },
+    sisoNumber: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    client: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    executionTime: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    policy: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    techicalCondition: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     sequelize: dbConnection,
     tableName: "TB_Quotation",
-    timestamps: false,
+    timestamps: true,
   }
 );
 
@@ -86,6 +126,11 @@ Quotation.hasOne(QuotationStatus, {
 });
 
 Quotation.hasMany(QuotationComment, {
+  sourceKey: "idQuotation",
+  foreignKey: "idQuotation",
+});
+
+Quotation.hasOne(QuotationAdditionalCost, {
   sourceKey: "idQuotation",
   foreignKey: "idQuotation",
 });
