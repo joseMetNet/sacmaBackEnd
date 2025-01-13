@@ -11,23 +11,6 @@ export class OrderController {
     this.orderService = orderService;
   }
 
-  findAll = async (req: Request, res: Response): Promise<void> => {
-    const request = schemas.findAllSchema.safeParse(req.query);
-    if (!request.success) {
-      res.status(StatusCode.BadRequest).json({
-        status: StatusValue.Failed,
-        data: {error: formatZodError(request.error)}
-      });
-      return;
-    }
-
-    const response = await this.orderService.findAll(request.data);
-    res.status(response.code).json({
-      status: response.status,
-      data: response.data
-    });
-  };
-
   findAllOrderItem = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.findAllOrderItemSchema.safeParse(req.query);
     if (!request.success) {
@@ -62,23 +45,6 @@ export class OrderController {
     });
   };
 
-  findById = async (req: Request, res: Response): Promise<void> => {
-    const request = schemas.idSchema.safeParse(req.params);
-    if (!request.success) {
-      res.status(StatusCode.BadRequest).json({
-        status: StatusValue.Failed,
-        data: { error: formatZodError(request.error) }
-      });
-      return;
-    }
-
-    const response = await this.orderService.findById(request.data.idOrder);
-    res.status(response.code).json({
-      status: response.status,
-      data: response.data
-    });
-  };
-
   findByIdOrderItem = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.idOrderItemSchema.safeParse(req.params);
     if (!request.success) {
@@ -107,23 +73,6 @@ export class OrderController {
     }
 
     const response = await this.orderService.findByIdOrderItemDetail(request.data.idOrderItemDetail);
-    res.status(response.code).json({
-      status: response.status,
-      data: response.data
-    });
-  };
-
-  create = async (req: Request, res: Response): Promise<void> => {
-    const request = schemas.createOrderSchema.safeParse(req.body);
-    if (!request.success) {
-      res.status(StatusCode.BadRequest).json({
-        status: StatusValue.Failed,
-        data: { error: formatZodError(request.error) }
-      });
-      return;
-    }
-
-    const response = await this.orderService.create(request.data);
     res.status(response.code).json({
       status: response.status,
       data: response.data
@@ -168,23 +117,6 @@ export class OrderController {
     });
   };
 
-  update = async (req: Request, res: Response): Promise<void> => {
-    const request = schemas.updateOrderSchema.safeParse(req.body);
-    if (!request.success) {
-      res.status(StatusCode.BadRequest).json({
-        status: StatusValue.Failed,
-        data: { error: formatZodError(request.error) }
-      });
-      return;
-    }
-
-    const response = await this.orderService.update(request.data);
-    res.status(response.code).json({
-      status: response.status,
-      data: response.data
-    });
-  };
-
   updateOrderItem = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.updateOrderItemSchema.safeParse(req.body);
     if (!request.success) {
@@ -217,23 +149,6 @@ export class OrderController {
     }
 
     const response = await this.orderService.updateOrderItemDetail(request.data);
-    res.status(response.code).json({
-      status: response.status,
-      data: response.data
-    });
-  };
-
-  delete = async (req: Request, res: Response): Promise<void> => {
-    const request = schemas.idSchema.safeParse(req.params);
-    if (!request.success) {
-      res.status(StatusCode.BadRequest).json({
-        status: StatusValue.Failed,
-        data: { error: formatZodError(request.error) }
-      });
-      return;
-    }
-
-    const response = await this.orderService.delete(request.data.idOrder);
     res.status(response.code).json({
       status: response.status,
       data: response.data

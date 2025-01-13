@@ -1,9 +1,5 @@
 import z from "zod";
 
-export const idSchema = z.object({
-  idOrder: z.coerce.number()
-});
-
 export const idOrderItemSchema = z.object({
   idOrderItem: z.coerce.number()
 });
@@ -12,30 +8,23 @@ export const idOrderItemDetailSchema = z.object({
   idOrderItemDetail: z.coerce.number()
 });
 
-export const findAllSchema = z.object({
-  page: z.coerce.number().optional(),
-  pageSize: z.coerce.number().optional()
-});
-
 export const findAllOrderItemSchema = z.object({
   page: z.coerce.number().optional(),
-  pageSize: z.coerce.number().optional()
+  pageSize: z.coerce.number().optional(),
 });
 
 export const findAllOrderItemDetailSchema = z.object({
   page: z.coerce.number().optional(),
-  pageSize: z.coerce.number().optional()
-});
-
-export const createOrderSchema = z.object({
-  address: z.string(),
-  phone: z.string(),
-  idEmployee: z.coerce.number()
+  pageSize: z.coerce.number().optional(),
+  idOrderItem: z.coerce.number()
 });
 
 export const createOrderItemSchema = z.object({
-  idOrder: z.coerce.number(),
   idOrderItemStatus: z.coerce.number(),
+  idEmployee: z.coerce.number(),
+  idCostCenterProject: z.coerce.number(),
+  address: z.string().optional(),
+  phone: z.string().optional(),
 });
 
 export const createOrderItemDetailSchema = z.object({
@@ -47,19 +36,13 @@ export const createOrderItemDetailSchema = z.object({
   updatedAt: z.string().optional()
 });
 
-export const updateOrderSchema = z.object({
-  idOrder: z.coerce.number(),
-  address: z.coerce.string().optional(),
-  phone: z.string().optional(),
-  idEmployee: z.coerce.number().optional(),
-  createdAt: z.string().optional(),
-  updatedAt: z.string().optional()
-});
-
 export const updateOrderItemSchema = z.object({
   idOrderItem: z.coerce.number(),
-  idOrder: z.coerce.number().optional(),
   idOrderItemStatus: z.coerce.number().optional(),
+  idEmployee: z.coerce.number().optional(),
+  idCostCenterProject: z.coerce.number().optional(),
+  address: z.string().optional(),
+  phone: z.string().optional(),
   consecutive: z.string().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional()

@@ -39,6 +39,7 @@ export const swaggerOptions: SwaggerOptions = {
     ]
   },
   apis: [
+    "./src/authentication/*route.ts",
     "./src/routes/*.route.ts",
     "./src/supplier/*route.ts",
     "./src/input/*route.ts",
