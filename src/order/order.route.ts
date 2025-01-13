@@ -10,6 +10,7 @@ export function orderRoute(app: Application) {
   const orderController = new OrderController(orderService);
 
   router.get("/v1/order/item", orderController.findAllOrderItem);
+  router.get("/v1/order/item/status", orderController.findOrderItemStatus);
   router.get("/v1/order/item/detail", orderController.findAllOrderItemDetail);
   router.get("/v1/order/item/:idOrderItem", orderController.findByIdOrderItem);
   router.get("/v1/order/item/detail/:idOrderItemDetail", orderController.findByIdOrderItemDetail);
@@ -112,6 +113,38 @@ export function orderRoute(app: Application) {
  *             schema:
  *               $ref: '#/components/schemas/failedResponse'
 */
+
+
+/**
+ * @openapi
+ * /v1/order/item/status:
+ *   get:
+ *     tags: [Order]
+ *     summary: Find all order item status
+ *     description: Retrieve a list of order item status
+ *     responses:
+ *       200:
+ *         description: A list of order item status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/OrderItemStatus'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
 
 /**
  * @openapi
@@ -469,16 +502,21 @@ export function orderRoute(app: Application) {
  *         updatedAt:
  *           type: string
  *           example: "2021-09-01T00:00:00.000Z"
+ *     OrderItemStatus:
+ *       type: object
+ *       properties:
+ *         idOrderItemStatus:
+ *           type: integer
+ *           example: 1
+ *         orderItemStatus:
+ *           type: string
+ *           example: "Order item status"
  *     CreateOrderItem:
  *       type: object
  *       required:
- *         - idOrder
  *         - idEmployee
  *         - idCostCenterProject
  *       properties:
- *         idOrder:
- *           type: integer
- *           example: 1
  *         idEmployee:
  *           type: integer
  *           example: 1

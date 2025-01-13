@@ -87,6 +87,19 @@ export class OrderService {
     }
   };
 
+  findOrderItemStatus = async (): Promise<ResponseEntity> => {
+    try {
+      const orderItemStatus = await this.orderRepository.findOrderItemStatus();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, orderItemStatus);
+    } catch (err: any) {
+      console.error(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "Error while fetching order item status" }
+      );
+    }
+  };
+
   findByIdOrderItemDetail = async (id: number): Promise<ResponseEntity> => {
     try {
       const orderItemDetail = await this.orderRepository.findByIdOrderItemDetail(id);
