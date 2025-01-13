@@ -1,11 +1,11 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
+import { Input } from "../input";
 
 export class OrderItemDetail extends Model {
   declare idOrderItemDetail: number;
   declare idOrderItem: number;
-  declare description: string;
-  declare unitMeasure: string;
+  declare idInput: number;
   declare quantity: number;
   declare createdAt: string;
   declare updatedAt: string;
@@ -21,12 +21,8 @@ OrderItemDetail.init({
     type: DataTypes.INTEGER,
     allowNull: false
   },
-  description: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  unitMeasure: {
-    type: DataTypes.STRING,
+  idInput: {
+    type: DataTypes.INTEGER,
     allowNull: false
   },
   quantity: {
@@ -44,4 +40,9 @@ OrderItemDetail.init({
 }, {
   sequelize: dbConnection,
   tableName: "TB_OrderItemDetail"
+});
+
+OrderItemDetail.hasOne(Input, {
+  foreignKey: "idInput",
+  sourceKey: "idInput"
 });

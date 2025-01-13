@@ -545,19 +545,15 @@ export function orderRoute(app: Application) {
  *       type: object
  *       required:
  *         - idOrderItem
- *         - description
- *         - unitMeasure
+ *         - idInput
  *         - quantity
  *       properties:
  *         idOrderItem:
  *           type: integer
  *           example: 1
- *         description:
- *           type: string
- *           example: "Item description"
- *         unitMeasure:
- *           type: string
- *           example: "unit"
+ *         idInput:
+ *           type: integer
+ *           example: 1
  *         quantity:
  *           type: number
  *           example: 1
@@ -613,12 +609,9 @@ export function orderRoute(app: Application) {
  *         idOrderItem:
  *           type: integer
  *           example: 1
- *         description:
- *           type: string
- *           example: "Item description"
- *         unitMeasure:
- *           type: string
- *           example: "unit"
+ *         idInput:
+ *           type: integer
+ *           example: 1
  *         quantity:
  *           type: number
  *           example: 1

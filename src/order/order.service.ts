@@ -16,7 +16,8 @@ export class OrderService {
   ): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = this.getPagination(request);
-      const orderItems = await this.orderRepository.findAllOrderItem({}, limit, offset);
+      const filter = this.buildItemFilter(request);
+      const orderItems = await this.orderRepository.findAllOrderItem(filter, limit, offset);
 
       const response = {
         data: orderItems.rows,
@@ -274,6 +275,14 @@ export class OrderService {
     const filter: any = {};
     if (request.idOrderItem) {
       filter.idOrderItem = request.idOrderItem;
+    }
+    return filter;
+  };
+
+  private buildItemFilter = (request: dtos.FindAllOrderItemDTO) => {
+    const filter: any = {};
+    if (request.idCostCenterProject) {
+      filter.idCostCenterProject = request.idCostCenterProject;
     }
     return filter;
   };

@@ -1,6 +1,7 @@
 export interface FindAllOrderItemDTO {
   page?: number;
   pageSize?: number;
+  idCostCenterProject?: number;
 }
 
 export interface FindAllOrderItemDetailDTO {
@@ -22,8 +23,7 @@ export interface CreateOrderItem {
 
 export interface CreateOrderItemDetail {
   idOrderItem: number;
-  description: string;
-  unitMeasure: string;
+  idInput: number;
   quantity: number;
   createdAt?: string;
   updatedAt?: string;
@@ -45,8 +45,7 @@ export interface UpdateOrderItem {
 export interface UpdateOrderItemDetail {
   idOrderItemDetail: number;
   idOrderItem?: number;
-  description?: string;
-  unitMeasure?: string;
+  idInput?: number;
   quantity?: number;
   createdAt?: string;
   updatedAt?: string;
