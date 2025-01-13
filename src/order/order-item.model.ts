@@ -1,5 +1,7 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../config";
+import { OrderItemStatus } from "./order-item-status.model";
+import { CostCenterProject } from "../cost-center";
 
 export class OrderItem extends Model {
   declare idOrderItem: number;
@@ -59,4 +61,14 @@ OrderItem.init({
 }, {
   sequelize: dbConnection,
   tableName: "TB_OrderItem"
+});
+
+OrderItem.hasOne(OrderItemStatus, {
+  foreignKey: "idOrderItemStatus",
+  sourceKey: "idOrderItemStatus"
+});
+
+OrderItem.hasOne(CostCenterProject, {
+  foreignKey: "idCostCenterProject",
+  sourceKey: "idCostCenterProject"
 });

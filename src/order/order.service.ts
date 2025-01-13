@@ -119,9 +119,10 @@ export class OrderService {
 
       const newOrderItem = await this.orderRepository.createOrderItem(request);
       newOrderItem.setDataValue("consecutive", `ORD-${newOrderItem.idOrderItem}`);
-      await newOrderItem.save();
+      newOrderItem.setDataValue("idOrderItemStatus", 1);
+      const response = await newOrderItem.save();
 
-      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, newOrderItem);
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
     } catch (err: any) {
       console.error(err);
       return BuildResponse.buildErrorResponse(
