@@ -3,7 +3,6 @@ import * as dtos from "./order.interface";
 import { ResponseEntity } from "../services/interface";
 import { StatusCode, StatusValue } from "../interfaces";
 import { BuildResponse } from "../services";
-import { or } from "sequelize";
 import { CustomError, deleteFile, uploadFile } from "../utils";
 
 export class OrderService {
@@ -12,38 +11,10 @@ export class OrderService {
     this.orderRepository = orderRepository;
   }
 
-  findAll = async(
-    request: dtos.FindAllDTO
-  ): Promise<ResponseEntity> => {
-    try {
-      const { page, pageSize, limit, offset } = this.getPagination(request);
-      const orders = await this.orderRepository.findAll({}, limit, offset);
-
-      const response = {
-        data: orders.rows,
-        totalItems: orders.count,
-        currentPage: page,
-        totalPages: Math.ceil(orders.count / pageSize)
-      };
-
-      return BuildResponse.buildSuccessResponse(
-        StatusCode.Ok,
-        response
-      );
-    } catch (err: any) {
-      console.error(err);
-      return BuildResponse.buildErrorResponse(
-        StatusCode.InternalErrorServer,
-        { message: "Error while fetching orders" }
-      );
-    }
-  };
-
   findAllOrderItem = async(
     request: dtos.FindAllOrderItemDTO
   ): Promise<ResponseEntity> => {
     try {
-      console.log("FROM ORDER ITEM SERVICE");
       const { page, pageSize, limit, offset } = this.getPagination(request);
       const orderItems = await this.orderRepository.findAllOrderItem({}, limit, offset);
 
@@ -72,7 +43,8 @@ export class OrderService {
   ): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = this.getPagination(request);
-      const orderItems = await this.orderRepository.findAllOrderItemDetail({}, limit, offset);
+      const filter = this.buildItemDetailFilter(request);
+      const orderItems = await this.orderRepository.findAllOrderItemDetail(filter, limit, offset);
 
       const response = {
         data: orderItems.rows,
@@ -90,27 +62,6 @@ export class OrderService {
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: "Error while fetching orders item details" }
-      );
-    }
-  };
-
-  findById = async (id: number): Promise<ResponseEntity> => {
-    try {
-      const order = await this.orderRepository.findById(id);
-      if (!order) {
-        return {
-          status: StatusValue.Failed,
-          code: StatusCode.NotFound,
-          data: { message: "Order not found" }
-        };
-      }
-
-      return BuildResponse.buildSuccessResponse( StatusCode.Ok, order );
-    } catch (err: any) {
-      console.error(err);
-      return BuildResponse.buildErrorResponse(
-        StatusCode.InternalErrorServer,
-        { message: "Error while fetching orders" }
       );
     }
   };
@@ -157,19 +108,6 @@ export class OrderService {
     }
   };
 
-  create = async (order: dtos.CreateOrder): Promise<ResponseEntity> => {
-    try {
-      const newOrder = await this.orderRepository.create(order);
-      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, newOrder);
-    } catch (err: any) {
-      console.error(err);
-      return BuildResponse.buildErrorResponse(
-        StatusCode.InternalErrorServer,
-        { message: "Error while fetching orders" }
-      );
-    }
-  };
-
   createOrderItem = async (request: dtos.CreateOrderItem, filePath?: string): 
   Promise<ResponseEntity> => {
     try {
@@ -202,29 +140,6 @@ export class OrderService {
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: "Error while fetching orders item details" }
-      );
-    }
-  };
-
-  update = async (order: dtos.UpdateOrder): Promise<ResponseEntity> => {
-    try {
-      const orderDb = await this.orderRepository.findById(order.idOrder);
-      if (!orderDb) {
-        return {
-          status: StatusValue.Failed,
-          code: StatusCode.NotFound,
-          data: { message: "Order not found" }
-        };
-      }
-
-      const updatedOrder = await orderDb.update(order);
-
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, updatedOrder);
-    } catch (err: any) {
-      console.error(err);
-      return BuildResponse.buildErrorResponse(
-        StatusCode.InternalErrorServer,
-        { message: "Error while fetching orders" }
       );
     }
   };
@@ -293,30 +208,6 @@ export class OrderService {
     }
   };
 
-  delete = async (id: number): Promise<ResponseEntity> => {
-    try {
-      const order = await this.orderRepository.findById(id);
-      if (!order) {
-        return {
-          status: StatusValue.Failed,
-          code: StatusCode.NotFound,
-          data: { message: "Order not found" }
-        };
-      }
-      
-      await this.orderRepository.delete(id);
-
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Order deleted successfully" });
-
-    } catch (err: any) {
-      console.error(err);
-      return BuildResponse.buildErrorResponse(
-        StatusCode.InternalErrorServer,
-        { message: "Error while fetching orders" }
-      );
-    }
-  };
-
   deleteOrderItem = async (id: number): Promise<ResponseEntity> => {
     try {
       const orderItem = await this.orderRepository.findByIdOrderItem(id);
@@ -363,6 +254,14 @@ export class OrderService {
         { message: "Error deleting fetching orders item details" }
       );
     }
+  };
+
+  private buildItemDetailFilter = (request: dtos.FindAllOrderItemDetailDTO) => {
+    const filter: any = {};
+    if (request.idOrderItem) {
+      filter.idOrderItem = request.idOrderItem;
+    }
+    return filter;
   };
 
   private getPagination = (request: { page?: number, pageSize?: number }) => {

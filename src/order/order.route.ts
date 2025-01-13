@@ -9,68 +9,22 @@ export function orderRoute(app: Application) {
   const orderService = new OrderService(orderRepository);
   const orderController = new OrderController(orderService);
 
-  router.get("/v1/order", orderController.findAll);
   router.get("/v1/order/item", orderController.findAllOrderItem);
   router.get("/v1/order/item/detail", orderController.findAllOrderItemDetail);
-  router.get("/v1/order/:idOrder", orderController.findById);
   router.get("/v1/order/item/:idOrderItem", orderController.findByIdOrderItem);
   router.get("/v1/order/item/detail/:idOrderItemDetail", orderController.findByIdOrderItemDetail);
 
-  router.post("/v1/order", orderController.create);
   router.post("/v1/order/item", orderController.createOrderItem);
   router.post("/v1/order/item/detail", orderController.createOrderItemDetail);
   
-  router.patch("/v1/order", orderController.update);
   router.patch("/v1/order/item", orderController.updateOrderItem);
   router.patch("/v1/order/item/detail", orderController.updateOrderItemDetail);
 
-  router.delete("/v1/order/:idOrder", orderController.delete);
   router.delete("/v1/order/item/:idOrderItem", orderController.deleteOrderItem);
   router.delete("/v1/order/item/detail/:idOrderItemDetail", orderController.deleteOrderItemDetail);
 
   app.use("/api/", router);
 }
-
-/**
- * @openapi
- * /v1/order:
- *   get:
- *     tags: [Order]
- *     summary: Find all orders
- *     description: Retrieve a list of orders
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *         description: Page number
- *       - in: query
- *         name: pageSize
- *         schema:
- *           type: integer
- *         description: Number of items per page
- *     responses:
- *       200:
- *         description: A list of orders
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Order'
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- *       404:
- *         description: Not found
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/failedResponse'
-*/
 
 /**
  * @openapi
@@ -131,6 +85,11 @@ export function orderRoute(app: Application) {
  *         schema:
  *           type: integer
  *         description: Number of items per page
+ *       - in: query
+ *         name: idOrderItem
+ *         schema:
+ *           type: integer
+ *         description: ID of the order item
  *     responses:
  *       200:
  *         description: A list of orders item details
@@ -140,43 +99,6 @@ export function orderRoute(app: Application) {
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/OrderItemDetail'
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- *       404:
- *         description: Not found
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/failedResponse'
-*/
-
-
-/**
- * @openapi
- * /v1/order/{idOrder}:
- *   get:
- *     tags: [Order]
- *     summary: Retrieve a single order
- *     description: Retrieve a single order by its ID
- *     parameters:
- *       - in: path
- *         name: idOrder
- *         schema:
- *           type: integer
- *         description: ID of the order to retrieve
- *     responses:
- *       200:
- *         description: A single order
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Order'
  *       401:
  *         description: Unauthorized
  *       403:
@@ -255,40 +177,6 @@ export function orderRoute(app: Application) {
  *         description: Forbidden
  *       404:
  *         description: Not found
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/failedResponse'
-*/
-
-/**
- * @openapi
- * /v1/order:
- *   post:
- *     tags: [Order]
- *     summary: Create a new order
- *     description: Create a new order
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             $ref: '#/components/schemas/CreateOrder'
- *     responses:
- *       201:
- *         description: Order Item Detail created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Order'
- *       400:
- *         description: Bad request
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
  *       500:
  *         description: Internal server error
  *         content:
@@ -401,40 +289,6 @@ export function orderRoute(app: Application) {
 
 /**
  * @openapi
- * /v1/order:
- *   patch:
- *     tags: [Order]
- *     summary: Update an existing order
- *     description: Update an existing order
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             $ref: '#/components/schemas/UpdateOrder'
- *     responses:
- *       200:
- *         description: Quotation Item Detail updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Order'
- *       400:
- *         description: Bad request
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/failedResponse'
-*/
-
-/**
- * @openapi
  * /v1/order/item:
  *   patch:
  *     tags: [Order]
@@ -493,37 +347,6 @@ export function orderRoute(app: Application) {
  *         description: Unauthorized
  *       403:
  *         description: Forbidden
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/failedResponse'
-*/
-
-/**
- * @openapi
- * /v1/order/{idOrder}:
- *   delete:
- *     tags: [Order]
- *     summary: Delete an existing order
- *     description: Delete an existing order
- *     parameters:
- *       - in: path
- *         name: idOrder
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID of the order to delete
- *     responses:
- *       204:
- *         description: Order deleted successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- *       404:
- *         description: Not found
  *       500:
  *         description: Internal server error
  *         content:
@@ -598,34 +421,16 @@ export function orderRoute(app: Application) {
  * @swagger
  * components:
  *   schemas:
- *     Order:
- *       type: object
- *       properties:
- *         idOrder:
- *           type: integer
- *           example: 1
- *         address:
- *           type: string
- *           example: "123 Main St"
- *         phone:
- *           type: string
- *           example: "123-456-7890"
- *         idEmployee:
- *           type: number
- *           example: 1
- *         createdAt:
- *           type: string
- *           example: "2021-09-01T00:00:00.000Z"
- *         updatedAt:
- *           type: string
- *           example: "2021-09-01T00:00:00.000Z"
  *     OrderItem:
  *       type: object
  *       properties:
  *         idOrderItem:
  *           type: integer
  *           example: 1
- *         idOrder:
+ *         idEmployee:
+ *           type: integer
+ *           example: 1
+ *         idCostCenterProject:
  *           type: integer
  *           example: 1
  *         idOrderItemStatus:
@@ -664,36 +469,28 @@ export function orderRoute(app: Application) {
  *         updatedAt:
  *           type: string
  *           example: "2021-09-01T00:00:00.000Z"
- *     CreateOrder:
- *       type: object
- *       required:
- *         - address
- *         - phone
- *         - idEmployee
- *       properties:
- *         address:
- *           type: string
- *           example: "123 Main St"
- *         phone:
- *           type: string
- *           example: "123-456-7890"
- *         idEmployee:
- *           type: number
- *           example: 1
- *         createdAt:
- *           type: string
- *           example: "2021-09-01T00:00:00.000Z"
- *         updatedAt:
- *           type: string
- *           example: "2021-09-01T00:00:00.000Z"
  *     CreateOrderItem:
  *       type: object
  *       required:
  *         - idOrder
+ *         - idEmployee
+ *         - idCostCenterProject
  *       properties:
  *         idOrder:
  *           type: integer
  *           example: 1
+ *         idEmployee:
+ *           type: integer
+ *           example: 1
+ *         idCostCenterProject:
+ *           type: integer
+ *           example: 1
+ *         address:
+ *           type: string
+ *           example: "Address"
+ *         phone:
+ *           type: string
+ *           example: "1234567890"
  *         idOrderItemStatus:
  *           type: integer
  *           example: 1
@@ -732,29 +529,6 @@ export function orderRoute(app: Application) {
  *         updatedAt:
  *           type: string
  *           example: "2021-09-01T00:00:00.000Z"
- *     UpdateOrder:
- *       type: object
- *       required:
- *         - idOrder
- *       properties:
- *         idOrder:
- *           type: integer
- *           example: 1
- *         address:
- *           type: string
- *           example: "123 Main St"
- *         phone:
- *           type: string
- *           example: "123-456-7890"
- *         idEmployee:
- *           type: number
- *           example: 1
- *         createdAt:
- *           type: string
- *           example: "2021-09-01T00:00:00.000Z"
- *         updatedAt:
- *           type: string
- *           example: "2021-09-01T00:00:00.000Z"
  *     UpdateOrderItem:
  *       type: object
  *       required:
@@ -763,9 +537,18 @@ export function orderRoute(app: Application) {
  *         idOrderItem:
  *           type: integer
  *           example: 1
- *         idOrder:
+ *         idEmployee:
  *           type: integer
  *           example: 1
+ *         idCostCenterProject:
+ *           type: integer
+ *           example: 1
+ *         address:
+ *           type: string
+ *           example: "Address"
+ *         phone:
+ *           type: string
+ *           example: "1234567890"
  *         document:
  *           type: string
  *           format: binary

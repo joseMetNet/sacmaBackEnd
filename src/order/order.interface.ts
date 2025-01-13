@@ -1,8 +1,3 @@
-export interface FindAllDTO {
-  page?: number;
-  pageSize?: number;
-}
-
 export interface FindAllOrderItemDTO {
   page?: number;
   pageSize?: number;
@@ -11,26 +6,15 @@ export interface FindAllOrderItemDTO {
 export interface FindAllOrderItemDetailDTO {
   page?: number;
   pageSize?: number;
-}
-
-export interface Order {
-  idOrder: number;
-  address: string;
-  phone: string;
-  idEmployee: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateOrder {
-  address: string;
-  phone: string;
-  idEmployee: number;
+  idOrderItem?: number;
 }
 
 export interface CreateOrderItem {
-  idOrder: number;
   idOrderItemStatus: number;
+  idEmployee: number;
+  idCostCenterProject: number;
+  address?: string;
+  phone?: string;
   documentUrl?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -45,18 +29,12 @@ export interface CreateOrderItemDetail {
   updatedAt?: string;
 }
 
-export interface UpdateOrder {
-  idOrder: number;
-  address?: string;
-  phone?: string;
-  idEmployee?: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
 export interface UpdateOrderItem {
   idOrderItem: number;
-  idOrder?: number;
+  idEmployee?: number;
+  idCostCenterProject?: number;
+  address?: string;
+  phone?: string;
   documentUrl?: string;
   idOrderItemStatus?: number;
   consecutive?: string;

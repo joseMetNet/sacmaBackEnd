@@ -3,10 +3,13 @@ import { dbConnection } from "../config";
 
 export class OrderItem extends Model {
   declare idOrderItem: number;
-  declare idOrder: number;
   declare idOrderItemStatus: number;
   declare consecutive: string;
   declare documentUrl: string;
+  declare idEmployee: number;
+  declare idCostCenterProject: number;
+  declare address: string;
+  declare phone: string;
   declare createdAt: string;
   declare updatedAt: string;
 }
@@ -17,15 +20,27 @@ OrderItem.init({
     autoIncrement: true,
     primaryKey: true
   },
-  idOrder: {
+  idEmployee: {
     type: DataTypes.INTEGER,
     allowNull: false,
+  },
+  idCostCenterProject: {
+    type: DataTypes.INTEGER,
+    allowNull: false
   },
   idOrderItemStatus: {
     type: DataTypes.INTEGER,
     allowNull: false
   },
   consecutive: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  address: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  phone: {
     type: DataTypes.STRING,
     allowNull: true
   },
