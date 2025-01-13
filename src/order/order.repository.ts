@@ -1,6 +1,8 @@
 import * as dtos from "./order.interface";
 import { OrderItem } from "./order-item.model";
 import { OrderItemDetail } from "./order-item-detail.model";
+import { OrderItemStatus } from "./order-item-status.model";
+import { CostCenterProject } from "../cost-center";
 
 export class OrderRepository {
 
@@ -10,6 +12,17 @@ export class OrderRepository {
     offset: number = 0
   ) => {
     return OrderItem.findAndCountAll({
+      include: [
+        {
+          model: CostCenterProject,
+          attributes: ["name", "address", "phone"],
+          required: true,
+        },
+        {
+          model: OrderItemStatus,
+          required: true,
+        }
+      ],
       where: filter,
       limit: limit,
       offset: offset,
@@ -31,7 +44,21 @@ export class OrderRepository {
   };
 
   findByIdOrderItem = (id: number) => {
-    return OrderItem.findByPk(id);
+    return OrderItem.findByPk(id,
+      {
+        include: [
+          {
+            model: CostCenterProject,
+            attributes: ["name", "address", "phone"],
+            required: true,
+          },
+          {
+            model: OrderItemStatus,
+            required: true,
+          }
+        ],
+      }
+    );
   };
 
   findByIdOrderItemDetail = (id: number) => {
