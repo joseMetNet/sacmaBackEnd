@@ -43,6 +43,10 @@ export class OrderRepository {
     });
   };
 
+  findOrderItemStatus = () => {
+    return OrderItemStatus.findAll();
+  };
+
   findByIdOrderItem = (id: number) => {
     return OrderItem.findByPk(id,
       {

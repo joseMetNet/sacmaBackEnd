@@ -62,6 +62,14 @@ export class OrderController {
     });
   };
 
+  findOrderItemStatus = async (req: Request, res: Response): Promise<void> => {
+    const response = await this.orderService.findOrderItemStatus();
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
   findByIdOrderItemDetail = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.idOrderItemDetailSchema.safeParse(req.params);
     if (!request.success) {
