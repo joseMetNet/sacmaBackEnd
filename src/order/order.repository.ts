@@ -3,6 +3,7 @@ import { OrderItem } from "./order-item.model";
 import { OrderItemDetail } from "./order-item-detail.model";
 import { OrderItemStatus } from "./order-item-status.model";
 import { CostCenterProject } from "../cost-center";
+import { Input, InputUnitOfMeasure } from "../input";
 
 export class OrderRepository {
 
@@ -36,6 +37,18 @@ export class OrderRepository {
     offset: number = 0
   ) => {
     return OrderItemDetail.findAndCountAll({
+      include: [
+        {
+          model: Input,
+          required: true,
+          include: [
+            {
+              model: InputUnitOfMeasure,
+              required: true,
+            }
+          ]
+        }
+      ],
       where: filter,
       limit: limit,
       offset: offset,
@@ -66,7 +79,22 @@ export class OrderRepository {
   };
 
   findByIdOrderItemDetail = (id: number) => {
-    return OrderItemDetail.findByPk(id);
+    return OrderItemDetail.findByPk(id, 
+      {
+        include: [
+          {
+            model: Input,
+            required: true,
+            include: [
+              {
+                model: InputUnitOfMeasure,
+                required: true,
+              }
+            ]
+          }
+        ],
+      }
+    );
   };
 
   createOrderItem = (orderItem: dtos.CreateOrderItem) => {

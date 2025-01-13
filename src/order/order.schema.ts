@@ -29,8 +29,7 @@ export const createOrderItemSchema = z.object({
 
 export const createOrderItemDetailSchema = z.object({
   idOrderItem: z.coerce.number(),
-  description: z.string(),
-  unitMeasure: z.string(),
+  idInput: z.coerce.number(),
   quantity: z.coerce.number(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional()
@@ -51,8 +50,7 @@ export const updateOrderItemSchema = z.object({
 export const updateOrderItemDetailSchema = z.object({
   idOrderItemDetail: z.coerce.number(),
   idOrderItem: z.coerce.number().optional(),
-  description: z.string().optional(),
-  unitMeasure: z.string().optional(),
+  idInput: z.coerce.number().optional(),
   quantity: z.coerce.number().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional()
