@@ -12,7 +12,7 @@ export const CreateQuotationSchema = z.object({
   client: z.string().optional(),
   executionTime: z.string().optional(),
   policy: z.string().optional(),
-  techicalCondition: z.string().optional(),
+  technicalCondition: z.string().optional(),
 });
 
 export const UpdateQuotationSchema = z.object({
@@ -29,7 +29,7 @@ export const UpdateQuotationSchema = z.object({
   client: z.string().optional(),
   executionTime: z.string().optional(),
   policy: z.string().optional(),
-  techicalCondition: z.string().optional(),
+  technicalCondition: z.string().optional(),
 });
 
 export const QuotationSchema = z.object({

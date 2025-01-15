@@ -11,7 +11,7 @@ export interface CreateQuotationDTO {
   client?: string;
   executionTime?: string;
   policy?: string;
-  techicalCondition?: string;
+  technicalCondition?: string;
 }
 
 export interface UpdateQuotationDTO {
@@ -28,7 +28,7 @@ export interface UpdateQuotationDTO {
   client?: string;
   executionTime?: string;
   policy?: string;
-  techicalCondition?: string;
+  technicalCondition?: string;
 }
 
 export interface findAllQuotationDTO {

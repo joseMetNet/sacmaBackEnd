@@ -7,6 +7,11 @@ export interface CreateWorkTrackingDTO {
   createdAt?: string;
 }
 
+export interface GenerateReportFilterDTO {
+  month?: number;
+  year?: number;
+}
+
 export interface WorkTrackingRDTO {
   idEmployee: number;
   workedDays: number;

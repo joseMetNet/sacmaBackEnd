@@ -297,7 +297,6 @@ export class WorkTrackingService {
   createAll = async (request: types.CreateWorkTrackingDTO[]): Promise<ResponseEntity> => {
     try {
 
-      // Check if there is any work tracking with the same date
       const workTracking = await WorkTracking.findAll({
         include: [
           {
@@ -365,14 +364,25 @@ export class WorkTrackingService {
       );
     }
   };
-  // method to generate an excel file, this call a store procedure called sp_FindDynamicWorkTrackingReport
-  generateReport = async (): Promise<ExcelJS.Buffer | CustomError> => {
+
+  generateReport = async (filter: types.GenerateReportFilterDTO): Promise<ExcelJS.Buffer | CustomError> => {
     try {
+      const query = (filter.month && filter.year) ?
+        `EXEC mvp1.sp_DynamicWorkTrackingReport @filterMonth = ${filter.month}, @filterYear = ${filter.year}`:
+        "EXEC mvp1.sp_DynamicWorkTrackingReport";
       let data = await dbConnection.query<PivotResult>(
-        "EXEC mvp1.sp_FindDynamicWorkTrackingReport",
+        query,
         { type: sequelize.QueryTypes.SELECT }
       );
-      // add the total to the returned data
+
+      if (data.length === 0) {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("Work Tracking Report");
+        worksheet.columns = [];
+        const buffer = await workbook.xlsx.writeBuffer();
+        return buffer;
+      }
+
       const employees = await this.employeeRepository.findEmployeeAndRoles();
       if(employees instanceof CustomError) {
         return employees;
@@ -397,7 +407,18 @@ export class WorkTrackingService {
 
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("Work Tracking Report");
+
+      const result = this.removeFieldsWithAllNullValues(data);
+      const columnsToRemove = result ? Object.keys(result).filter((key) => result[key] === 0) : [];
+
+      data.map(item => {
+        columnsToRemove.map(column => {
+          delete item[column];
+        });
+      });
+
       const columns = data[0]? Object.keys(data[0]): [];
+
       worksheet.columns = columns.map(
         (column) => {
           if (column === "employeeName") {
@@ -409,7 +430,7 @@ export class WorkTrackingService {
           return { header: column, key: column, width: 30, style: { font: { bold: true } } };
         }
       );
-
+      
       data.forEach((item) => {
         worksheet.addRow(item);
       });
@@ -698,6 +719,26 @@ export class WorkTrackingService {
     }
     return conditions;
   };
+
+  private removeFieldsWithAllNullValues(data: any[]): { [key: string]: number } {
+    const result: { [key: string]: number } = { employeeName: 0 };
+    
+    const columns = Object.keys(data[0]).filter((key) => key !== "employeeName");
+    
+    columns.forEach((column) => {
+      result[column] = 0;
+    });
+    
+    data.forEach((row) => {
+      result.employeeName++;
+    
+      columns.forEach((column) => {
+        result[column] += row[column] || 0;
+      });
+    });
+
+    return result;
+  }
 }
 
 interface FindDailyCount {

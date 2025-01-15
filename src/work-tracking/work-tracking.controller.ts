@@ -137,7 +137,16 @@ export class WorkTrackingController {
   };
 
   generateReport = async (req: Request, res: Response): Promise<void> => {
-    const response = await this.workTrackingService.generateReport();
+    const request = schemas.generateReport.safeParse(req.query);
+    if(!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) }
+        });
+      return;
+    }
+    const response = await this.workTrackingService.generateReport(request.data);
     if(response instanceof CustomError) {
       res
         .status(response.statusCode)
