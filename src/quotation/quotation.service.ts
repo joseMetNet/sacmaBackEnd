@@ -200,6 +200,15 @@ export class QuotationService {
       const offset = (page - 1) * pageSize;
       const filter = this.buildQuotationFilter(request);
       const quotations = await this.quotationRepository.findAll(filter, limit, offset);
+      const comments = await this.quotationRepository.findAllQuotationComment({}, -1, 0);
+      
+      const commentsMap = comments.rows.reduce((acc, comment) => {
+        if (!acc[comment.idQuotation]) {
+          acc[comment.idQuotation] = comment.comment;
+        }
+        return acc;
+      }, {} as { [key: number]: string });
+
       const data = quotations.rows.map((quotation) => {
         let responsable: string | undefined;
         const jsonQuotation = quotation.toJSON();
@@ -213,14 +222,13 @@ export class QuotationService {
           responsable: responsable,
           consecutive: quotation.consecutive,
           idEmployee: jsonQuotation.Employee.idEmployee,
-          QuotationPercentage: jsonQuotation.QuotationPercentage,
+          comment: commentsMap[quotation.idQuotation] ?? "",
           QuotationStatus: jsonQuotation.QuotationStatus,
           builder: quotation.builder,
           builderAddress: quotation.builderAddress,
           projectName: quotation.projectName,
           itemSummary: quotation.itemSummary,
           totalCost: quotation.totalCost,
-          QuotationComments: jsonQuotation.QuotationComments,
           createdAt: quotation.createdAt,
           updatedAt: quotation.updatedAt,
           client: quotation.client,
