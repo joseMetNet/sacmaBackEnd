@@ -30,6 +30,7 @@ export class QuotationService {
       quotationData = {
         ...quotationData,
         idQuotationStatus: 1,
+        builder: quotationData.builder ?? quotationData.client,
       };
       const quotation = await this.quotationRepository.create(quotationData, transaction);
       const consecutive = `COT SACIPR No. ${quotation.idQuotation}-${new Date().getFullYear()}`;
@@ -89,6 +90,7 @@ export class QuotationService {
       const data = {
         idQuotation: quotation.idQuotation,
         name: quotation.name,
+        client: quotation.client,
         responsable,
         consecutive: quotation.consecutive,
         QuotationPercentage: jsonQuotation.QuotationPercentage,
@@ -216,7 +218,7 @@ export class QuotationService {
           client: quotation.client,
           executionTime: quotation.executionTime,
           policy: quotation.policy,
-          techicalCondition: quotation.techicalCondition,
+          technicalCondition: quotation.technicalCondition,
         };
       });
 
@@ -240,9 +242,9 @@ export class QuotationService {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
       }
       const updatedQuotation = this.buildQuotation(quotation, quotationData);
-      await updatedQuotation.save();
+      const response = await updatedQuotation.save();
 
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, updatedQuotation);
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
     } catch (error) {
       console.error(error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
@@ -660,8 +662,12 @@ export class QuotationService {
 
   private buildQuotation = (quotation: Quotation, quotationData: dtos.UpdateQuotationDTO) => {
     quotation.name = quotationData.name ?? quotation.name;
+    quotation.client = quotationData.client ?? quotation.client;
+    quotation.builder = quotationData.client ?? quotation.client;
+    quotation.idResponsable = quotationData.idResponsable ?? quotation.idResponsable;
+    quotation.policy = quotationData.policy ?? quotation.policy;
+    quotation.technicalCondition = quotationData.technicalCondition ?? quotation.technicalCondition;
     quotation.idQuotationStatus = quotationData.idQuotationStatus ?? quotation.idQuotationStatus;
-    quotation.builder = quotationData.builder ?? quotation.builder;
     quotation.builderAddress = quotationData.builderAddress ?? quotation.builderAddress;
     quotation.projectName = quotationData.projectName ?? quotation.projectName;
     quotation.itemSummary = quotationData.itemSummary ?? quotation.itemSummary;
@@ -834,7 +840,7 @@ export class QuotationService {
           + (unitValueAIU * percentage.utility) * percentage.vat)
       };
 
-      const directCost = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost)*parseFloat(item.quantity), 0);
+      const directCost = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost) * parseFloat(item.quantity), 0);
 
       const quotationAdditionalCost = {
         perDiem: String(otherCost.perDiem),
@@ -843,7 +849,7 @@ export class QuotationService {
         commision: String(otherCost.comision),
         pettyCash: String(otherCost.caja_menor),
         policy: String(otherCost.poliza),
-        utility: String(otherCost.utility*subTotal),
+        utility: String(otherCost.utility * subTotal),
         directCost: String(directCost),
       };
       return { quotationSummary, quotationAdditionalCost, summaryByItem };
