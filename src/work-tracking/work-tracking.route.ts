@@ -452,6 +452,19 @@ export function workTrackingRoute(app: Application): void {
  *     tags: [Work Tracking]
  *     summary: Generate Report
  *     description: Generate a report of the Work Tracking
+ *     parameters:
+ *       - in: query
+ *         name: month
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Month of the Work Tracking
+ *       - in: query
+ *         name: year
+ *         schema:
+ *           type: integer
+ *           example: 2021
+ *         description: Year of the Work Tracking
  *     responses:
  *       200:
  *         description: Generated report

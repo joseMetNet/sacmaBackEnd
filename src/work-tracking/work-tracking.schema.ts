@@ -37,6 +37,11 @@ export const idWorkTracking = z.object({
   idWorkTracking: z.coerce.number()
 });
 
+export const generateReport = z.object({
+  month: z.coerce.number().optional(),
+  year: z.coerce.number().optional(),
+});
+
 export const createWorkTracking = z.object({
   idEmployee: z.coerce.number(),
   idCostCenterProject: z.coerce.number(),
