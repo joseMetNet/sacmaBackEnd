@@ -150,8 +150,16 @@ export class QuotationService {
         currency: "COP",
       });
 
+      const itemResponse = (quotationItems.data as any).data
+        .map((item: QuotationItem) => { 
+          item.unitPrice = currencyFormatter.format(parseFloat(item.unitPrice)); 
+          item.total = currencyFormatter.format(parseFloat(item.total));
+          item.quantity = String(parseInt(item.quantity));
+          return item; 
+        });
+
       const response = {
-        items: (quotationItems.data as any).data,
+        items: itemResponse,
         name: (quotation.data as any)?.name ?? "",
         itemNames,
         technicalSpecifications,

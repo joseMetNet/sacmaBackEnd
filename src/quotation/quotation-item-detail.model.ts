@@ -8,6 +8,8 @@ export class QuotationItemDetail extends Model {
   declare idQuotationItem: number;
   declare idInput: number;
   declare quantity: string;
+  declare performance: string;
+  declare price: string;
   declare totalCost: string;
 }
 
@@ -29,6 +31,14 @@ QuotationItemDetail.init(
     quantity: {
       type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    performance: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    price: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
     },
     totalCost: {
       type: DataTypes.DECIMAL(10, 2),
