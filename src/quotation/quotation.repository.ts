@@ -150,6 +150,12 @@ export class QuotationRepository {
     return await QuotationItemDetail.findByPk(idQuotationItemDetail);
   }
 
+  async findQuotationItemDetailByQuotationItemId(idQuotationItem: number): Promise<QuotationItemDetail[] | null> {
+    return await QuotationItemDetail.findAll({
+      where: { idQuotationItem },
+    });
+  }
+
   async findAllQuotationItemDetail(
     filter: { [key: string]: any },
     limit: number, offset: number
