@@ -112,6 +112,8 @@ export class QuotationController {
       return;
     }
 
+    console.log(request.data);
+
     const response = await this.quotationService.createQuotationItemDetail(request.data);
     res.status(response.code).json({
       status: response.status,

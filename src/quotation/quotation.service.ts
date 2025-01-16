@@ -391,7 +391,7 @@ export class QuotationService {
 
       const quantity = quotationItemData.quantity ?? data.quantity;
       const unitPrice = quotationItemData.unitPrice ?? data.unitPrice;
-      
+
       quotationItemData.total = unitPrice ? String(parseFloat(quantity) * parseFloat(unitPrice)): "";
 
       const quotationItemDetails = await this.quotationRepository.findQuotationItemDetailByQuotationItemId(quotationItemData.idQuotationItem);
@@ -483,12 +483,12 @@ export class QuotationService {
       if (!quotationItem) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation item not found" });
       }
-
+      console.log(request);
       if(!request.performance || !request.cost) {
         request.performance = input.performance;
         request.cost = input.cost;
       }
-
+      console.log("Performance: ", request.performance);
       const data = {
         ...request,
         quantity: Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(request.performance)),
@@ -510,20 +510,27 @@ export class QuotationService {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation item detail not found" });
       }
 
+      const quotationItem = await this.quotationRepository.findQuotationItemById(quotationItemDetail.idQuotationItem);
+      if(!quotationItem) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation item not found" });
+      }
+
       if (quotationItemDetailData.idInput) {
         const input = await Input.findOne({ where: { idInput: quotationItemDetailData.idInput } });
         if (!input) {
           return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Input not found" });
         }
-        const quantity = quotationItemDetailData.quantity ? quotationItemDetailData.quantity : quotationItemDetail.quantity;
+
         if(!quotationItemDetailData.performance || !quotationItemDetailData.cost) {
           quotationItemDetailData.performance = input.performance;
           quotationItemDetailData.cost = input.cost;
         }
-        quotationItemDetailData.totalCost =
-          String(Math.ceil(parseInt(quotationItemDetailData.cost) * parseFloat(quantity)));
       }
-      quotationItemDetailData.totalCost = quotationItemDetailData.totalCost || quotationItemDetail.totalCost;
+
+      const quantity = String(Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(quotationItemDetailData.performance ?? quotationItemDetail.performance)));
+      quotationItemDetailData.totalCost =
+          String(Math.ceil(parseInt(quotationItemDetailData.cost ?? quotationItemDetail.cost) * parseFloat(quantity)));
+      quotationItemDetailData.quantity = quantity;
 
       const [updatedCount, updatedQuotationItemDetails] = await this.quotationRepository.updateQuotationItemDetail(quotationItemDetailData);
       if (updatedCount > 0) {
@@ -870,7 +877,7 @@ export class QuotationService {
           + (unitValueAIU * percentage.utility) * percentage.vat)
       };
 
-      const directCost = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost) * parseFloat(item.quantity), 0);
+      const directCost = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost), 0);
 
       const quotationAdditionalCost = {
         perDiem: String(otherCost.perDiem),
