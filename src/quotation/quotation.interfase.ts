@@ -67,24 +67,13 @@ export interface CreateQuotationItemDTO {
   total?: string;
 }
 
-export interface QuotationItemDTO {
-  idQuotationItem: number;
-  idQuotation: number;
-  description: string;
-  quantity: number;
-  price: number;
-}
-
-export interface QuotationItemFindAllDTO {
-  rows: QuotationItemDTO[];
-  count: number;
-}
-
 export interface QuotationItemDetailDTO {
   idQuotationItemDetail: number;
   idQuotationItem: number;
   idInput: number;
   quantity: string;
+  performance: string;
+  cost: number;
   totalCost: number;
 }
 
@@ -92,7 +81,7 @@ export interface CreateQuotationItemDetailDTO {
   idQuotationItem: number;
   idInput: number;
   performance?: string;
-  price?: string;
+  cost?: string;
 }
 
 export interface UpdateQuotationItemDetailDTO {
@@ -100,6 +89,8 @@ export interface UpdateQuotationItemDetailDTO {
   idQuotationItem?: number;
   idInput?: number;
   quantity?: string;
+  performance?: string;
+  cost?: string;
   totalCost?: string;
 }
 
@@ -153,11 +144,6 @@ export interface QuotationItemDTO {
   description: string;
   quantity: number;
   price: number;
-}
-
-export interface QuotationItemFindAllDTO {
-  rows: QuotationItemDTO[];
-  count: number;
 }
 
 export interface CreateQuotationCommentDTO {

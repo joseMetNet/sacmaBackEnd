@@ -9,7 +9,7 @@ export class QuotationItemDetail extends Model {
   declare idInput: number;
   declare quantity: string;
   declare performance: string;
-  declare price: string;
+  declare cost: string;
   declare totalCost: string;
 }
 
@@ -36,7 +36,7 @@ QuotationItemDetail.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
-    price: {
+    cost: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: true,
     },
