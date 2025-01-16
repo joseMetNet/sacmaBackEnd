@@ -201,6 +201,22 @@ export class QuotationService {
       const filter = this.buildQuotationFilter(request);
       const quotations = await this.quotationRepository.findAll(filter, limit, offset);
       const comments = await this.quotationRepository.findAllQuotationComment({}, -1, 0);
+
+      const unitValueAIUPromise = quotations.rows.map(async (quotation: Quotation) => {
+        const report = await this.buildQuotationReport(quotation);
+        if (report instanceof CustomError) {
+          return {
+            quotationId: quotation.idQuotation,
+            unitValueAIU: "0",
+          };
+        }
+        return {
+          quotationId: quotation.idQuotation,
+          unitValueAIU: parseFloat(report.quotationSummary.unitValueAIUIncluded).toFixed(2),
+        };
+      });
+
+      const unitValueAIU = await Promise.all(unitValueAIUPromise);
       
       const commentsMap = comments.rows.reduce((acc, comment) => {
         if (!acc[comment.idQuotation]) {
@@ -221,6 +237,7 @@ export class QuotationService {
           name: quotation.name,
           responsable: responsable,
           consecutive: quotation.consecutive,
+          total: unitValueAIU.find((item) => item.quotationId === quotation.idQuotation)?.unitValueAIU,
           idEmployee: jsonQuotation.Employee.idEmployee,
           comment: commentsMap[quotation.idQuotation] ?? "",
           QuotationStatus: jsonQuotation.QuotationStatus,
@@ -443,7 +460,7 @@ export class QuotationService {
     }
   };
 
-  findAllQuotationItemDetails = async (request: dtos.findAllQuotationItemDetailDTO): Promise<ResponseEntity> => {
+  findAllQuotationItemDetail = async (request: dtos.findAllQuotationItemDetailDTO): Promise<ResponseEntity> => {
     try {
       let page = 1;
       if (request.page) {
@@ -460,8 +477,10 @@ export class QuotationService {
       if (quotationItems instanceof CustomError) {
         return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: quotationItems.message });
       }
+      const totalCost = quotationItems.rows.reduce((acc, item) => acc + parseFloat(item.totalCost), 0);
       const response = {
         data: quotationItems.rows,
+        totalCost: totalCost.toFixed(2),
         totalItems: quotationItems.count,
         currentPage: page,
         totalPages: Math.ceil(quotationItems.count / pageSize),

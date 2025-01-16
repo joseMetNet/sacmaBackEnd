@@ -289,7 +289,7 @@ export class QuotationController {
       });
       return;
     }
-    const response = await this.quotationService.findAllQuotationItemDetails(request.data);
+    const response = await this.quotationService.findAllQuotationItemDetail(request.data);
     res.status(response.code).json({
       status: response.status,
       data: response.data,
