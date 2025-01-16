@@ -443,7 +443,7 @@ export class QuotationService {
     }
   };
 
-  findAllQuotationItemDetails = async (request: dtos.findAllQuotationItemDetailDTO): Promise<ResponseEntity> => {
+  findAllQuotationItemDetail = async (request: dtos.findAllQuotationItemDetailDTO): Promise<ResponseEntity> => {
     try {
       let page = 1;
       if (request.page) {
@@ -460,8 +460,10 @@ export class QuotationService {
       if (quotationItems instanceof CustomError) {
         return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: quotationItems.message });
       }
+      const totalCost = quotationItems.rows.reduce((acc, item) => acc + parseFloat(item.totalCost), 0);
       const response = {
         data: quotationItems.rows,
+        totalCost: totalCost.toFixed(2),
         totalItems: quotationItems.count,
         currentPage: page,
         totalPages: Math.ceil(quotationItems.count / pageSize),
