@@ -201,6 +201,22 @@ export class QuotationService {
       const filter = this.buildQuotationFilter(request);
       const quotations = await this.quotationRepository.findAll(filter, limit, offset);
       const comments = await this.quotationRepository.findAllQuotationComment({}, -1, 0);
+
+      const unitValueAIUPromise = quotations.rows.map(async (quotation: Quotation) => {
+        const report = await this.buildQuotationReport(quotation);
+        if (report instanceof CustomError) {
+          return {
+            quotationId: quotation.idQuotation,
+            unitValueAIU: "0",
+          };
+        }
+        return {
+          quotationId: quotation.idQuotation,
+          unitValueAIU: parseFloat(report.quotationSummary.unitValueAIUIncluded).toFixed(2),
+        };
+      });
+
+      const unitValueAIU = await Promise.all(unitValueAIUPromise);
       
       const commentsMap = comments.rows.reduce((acc, comment) => {
         if (!acc[comment.idQuotation]) {
@@ -221,6 +237,7 @@ export class QuotationService {
           name: quotation.name,
           responsable: responsable,
           consecutive: quotation.consecutive,
+          total: unitValueAIU.find((item) => item.quotationId === quotation.idQuotation)?.unitValueAIU,
           idEmployee: jsonQuotation.Employee.idEmployee,
           comment: commentsMap[quotation.idQuotation] ?? "",
           QuotationStatus: jsonQuotation.QuotationStatus,
