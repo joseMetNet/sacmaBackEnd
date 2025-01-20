@@ -502,16 +502,19 @@ export class QuotationService {
       if (!quotationItem) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation item not found" });
       }
-      console.log(request);
-      if(!request.performance || !request.cost) {
+
+      if(!request.performance || !request.price) {
         request.performance = input.performance;
-        request.cost = input.cost;
+        request.price = input.cost;
       }
-      console.log("Performance: ", request.performance);
+
       const data = {
-        ...request,
+        idQuotationItem: request.idQuotationItem,
+        idInput: request.idInput,
+        cost: request.price,
+        performance: request.performance,
         quantity: Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(request.performance)),
-        totalCost: parseFloat((parseFloat(request.cost) * Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(request.performance))).toFixed(2)),
+        totalCost: parseFloat((parseFloat(request.price) * Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(request.performance))).toFixed(2)),
       };
 
       const quotationItemDetail = await this.quotationRepository.createQuotationItemDetail(data);
@@ -540,18 +543,28 @@ export class QuotationService {
           return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Input not found" });
         }
 
-        if(!quotationItemDetailData.performance || !quotationItemDetailData.cost) {
+        if(!quotationItemDetailData.performance || !quotationItemDetailData.price) {
           quotationItemDetailData.performance = input.performance;
-          quotationItemDetailData.cost = input.cost;
+          quotationItemDetailData.price = input.cost;
         }
       }
 
       const quantity = String(Math.ceil(parseFloat(quotationItem.quantity) / parseFloat(quotationItemDetailData.performance ?? quotationItemDetail.performance)));
       quotationItemDetailData.totalCost =
-          String(Math.ceil(parseInt(quotationItemDetailData.cost ?? quotationItemDetail.cost) * parseFloat(quantity)));
+          String(Math.ceil(parseInt(quotationItemDetailData.price ?? quotationItemDetail.cost) * parseFloat(quantity)));
       quotationItemDetailData.quantity = quantity;
 
-      const [updatedCount, updatedQuotationItemDetails] = await this.quotationRepository.updateQuotationItemDetail(quotationItemDetailData);
+      const data = {
+        idQuotationItemDetail: quotationItemDetailData.idQuotationItemDetail,
+        idQuotationItem: quotationItemDetail.idQuotationItem,
+        idInput: quotationItemDetailData.idInput ?? quotationItemDetail.idInput,
+        quantity: quotationItemDetailData.quantity,
+        performance: quotationItemDetailData.performance ?? quotationItemDetail.performance,
+        cost: quotationItemDetailData.price ?? quotationItemDetail.cost,
+        totalCost: quotationItemDetailData.totalCost,
+      };
+
+      const [updatedCount, updatedQuotationItemDetails] = await this.quotationRepository.updateQuotationItemDetail(data);
       if (updatedCount > 0) {
         return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, updatedQuotationItemDetails);
       } else {

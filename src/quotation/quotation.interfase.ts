@@ -81,7 +81,7 @@ export interface CreateQuotationItemDetailDTO {
   idQuotationItem: number;
   idInput: number;
   performance?: string;
-  cost?: string;
+  price?: string;
 }
 
 export interface UpdateQuotationItemDetailDTO {
@@ -90,7 +90,7 @@ export interface UpdateQuotationItemDetailDTO {
   idInput?: number;
   quantity?: string;
   performance?: string;
-  cost?: string;
+  price?: string;
   totalCost?: string;
 }
 
