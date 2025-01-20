@@ -96,7 +96,7 @@ export const CreateQuotationItemDetailSchema = z.object({
   idQuotationItem: z.coerce.number(),
   idInput: z.coerce.number(),
   performance: z.string().optional(),
-  cost: z.string().optional(),
+  price: z.string().optional(),
 });
 
 export const UpdateQuotationItemDetailSchema = z.object({
@@ -105,7 +105,7 @@ export const UpdateQuotationItemDetailSchema = z.object({
   idInput: z.coerce.number().optional(),
   quantity: z.string().optional(),
   performance: z.string().optional(),
-  cost: z.string().optional(),
+  price: z.string().optional(),
   totalCost: z.string().optional(),
 });
 
