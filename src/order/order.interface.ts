@@ -2,6 +2,8 @@ export interface FindAllOrderItemDTO {
   page?: number;
   pageSize?: number;
   idCostCenterProject?: number;
+  idOrderItemStatus?: number;
+  consecutive?: string;
 }
 
 export interface FindAllOrderItemDetailDTO {

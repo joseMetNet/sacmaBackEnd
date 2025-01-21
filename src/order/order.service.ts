@@ -4,6 +4,7 @@ import { ResponseEntity } from "../services/interface";
 import { StatusCode, StatusValue } from "../interfaces";
 import { BuildResponse } from "../services";
 import { CustomError, deleteFile, uploadFile } from "../utils";
+import sequelize from "sequelize";
 
 export class OrderService {
   private orderRepository: OrderRepository;
@@ -132,7 +133,7 @@ export class OrderService {
       }
 
       const newOrderItem = await this.orderRepository.createOrderItem(request);
-      newOrderItem.setDataValue("consecutive", `ORD-${newOrderItem.idOrderItem}`);
+      newOrderItem.setDataValue("consecutive", newOrderItem.idOrderItem);
       newOrderItem.setDataValue("idOrderItemStatus", 1);
       const response = await newOrderItem.save();
 
@@ -159,7 +160,7 @@ export class OrderService {
     }
   };
 
-  updateOrderItem = async (request: dtos.UpdateOrderItem, filePath?: string)
+  updateOrderItem = async (request: dtos.UpdateOrderItem, filePath?: string, fileExtension?: string)
   : Promise<ResponseEntity> => {
     try {
       const orderItemDb = await this.orderRepository.findByIdOrderItem(request.idOrderItem);
@@ -185,8 +186,10 @@ export class OrderService {
 
       if (filePath) {
         const identifier = crypto.randomUUID();
-        await uploadFile(filePath, identifier, "application/pdf", "order");
-        request.documentUrl = `https://sacmaback.blob.core.windows.net/order/${identifier}.pdf`;
+        const contentType = fileExtension === "pdf" ? "application/pdf" : "image/jpeg";
+        await uploadFile(filePath, identifier, contentType, "order");
+        request.documentUrl = `https://sacmaback.blob.core.windows.net/order/${identifier}.${fileExtension==="pdf" ? "pdf" : "png"}`;
+        request.idOrderItemStatus = 2;
       }
 
       const updatedOrderItem = await orderItemDb.update(request);
@@ -280,11 +283,26 @@ export class OrderService {
   };
 
   private buildItemFilter = (request: dtos.FindAllOrderItemDTO) => {
-    const filter: any = {};
-    if (request.idCostCenterProject) {
-      filter.idCostCenterProject = request.idCostCenterProject;
+    let where: { [key: string]: any } = {};
+    if (request.consecutive) {
+      where = {
+        ...where,
+        consecutive: sequelize.where(sequelize.col("consecutive"), "LIKE", `%${where.consecutive}%`),
+      };
     }
-    return filter;
+    if (request.idOrderItemStatus) {
+      where = {
+        ...where, 
+        idOrderItemStatus: request.idOrderItemStatus
+      };
+    }
+    if (request.idCostCenterProject) {
+      where = {
+        ...where, 
+        idCostCenterProject: request.idCostCenterProject
+      };
+    }
+    return where;
   };
 
   private getPagination = (request: { page?: number, pageSize?: number }) => {

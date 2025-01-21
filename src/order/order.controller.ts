@@ -139,7 +139,11 @@ export class OrderController {
       ? (req.files.document as UploadedFile).tempFilePath
       : undefined;
 
-    const response = await this.orderService.updateOrderItem(request.data, filePath);
+    const fileExtension = req.files
+      ? (req.files.document as UploadedFile).name.split(".").pop()
+      : undefined;
+
+    const response = await this.orderService.updateOrderItem(request.data, filePath, fileExtension);
     res.status(response.code).json({
       status: response.status,
       data: response.data
