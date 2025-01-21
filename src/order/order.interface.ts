@@ -19,8 +19,18 @@ export interface CreateOrderItem {
   address?: string;
   phone?: string;
   documentUrl?: string;
+  orderDocumentUrl?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+
+export interface UpdateOrderItemIn {
+  data: UpdateOrderItem;
+  filePath?: string;
+  fileExtension?: string;
+  filePathOrder?: string;
+  fileExtensionOrder?: string;
 }
 
 export interface CreateOrderItemDetail {
@@ -38,6 +48,7 @@ export interface UpdateOrderItem {
   address?: string;
   phone?: string;
   documentUrl?: string;
+  orderDocumentUrl?: string;
   idOrderItemStatus?: number;
   consecutive?: string;
   createdAt?: string;

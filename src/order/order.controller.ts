@@ -96,12 +96,7 @@ export class OrderController {
       });
       return;
     }
-
-    const filePath = req.files
-      ? (req.files.document as UploadedFile).tempFilePath
-      : undefined;
-
-    const response = await this.orderService.createOrderItem(request.data, filePath);
+    const response = await this.orderService.createOrderItem(request.data);
     res.status(response.code).json({
       status: response.status,
       data: response.data
@@ -135,15 +130,25 @@ export class OrderController {
       return;
     }
 
-    const filePath = req.files
-      ? (req.files.document as UploadedFile).tempFilePath
-      : undefined;
+    const { document: uploadedDocument, orderDocument: uploadedOrderDocument } = req.files as {
+      document?: UploadedFile;
+      orderDocument?: UploadedFile;
+    } || {};
 
-    const fileExtension = req.files
-      ? (req.files.document as UploadedFile).name.split(".").pop()
-      : undefined;
+    const filePath = uploadedDocument?.tempFilePath;
+    const filePathOrder = uploadedOrderDocument?.tempFilePath;
+    const fileExtension = uploadedDocument?.name.split(".").pop();
+    const fileExtensionOrder = uploadedOrderDocument?.name.split(".").pop();
 
-    const response = await this.orderService.updateOrderItem(request.data, filePath, fileExtension);
+    const completedRequest = {
+      data: request.data,
+      filePath,
+      fileExtension,
+      filePathOrder,
+      fileExtensionOrder
+    };
+
+    const response = await this.orderService.updateOrderItem(completedRequest);
     res.status(response.code).json({
       status: response.status,
       data: response.data
