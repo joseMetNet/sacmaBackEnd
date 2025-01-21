@@ -189,6 +189,7 @@ export class OrderService {
         const contentType = fileExtension === "pdf" ? "application/pdf" : "image/jpeg";
         await uploadFile(filePath, identifier, contentType, "order");
         request.documentUrl = `https://sacmaback.blob.core.windows.net/order/${identifier}.${fileExtension==="pdf" ? "pdf" : "png"}`;
+        request.idOrderItemStatus = 2;
       }
 
       const updatedOrderItem = await orderItemDb.update(request);
