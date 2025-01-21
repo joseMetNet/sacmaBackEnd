@@ -11,6 +11,9 @@ export const idOrderItemDetailSchema = z.object({
 export const findAllOrderItemSchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
+  consecutive: z.string().optional(),
+  idOrderItemStatus: z.coerce.number().optional(),
+  idCostCenterProject: z.coerce.number().optional(),
 });
 
 export const findAllOrderItemDetailSchema = z.object({

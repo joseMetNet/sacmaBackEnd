@@ -4,6 +4,7 @@ import { ResponseEntity } from "../services/interface";
 import { StatusCode, StatusValue } from "../interfaces";
 import { BuildResponse } from "../services";
 import { CustomError, deleteFile, uploadFile } from "../utils";
+import sequelize from "sequelize";
 
 export class OrderService {
   private orderRepository: OrderRepository;
@@ -280,11 +281,26 @@ export class OrderService {
   };
 
   private buildItemFilter = (request: dtos.FindAllOrderItemDTO) => {
-    const filter: any = {};
-    if (request.idCostCenterProject) {
-      filter.idCostCenterProject = request.idCostCenterProject;
+    let where: { [key: string]: any } = {};
+    if (request.consecutive) {
+      where = {
+        ...where,
+        consecutive: sequelize.where(sequelize.col("consecutive"), "LIKE", `%${where.consecutive}%`),
+      };
     }
-    return filter;
+    if (request.idOrderItemStatus) {
+      where = {
+        ...where, 
+        idOrderItemStatus: request.idOrderItemStatus
+      };
+    }
+    if (request.idCostCenterProject) {
+      where = {
+        ...where, 
+        idCostCenterProject: request.idCostCenterProject
+      };
+    }
+    return where;
   };
 
   private getPagination = (request: { page?: number, pageSize?: number }) => {

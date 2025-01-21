@@ -45,6 +45,21 @@ export function orderRoute(app: Application) {
  *         schema:
  *           type: integer
  *         description: Number of items per page
+ *       - in: query
+ *         name: consecutive
+ *         schema:
+ *           type: string
+ *         description: Consecutive of the order item
+ *       - in: query
+ *         name: idOrderItemStatus
+ *         schema:
+ *           type: integer
+ *         description: Number of the order item status
+ *       - in: query
+ *         name: idCostCenterProject
+ *         schema:
+ *           type: integer
+ *         description: Number of the cost center project
  *     responses:
  *       200:
  *         description: A list of orders
