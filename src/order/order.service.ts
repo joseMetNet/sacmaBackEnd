@@ -133,7 +133,7 @@ export class OrderService {
       }
 
       const newOrderItem = await this.orderRepository.createOrderItem(request);
-      newOrderItem.setDataValue("consecutive", `ORD-${newOrderItem.idOrderItem}`);
+      newOrderItem.setDataValue("consecutive", newOrderItem.idOrderItem);
       newOrderItem.setDataValue("idOrderItemStatus", 1);
       const response = await newOrderItem.save();
 
