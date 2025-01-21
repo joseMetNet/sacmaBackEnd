@@ -8,6 +8,7 @@ export class OrderItem extends Model {
   declare idOrderItemStatus: number;
   declare consecutive: string;
   declare documentUrl: string;
+  declare orderDocumentUrl: string;
   declare idEmployee: number;
   declare idCostCenterProject: number;
   declare address: string;
@@ -47,6 +48,10 @@ OrderItem.init({
     allowNull: true
   },
   documentUrl: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  orderDocumentUrl: {
     type: DataTypes.STRING,
     allowNull: true
   },

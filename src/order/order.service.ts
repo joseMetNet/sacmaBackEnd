@@ -123,17 +123,11 @@ export class OrderService {
     }
   };
 
-  createOrderItem = async (request: dtos.CreateOrderItem, filePath?: string): 
+  createOrderItem = async (request: dtos.CreateOrderItem): 
   Promise<ResponseEntity> => {
     try {
-      if (filePath) {
-        const identifier = crypto.randomUUID();
-        await uploadFile(filePath, identifier, "application/pdf", "order");
-        request.documentUrl = `https://sacmaback.blob.core.windows.net/order/${identifier}.pdf`;
-      }
-
       const newOrderItem = await this.orderRepository.createOrderItem(request);
-      newOrderItem.setDataValue("consecutive", newOrderItem.idOrderItem);
+      newOrderItem.setDataValue("consecutive", `OC-${newOrderItem.idOrderItem}`);
       newOrderItem.setDataValue("idOrderItemStatus", 1);
       const response = await newOrderItem.save();
 
@@ -160,10 +154,10 @@ export class OrderService {
     }
   };
 
-  updateOrderItem = async (request: dtos.UpdateOrderItem, filePath?: string, fileExtension?: string)
+  updateOrderItem = async (request: dtos.UpdateOrderItemIn)
   : Promise<ResponseEntity> => {
     try {
-      const orderItemDb = await this.orderRepository.findByIdOrderItem(request.idOrderItem);
+      const orderItemDb = await this.orderRepository.findByIdOrderItem(request.data.idOrderItem);
       if (!orderItemDb) {
         return {
           status: StatusValue.Failed,
@@ -172,7 +166,7 @@ export class OrderService {
         };
       }
 
-      if (filePath && orderItemDb.documentUrl) {
+      if (request.filePath && orderItemDb.documentUrl) {
         const identifier = new URL(orderItemDb.documentUrl).pathname.split("/").pop();
         const deleteRequest = await deleteFile(identifier!, "order");
         if (deleteRequest instanceof CustomError) {
@@ -184,15 +178,35 @@ export class OrderService {
         }
       }
 
-      if (filePath) {
+      if (request.filePath) {
         const identifier = crypto.randomUUID();
-        const contentType = fileExtension === "pdf" ? "application/pdf" : "image/jpeg";
-        await uploadFile(filePath, identifier, contentType, "order");
-        request.documentUrl = `https://sacmaback.blob.core.windows.net/order/${identifier}.${fileExtension==="pdf" ? "pdf" : "png"}`;
-        request.idOrderItemStatus = 2;
+        const contentType = request.fileExtension === "pdf" ? "application/pdf" : "image/jpeg";
+        await uploadFile(request.filePath, identifier, contentType, "order");
+        request.data.documentUrl = `https://sacmaback.blob.core.windows.net/order/${identifier}.${request.fileExtension==="pdf" ? "pdf" : "png"}`;
+        request.data.idOrderItemStatus = 2;
       }
 
-      const updatedOrderItem = await orderItemDb.update(request);
+      if (request.filePathOrder && orderItemDb.orderDocumentUrl) {
+        const identifier = new URL(orderItemDb.orderDocumentUrl).pathname.split("/").pop();
+        const deleteRequest = await deleteFile(identifier!, "order");
+        if (deleteRequest instanceof CustomError) {
+          console.error(deleteRequest);
+          return BuildResponse.buildErrorResponse(
+            StatusCode.InternalErrorServer,
+            { message: "Error while deleting file" }
+          );
+        }
+      }
+
+      if (request.filePathOrder) {
+        const identifier = crypto.randomUUID();
+        const contentType = request.fileExtensionOrder === "pdf" ? "application/pdf" : "image/jpeg";
+        await uploadFile(request.filePathOrder, identifier, contentType, "order");
+        request.data.orderDocumentUrl = `https://sacmaback.blob.core.windows.net/order/${identifier}.${request.fileExtensionOrder==="pdf" ? "pdf" : "png"}`;
+        request.data.idOrderItemStatus = 2;
+      }
+
+      const updatedOrderItem = await orderItemDb.update(request.data);
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, updatedOrderItem);
     } catch (err: any) {
