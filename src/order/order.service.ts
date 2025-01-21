@@ -160,7 +160,7 @@ export class OrderService {
     }
   };
 
-  updateOrderItem = async (request: dtos.UpdateOrderItem, filePath?: string)
+  updateOrderItem = async (request: dtos.UpdateOrderItem, filePath?: string, fileExtension?: string)
   : Promise<ResponseEntity> => {
     try {
       const orderItemDb = await this.orderRepository.findByIdOrderItem(request.idOrderItem);
@@ -186,8 +186,9 @@ export class OrderService {
 
       if (filePath) {
         const identifier = crypto.randomUUID();
-        await uploadFile(filePath, identifier, "application/pdf", "order");
-        request.documentUrl = `https://sacmaback.blob.core.windows.net/order/${identifier}.pdf`;
+        const contentType = fileExtension === "pdf" ? "application/pdf" : "image/jpeg";
+        await uploadFile(filePath, identifier, contentType, "order");
+        request.documentUrl = `https://sacmaback.blob.core.windows.net/order/${identifier}.${fileExtension==="pdf" ? "pdf" : "png"}`;
       }
 
       const updatedOrderItem = await orderItemDb.update(request);
