@@ -16,6 +16,7 @@ export class Quotation extends Model {
   declare client: string;
   declare executionTime: string;
   declare policy: string;
+  declare advance: string;
   declare technicalCondition: string;
   declare builderAddress: string;
   declare projectName: string;
@@ -87,6 +88,10 @@ Quotation.init(
       allowNull: true,
     },
     policy: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    advance: {
       type: DataTypes.STRING,
       allowNull: true,
     },

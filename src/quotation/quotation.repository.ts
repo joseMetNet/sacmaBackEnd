@@ -179,7 +179,7 @@ export class QuotationRepository {
           }
         ],
         where: filter,
-        limit,
+        limit: limit === -1 ? undefined : limit,
         offset,
         distinct: true,
         order: [["idQuotationItemDetail", "ASC"]],

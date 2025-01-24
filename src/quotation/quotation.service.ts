@@ -285,16 +285,44 @@ export class QuotationService {
   };
 
   deleteQuotation = async (idQuotation: number): Promise<ResponseEntity> => {
+    const transaction = await dbConnection.transaction();
     try {
-      const deletedCount = await this.quotationRepository.delete(idQuotation);
-      if (deletedCount > 0) {
-        return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Quotation deleted successfully" });
-      } else {
+      const quotation = await this.quotationRepository.findById(idQuotation);
+      if (!quotation) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
       }
+
+      const [quotationItems, quotationItemDetails, 
+        quotationComments, quotationAdditionalCost, quotationPercentage
+      ] = await Promise.all([
+        this.quotationRepository.findAllQuotationItem({ idQuotation: idQuotation }, -1, 0),
+        this.quotationRepository.findAllQuotationItemDetail({ idQuotation: idQuotation }, -1, 0),
+        this.quotationRepository.findAllQuotationComment({ idQuotation: idQuotation }, -1, 0),
+        this.quotationRepository.findQuotationAdditionalCostByQuotationId(idQuotation),
+        this.quotationRepository.findQuotationPercentageByQuotationId(idQuotation),
+
+      ]);
+
+      if (quotationItemDetails instanceof CustomError || quotationItems instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get quotation items" });
+      }
+
+      await Promise.all([
+        ...quotationItemDetails.rows.map(itemDetail => itemDetail.destroy({ transaction })),
+        ...quotationItems.rows.map(item => item.destroy({ transaction })),
+        ...quotationComments.rows.map(comment => comment.destroy({ transaction })),
+        quotationAdditionalCost?.destroy({ transaction }),
+        quotationPercentage?.destroy({ transaction }),
+      ]);
+
+      await quotation.destroy({ transaction });
+      await transaction.commit();
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Quotation deleted successfully" });
     } catch (error) {
-      console.error(error);
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
+      await transaction.rollback();
+      console.error("Error deleting quotation:", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to delete quotation" });
     }
   };
 
@@ -433,13 +461,23 @@ export class QuotationService {
   };
 
   deleteQuotationItem = async (idQuotationItem: number): Promise<ResponseEntity> => {
+    const transaction = await dbConnection.transaction();
     try {
-      const deletedCount = await this.quotationRepository.deleteQuotationItem(idQuotationItem);
-      if (deletedCount > 0) {
-        return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, { message: "Quotation item deleted successfully" });
-      } else {
+      const quotationItem = await this.quotationRepository.findQuotationItemById(idQuotationItem);
+      if (!quotationItem) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation item not found" });
       }
+      const quotationItemDetails = await this.quotationRepository.findQuotationItemDetailByQuotationItemId(idQuotationItem);
+      if (!quotationItemDetails) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation item details not found" });
+      }
+      
+      await Promise.all(quotationItemDetails.map(itemDetail => itemDetail.destroy({ transaction })));
+      await quotationItem.destroy({ transaction });
+      await transaction.commit();
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Quotation item deleted successfully" });
+
     } catch (error) {
       console.error(error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
@@ -735,6 +773,8 @@ export class QuotationService {
     quotation.builder = quotationData.client ?? quotation.client;
     quotation.idResponsable = quotationData.idResponsable ?? quotation.idResponsable;
     quotation.policy = quotationData.policy ?? quotation.policy;
+    quotation.executionTime = quotationData.executionTime ?? quotation.executionTime;
+    quotation.advance = quotationData.advance ?? quotation.advance;
     quotation.technicalCondition = quotationData.technicalCondition ?? quotation.technicalCondition;
     quotation.idQuotationStatus = quotationData.idQuotationStatus ?? quotation.idQuotationStatus;
     quotation.builderAddress = quotationData.builderAddress ?? quotation.builderAddress;
