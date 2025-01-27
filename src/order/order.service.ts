@@ -5,6 +5,7 @@ import { StatusCode, StatusValue } from "../interfaces";
 import { BuildResponse } from "../services";
 import { CustomError, deleteFile, uploadFile } from "../utils";
 import sequelize from "sequelize";
+import { dbConnection } from "../config";
 
 export class OrderService {
   private orderRepository: OrderRepository;
@@ -241,26 +242,24 @@ export class OrderService {
   };
 
   deleteOrderItem = async (id: number): Promise<ResponseEntity> => {
+    const transaction = await dbConnection.transaction();
     try {
       const orderItem = await this.orderRepository.findByIdOrderItem(id);
       if (!orderItem) {
-        return {
-          status: StatusValue.Failed,
-          code: StatusCode.NotFound,
-          data: { message: "Order item not found" }
-        };
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Order item not found" });
       }
+
+      const orderItemDetails = await this.orderRepository.findAllOrderItemDetail({ idOrderItem: id });
       
-      await this.orderRepository.deleteOrderItem(id);
+      await Promise.all(orderItemDetails.rows.map(orderItemDetail => orderItemDetail.destroy({ transaction })));
+      await orderItem.destroy({ transaction });
+      await transaction.commit();
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Order item deleted successfully" });
-
     } catch (err: any) {
-      console.error(err);
-      return BuildResponse.buildErrorResponse(
-        StatusCode.InternalErrorServer,
-        { message: "Error while fetching orders items" }
-      );
+      await transaction.rollback();
+      console.error("Error deleting order item:", err);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to delete order item", error: err.message });
     }
   };
 

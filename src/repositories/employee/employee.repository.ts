@@ -82,6 +82,31 @@ export class EmployeeRepository {
     }
   }
 
+  async findById(idEmployee: number): Promise<Employee | CustomError> {
+    try {
+      const employee = await Employee.findByPk(idEmployee, {
+        include: [
+          {
+            model: User,
+            required: true,
+          },
+          {
+            model: Position,
+            required: true
+          }
+        ]
+      });
+      console.log(employee);
+      if (!employee) {
+        return CustomError.notFound("Employee not found");
+      }
+      return employee;
+    }catch(err: any) {
+      console.error(err);
+      return CustomError.internalServer(err.message);
+    }
+  }
+
   async findEmployeeNoveltiesByEmployeeId(idEmployee: number): Promise<CustomError | EmployeeNovelty[]> {
     try {
       const novelties = await EmployeeNovelty.findAll({

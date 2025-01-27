@@ -10,6 +10,7 @@ export const CreateQuotationSchema = z.object({
   perDiem: z.string().optional(),
   sisoNumber: z.string().optional(),
   client: z.string().optional(),
+  advance: z.string().optional(),
   executionTime: z.string().optional(),
   policy: z.string().optional(),
   technicalCondition: z.string().optional(),
@@ -29,6 +30,7 @@ export const UpdateQuotationSchema = z.object({
   client: z.string().optional(),
   executionTime: z.string().optional(),
   policy: z.string().optional(),
+  advance: z.string().optional(),
   technicalCondition: z.string().optional(),
 });
 

@@ -2,9 +2,11 @@ import { Application, Router } from "express";
 import { QuotationController } from "./quotation.controller";
 import { QuotationRepository } from "./quotation.repository";
 import { QuotationService } from "./quotation.service";
+import { EmployeeRepository } from "../repositories";
 
 const quotationRepository = new QuotationRepository();
-const quotationService = new QuotationService(quotationRepository);
+const employeeRepository = new EmployeeRepository();
+const quotationService = new QuotationService(quotationRepository, employeeRepository);
 const quotationController = new QuotationController(quotationService);
 
 export function quotationRoute(app: Application): void {

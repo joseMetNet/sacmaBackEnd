@@ -15,13 +15,20 @@ import { QuotationItem } from "./quotation-item.model";
 import { readFileSync } from "fs";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
+import { EmployeeRepository } from "../repositories";
+import e from "cors";
 
 export class QuotationService {
 
   private readonly quotationRepository: QuotationRepository;
+  private readonly employeeRepository: EmployeeRepository;
 
-  constructor(quotationRepository: QuotationRepository) {
+  constructor(
+    quotationRepository: QuotationRepository,
+    employeeRepository: EmployeeRepository
+  ) {
     this.quotationRepository = quotationRepository;
+    this.employeeRepository = employeeRepository;
   }
 
   createQuotation = async (quotationData: dtos.CreateQuotationDTO): Promise<ResponseEntity> => {
@@ -99,6 +106,11 @@ export class QuotationService {
         builder: quotation.builder,
         builderAddress: quotation.builderAddress,
         projectName: quotation.projectName,
+        executionTime: quotation.executionTime,
+        advance: quotation.advance,
+        policy: quotation.policy,
+        technicalCondition: quotation.technicalCondition,
+        idResponsable: quotation.idResponsable,
         itemSummary: quotation.itemSummary,
         totalCost: quotation.totalCost,
         QuotationComments: jsonQuotation.QuotationComments,
@@ -141,6 +153,7 @@ export class QuotationService {
         item.unitPrice = parseFloat(item.unitPrice).toFixed(2);
         item.total = parseFloat(item.total).toFixed(2);
       });
+
       const technicalSpecifications = (quotationItems.data as any).data
         .map((item: QuotationItem) => item.technicalSpecification)
         .join(", ");
@@ -158,15 +171,31 @@ export class QuotationService {
           return item; 
         });
 
+      const employeeDb = await this.employeeRepository.findById((quotation.data as any).idResponsable);
+      if(employeeDb instanceof CustomError) {
+        console.error(employeeDb);
+        return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get employee" });
+      }
+
+      const employee = employeeDb.toJSON();
+
+
       const response = {
         items: itemResponse,
         name: (quotation.data as any)?.name ?? "",
         itemNames,
+        quotationName: (quotation.data as any)?.name ?? "",
+        executionTime: (quotation.data as any)?.executionTime ?? "",
+        advance: (quotation.data as any)?.advance ?? "",
+        cuts: (quotation.data as any)?.advance ? 100-parseInt((quotation.data as any)?.advance) : "",
         technicalSpecifications,
+        employeeName: employee.User.firstName + " " + employee.User.lastName,
+        employeeEmail: employee.User.email,
+        technicalCondition: (quotation.data as any)?.technicalCondition ?? "",
+        employeePosition: employee.Position.position,
         date: formatDate(new Date().toISOString().split("T")[0]),
         dateUntil: formatDate(getNextMonth(new Date().toISOString().split("T")[0])),
         consecutive: (quotation.data as any)?.consecutive ?? "",
-        referencia: "Impermeabilización Aleros",
         project: (quotation.data as any)?.projectName ?? "",
         unitValueAIU: currencyFormatter.format(additionalRepport.unitValueAIU),
         administration: currencyFormatter.format(additionalRepport.administration),
@@ -285,16 +314,44 @@ export class QuotationService {
   };
 
   deleteQuotation = async (idQuotation: number): Promise<ResponseEntity> => {
+    const transaction = await dbConnection.transaction();
     try {
-      const deletedCount = await this.quotationRepository.delete(idQuotation);
-      if (deletedCount > 0) {
-        return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Quotation deleted successfully" });
-      } else {
+      const quotation = await this.quotationRepository.findById(idQuotation);
+      if (!quotation) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
       }
+
+      const [quotationItems, quotationItemDetails, 
+        quotationComments, quotationAdditionalCost, quotationPercentage
+      ] = await Promise.all([
+        this.quotationRepository.findAllQuotationItem({ idQuotation: idQuotation }, -1, 0),
+        this.quotationRepository.findAllQuotationItemDetail({ idQuotation: idQuotation }, -1, 0),
+        this.quotationRepository.findAllQuotationComment({ idQuotation: idQuotation }, -1, 0),
+        this.quotationRepository.findQuotationAdditionalCostByQuotationId(idQuotation),
+        this.quotationRepository.findQuotationPercentageByQuotationId(idQuotation),
+
+      ]);
+
+      if (quotationItemDetails instanceof CustomError || quotationItems instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get quotation items" });
+      }
+
+      await Promise.all([
+        ...quotationItemDetails.rows.map(itemDetail => itemDetail.destroy({ transaction })),
+        ...quotationItems.rows.map(item => item.destroy({ transaction })),
+        ...quotationComments.rows.map(comment => comment.destroy({ transaction })),
+        quotationAdditionalCost?.destroy({ transaction }),
+        quotationPercentage?.destroy({ transaction }),
+      ]);
+
+      await quotation.destroy({ transaction });
+      await transaction.commit();
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Quotation deleted successfully" });
     } catch (error) {
-      console.error(error);
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
+      await transaction.rollback();
+      console.error("Error deleting quotation:", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to delete quotation" });
     }
   };
 
@@ -433,13 +490,23 @@ export class QuotationService {
   };
 
   deleteQuotationItem = async (idQuotationItem: number): Promise<ResponseEntity> => {
+    const transaction = await dbConnection.transaction();
     try {
-      const deletedCount = await this.quotationRepository.deleteQuotationItem(idQuotationItem);
-      if (deletedCount > 0) {
-        return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, { message: "Quotation item deleted successfully" });
-      } else {
+      const quotationItem = await this.quotationRepository.findQuotationItemById(idQuotationItem);
+      if (!quotationItem) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation item not found" });
       }
+      const quotationItemDetails = await this.quotationRepository.findQuotationItemDetailByQuotationItemId(idQuotationItem);
+      if (!quotationItemDetails) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation item details not found" });
+      }
+      
+      await Promise.all(quotationItemDetails.map(itemDetail => itemDetail.destroy({ transaction })));
+      await quotationItem.destroy({ transaction });
+      await transaction.commit();
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Quotation item deleted successfully" });
+
     } catch (error) {
       console.error(error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
@@ -735,6 +802,8 @@ export class QuotationService {
     quotation.builder = quotationData.client ?? quotation.client;
     quotation.idResponsable = quotationData.idResponsable ?? quotation.idResponsable;
     quotation.policy = quotationData.policy ?? quotation.policy;
+    quotation.executionTime = quotationData.executionTime ?? quotation.executionTime;
+    quotation.advance = quotationData.advance ?? quotation.advance;
     quotation.technicalCondition = quotationData.technicalCondition ?? quotation.technicalCondition;
     quotation.idQuotationStatus = quotationData.idQuotationStatus ?? quotation.idQuotationStatus;
     quotation.builderAddress = quotationData.builderAddress ?? quotation.builderAddress;
