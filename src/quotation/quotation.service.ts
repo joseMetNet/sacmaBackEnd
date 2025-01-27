@@ -16,7 +16,6 @@ import { readFileSync } from "fs";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 import { EmployeeRepository } from "../repositories";
-import e from "cors";
 
 export class QuotationService {
 
@@ -182,8 +181,9 @@ export class QuotationService {
 
       const response = {
         items: itemResponse,
-        name: (quotation.data as any)?.name ?? "",
+        client: (quotation.data as any)?.client ?? "",
         itemNames,
+        policy: (quotation.data as any)?.policy ?? "",
         quotationName: (quotation.data as any)?.name ?? "",
         executionTime: (quotation.data as any)?.executionTime ?? "",
         advance: (quotation.data as any)?.advance ?? "",
@@ -265,6 +265,7 @@ export class QuotationService {
           idQuotation: quotation.idQuotation,
           name: quotation.name,
           responsable: responsable,
+          advance: quotation.advance,
           consecutive: quotation.consecutive,
           total: unitValueAIU.find((item) => item.quotationId === quotation.idQuotation)?.unitValueAIU,
           idEmployee: jsonQuotation.Employee.idEmployee,
