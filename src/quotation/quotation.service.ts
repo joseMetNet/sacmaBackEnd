@@ -15,13 +15,20 @@ import { QuotationItem } from "./quotation-item.model";
 import { readFileSync } from "fs";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
+import { EmployeeRepository } from "../repositories";
+import e from "cors";
 
 export class QuotationService {
 
   private readonly quotationRepository: QuotationRepository;
+  private readonly employeeRepository: EmployeeRepository;
 
-  constructor(quotationRepository: QuotationRepository) {
+  constructor(
+    quotationRepository: QuotationRepository,
+    employeeRepository: EmployeeRepository
+  ) {
     this.quotationRepository = quotationRepository;
+    this.employeeRepository = employeeRepository;
   }
 
   createQuotation = async (quotationData: dtos.CreateQuotationDTO): Promise<ResponseEntity> => {
@@ -99,6 +106,11 @@ export class QuotationService {
         builder: quotation.builder,
         builderAddress: quotation.builderAddress,
         projectName: quotation.projectName,
+        executionTime: quotation.executionTime,
+        advance: quotation.advance,
+        policy: quotation.policy,
+        technicalCondition: quotation.technicalCondition,
+        idResponsable: quotation.idResponsable,
         itemSummary: quotation.itemSummary,
         totalCost: quotation.totalCost,
         QuotationComments: jsonQuotation.QuotationComments,
@@ -141,6 +153,7 @@ export class QuotationService {
         item.unitPrice = parseFloat(item.unitPrice).toFixed(2);
         item.total = parseFloat(item.total).toFixed(2);
       });
+
       const technicalSpecifications = (quotationItems.data as any).data
         .map((item: QuotationItem) => item.technicalSpecification)
         .join(", ");
@@ -158,15 +171,31 @@ export class QuotationService {
           return item; 
         });
 
+      const employeeDb = await this.employeeRepository.findById((quotation.data as any).idResponsable);
+      if(employeeDb instanceof CustomError) {
+        console.error(employeeDb);
+        return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get employee" });
+      }
+
+      const employee = employeeDb.toJSON();
+
+
       const response = {
         items: itemResponse,
         name: (quotation.data as any)?.name ?? "",
         itemNames,
+        quotationName: (quotation.data as any)?.name ?? "",
+        executionTime: (quotation.data as any)?.executionTime ?? "",
+        advance: (quotation.data as any)?.advance ?? "",
+        cuts: (quotation.data as any)?.advance ? 100-parseInt((quotation.data as any)?.advance) : "",
         technicalSpecifications,
+        employeeName: employee.User.firstName + " " + employee.User.lastName,
+        employeeEmail: employee.User.email,
+        technicalCondition: (quotation.data as any)?.technicalCondition ?? "",
+        employeePosition: employee.Position.position,
         date: formatDate(new Date().toISOString().split("T")[0]),
         dateUntil: formatDate(getNextMonth(new Date().toISOString().split("T")[0])),
         consecutive: (quotation.data as any)?.consecutive ?? "",
-        referencia: "Impermeabilización Aleros",
         project: (quotation.data as any)?.projectName ?? "",
         unitValueAIU: currencyFormatter.format(additionalRepport.unitValueAIU),
         administration: currencyFormatter.format(additionalRepport.administration),
