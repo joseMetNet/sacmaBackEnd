@@ -12,7 +12,7 @@ export class OrderItem extends Model {
   declare idEmployee: number;
   declare idCostCenterProject: number;
   declare address: string;
-  declare phone: string;
+  declare orderRequest: string;
   declare createdAt: string;
   declare updatedAt: string;
 }
@@ -43,7 +43,7 @@ OrderItem.init({
     type: DataTypes.STRING,
     allowNull: true
   },
-  phone: {
+  orderRequest: {
     type: DataTypes.STRING,
     allowNull: true
   },

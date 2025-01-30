@@ -16,7 +16,7 @@ export class OrderRepository {
       include: [
         {
           model: CostCenterProject,
-          attributes: ["name", "address", "phone"],
+          attributes: ["name", "address", "orderRequest"],
           required: true,
         },
         {
@@ -66,7 +66,7 @@ export class OrderRepository {
         include: [
           {
             model: CostCenterProject,
-            attributes: ["name", "address", "phone"],
+            attributes: ["name", "address", "orderRequest"],
             required: true,
           },
           {

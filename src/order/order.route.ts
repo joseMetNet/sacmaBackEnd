@@ -541,9 +541,9 @@ export function orderRoute(app: Application) {
  *         address:
  *           type: string
  *           example: "Address"
- *         phone:
+ *         orderRequest:
  *           type: string
- *           example: "1234567890"
+ *           example: "kdsa"
  *         idOrderItemStatus:
  *           type: integer
  *           example: 1
@@ -595,9 +595,9 @@ export function orderRoute(app: Application) {
  *         address:
  *           type: string
  *           example: "Address"
- *         phone:
+ *         orderRequest:
  *           type: string
- *           example: "1234567890"
+ *           example: "kdsa"
  *         document:
  *           type: string
  *           format: binary
