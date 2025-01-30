@@ -16,7 +16,7 @@ export class OrderRepository {
       include: [
         {
           model: CostCenterProject,
-          attributes: ["name", "address", "orderRequest"],
+          attributes: ["name", "address", "phone"],
           required: true,
         },
         {
