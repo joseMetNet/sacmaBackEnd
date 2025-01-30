@@ -12,6 +12,7 @@ export const findAllOrderItemSchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
   consecutive: z.string().optional(),
+  orderRequest: z.string().optional(),
   idOrderItemStatus: z.coerce.number().optional(),
   idCostCenterProject: z.coerce.number().optional(),
 });
@@ -27,7 +28,7 @@ export const createOrderItemSchema = z.object({
   idEmployee: z.coerce.number(),
   idCostCenterProject: z.coerce.number(),
   address: z.string().optional(),
-  phone: z.string().optional(),
+  orderRequest: z.string().optional(),
 });
 
 export const createOrderItemDetailSchema = z.object({
@@ -44,7 +45,7 @@ export const updateOrderItemSchema = z.object({
   idEmployee: z.coerce.number().optional(),
   idCostCenterProject: z.coerce.number().optional(),
   address: z.string().optional(),
-  phone: z.string().optional(),
+  orderRequest: z.string().optional(),
   consecutive: z.string().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional()

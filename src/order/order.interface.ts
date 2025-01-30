@@ -1,6 +1,7 @@
 export interface FindAllOrderItemDTO {
   page?: number;
   pageSize?: number;
+  orderRequest?: string;
   idCostCenterProject?: number;
   idOrderItemStatus?: number;
   consecutive?: string;
@@ -17,7 +18,7 @@ export interface CreateOrderItem {
   idEmployee: number;
   idCostCenterProject: number;
   address?: string;
-  phone?: string;
+  orderRequest?: string;
   documentUrl?: string;
   orderDocumentUrl?: string;
   createdAt?: string;
@@ -46,7 +47,7 @@ export interface UpdateOrderItem {
   idEmployee?: number;
   idCostCenterProject?: number;
   address?: string;
-  phone?: string;
+  orderRequest?: string;
   documentUrl?: string;
   orderDocumentUrl?: string;
   idOrderItemStatus?: number;

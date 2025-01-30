@@ -315,6 +315,12 @@ export class OrderService {
         idCostCenterProject: request.idCostCenterProject
       };
     }
+    if (request.orderRequest) {
+      where = {
+        ...where,
+        orderRequest: sequelize.where(sequelize.col("orderRequest"), "LIKE", `%${where.orderRequest}%`),
+      };
+    }
     return where;
   };
 
