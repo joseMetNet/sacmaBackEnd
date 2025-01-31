@@ -27,7 +27,7 @@ export class OrderRepository {
       where: filter,
       limit: limit,
       offset: offset,
-      order: [["createdAt", "ASC"]],
+      order: [["createdAt", "DESC"]],
     });
   };
 
@@ -66,7 +66,7 @@ export class OrderRepository {
         include: [
           {
             model: CostCenterProject,
-            attributes: ["name", "address", "orderRequest"],
+            attributes: ["name", "address", "phone"],
             required: true,
           },
           {
