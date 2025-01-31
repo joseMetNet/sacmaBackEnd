@@ -297,10 +297,11 @@ export class OrderService {
 
   private buildItemFilter = (request: dtos.FindAllOrderItemDTO) => {
     let where: { [key: string]: any } = {};
+    console.log("=======================================================");
     if (request.consecutive) {
       where = {
         ...where,
-        consecutive: sequelize.where(sequelize.col("consecutive"), "LIKE", `%${where.consecutive}%`),
+        consecutive: sequelize.where(sequelize.col("consecutive"), "LIKE", `%${request.consecutive}%`),
       };
     }
     if (request.idOrderItemStatus) {
@@ -318,7 +319,7 @@ export class OrderService {
     if (request.orderRequest) {
       where = {
         ...where,
-        orderRequest: sequelize.where(sequelize.col("orderRequest"), "LIKE", `%${where.orderRequest}%`),
+        orderRequest: sequelize.where(sequelize.col("orderRequest"), "LIKE", `%${request.orderRequest}%`),
       };
     }
     return where;
