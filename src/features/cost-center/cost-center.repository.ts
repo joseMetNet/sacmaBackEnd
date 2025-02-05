@@ -1,6 +1,7 @@
 import { CostCenterContact } from "./cost-center-contact.model";
 import { CostCenterProject } from "./cost-center-project.model";
 import { CostCenter } from "./cost-center.model";
+import { ProjectItem } from "./project-item.model";
 
 export class CostCenterRepository {
 
@@ -14,6 +15,10 @@ export class CostCenterRepository {
 
   async findCostCenterProjectById(id: number): Promise<CostCenterProject | null> {
     return await CostCenterProject.findByPk(id, { include: [{ all: true }] });
+  }
+
+  async findProjectItemById(id: number): Promise<ProjectItem | null> {
+    return await ProjectItem.findByPk(id, { include: [{ all: true }] });
   }
 
   async findAllAndSearch(
@@ -46,6 +51,22 @@ export class CostCenterRepository {
       order: [["idCostCenterContact", "DESC"]]
     });
     return costCenterContact;
+  }
+
+  async findAllProjectItem(
+    filter: { [key: string]: any },
+    limit: number, offset: number
+  ): Promise<{ rows: ProjectItem[], count: number }> {
+    const projectItem = await ProjectItem.findAndCountAll({
+      include: [{ all: true }],
+      where: filter,
+      nest: true,
+      distinct: true,
+      limit,
+      offset,
+      order: [["idProjectItem", "DESC"]]
+    });
+    return projectItem;
   }
 
   async findAllAndSearchCostCenterProject(
@@ -118,6 +139,13 @@ export class CostCenterRepository {
     });
   }
 
+  async updateProjectItem(projectItemData: Partial<ProjectItem>): Promise<[number, ProjectItem[]]> {
+    return await ProjectItem.update(projectItemData, {
+      where: { idProjectItem: projectItemData.idProjectItem },
+      returning: true
+    });
+  }
+
   async create(costCenterData: Partial<CostCenter>): Promise<CostCenter> {
     return await CostCenter.create(costCenterData);
   }
@@ -128,6 +156,10 @@ export class CostCenterRepository {
 
   async createCostCenterProject(costCenterProjectData: Partial<CostCenterProject>): Promise<CostCenterProject> {
     return await CostCenterProject.create(costCenterProjectData);
+  }
+
+  async createProjectItem(projectItemData: Partial<ProjectItem>): Promise<ProjectItem> {
+    return await ProjectItem.create(projectItemData);
   }
 
   async delete(id: number): Promise<number> {
@@ -145,6 +177,12 @@ export class CostCenterRepository {
   async deleteCostCenterProject(id: number): Promise<number> {
     return await CostCenterProject.destroy({
       where: { idCostCenterProject: id }
+    });
+  }
+
+  async deleteProjectItem(id: number): Promise<number> {
+    return await ProjectItem.destroy({
+      where: { idProjectItem: id }
     });
   }
 }

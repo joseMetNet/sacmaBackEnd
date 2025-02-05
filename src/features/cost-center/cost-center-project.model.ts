@@ -5,6 +5,7 @@ export class CostCenterProject extends Model {
   declare idCostCenterProject: number;
   declare idCostCenter: number;
   declare name: string;
+  declare documentUrl: string;
   declare location: string;
   declare address: string;
   declare phone: string;
@@ -23,6 +24,10 @@ CostCenterProject.init({
   name: {
     type: DataTypes.STRING,
     allowNull: false
+  },
+  documentUrl: {
+    type: DataTypes.STRING,
+    allowNull: true
   },
   location: {
     type: DataTypes.STRING,

@@ -50,6 +50,20 @@ class CostCenterService {
     }
   };
 
+  createProjectItem = async (request: types.CreateProjectItemDTO): Promise<ResponseEntity> => {
+    try {
+      request.total = String(parseInt(request.quantity) * parseFloat(request.unitPrice));
+      const response = await this.costCenterRepository.createProjectItem(request);
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
+    } catch (err: any) {
+      console.log(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  };
+
   createCostCenterProject = async (request: types.CreateCostCenterProjectDTO): Promise<ResponseEntity> => {
     try {
       const response = await this.costCenterRepository.createCostCenterProject(request);
@@ -271,6 +285,31 @@ class CostCenterService {
     }
   };
 
+
+  findAllProjectItem = async (request: types.FindAllProjectItemDTO): Promise<ResponseEntity> => {
+    try {
+      const { page, pageSize, limit, offset } = this.getPagination(request);
+      const filter = this.buildFindAllProjectItemFilter(request);
+      const data = await this.costCenterRepository.findAllProjectItem(filter, limit, offset);
+
+      const response = {
+        data: data.rows,
+        totalItems: data.count,
+        currentPage: page,
+        totalPages: Math.ceil(data.count / pageSize),
+      };
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
+    }
+    catch (err: any) {
+      console.log(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  };
+
   findAllCostCenterProject = async (request: types.FindAllCostCenterProjectDTO): Promise<ResponseEntity> => {
     let page = 1;
     if (request.page) {
@@ -366,10 +405,72 @@ class CostCenterService {
     }
   };
 
-  updateCostCenterProject = async (costCenterData: types.UpdateCostCenterProjectDTO): Promise<ResponseEntity> => {
+  updateCostCenterProject = async (
+    costCenterData: types.UpdateCostCenterProjectDTO,
+    filePath?: string
+  ): Promise<ResponseEntity> => {
     try {
-      const data = await this.costCenterRepository.updateCostCenterProject(costCenterData);
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, data[1]);
+      const dbCostCenterProject = await this.costCenterRepository.findCostCenterProjectById(costCenterData.idCostCenterProject);
+      if (!dbCostCenterProject) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Cost center project not found" });
+      }
+
+      if (filePath && dbCostCenterProject.documentUrl) {
+        await deleteFile(
+          new URL(dbCostCenterProject.documentUrl).pathname.split("/").pop()!,
+          "cost-center"
+        );
+      }
+
+      console.log(`filePath ${filePath}`);
+      if(filePath) {
+        const identifier = crypto.randomUUID();
+        const uploadResponse = await uploadFile(filePath!, identifier, "application/pdf", "cost-center");
+        if (uploadResponse instanceof CustomError) {
+          return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Error uploading image" });
+        }
+        await dbCostCenterProject.update({
+          documentUrl: `https://sacmaback.blob.core.windows.net/cost-center/${identifier}.pdf`
+        });
+      }
+
+      dbCostCenterProject.idCostCenter = costCenterData.idCostCenter ?? dbCostCenterProject.idCostCenter;
+      dbCostCenterProject.name = costCenterData.name ?? dbCostCenterProject.name;
+      dbCostCenterProject.location = costCenterData.location ?? dbCostCenterProject.location;
+      dbCostCenterProject.address = costCenterData.address ?? dbCostCenterProject.address;
+      dbCostCenterProject.phone = costCenterData.phone ?? dbCostCenterProject.phone;
+
+      const response = await dbCostCenterProject.save();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
+    }
+    catch (err: any) {
+      console.log(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  };
+
+  updateProjectItem = async (request: types.UpdateProjectItemDTO): Promise<ResponseEntity> => {
+    try {
+      const projectItemDb = await this.costCenterRepository.findProjectItemById(request.idProjectItem);
+      if (!projectItemDb) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Project item not found" });
+      }
+
+      projectItemDb.idCostCenterProject = request.idCostCenterProject ?? projectItemDb.idCostCenterProject;
+      projectItemDb.item = request.item ?? projectItemDb.item;
+      projectItemDb.quantity = request.quantity ?? projectItemDb.quantity;
+      projectItemDb.unitMeasure = request.unitMeasure ?? projectItemDb.unitMeasure;
+      projectItemDb.unitPrice = request.unitPrice ?? projectItemDb.unitPrice;
+      if(request.unitPrice && request.quantity) {
+        projectItemDb.total = String(parseInt(request.quantity) * parseFloat(request.unitPrice));
+      }
+
+      const projectItem = await projectItemDb.save();
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, projectItem);
     }
     catch (err: any) {
       console.log(err);
@@ -393,6 +494,11 @@ class CostCenterService {
   deleteCostCenterProject = async (id: number): Promise<ResponseEntity> => {
     await this.costCenterRepository.deleteCostCenterProject(id);
     return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Cost center project deleted" });
+  };
+
+  deleteProjectItem = async (idProjectItem: number): Promise<ResponseEntity> => {
+    await this.costCenterRepository.deleteProjectItem(idProjectItem);
+    return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Project item deleted" });
   };
 
   private buildFindAllFilter(request: types.FindAllDTO): { [key: string]: any } {
@@ -467,6 +573,19 @@ class CostCenterService {
     return filter;
   }
 
+  buildFindAllProjectItemFilter(request: types.FindAllProjectItemDTO): { [key: string]: any } {
+    let filter: { [key: string]: any } = {};
+    for (const key of Object.getOwnPropertyNames(request)) {
+      if (/^id/.test(key)) {
+        filter = {
+          ...filter,
+          [key]: request[key as keyof types.FindAllProjectItemDTO],
+        };
+      }
+    }
+    return filter;
+  }
+
   private buildFindAllCostCenterProjectFilter(request: types.FindAllCostCenterProjectDTO): { [key: string]: any } {
     let filter: { [key: string]: any } = {};
     for (const key of Object.getOwnPropertyNames(request)) {
@@ -510,6 +629,14 @@ class CostCenterService {
     }
     return filter;
   }
+
+  private getPagination = (request: { page?: number, pageSize?: number }) => {
+    const page = request.page || 1;
+    const pageSize = request.pageSize || 10;
+    const limit = pageSize;
+    const offset = (page - 1) * pageSize;
+    return { page, pageSize, limit, offset };
+  };
 }
 
 const costCenterRepository = new CostCenterRepository();

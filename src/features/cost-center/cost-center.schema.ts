@@ -27,6 +27,12 @@ export const findAllCostCenterProject = z.object({
   phone: z.string().optional()
 });
 
+export const findAllProjectItem = z.object({
+  page: z.coerce.number().optional(),
+  pageSize: z.coerce.number().optional(),
+  idCostCenterProject: z.coerce.number(),
+});
+
 export const idCostCenter = z.object({
   idCostCenter: z.coerce.number(),
 });
@@ -37,6 +43,10 @@ export const idCostCenterContact = z.object({
 
 export const idCostCenterProject = z.object({
   idCostCenterProject: z.coerce.number(),
+});
+
+export const idProjectItem = z.object({
+  idProjectItem: z.coerce.number(),
 });
 
 export const createCostCenter = z.object({
@@ -53,6 +63,15 @@ export const createCostCenterContact = z.object({
   role: z.string().optional()
 });
 
+
+export const createProjectItem = z.object({
+  idCostCenterProject: z.coerce.number(),
+  item: z.string(),
+  unitMeasure: z.string(),
+  quantity: z.string(),
+  unitPrice: z.string(),
+  total: z.string().optional()
+});
 
 export const createCostCenterProject = z.object({
   idCostCenter: z.coerce.number(),
@@ -76,6 +95,16 @@ export const updateCostCenter = z.object({
   nit: z.string().optional(),
   name: z.string().optional(),
   phone: z.string().optional()
+});
+
+export const updateProjectItem = z.object({
+  idProjectItem: z.coerce.number(),
+  idCostCenterProject: z.coerce.number().optional(),
+  item: z.string().optional(),
+  unitMeasure: z.string().optional(),
+  quantity: z.string().optional(),
+  unitPrice: z.string().optional(),
+  total: z.string().optional()
 });
 
 export const updateCostCenterContact = z.object({
