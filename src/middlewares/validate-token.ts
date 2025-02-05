@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { EnvConfig } from "../config";
-import { RefreshToken, User } from "../authentication";
-import { StatusCode, StatusValue } from "../interfaces";
+import { RefreshToken, User } from "../features/authentication";
+import { StatusCode, StatusValue } from "../utils/general.interfase";
 
 function removeBlankAttributes(obj: { [key: string]: any }) {
   const result: { [key: string]: any } = {};
@@ -38,8 +38,8 @@ export async function verifyToken(req: Request, res: Response, next: NextFunctio
 
     if (
       !payload ||
-      typeof payload !== "object" || 
-      !("idUser" in payload) || 
+      typeof payload !== "object" ||
+      !("idUser" in payload) ||
       !("idRefreshToken" in payload)
     ) {
       res.status(401).json({ message: "Invalid token." });
@@ -58,7 +58,7 @@ export async function verifyToken(req: Request, res: Response, next: NextFunctio
       if (!user) {
         res
           .status(StatusCode.Forbidden)
-          .json({ 
+          .json({
             status: StatusValue.Failed,
             data: {
               message: "Access forbidden"
@@ -71,7 +71,7 @@ export async function verifyToken(req: Request, res: Response, next: NextFunctio
       if (!refreshToken) {
         res
           .status(StatusCode.Forbidden)
-          .json({ 
+          .json({
             status: StatusValue.Failed,
             data: {
               message: "Access forbidden"
@@ -79,7 +79,7 @@ export async function verifyToken(req: Request, res: Response, next: NextFunctio
           });
         return;
       }
-      
+
       req.body.userLogged = { idUser, idRole };
       const body = removeBlankAttributes(req.body);
       req.body = body;
@@ -89,7 +89,7 @@ export async function verifyToken(req: Request, res: Response, next: NextFunctio
       console.error(err);
       res
         .status(StatusCode.InternalErrorServer)
-        .json({ 
+        .json({
           status: StatusValue.Failed,
           data: {
             message: err

@@ -1,9 +1,9 @@
-import { StatusCode } from "../interfaces";
+import { StatusCode } from "./general.interfase";
 
 export class CustomError extends Error {
   constructor(
-		public readonly statusCode: StatusCode,
-		public readonly message: string
+    public readonly statusCode: StatusCode,
+    public readonly message: string
   ) {
     super(message);
   }

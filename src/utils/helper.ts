@@ -1,5 +1,5 @@
 import { EnvConfig } from "../config";
-import { AuthRefreshTokenPayload, AuthTokenPayload } from "../services/interface";
+import { AuthRefreshTokenPayload, AuthTokenPayload } from "../features/employee/interface";
 import { CustomError } from ".";
 import {
   BlobServiceClient,

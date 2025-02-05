@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { RefreshToken } from "../models";
+import { RefreshToken } from "../features/employee";
 import { EnvConfig } from "../config";
 
 export async function verifyRefreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
 
   const token: string = req.body.refreshToken;
-  if(!token) {
+  if (!token) {
     res.status(401).json({ message: "Refresh token is required." });
     return;
   }
