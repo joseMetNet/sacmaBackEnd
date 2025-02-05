@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { PermissionRoleModel } from "../features/authentication/permission-role.model";
 import { PermissionModel } from "../features/authentication/permission.model";
-import { StatusCode, StatusValue } from "../interfaces";
+import { StatusCode, StatusValue } from "../utils/general.interfase";
 
 function checkRole(requiredRoles: string[]) {
   return async (req: Request, res: Response, next: NextFunction) => {
