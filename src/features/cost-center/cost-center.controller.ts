@@ -38,6 +38,22 @@ class CostCenterController {
       .json({ status: response.status, data: response.data });
   }
 
+  async findAllProjectItem(req: Request, res: Response): Promise<void> {
+    const request = schemas.findAllProjectItem.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) },
+        });
+      return;
+    }
+    const response = await costCenterService.findAllProjectItem(request.data);
+    res
+      .status(response.code)
+      .json({ status: response.status, data: response.data });
+  }
+
   async findAllCostCenterProject(req: Request, res: Response): Promise<void> {
     const request = schemas.findAllCostCenterProject.safeParse(req.query);
     if (!request.success) {
@@ -158,6 +174,28 @@ class CostCenterController {
     }
   }
 
+  async deleteProjectItem(req: Request, res: Response): Promise<void> {
+    try {
+      const request = schemas.idProjectItem.safeParse(req.params);
+      if (!request.success) {
+        res.status(StatusCode.BadRequest)
+          .json({
+            status: StatusValue.Failed,
+            data: { error: formatZodError(request.error) },
+          });
+        return;
+      }
+      const response = await costCenterService.deleteProjectItem(request.data.idProjectItem);
+      res
+        .status(response.code)
+        .json({ status: response.status, data: response.data });
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({ message: err.message });
+    }
+  }
+
   async deleteCostCenterContact(req: Request, res: Response): Promise<void> {
     try {
       const request = schemas.idCostCenterContact.safeParse(req.params);
@@ -249,6 +287,28 @@ class CostCenterController {
     }
   }
 
+  async createProjectItem(req: Request, res: Response): Promise<void> {
+    try {
+      const request = schemas.createProjectItem.safeParse(req.body);
+      if (!request.success) {
+        res.status(StatusCode.BadRequest)
+          .json({
+            status: StatusValue.Failed,
+            data: { error: formatZodError(request.error) },
+          });
+        return;
+      }
+      const response = await costCenterService.createProjectItem(request.data);
+      res
+        .status(response.code)
+        .json({ status: response.status, data: response.data });
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({ message: err.message });
+    }
+  }
+
   async createCostCenterProject(req: Request, res: Response): Promise<void> {
     try {
       const request = schemas.createCostCenterProject.safeParse(req.body);
@@ -329,7 +389,32 @@ class CostCenterController {
           });
         return;
       }
-      const response = await costCenterService.updateCostCenterProject(request.data);
+      const uploadedDocument = req.files
+        ? (req.files.document as UploadedFile).tempFilePath
+        : undefined;
+      const response = await costCenterService.updateCostCenterProject(request.data, uploadedDocument);
+      res
+        .status(response.code)
+        .json({ status: response.status, data: response.data });
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({ message: err.message });
+    }
+  }
+
+  async updateProjectItem(req: Request, res: Response): Promise<void> {
+    try {
+      const request = schemas.updateProjectItem.safeParse(req.body);
+      if (!request.success) {
+        res.status(StatusCode.BadRequest)
+          .json({
+            status: StatusValue.Failed,
+            data: { error: formatZodError(request.error) },
+          });
+        return;
+      }
+      const response = await costCenterService.updateProjectItem(request.data);
       res
         .status(response.code)
         .json({ status: response.status, data: response.data });

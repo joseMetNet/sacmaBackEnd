@@ -24,6 +24,12 @@ export interface FindAllCostCenterProjectDTO {
   phone?: string;
 }
 
+export interface FindAllProjectItemDTO {
+  page?: number;
+  pageSize?: number;
+  idCostCenterProject: number;
+}
+
 export interface CreateCostCenterContactDTO {
   idCostCenter: number;
   name: string;
@@ -70,4 +76,23 @@ export interface UpdateCostCenterProjectDTO {
   location?: string;
   address?: string;
   phone?: string;
+}
+
+export interface UpdateProjectItemDTO {
+  idProjectItem: number;
+  idCostCenterProject?: number;
+  item?: string;
+  unitMeasure?: string;
+  quantity?: string;
+  unitPrice?: string;
+  total?: string;
+}
+
+export interface CreateProjectItemDTO {
+  idCostCenterProject: number;
+  item: string;
+  unitMeasure: string;
+  quantity: string;
+  unitPrice: string;
+  total?: string;
 }
