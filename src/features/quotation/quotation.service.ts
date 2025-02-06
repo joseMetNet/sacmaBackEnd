@@ -883,7 +883,7 @@ export class QuotationService {
     if (filter.idQuotation) {
       where = {
         ...where,
-        idQuotation: sequelize.where(sequelize.col("Quotation.idQuotation"), "=", `${filter.idQuotation}`),
+        idQuotation: sequelize.where(sequelize.col("QuotationItem.Quotation.idQuotation"), "=", `${filter.idQuotation}`),
       };
     }
     return where;
