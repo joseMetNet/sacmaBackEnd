@@ -51,7 +51,8 @@ export interface findAllQuotationItemDTO {
 export interface findAllQuotationItemDetailDTO {
   page?: number;
   pageSize?: number;
-  idQuotationItem: number;
+  idQuotationItem?: number;
+  idQuotation?: number;
 }
 
 export interface UpdateQuotationStatusDTO {

@@ -61,7 +61,8 @@ export const UpdateQuotationStatusSchema = z.object({
 export const FindAllQuotationItemDetailSchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
-  idQuotationItem: z.coerce.number(),
+  idQuotation: z.coerce.number().optional(),
+  idQuotationItem: z.coerce.number().optional(),
 });
 
 export const CreateQuotationItemSchema = z.object({
