@@ -165,7 +165,7 @@ export class QuotationRepository {
         include: [
           {
             model: QuotationItem,
-            attributes: ["idQuotationItem", "item"],
+            attributes: ["idQuotationItem", "item", "technicalSpecification", "unitMeasure", "quantity", "unitPrice", "total"],
             include: [
               {
                 model: Quotation,
