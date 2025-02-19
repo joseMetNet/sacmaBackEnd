@@ -16,3 +16,11 @@ export enum StatusCode {
   ServiceUnavailable = 503, // Service Unavailable: Unavailable.
   GatewayTimeout = 504 // Deadline exceeded (retry your request).
 }
+
+export const findPagination = (request: { page?: number, pageSize?: number }) => {
+  const page = request.page || 1;
+  const pageSize = request.pageSize || 10;
+  const limit = pageSize;
+  const offset = (page - 1) * pageSize;
+  return { page, pageSize, limit, offset };
+};
