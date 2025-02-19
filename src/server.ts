@@ -16,6 +16,7 @@ import { authenticationRoutes } from "./features/authentication";
 import { noveltyRoutes } from "./features/novelty";
 import { orderRoute } from "./features/order";
 import { employeeRoutes } from "./features/employee/employee.route";
+import { expenditureRoute } from "./features/expenditure";
 
 class Server {
   private app: Application;
@@ -65,6 +66,7 @@ class Server {
     workTrackingRoute(this.app);
     quotationRoute(this.app);
     orderRoute(this.app);
+    expenditureRoute(this.app);
   }
 
   public listen(): void {
