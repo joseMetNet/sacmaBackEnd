@@ -45,6 +45,10 @@ export class ExpenditureRepository {
     });
   }
 
+  async findAllExpenditureType() {
+    return ExpenditureType.findAll();
+  }
+
   async findById(idExpenditure: number) {
     return Expenditure.findByPk(idExpenditure, {
       include: [

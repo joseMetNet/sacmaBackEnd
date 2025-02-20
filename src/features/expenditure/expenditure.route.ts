@@ -11,6 +11,7 @@ export function expenditureRoute(app: Application) {
 
   router.get("/v1/expenditure", expenditureController.findAll);
   router.get("/v1/expenditure/item", expenditureController.findAllExpenditureItem);
+  router.get("/v1/expenditure/type", expenditureController.findAllExpenditureType);
   router.get("/v1/expenditure/:idExpenditure", expenditureController.findById);
 
   router.post("/v1/expenditure", expenditureController.create);
@@ -118,6 +119,36 @@ export function expenditureRoute(app: Application) {
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/ExpenditureItem'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
+ * /v1/expenditure/type:
+ *   get:
+ *     tags: [Expenditure]
+ *     summary: Find all expenditures types
+ *     description: Retrieve a list of expenditures types
+ *     responses:
+ *       200:
+ *         description: A list of expenditures types
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/ExpenditureType'
  *       401:
  *         description: Unauthorized
  *       403:

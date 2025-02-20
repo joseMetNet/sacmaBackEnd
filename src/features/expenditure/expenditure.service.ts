@@ -37,6 +37,16 @@ export class ExpenditureService {
     }
   };
 
+  findAllExpenditureType = async (): Promise<ResponseEntity> => {
+    try {
+      const expenditureTypes = await this.expenditureRepository.findAllExpenditureType();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, expenditureTypes );
+    } catch (error) {
+      console.error("An error occurred while trying to find all expenditure types", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find all expenditure types" });
+    }
+  };
+
   findById = async (idExpenditure: number): Promise<ResponseEntity> => {
     try {
       const expenditure = await this.expenditureRepository.findById(idExpenditure);
