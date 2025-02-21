@@ -70,6 +70,22 @@ class CostCenterController {
       .json({ status: response.status, data: response.data });
   }
 
+  async findAllProjectDocument(req: Request, res: Response): Promise<void> {
+    const request = schemas.findAllProjectDocument.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) },
+        });
+      return;
+    }
+    const response = await costCenterService.findAllProjectDocument(request.data);
+    res
+      .status(response.code)
+      .json({ status: response.status, data: response.data });
+  }
+
   async findById(req: Request, res: Response): Promise<void> {
     try {
       const request = schemas.idCostCenter.safeParse(req.params);
@@ -172,6 +188,22 @@ class CostCenterController {
         .status(StatusCode.InternalErrorServer)
         .json({ message: err.message });
     }
+  }
+
+  async deleteProjectDocument(req: Request, res: Response): Promise<void> {
+    const request = schemas.idProjectDocument.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) },
+        });
+      return;
+    }
+    const response = await costCenterService.deleteProjectDocument(request.data.idProjectDocument);
+    res
+      .status(response.code)
+      .json({ status: response.status, data: response.data });
   }
 
   async deleteProjectItem(req: Request, res: Response): Promise<void> {
@@ -309,6 +341,31 @@ class CostCenterController {
     }
   }
 
+  async createProjectDocument(req: Request, res: Response): Promise<void> {
+    try {
+      const request = schemas.createProjectDocument.safeParse(req.body);
+      if (!request.success) {
+        res.status(StatusCode.BadRequest)
+          .json({
+            status: StatusValue.Failed,
+            data: { error: formatZodError(request.error) },
+          });
+        return;
+      }
+      const uploadedDocument = req.files
+        ? (req.files.document as UploadedFile).tempFilePath
+        : undefined;
+      const response = await costCenterService.createProjectDocument(request.data, uploadedDocument);
+      res
+        .status(response.code)
+        .json({ status: response.status, data: response.data });
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({ message: err.message });
+    }
+  }
+
   async createCostCenterProject(req: Request, res: Response): Promise<void> {
     try {
       const request = schemas.createCostCenterProject.safeParse(req.body);
@@ -377,6 +434,25 @@ class CostCenterController {
         .json({ message: err.message });
     }
   }
+
+  async updateProjectDocument(req: Request, res: Response): Promise<void> {
+    const request = schemas.updateProjectDocument.safeParse(req.body);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) },
+        });
+      return;
+    }
+    const uploadedDocument = req.files
+      ? (req.files.document as UploadedFile).tempFilePath
+      : undefined;
+    const response = await costCenterService.updateProjectDocument(request.data, uploadedDocument);
+    res
+      .status(response.code)
+      .json({ status: response.status, data: response.data });
+  }  
 
   async updateCostCenterProject(req: Request, res: Response): Promise<void> {
     try {

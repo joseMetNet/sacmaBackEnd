@@ -77,6 +77,27 @@ class CostCenterService {
     }
   };
 
+  createProjectDocument = async (request: types.CreateProjectDocumentDTO, filePath?: string): Promise<ResponseEntity> => {
+    try {
+      if (filePath) {
+        const identifier = crypto.randomUUID();
+        const uploadResponse = await uploadFile(filePath, identifier, "application/pdf", "cost-center");
+        if (uploadResponse instanceof CustomError) {
+          return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Error uploading document" });
+        }
+        request.documentUrl = `https://sacmaback.blob.core.windows.net/cost-center/${identifier}.pdf`;
+      }
+      const response = await this.costCenterRepository.createProjectDocument(request);
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
+    } catch (err: any) {
+      console.error(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  };
+
   download = async () => {
     try {
       const data = await this.costCenterRepository.findAll();
@@ -178,7 +199,7 @@ class CostCenterService {
         { message: err.message }
       );
     }
-  };
+  };  
 
   findCostCenterProjectById = async (id: number): Promise<ResponseEntity> => {
     try {
@@ -347,6 +368,28 @@ class CostCenterService {
     }
   };
 
+  findAllProjectDocument = async (request: types.FindAllProjectDocumentDTO): Promise<ResponseEntity> => {
+    try {
+      const { page, pageSize, limit, offset } = this.getPagination(request);
+      const filter = this.buildFindAllProjectDocumentFilter(request);
+      const data = await this.costCenterRepository.findAllProjectDocument(filter, limit, offset);
+      const response = {
+        data: data.rows,
+        totalItems: data.count,
+        currentPage: page,
+        totalPages: Math.ceil(data.count / pageSize),
+      };
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
+    }
+    catch (err: any) {
+      console.log(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  };
+
   update = async (costCenterData: types.UpdateCostCenterDTO, filePath?: string): Promise<ResponseEntity> => {
     try {
       const dbCostCenter = await this.costCenterRepository.findById(costCenterData.idCostCenter);
@@ -481,6 +524,46 @@ class CostCenterService {
     }
   };
 
+  updateProjectDocument = async (request: types.UpdateProjectDocumentDTO, filePath?: string): Promise<ResponseEntity> => {
+    try {
+      const dbProjectDocument = await this.costCenterRepository.findProjectDocumentById(request.idProjectDocument);
+      if (!dbProjectDocument) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Project document not found" });
+      }
+
+      if (filePath && dbProjectDocument.documentUrl) {
+        await deleteFile(
+          new URL(dbProjectDocument.documentUrl).pathname.split("/").pop()!,
+          "cost-center"
+        );
+      }
+
+      if(filePath) {
+        const identifier = crypto.randomUUID();
+        const uploadResponse = await uploadFile(filePath!, identifier, "application/pdf", "cost-center");
+        if (uploadResponse instanceof CustomError) {
+          return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Error uploading image" });
+        }
+        await dbProjectDocument.update({
+          documentUrl: `https://sacmaback.blob.core.windows.net/cost-center/${identifier}.pdf`
+        });
+      }
+
+      dbProjectDocument.description = request.description ?? dbProjectDocument.description;
+      dbProjectDocument.value = request.value ?? dbProjectDocument.value;
+
+      const response = await dbProjectDocument.save();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
+    }
+    catch (err: any) {
+      console.log(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "Error updating project document" }
+      );
+    }
+  };
+
   delete = async (id: number): Promise<ResponseEntity> => {
     await this.costCenterRepository.delete(id);
     return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Cost center deleted" });
@@ -499,6 +582,31 @@ class CostCenterService {
   deleteProjectItem = async (idProjectItem: number): Promise<ResponseEntity> => {
     await this.costCenterRepository.deleteProjectItem(idProjectItem);
     return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Project item deleted" });
+  };
+
+  deleteProjectDocument = async (idProjectDocument: number): Promise<ResponseEntity> => {
+    try {
+      const projectDocument = await this.costCenterRepository.findProjectDocumentById(idProjectDocument);
+      if (!projectDocument) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Project document not found" });
+      }
+
+      if(projectDocument.documentUrl){
+        await deleteFile(
+        new URL(projectDocument.documentUrl).pathname.split("/").pop()!,
+        "cost-center"
+        );
+      }
+      await this.costCenterRepository.deleteProjectDocument(idProjectDocument);
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Project document deleted" });
+    }
+    catch (err: any) {
+      console.log(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "Error deleting project document" }
+      );
+    }
   };
 
   private buildFindAllFilter(request: types.FindAllDTO): { [key: string]: any } {
@@ -624,6 +732,19 @@ class CostCenterService {
           phone: {
             [Op.like]: `%${request.phone}%`,
           },
+        };
+      }
+    }
+    return filter;
+  }
+
+  private buildFindAllProjectDocumentFilter(request: types.FindAllProjectDocumentDTO): { [key: string]: any } {
+    let filter: { [key: string]: any } = {};
+    for (const key of Object.getOwnPropertyNames(request)) {
+      if (/^id/.test(key)) {
+        filter = {
+          ...filter,
+          [key]: request[key as keyof types.FindAllProjectDocumentDTO],
         };
       }
     }

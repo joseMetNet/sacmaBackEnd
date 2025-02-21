@@ -3,6 +3,7 @@ import { dbConnection } from "../../config";
 import { CostCenterProject } from "../cost-center";
 
 export class ExpenditureItem extends Model{
+  declare idExpenditureItem: number;
   declare idExpenditure: number;
   declare idCostCenterProject: number;
   declare value: string;
@@ -12,10 +13,14 @@ export class ExpenditureItem extends Model{
 }
 
 ExpenditureItem.init({
+  idExpenditureItem: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
   idExpenditure: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    primaryKey: true,
   },
   idCostCenterProject: {
     type: DataTypes.INTEGER,

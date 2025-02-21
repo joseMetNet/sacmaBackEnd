@@ -9,6 +9,7 @@ export function costCenterRoutes(app: Application): void {
   router.get("/v1/cost-center/contact", costCenterController.findAllCostCenterContact);
   router.get("/v1/cost-center/project", costCenterController.findAllCostCenterProject);
   router.get("/v1/cost-center/project/item", costCenterController.findAllProjectItem);
+  router.get("/v1/cost-center/project/document", costCenterController.findAllProjectDocument);
   router.get("/v1/cost-center/download", costCenterController.download);
   router.get("/v1/cost-center/:idCostCenter", costCenterController.findById);
   
@@ -17,18 +18,21 @@ export function costCenterRoutes(app: Application): void {
   router.post("/v1/cost-center/contact", costCenterController.createCostCenterContact);
   router.post("/v1/cost-center/project", costCenterController.createCostCenterProject);
   router.post("/v1/cost-center/project/item", costCenterController.createProjectItem);
+  router.post("/v1/cost-center/project/document", costCenterController.createProjectDocument);
   
   // PATCH routes
   router.patch("/v1/cost-center", costCenterController.update);
   router.patch("/v1/cost-center/contact", costCenterController.updateCostCenterContact);
   router.patch("/v1/cost-center/project", costCenterController.updateCostCenterProject);
   router.patch("/v1/cost-center/project/item", costCenterController.updateProjectItem);
+  router.patch("/v1/cost-center/project/document", costCenterController.updateProjectDocument);
   
   // DELETE routes
   router.delete("/v1/cost-center/:idCostCenter", costCenterController.delete);
   router.delete("/v1/cost-center/contact/:idCostCenterContact", costCenterController.deleteCostCenterContact);
   router.delete("/v1/cost-center/project/:idCostCenterProject", costCenterController.deleteCostCenterProject);
   router.delete("/v1/cost-center/project/item/:idProjectItem", costCenterController.deleteProjectItem);
+  router.delete("/v1/cost-center/project/document/:idProjectDocument", costCenterController.deleteProjectDocument);
 
   app.use("/api/", router);
 }
@@ -139,6 +143,52 @@ export function costCenterRoutes(app: Application): void {
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/ProjectItem'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
+ * /v1/cost-center/project/document:
+ *   get:
+ *     tags: [Cost Center]
+ *     summary: Find project documents
+ *     description: Find project documents
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *         description: Number of items per page
+ *       - in: query
+ *         name: idCostCenterProject
+ *         schema:
+ *           type: integer
+ *         description: ID of the project
+ *     responses:
+ *       200:
+ *         description: A list of project documents
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/ProjectDocument'
  *       401:
  *         description: Unauthorized
  *       403:
@@ -441,6 +491,37 @@ export function costCenterRoutes(app: Application): void {
 
 /**
  * @openapi
+ * /v1/cost-center/project/document/{idProjectDocument}:
+ *   delete:
+ *     tags: [Cost Center]
+ *     summary: Delete project document by ID
+ *     description: Use to delete a project document by ID
+ *     parameters:
+ *       - in: path
+ *         name: idProjectDocument
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the project document
+ *     responses:
+ *       204:
+ *         description: No Content - Project document deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
  * /v1/cost-center:
  *   post:
  *     tags: [Cost Center]
@@ -495,6 +576,42 @@ export function costCenterRoutes(app: Application): void {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ProjectItem'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
+ * /v1/cost-center/project/document:
+ *   post:
+ *     tags: [Cost Center]
+ *     summary: Create a project document
+ *     description: Create a project document
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateProjectDocument'
+ *     responses:
+ *       201:
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProjectDocument'
  *       400:
  *         description: Bad request
  *       401:
@@ -639,6 +756,42 @@ export function costCenterRoutes(app: Application): void {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ProjectItem'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
+ * /v1/cost-center/project/document:
+ *   patch:
+ *     tags: [Cost Center]
+ *     summary: Update a project document
+ *     description: Update a project document
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateProjectDocument'
+ *     responses:
+ *       201:
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProjectDocument'
  *       400:
  *         description: Bad request
  *       401:
@@ -812,6 +965,24 @@ export function costCenterRoutes(app: Application): void {
  *           format: binary
  *         phone:
  *           type: string
+ *     ProjectDocument:
+ *       type: object
+ *       properties:
+ *         idProjectDocument:
+ *           type: integer
+ *           format: int64
+ *         idCostCenterProject:
+ *           type: integer
+ *           format: int64
+ *         document:
+ *           type: string
+ *           format: binary
+ *         description:
+ *           type: string
+ *           format: string
+ *         value:
+ *           type: string
+ *           format: string
  *     CreateProjectItem:
  *       type: object
  *       required:
@@ -862,6 +1033,21 @@ export function costCenterRoutes(app: Application): void {
  *           type: string
  *         phone:
  *           type: string
+ *     CreateProjectDocument:
+ *       type: object
+ *       properties:
+ *         idCostCenterProject:
+ *           type: integer
+ *           format: int64
+ *         document:
+ *           type: string
+ *           format: binary
+ *         description:
+ *           type: string
+ *           format: string
+ *         value:
+ *           type: string
+ *           format: string
  *     UpdateCostCenter:
  *       type: object
  *       properties:
@@ -932,4 +1118,22 @@ export function costCenterRoutes(app: Application): void {
  *         document:
  *           type: string
  *           format: binary
+ *     UpdateProjectDocument:
+ *       type: object
+ *       properties:
+ *         idProjectDocument:
+ *           type: integer
+ *           format: int64
+ *         idCostCenterProject:
+ *           type: integer
+ *           format: int64
+ *         document:
+ *           type: string
+ *           format: binary
+ *         description:
+ *           type: string
+ *           format: string
+ *         value:
+ *           type: string
+ *           format: string
 */

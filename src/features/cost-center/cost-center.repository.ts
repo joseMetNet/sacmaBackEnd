@@ -1,6 +1,7 @@
 import { CostCenterContact } from "./cost-center-contact.model";
 import { CostCenterProject } from "./cost-center-project.model";
 import { CostCenter } from "./cost-center.model";
+import { ProjectDocument } from "./project-document.model";
 import { ProjectItem } from "./project-item.model";
 
 export class CostCenterRepository {
@@ -19,6 +20,10 @@ export class CostCenterRepository {
 
   async findProjectItemById(id: number): Promise<ProjectItem | null> {
     return await ProjectItem.findByPk(id, { include: [{ all: true }] });
+  }
+
+  async findProjectDocumentById(id: number): Promise<ProjectDocument | null> {
+    return await ProjectDocument.findByPk(id, { include: [{ all: true }] });
   }
 
   async findAllAndSearch(
@@ -118,6 +123,20 @@ export class CostCenterRepository {
     return costCenterProject;
   }
 
+  async findAllProjectDocument(
+    filter: { [key: string]: any },
+    limit: number, offset: number
+  ): Promise<{ rows: any[], count: number }> {
+    return await ProjectDocument.findAndCountAll({
+      include: [{ all: true }],
+      where: filter ?? undefined,
+      limit: limit ?? undefined,
+      offset: offset ?? undefined,
+      distinct: true,
+      order: [["idProjectDocument", "DESC"]]
+    });
+  }
+
   async update(costCenterData: Partial<CostCenter>): Promise<[number, CostCenter[]]> {
     return await CostCenter.update(costCenterData, {
       where: { idCostCenter: costCenterData.idCostCenter },
@@ -162,6 +181,10 @@ export class CostCenterRepository {
     return await ProjectItem.create(projectItemData);
   }
 
+  async createProjectDocument(projectDocumentData: Partial<ProjectDocument>): Promise<ProjectDocument> {
+    return await ProjectDocument.create(projectDocumentData);
+  }
+
   async delete(id: number): Promise<number> {
     return await CostCenter.destroy({
       where: { idCostCenter: id }
@@ -183,6 +206,12 @@ export class CostCenterRepository {
   async deleteProjectItem(id: number): Promise<number> {
     return await ProjectItem.destroy({
       where: { idProjectItem: id }
+    });
+  }
+
+  async deleteProjectDocument(id: number): Promise<number> {
+    return await ProjectDocument.destroy({
+      where: { idProjectDocument: id }
     });
   }
 }
