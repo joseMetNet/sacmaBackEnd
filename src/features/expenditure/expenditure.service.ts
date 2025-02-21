@@ -15,10 +15,18 @@ export class ExpenditureService {
 
   findAll = async (request: dtos.FindAllDTO): Promise<ResponseEntity> => {
     try {
-      const { limit, offset } = findPagination(request);
+      const { page, pageSize, limit, offset } = findPagination(request);
       const filter = this.buildFilter(request);
       const expenditures = await this.expenditureRepository.findAll(limit, offset, filter);
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { data: expenditures.rows });
+
+      const response = {
+        data: expenditures.rows,
+        totalItems: expenditures.count,
+        currentPage: page,
+        totalPage: Math.ceil(expenditures.count / pageSize),
+      };
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
     } catch (error) {
       console.error("An error occurred while trying to find all expenditures", error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find all expenditures" });
@@ -27,10 +35,18 @@ export class ExpenditureService {
 
   findAllExpenditureItem = async (request: dtos.FindAllExpenditureItemDTO): Promise<ResponseEntity> => {
     try {
-      const { limit, offset } = findPagination(request);
+      const { page, pageSize, limit, offset } = findPagination(request);
       const filter = this.buildExpenditureItemFilter(request);
       const expenditureItems = await this.expenditureRepository.findAllExpenditureItem(limit, offset, filter);
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { data: expenditureItems.rows });
+
+      const response = {
+        data: expenditureItems.rows,
+        totalItems: expenditureItems.count,
+        currentPage: page,
+        totalPage: Math.ceil(expenditureItems.count / pageSize),
+      };
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
     } catch (error) {
       console.error("An error occurred while trying to find all expenditure items", error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find all expenditure items" });
@@ -53,7 +69,22 @@ export class ExpenditureService {
       if (!expenditure) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Expenditure not found" });
       }
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, expenditure);
+
+      const filter = { idExpenditure: expenditure.idExpenditure };
+      const expenditureItems = await this.expenditureRepository.findAllExpenditureItem(-1, 0, filter);
+
+      const totalValues = {
+        valueFund: 1500000,
+        spendFund: expenditureItems.rows.reduce((acc, item) => acc + parseFloat(item.value), 0),
+        availableFund: 1500000 - expenditureItems.rows.reduce((acc, item) => acc + parseFloat(item.value), 0),
+      };
+
+      const response = {
+        ...expenditure.toJSON(),
+        totalValues
+      };
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
     } catch (error) {
       console.error("An error occurred while trying to find expenditure by id", error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find expenditure by id" });
