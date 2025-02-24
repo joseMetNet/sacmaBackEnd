@@ -368,7 +368,7 @@ export function expenditureRoute(app: Application) {
  *         schema:
  *           type: integer
  *         required: true
- *         description: Expenditure id
+ *         description: Expenditure item id
  *     responses:
  *       204:
  *         description: Expenditure item deleted
