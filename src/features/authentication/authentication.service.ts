@@ -12,10 +12,18 @@ import * as helper from "../../utils/helper";
 import { AuthenticationRequest, RegisterRequest } from "./authentication.interface";
 import { StatusCode } from "../../utils/general.interfase";
 import { BuildResponse } from "../../utils/build-response";
+import { NoveltyRepository } from "../novelty";
 
 export class AuthenticationService {
-  constructor(private readonly authRepository: AuthenticationRepository) {
+  private readonly authRepository: AuthenticationRepository;
+  private readonly noveltyRepository: NoveltyRepository;
+
+  constructor(
+    authRepository: AuthenticationRepository,
+    noveltyRepository: NoveltyRepository
+  ) {
     this.authRepository = authRepository;
+    this.noveltyRepository = noveltyRepository;
   }
 
   async register(request: RegisterRequest): Promise<ResponseEntity> {
@@ -35,7 +43,7 @@ export class AuthenticationService {
 
       const user = await this.createUser(request, transaction);
       const emergencyContact = await this.createEmergencyContact(request, transaction);
-      await this.createEmployee(request, emergencyContact, user, transaction);
+      const employee = await this.createEmployee(request, emergencyContact, user, transaction);
 
       const idRefreshToken = await this.insertRefreshToken(user.get("idUser"), transaction);
       if (idRefreshToken instanceof CustomError) {
@@ -56,7 +64,15 @@ export class AuthenticationService {
       const refreshToken = helper.signAuthRefreshToken({ idUser: user.get("idUser"), idRefreshToken });
       const token = helper.signAuthToken(payload);
 
+      const novelty = await this.noveltyRepository.createNovelty({
+        idNovelty: 1,
+        idEmployee: employee.idEmployee,
+        createdAt: new Date().toISOString(),
+        endAt: new Date().toISOString(),
+      }, transaction);
+
       await transaction.commit();
+      
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         token,
@@ -257,7 +273,7 @@ export class AuthenticationService {
     idUser: number
   ): Promise<ResponseEntity> {
     try {
-      const response = await authRepository.deleteRefreshToken(
+      const response = await this.authRepository.deleteRefreshToken(
         idRefreshToken,
         idUser
       );
@@ -363,6 +379,3 @@ export class AuthenticationService {
     );
   }
 }
-
-const authRepository = new AuthenticationRepository();
-export const authService = new AuthenticationService(authRepository);
