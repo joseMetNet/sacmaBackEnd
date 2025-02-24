@@ -20,6 +20,10 @@ export const idSchema = z.object({
   idExpenditure: z.coerce.number(),
 });
 
+export const idExpenditureItemSchema = z.object({
+  idExpenditureItem: z.coerce.number(),
+});   
+
 export const createSchema = z.object({
   idExpenditureType: z.coerce.number(),
   idCostCenterProject: z.coerce.number(),

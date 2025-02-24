@@ -163,7 +163,7 @@ export class ExpenditureController {
   };
 
   deleteExpenditureItem = async (req: Request, res: Response): Promise<void> => {
-    const request = schemas.idSchema.safeParse(req.params);
+    const request = schemas.idExpenditureItemSchema.safeParse(req.params);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -172,7 +172,7 @@ export class ExpenditureController {
       return;
     }
 
-    const response = await this.expenditureService.deleteExpenditureItem(request.data.idExpenditure);
+    const response = await this.expenditureService.deleteExpenditureItem(request.data.idExpenditureItem);
     res.status(response.code).json({
       status: response.status,
       data: response.data
