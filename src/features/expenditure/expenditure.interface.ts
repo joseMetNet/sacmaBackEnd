@@ -17,7 +17,7 @@ export interface FindAllExpenditureItemDTO {
 
 export interface CreateDTO {
   idExpenditureType: number;
-  idCostCenterProject: number;
+  idCostCenterProject?: number;
   description: string;
   value: string;
   documentUrl?: string;
