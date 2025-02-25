@@ -26,7 +26,7 @@ Expenditure.init(
     },
     idCostCenterProject: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
     },
     description: {
       type: DataTypes.STRING,
