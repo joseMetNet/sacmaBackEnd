@@ -449,6 +449,9 @@ export function expenditureRoute(app: Application) {
  *         document:
  *           type: string
  *           format: binary
+ *         refundRequestDate:
+ *           type: string
+ *           format: date
  *     CreateExpenditureItem:
  *       type: object
  *       required:
@@ -489,6 +492,9 @@ export function expenditureRoute(app: Application) {
  *         document:
  *           type: string
  *           format: binary
+ *         refundRequestDate:
+ *           type: string
+ *           format: date
  *     UpdateExpenditureItem:
  *       type: object
  *       required:
