@@ -69,7 +69,7 @@ export class CostCenterRepository {
       distinct: true,
       limit,
       offset,
-      order: [["idProjectItem", "DESC"]]
+      order: [["idProjectItem", "ASC"]]
     });
     return projectItem;
   }

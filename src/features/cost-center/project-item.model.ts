@@ -4,6 +4,7 @@ import { dbConnection } from "../../config";
 export class ProjectItem extends Model {
   declare idProjectItem: number;
   declare idCostCenterProject: number;
+  declare contract: string;
   declare item: string;
   declare unitMeasure: string;
   declare quantity: string;
@@ -21,6 +22,10 @@ ProjectItem.init(
     idCostCenterProject: {
       type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    contract: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     item: {
       type: DataTypes.STRING,
