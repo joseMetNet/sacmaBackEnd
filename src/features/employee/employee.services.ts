@@ -139,7 +139,7 @@ export class EmployeeService {
           ],
           limit: limit,
           offset: offset,
-          order: [[sequelize.literal("[User.firstName]"), "ASC"]],
+          order: [[sequelize.literal("[User.status]"), "DESC"], [sequelize.literal("[User.firstName]"), "ASC"]],
           distinct: true,
         });
       const totalItems = employees.count;

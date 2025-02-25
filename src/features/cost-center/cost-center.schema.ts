@@ -82,6 +82,7 @@ export const createProjectDocument = z.object({
 export const createProjectItem = z.object({
   idCostCenterProject: z.coerce.number(),
   item: z.string(),
+  contract: z.string().optional(),
   unitMeasure: z.string(),
   quantity: z.string(),
   unitPrice: z.string(),
@@ -123,6 +124,7 @@ export const updateProjectItem = z.object({
   idProjectItem: z.coerce.number(),
   idCostCenterProject: z.coerce.number().optional(),
   item: z.string().optional(),
+  contract: z.string().optional(),
   unitMeasure: z.string().optional(),
   quantity: z.string().optional(),
   unitPrice: z.string().optional(),

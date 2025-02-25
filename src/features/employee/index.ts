@@ -1,8 +1,8 @@
+export * from "./employee.route";
 export * from "./city.model";
 export * from "./emergency-contact.model";
 export * from "./state.model";
 export * from "./identity-card.model";
-export * from "./employee.model";
 export * from "./employee.model";
 export * from "./position.model";
 export * from "./contract-type.model";
@@ -19,3 +19,4 @@ export * from "../authentication/refresh-token.model";
 export * from "../payroll/payroll.model";
 export * from "./severance-pay.model";
 export * from "../novelty/periodicity.model";
+export * from "./employee.repository";

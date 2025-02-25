@@ -93,14 +93,14 @@ export class ExpenditureService {
 
   create = async (request: dtos.CreateDTO, filePath?: string): Promise<ResponseEntity> => {
     try {
-      const expenditure = await this.expenditureRepository.create(request);
-
+      let expenditure = await this.expenditureRepository.create(request);
+      
       if (filePath) {
         const identifier = crypto.randomUUID();
         const contentType = "application/pdf";
         await uploadFile(filePath, identifier, contentType, "expenditure");
         expenditure.documentUrl = `https://sacmaback.blob.core.windows.net/expenditure/${identifier}.pdf`;
-        await expenditure.save();
+        expenditure = await expenditure.save();
       }
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, expenditure);
     } catch (error) {

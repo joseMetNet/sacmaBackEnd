@@ -2,7 +2,7 @@ import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../../config";
 import { Novelty } from "./novelty.model";
 import { Periodicity } from "./periodicity.model";
-import { Employee } from "../employee";
+import { Employee } from "../employee/employee.model";
 
 export class EmployeeNovelty extends Model {
   declare idEmployeeNovelty: number;
@@ -80,4 +80,9 @@ EmployeeNovelty.hasOne(Periodicity, {
 EmployeeNovelty.hasOne(Employee, {
   sourceKey: "idEmployee",
   foreignKey: "idEmployee"
+});
+
+EmployeeNovelty.belongsTo(Employee, {
+  foreignKey: "idEmployee",
+  targetKey: "idEmployee",
 });

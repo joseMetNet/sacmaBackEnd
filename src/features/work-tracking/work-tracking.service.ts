@@ -328,7 +328,7 @@ export class WorkTrackingService {
       }
 
       // check is there is a novelty with id distinct of 1
-      const noveltiesRequest = request.filter((item) => item.idNovelty !== 1);
+      const noveltiesRequest = request.filter((item) => item.idNovelty !== 10);
 
       if (noveltiesRequest.length > 0) {
         // create novelties

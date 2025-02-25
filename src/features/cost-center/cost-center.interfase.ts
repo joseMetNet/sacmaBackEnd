@@ -106,6 +106,7 @@ export interface UpdateProjectItemDTO {
   idProjectItem: number;
   idCostCenterProject?: number;
   item?: string;
+  contract?: string;
   unitMeasure?: string;
   quantity?: string;
   unitPrice?: string;
@@ -115,6 +116,7 @@ export interface UpdateProjectItemDTO {
 export interface CreateProjectItemDTO {
   idCostCenterProject: number;
   item: string;
+  contract?: string;
   unitMeasure: string;
   quantity: string;
   unitPrice: string;

@@ -147,6 +147,7 @@ export class NoveltyRepository {
         ],
         limit,
         offset,
+        order: [["createdAt", "DESC"]],
         distinct: true
       });
       return novelties;

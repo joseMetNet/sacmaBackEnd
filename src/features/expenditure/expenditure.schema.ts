@@ -26,7 +26,7 @@ export const idExpenditureItemSchema = z.object({
 
 export const createSchema = z.object({
   idExpenditureType: z.coerce.number(),
-  idCostCenterProject: z.coerce.number(),
+  idCostCenterProject: z.coerce.number().optional(),
   description: z.string(),
   value: z.string(),
   refundRequestDate: z.date().optional(),

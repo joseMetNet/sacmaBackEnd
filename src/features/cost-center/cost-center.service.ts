@@ -504,6 +504,7 @@ class CostCenterService {
 
       projectItemDb.idCostCenterProject = request.idCostCenterProject ?? projectItemDb.idCostCenterProject;
       projectItemDb.item = request.item ?? projectItemDb.item;
+      projectItemDb.contract = request.contract ?? projectItemDb.contract;
       projectItemDb.quantity = request.quantity ?? projectItemDb.quantity;
       projectItemDb.unitMeasure = request.unitMeasure ?? projectItemDb.unitMeasure;
       projectItemDb.unitPrice = request.unitPrice ?? projectItemDb.unitPrice;
