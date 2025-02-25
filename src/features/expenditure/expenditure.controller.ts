@@ -121,7 +121,11 @@ export class ExpenditureController {
       return;
     }
 
-    const response = await this.expenditureService.update(request.data);
+    const filePath = req.files ? 
+      (req.files.document as UploadedFile).tempFilePath
+      : undefined;
+
+    const response = await this.expenditureService.update(request.data, filePath);
     res.status(response.code).json({
       status: response.status,
       data: response.data
