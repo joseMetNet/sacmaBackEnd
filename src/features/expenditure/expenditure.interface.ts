@@ -21,7 +21,7 @@ export interface CreateDTO {
   description: string;
   value: string;
   documentUrl?: string;
-  refundRequestDate?: Date;
+  refundRequestDate?: string;
 }
 
 export interface CreateExpenditureItemDTO {
@@ -38,7 +38,7 @@ export interface UpdateDTO {
   description?: string;
   value?: string;
   documentUrl?: string;
-  refundRequestDate?: Date;
+  refundRequestDate?: string;
 }
 
 export interface UpdateExpenditureItemDTO {

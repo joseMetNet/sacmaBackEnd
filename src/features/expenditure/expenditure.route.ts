@@ -494,7 +494,7 @@ export function expenditureRoute(app: Application) {
  *           format: binary
  *         refundRequestDate:
  *           type: string
- *           format: date
+ *           format: string
  *     UpdateExpenditureItem:
  *       type: object
  *       required:

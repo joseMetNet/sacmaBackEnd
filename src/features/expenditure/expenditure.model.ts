@@ -10,7 +10,7 @@ export class Expenditure extends Model {
   declare description: string;
   declare value: string;
   declare documentUrl: string;
-  declare refundRequestDate: Date;
+  declare refundRequestDate: string;
 }
 
 Expenditure.init(
@@ -41,7 +41,7 @@ Expenditure.init(
       allowNull: true,
     },
     refundRequestDate: {
-      type: DataTypes.DATE,
+      type: DataTypes.STRING,
       allowNull: true,
     },
   },
