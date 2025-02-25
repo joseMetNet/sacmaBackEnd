@@ -18,7 +18,7 @@ export class ExpenditureRepository {
         },
         {
           model: CostCenterProject,
-          required: true,
+          required: false,
         },
       ],
       limit,
@@ -36,7 +36,7 @@ export class ExpenditureRepository {
       include: [
         {
           model: CostCenterProject,
-          required: true,
+          required: false,
         },
       ],
       limit: limit === -1 ? undefined : limit,
@@ -58,7 +58,7 @@ export class ExpenditureRepository {
         },
         {
           model: CostCenterProject,
-          required: true,
+          required: false,
         },
       ],
     });
@@ -69,7 +69,7 @@ export class ExpenditureRepository {
       include: [
         {
           model: CostCenterProject,
-          required: true,
+          required: false,
         },
       ],
     });
