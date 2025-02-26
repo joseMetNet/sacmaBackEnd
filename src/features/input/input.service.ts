@@ -61,7 +61,7 @@ class InputService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, input);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }

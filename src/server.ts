@@ -72,7 +72,7 @@ class Server {
   public listen(): void {
     console.clear();
     this.app.listen(this.port, () => {
-      console.log(`Server in port ${this.port}`);
+      console.error(`Server in port ${this.port}`);
     });
   }
 }

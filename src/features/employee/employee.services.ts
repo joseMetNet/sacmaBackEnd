@@ -219,7 +219,7 @@ export class EmployeeService {
       });
     } catch (err: any) {
       await transaction.rollback();
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
         message: "Internal server error",
       });

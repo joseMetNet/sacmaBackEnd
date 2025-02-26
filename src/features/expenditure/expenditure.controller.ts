@@ -30,7 +30,7 @@ export class ExpenditureController {
   };
 
   findAllExpenditureItem = async (req: Request, res: Response): Promise<void> => {
-    console.log(req.query);
+    console.error(req.query);
     const request = schemas.findAllExpenditureItemSchema.safeParse(req.query);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
@@ -121,7 +121,7 @@ export class ExpenditureController {
       return;
     }
 
-    const filePath = req.files ? 
+    const filePath = req.files ?
       (req.files.document as UploadedFile).tempFilePath
       : undefined;
 

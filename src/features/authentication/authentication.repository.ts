@@ -83,7 +83,7 @@ export class AuthenticationRepository {
     * @example
     * const user = await findUserByEmail("mail@mail.com");
     * if (user instanceof CustomError) {
-    *   console.log(user.message);
+    *   console.error(user.message);
     *   return;
     * }
     * user.id;
@@ -114,7 +114,7 @@ export class AuthenticationRepository {
     * @example
     * const response = await changePassword({ email: "", password: "" });
     * if (response instanceof CustomError) {
-    *   console.log(response.message);
+    *   console.error(response.message);
     *   return;
     * }
   */
@@ -124,7 +124,7 @@ export class AuthenticationRepository {
       "password": request.password,
       "userName": request.email
     });
-    console.log(payload);
+    console.error(payload);
     const requestOptions: RequestInit = {
       method: "PUT",
       headers: this.headers,
@@ -146,7 +146,7 @@ export class AuthenticationRepository {
     * @example
     * const response = await authenticationRequest({ email: "", password: "" });
     * if (response instanceof CustomError) {
-    *   console.log(response.message);
+    *   console.error(response.message);
     *   return;
     * }
     * response;
@@ -179,7 +179,7 @@ export class AuthenticationRepository {
     * @example
     * const response = await registerRequest({ email: "", password: "" });
     * if (response instanceof CustomError) {
-    *   console.log(response.message);
+    *   console.error(response.message);
     *   return;
     * }
     * response;
@@ -199,7 +199,7 @@ export class AuthenticationRepository {
     };
     const response = await fetch(`${this.baseUrl}`, requestOptions);
     const data = await response.json();
-    console.log(data);
+    console.error(data);
     if (response.status !== 200) {
       return CustomError.internalServer("Registration failed");
     }

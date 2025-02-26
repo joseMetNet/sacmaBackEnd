@@ -121,7 +121,7 @@ export class EmployeePayrollService {
         message: "Payroll uploaded successfully",
       });
     } catch (err: any) {
-      console.log(err);
+      console.error(err);
       await transaction.rollback();
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
         message: err.message,

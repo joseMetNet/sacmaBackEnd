@@ -44,7 +44,7 @@ export async function uploadDocument(
     const uploadBlobResponse = await blockBlobClient.uploadFile(filePath, blobOptions);
     return uploadBlobResponse;
   } catch (err: any) {
-    console.log(err);
+    console.error(err);
     return CustomError.internalServer(err);
   }
 }
@@ -66,7 +66,7 @@ export async function uploadImageProfile(
     const uploadBlobResponse = await blockBlobClient.uploadFile(filePath, blobOptions);
     return uploadBlobResponse;
   } catch (err: any) {
-    console.log(err);
+    console.error(err);
     return CustomError.internalServer(err);
   }
 }
@@ -85,7 +85,7 @@ export async function deleteImageProfile(
     const uploadBlobResponse = await blockBlobClient.delete();
     return uploadBlobResponse;
   } catch (err: any) {
-    console.log(err);
+    console.error(err);
     return CustomError.internalServer(err);
   }
 }
@@ -104,7 +104,7 @@ export async function deleteDocument(
     const uploadBlobResponse = await blockBlobClient.delete();
     return uploadBlobResponse;
   } catch (err: any) {
-    console.log(err);
+    console.error(err);
     return CustomError.internalServer(err);
   }
 }

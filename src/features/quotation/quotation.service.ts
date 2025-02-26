@@ -474,7 +474,7 @@ export class QuotationService {
         quotationItemDetails.forEach(async (quotationItemDetail) => {
           quotationItemDetail.quantity = String(parseInt(String(parseFloat(quantity) / parseFloat(quotationItemDetail.performance))));
           quotationItemDetail.totalCost = (parseFloat(quotationItemDetail.cost) * Math.ceil(parseFloat(quantity) / parseFloat(quotationItemDetail.performance))).toFixed(2),
-          await quotationItemDetail.save();
+            await quotationItemDetail.save();
         });
       }
 
@@ -548,17 +548,17 @@ export class QuotationService {
 
       if (request.idQuotation) {
         const quotationItems = new Map<number, { QuotationItem: any; QuotationItemDetails: any[] }>();
-      
+
         quotationItemDetails.rows.forEach((itemDetail) => {
           const idQuotationItem = itemDetail.idQuotationItem;
-      
+
           if (!quotationItems.has(idQuotationItem)) {
             quotationItems.set(idQuotationItem, {
               QuotationItem: itemDetail.toJSON().QuotationItem,
               QuotationItemDetails: [],
             });
           }
-      
+
           quotationItems.get(idQuotationItem)!.QuotationItemDetails.push({
             idQuotationItemDetail: itemDetail.idQuotationItemDetail,
             idQuotationItem: itemDetail.idQuotationItem,
@@ -570,9 +570,9 @@ export class QuotationService {
             Input: itemDetail.toJSON().Input,
           });
         });
-      
+
         const rows = Array.from(quotationItems.values());
-      
+
         const response = {
           data: rows,
           totalItems: rows.length,
@@ -580,9 +580,8 @@ export class QuotationService {
           totalPages: Math.ceil(rows.length / pageSize),
         };
 
-        console.log(response);
         return BuildResponse.buildSuccessResponse(
-          StatusCode.Ok, 
+          StatusCode.Ok,
           response
         );
       }
@@ -722,7 +721,7 @@ export class QuotationService {
   createQuotationAdditionalCost = async (request: dtos.CreateQuotationAdditionalCostDTO): Promise<ResponseEntity> => {
     try {
       const quotationAdditionalCost = await this.quotationRepository.findQuotationAdditionalCostById(request.idQuotation);
-      console.log(quotationAdditionalCost);
+      console.error(quotationAdditionalCost);
       if (!quotationAdditionalCost) {
         const response = await this.quotationRepository.createQuotationAdditionalCost(request);
         return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);

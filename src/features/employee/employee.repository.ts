@@ -96,7 +96,7 @@ export class EmployeeRepository {
           }
         ]
       });
-      console.log(employee);
+
       if (!employee) {
         return CustomError.notFound("Employee not found");
       }
@@ -124,7 +124,7 @@ export class EmployeeRepository {
       return novelties;
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return CustomError.internalServer("Internal server error");
     }
   }

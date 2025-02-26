@@ -104,7 +104,7 @@ export class NoveltyRepository {
       return novelty;
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return CustomError.internalServer("Internal server error");
     }
   }
@@ -153,7 +153,7 @@ export class NoveltyRepository {
       return novelties;
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return CustomError.internalServer("Internal server error");
     }
   }
