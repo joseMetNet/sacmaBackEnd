@@ -88,7 +88,7 @@ export class AuthenticationController {
         .status(response.code)
         .json({ status: response.status, data: response.data });
     } catch (err: any) {
-      console.log(err);
+      console.error(err);
       res
         .status(StatusCode.InternalErrorServer)
         .json({ status: StatusValue.Failed, data: { message: err } });

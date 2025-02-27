@@ -111,7 +111,7 @@ export class NoveltyService {
       const buffer = await workbook.xlsx.writeBuffer();
       return buffer;
     } catch (err: any) {
-      console.log(`error: ${JSON.stringify(err)}`);
+      console.error(`error: ${JSON.stringify(err)}`);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, err);
     }
   }
@@ -228,7 +228,7 @@ export class NoveltyService {
 
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, newNovelty);
     } catch (err: any) {
-      console.log(err);
+      console.error(err);
       await transaction.rollback();
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: err.message });
     }

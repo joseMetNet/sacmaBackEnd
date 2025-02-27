@@ -72,7 +72,7 @@ export class AuthenticationService {
       }, transaction);
 
       await transaction.commit();
-      
+
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         token,
@@ -91,7 +91,7 @@ export class AuthenticationService {
         }
       });
     } catch (err: any) {
-      console.log(err);
+      console.error(err);
       await transaction.rollback();
 
       if (err instanceof CustomError) {
@@ -286,7 +286,7 @@ export class AuthenticationService {
         message: "Refresh token revoked",
       });
     } catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
         message: err,
       });

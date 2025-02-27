@@ -48,7 +48,7 @@ class MachineryService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -83,7 +83,7 @@ class MachineryService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -118,7 +118,7 @@ class MachineryService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -138,7 +138,7 @@ class MachineryService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, machinery);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -442,7 +442,7 @@ class MachineryService {
       const buffer = await workbook.xlsx.writeBuffer();
       return buffer;
     } catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }

@@ -12,22 +12,22 @@ export async function uploadFile(
     const blobServiceClient = BlobServiceClient.fromConnectionString(
       EnvConfig.AZURE_STORAGE_CONNECTION_STRING,
     );
-    const containerClient = 
+    const containerClient =
       blobServiceClient.getContainerClient(containerClientName);
     const blobName = contentType === "application/pdf" ?
-      `${identifier}.pdf`:
+      `${identifier}.pdf` :
       `${identifier}.png`;
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
     const blobOptions: BlockBlobParallelUploadOptions = { blobHTTPHeaders: { blobContentType: contentType } };
     const uploadBlobResponse = await blockBlobClient.uploadFile(filePath, blobOptions);
     return uploadBlobResponse;
   } catch (err: any) {
-    console.log(err);
+    console.error(err);
     return CustomError.internalServer(err);
   }
 }
 
-export async function deleteFile (
+export async function deleteFile(
   blobName: string,
   containerClientName: string
 ): Promise<CustomError | BlobUploadCommonResponse> {
@@ -40,7 +40,7 @@ export async function deleteFile (
     const uploadBlobResponse = await blockBlobClient.delete();
     return uploadBlobResponse;
   } catch (err: any) {
-    console.log(err);
+    console.error(err);
     return CustomError.internalServer(err);
   }
 }

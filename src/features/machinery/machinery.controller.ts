@@ -378,7 +378,7 @@ class MachineryController {
       request.data.documentName = req.files
         ? (req.files.document as UploadedFile).name
         : undefined;
-      console.log(`filePath: ${filePath}`);
+        
       const response = await machineryService.createMachineryMaintenance(request.data, filePath);
       res
         .status(response.code)

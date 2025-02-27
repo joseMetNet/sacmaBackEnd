@@ -21,7 +21,7 @@ class CostCenterService {
         const identifier = crypto.randomUUID();
         const uploadResponse = await uploadFile(filePath, identifier, "image/jpg", "cost-center");
         if (uploadResponse instanceof CustomError) {
-          console.log(`Error uploading image: ${JSON.stringify(uploadResponse)}`);
+          console.error(`Error uploading image: ${JSON.stringify(uploadResponse)}`);
           return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Error uploading image" });
         }
         costCenterData.imageUrl = `https://sacmaback.blob.core.windows.net/cost-center/${identifier}.png`;
@@ -29,7 +29,7 @@ class CostCenterService {
       const response = await this.costCenterRepository.create(costCenterData);
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
     } catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -42,7 +42,7 @@ class CostCenterService {
       const response = await this.costCenterRepository.createCostCenterContact(request);
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
     } catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -56,7 +56,7 @@ class CostCenterService {
       const response = await this.costCenterRepository.createProjectItem(request);
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
     } catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -69,7 +69,7 @@ class CostCenterService {
       const response = await this.costCenterRepository.createCostCenterProject(request);
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
     } catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -153,7 +153,7 @@ class CostCenterService {
       const buffer = await workbook.xlsx.writeBuffer();
       return buffer;
     } catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -173,7 +173,7 @@ class CostCenterService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -193,13 +193,13 @@ class CostCenterService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
       );
     }
-  };  
+  };
 
   findCostCenterProjectById = async (id: number): Promise<ResponseEntity> => {
     try {
@@ -213,7 +213,7 @@ class CostCenterService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -261,7 +261,7 @@ class CostCenterService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -298,7 +298,7 @@ class CostCenterService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -323,7 +323,7 @@ class CostCenterService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -360,7 +360,7 @@ class CostCenterService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -382,7 +382,7 @@ class CostCenterService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -425,7 +425,7 @@ class CostCenterService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -436,11 +436,10 @@ class CostCenterService {
   updateCostCenterContact = async (costCenterData: types.UpdateCostCenterContactDTO): Promise<ResponseEntity> => {
     try {
       const data = await this.costCenterRepository.updateCostCenterContact(costCenterData);
-      console.log(`data ${JSON.stringify(costCenterData)}`);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -465,8 +464,7 @@ class CostCenterService {
         );
       }
 
-      console.log(`filePath ${filePath}`);
-      if(filePath) {
+      if (filePath) {
         const identifier = crypto.randomUUID();
         const uploadResponse = await uploadFile(filePath!, identifier, "application/pdf", "cost-center");
         if (uploadResponse instanceof CustomError) {
@@ -487,7 +485,7 @@ class CostCenterService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -508,7 +506,7 @@ class CostCenterService {
       projectItemDb.quantity = request.quantity ?? projectItemDb.quantity;
       projectItemDb.unitMeasure = request.unitMeasure ?? projectItemDb.unitMeasure;
       projectItemDb.unitPrice = request.unitPrice ?? projectItemDb.unitPrice;
-      if(request.unitPrice && request.quantity) {
+      if (request.unitPrice && request.quantity) {
         projectItemDb.total = String(parseInt(request.quantity) * parseFloat(request.unitPrice));
       }
 
@@ -517,7 +515,7 @@ class CostCenterService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, projectItem);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: err.message }
@@ -539,7 +537,7 @@ class CostCenterService {
         );
       }
 
-      if(filePath) {
+      if (filePath) {
         const identifier = crypto.randomUUID();
         const uploadResponse = await uploadFile(filePath!, identifier, "application/pdf", "cost-center");
         if (uploadResponse instanceof CustomError) {
@@ -557,7 +555,7 @@ class CostCenterService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: "Error updating project document" }
@@ -592,17 +590,17 @@ class CostCenterService {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Project document not found" });
       }
 
-      if(projectDocument.documentUrl){
+      if (projectDocument.documentUrl) {
         await deleteFile(
-        new URL(projectDocument.documentUrl).pathname.split("/").pop()!,
-        "cost-center"
+          new URL(projectDocument.documentUrl).pathname.split("/").pop()!,
+          "cost-center"
         );
       }
       await this.costCenterRepository.deleteProjectDocument(idProjectDocument);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Project document deleted" });
     }
     catch (err: any) {
-      console.log(err);
+      console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: "Error deleting project document" }
