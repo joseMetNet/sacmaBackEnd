@@ -123,6 +123,17 @@ export class ExpenditureService {
     }
   };
 
+  createExpenditureType = async (request: dtos.CreateExpenditureTypeDTO): Promise<ResponseEntity> => {
+    try {
+      const expenditureType = await this.expenditureRepository.createExpenditureType(request);
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, expenditureType);
+    }
+    catch (error) {
+      console.error("An error occurred while trying to create expenditure type", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to create expenditure type" });
+    }
+  };
+
   update = async (request: dtos.UpdateDTO, filePath?: string): Promise<ResponseEntity> => {
     try {
       const expenditure = await this.expenditureRepository.findById(request.idExpenditure);
@@ -180,6 +191,22 @@ export class ExpenditureService {
     }
   };
 
+  updateExpenditureType = async (request: dtos.UpdateExpenditureTypeDTO): Promise<ResponseEntity> => {
+    try {
+      const expenditureType = await this.expenditureRepository.findExpenditureTypeById(request.idExpenditureType);
+      if (!expenditureType) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Expenditure type not found" });
+      }
+
+      expenditureType.expenditureType = request.expenditureType || expenditureType.expenditureType;
+      const response = await expenditureType.save();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
+    } catch (error) {
+      console.error("An error occurred while trying to update expenditure type", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to update expenditure type" });
+    }
+  };
+
   delete = async (idExpenditure: number): Promise<ResponseEntity> => {
     try {
       const expenditure = await this.expenditureRepository.findById(idExpenditure);
@@ -209,6 +236,20 @@ export class ExpenditureService {
     } catch (error) {
       console.error("An error occurred while trying to delete expenditure item", error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to delete expenditure item" });
+    }
+  };
+
+  deleteExpenditureType = async (idExpenditureType: number): Promise<ResponseEntity> => {
+    try {
+      const expenditureType = await this.expenditureRepository.findExpenditureTypeById(idExpenditureType);
+      if (!expenditureType) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Expenditure type not found" });
+      }
+      await expenditureType.destroy();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Expenditure type deleted successfully" });
+    } catch (error) {
+      console.error("An error occurred while trying to delete expenditure type", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to delete expenditure type" });
     }
   };
 

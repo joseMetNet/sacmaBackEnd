@@ -64,6 +64,10 @@ export class ExpenditureRepository {
     });
   }
 
+  async findExpenditureTypeById(idExpenditureType: number) {
+    return ExpenditureType.findByPk(idExpenditureType);
+  }
+
   async findByIdExpenditureItem(idExpenditure: number) {
     return ExpenditureItem.findByPk(idExpenditure, {
       include: [
@@ -82,6 +86,10 @@ export class ExpenditureRepository {
   async createExpenditureItem(data: dtos.CreateExpenditureItemDTO
   ) {
     return ExpenditureItem.create(data as any);
+  }
+
+  async createExpenditureType(data: dtos.CreateExpenditureTypeDTO) {
+    return ExpenditureType.create(data as any);
   }
 
 }

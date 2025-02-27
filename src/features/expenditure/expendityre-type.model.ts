@@ -11,6 +11,7 @@ ExpenditureType.init(
     idExpenditureType: {
       type: DataTypes.INTEGER,
       primaryKey: true,
+      autoIncrement: true,
     },
     expenditureType: {
       type: DataTypes.STRING,
