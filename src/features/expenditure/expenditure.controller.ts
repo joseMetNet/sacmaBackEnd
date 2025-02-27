@@ -111,6 +111,23 @@ export class ExpenditureController {
     });
   };
 
+  createExpenditureType = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.createExpenditureTypeSchema.safeParse(req.body);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.expenditureService.createExpenditureType(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
   update = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.updateSchema.safeParse(req.body);
     if (!request.success) {
@@ -149,6 +166,23 @@ export class ExpenditureController {
     });
   };
 
+  updateExpenditureType = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.updateExpenditureTypeSchema.safeParse(req.body);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.expenditureService.updateExpenditureType(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
   delete = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.idSchema.safeParse(req.params);
     if (!request.success) {
@@ -177,6 +211,23 @@ export class ExpenditureController {
     }
 
     const response = await this.expenditureService.deleteExpenditureItem(request.data.idExpenditureItem);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
+  deleteExpenditureType = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.idExpenditureTypeSchema.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.expenditureService.deleteExpenditureType(request.data.idExpenditureType);
     res.status(response.code).json({
       status: response.status,
       data: response.data

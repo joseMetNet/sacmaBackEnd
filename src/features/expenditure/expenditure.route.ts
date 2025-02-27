@@ -16,12 +16,15 @@ export function expenditureRoute(app: Application) {
 
   router.post("/v1/expenditure", expenditureController.create);
   router.post("/v1/expenditure/item", expenditureController.createExpenditureItem);
+  router.post("/v1/expenditure/type", expenditureController.createExpenditureType);
 
   router.patch("/v1/expenditure", expenditureController.update);
   router.patch("/v1/expenditure/item", expenditureController.updateExpenditureItem);
+  router.patch("/v1/expenditure/type", expenditureController.updateExpenditureType);
 
   router.delete("/v1/expenditure/:idExpenditure", expenditureController.delete);
   router.delete("/v1/expenditure/item/:idExpenditureItem", expenditureController.deleteExpenditureItem);
+  router.delete("/v1/expenditure/type/:idExpenditureType", expenditureController.deleteExpenditureType);
 
   app.use("/api/", router);
 }
@@ -264,6 +267,38 @@ export function expenditureRoute(app: Application) {
 
 /**
  * @openapi
+ * /v1/expenditure/type:
+ *   post:
+ *     tags: [Expenditure]
+ *     summary: Create expenditure type
+ *     description: Create a new expenditure type
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateExpenditureType'
+ *     responses:
+ *       201:
+ *         description: Expenditure type created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ExpenditureType'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
  * /v1/expenditure:
  *   patch:
  *     tags: [Expenditure]
@@ -314,6 +349,38 @@ export function expenditureRoute(app: Application) {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ExpenditureItem'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
+ * /v1/expenditure/type:
+ *   patch:
+ *     tags: [Expenditure]
+ *     summary: Update expenditure type
+ *     description: Update an existing expenditure type
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateExpenditureType'
+ *     responses:
+ *       200:
+ *         description: Expenditure type updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ExpenditureType'
  *       401:
  *         description: Unauthorized
  *       403:
@@ -384,6 +451,34 @@ export function expenditureRoute(app: Application) {
  *               $ref: '#/components/schemas/failedResponse'
 */
 
+/**
+ * @openapi
+ * /v1/expenditure/type/{idExpenditureType}:
+ *   delete:
+ *     tags: [Expenditure]
+ *     summary: Delete expenditure type
+ *     description: Delete an existing expenditure type
+ *     parameters:
+ *       - in: path
+ *         name: idExpenditureType
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Expenditure type id
+ *     responses:
+ *       204:
+ *         description: Expenditure type deleted
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
 
 /**
  * @swagger
@@ -431,6 +526,15 @@ export function expenditureRoute(app: Application) {
  *         value:
  *           type: string
  *           example: "100.00"
+ *     ExpenditureType:
+ *       type: object
+ *       properties:
+ *         idExpenditureType:
+ *           type: integer
+ *           example: 1
+ *         expenditureType:
+ *           type: string
+ *           example: "Type"
  *     CreateExpenditure:
  *       type: object
  *       properties:
@@ -471,6 +575,12 @@ export function expenditureRoute(app: Application) {
  *         value:
  *           type: string
  *           example: "100.00"
+ *     CreateExpenditureType:
+ *       type: object
+ *       properties:
+ *         expenditureType:
+ *           type: string
+ *           example: "Type"
  *     UpdateExpenditure:
  *       type: object
  *       properties:
@@ -515,4 +625,13 @@ export function expenditureRoute(app: Application) {
  *         value:
  *           type: string
  *           example: "100.00"
+ *     UpdateExpenditureType:
+ *       type: object
+ *       properties:
+ *         idExpenditureType:
+ *           type: integer
+ *           example: 1
+ *         expenditureType:
+ *           type: string
+ *           example: "Type"
  */

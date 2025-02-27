@@ -22,7 +22,11 @@ export const idSchema = z.object({
 
 export const idExpenditureItemSchema = z.object({
   idExpenditureItem: z.coerce.number(),
-});   
+});
+
+export const idExpenditureTypeSchema = z.object({
+  idExpenditureType: z.coerce.number(),
+});
 
 export const createSchema = z.object({
   idExpenditureType: z.coerce.number(),
@@ -37,6 +41,10 @@ export const createExpenditureItemSchema = z.object({
   idCostCenterProject: z.coerce.number().optional(),
   value: z.string(),
   description: z.string(),
+});
+
+export const createExpenditureTypeSchema = z.object({
+  expenditureType: z.string(),
 });
 
 export const updateSchema = z.object({
@@ -56,4 +64,9 @@ export const updateExpenditureItemSchema = z.object({
   description: z.string().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
+});
+
+export const updateExpenditureTypeSchema = z.object({
+  idExpenditureType: z.coerce.number(),
+  expenditureType: z.string(),
 });

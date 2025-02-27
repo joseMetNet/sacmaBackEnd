@@ -31,6 +31,15 @@ export interface CreateExpenditureItemDTO {
   description: string;
 }
 
+export interface CreateExpenditureTypeDTO {
+  expenditureType: string;
+}
+
+export interface UpdateExpenditureTypeDTO {
+  idExpenditureType: number;
+  expenditureType: string;
+}
+
 export interface UpdateDTO {
   idExpenditure: number;
   idExpenditureType?: number;
