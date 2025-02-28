@@ -4,6 +4,8 @@ export interface FindAllDTO {
   idExpenditureType?: number;
   consecutive?: string;
   idCostCenterProject?: number;
+  month?: number;
+  year?: number;
 }
 
 export interface FindAllExpenditureItemDTO {
@@ -22,6 +24,8 @@ export interface CreateDTO {
   value: string;
   documentUrl?: string;
   refundRequestDate?: string;
+  fromDate?: string;
+  toDate?: string;
 }
 
 export interface CreateExpenditureItemDTO {
@@ -48,6 +52,8 @@ export interface UpdateDTO {
   value?: string;
   documentUrl?: string;
   refundRequestDate?: string;
+  fromDate?: string;
+  toDate?: string;
 }
 
 export interface UpdateExpenditureItemDTO {

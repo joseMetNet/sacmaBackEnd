@@ -4,6 +4,7 @@ import { ResponseEntity } from "../employee/interface";
 import { BuildResponse } from "../../utils/build-response";
 import { findPagination, StatusCode } from "../../utils/general.interfase";
 import { deleteFile, uploadFile } from "../../utils";
+import sequelize from "sequelize";
 
 export class ExpenditureService {
 
@@ -146,6 +147,8 @@ export class ExpenditureService {
       expenditure.value = request.value || expenditure.value;
       expenditure.documentUrl = request.documentUrl || expenditure.documentUrl;
       expenditure.refundRequestDate = request.refundRequestDate || expenditure.refundRequestDate;
+      expenditure.fromDate = request.fromDate || expenditure.fromDate;
+      expenditure.toDate = request.toDate || expenditure.toDate;
 
       if (expenditure.documentUrl && filePath) {
         const identifier = new URL(expenditure.documentUrl).pathname.split("/").pop();
@@ -271,6 +274,18 @@ export class ExpenditureService {
       filter = {
         ...filter,
         consecutive: request.consecutive,
+      };
+    }
+    if (request.month) {
+      filter = {
+        ...filter,
+        month: sequelize.where(sequelize.fn("MONTH", sequelize.col("Expenditure.createdAt")), request.month),
+      };
+    }
+    if (request.year) {
+      filter = {
+        ...filter,
+        year: sequelize.where(sequelize.fn("YEAR", sequelize.col("Expenditure.createdAt")), request.year),
       };
     }
     return filter;
