@@ -5,6 +5,8 @@ export const findAllSchema = z.object({
   pageSize: z.coerce.number().optional(),
   idExpenditureType: z.coerce.number().optional(),
   idCostCenterProject: z.coerce.number().optional(),
+  month: z.coerce.number().optional(),
+  year: z.coerce.number().optional()
 });
 
 export const findAllExpenditureItemSchema = z.object({
@@ -34,6 +36,8 @@ export const createSchema = z.object({
   description: z.string(),
   value: z.string(),
   refundRequestDate: z.string().optional(),
+  fromDate: z.string().optional(),
+  toDate: z.string().optional(),
 });
 
 export const createExpenditureItemSchema = z.object({
@@ -54,6 +58,8 @@ export const updateSchema = z.object({
   description: z.string().optional(),
   value: z.string().optional(),
   refundRequestDate: z.string().optional(),
+  fromDate: z.string().optional(),
+  toDate: z.string().optional(),
 });
 
 export const updateExpenditureItemSchema = z.object({

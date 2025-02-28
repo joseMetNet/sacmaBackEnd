@@ -62,6 +62,18 @@ export function expenditureRoute(app: Application) {
  *         schema:
  *           type: integer
  *         description: Number of the cost center project
+ *       - in: query
+ *         name: month
+ *         schema:
+ *           type: integer
+ *           format: int32
+ *         description: Month of the expenditure
+ *       - in: query
+ *         name: year
+ *         schema:
+ *           type: integer
+ *           format: int32
+ *         description: Year of the expenditure  
  *     responses:
  *       200:
  *         description: A list of orders
@@ -556,6 +568,12 @@ export function expenditureRoute(app: Application) {
  *         refundRequestDate:
  *           type: string
  *           format: date
+ *         fromDate:
+ *           type: string
+ *           format: date
+ *         toDate:
+ *           type: string
+ *           format: date
  *     CreateExpenditureItem:
  *       type: object
  *       required:
@@ -603,6 +621,12 @@ export function expenditureRoute(app: Application) {
  *           type: string
  *           format: binary
  *         refundRequestDate:
+ *           type: string
+ *           format: string
+ *         fromDate:
+ *           type: string
+ *           format: string
+ *         toDate:
  *           type: string
  *           format: string
  *     UpdateExpenditureItem:
