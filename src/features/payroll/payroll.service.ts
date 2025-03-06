@@ -93,7 +93,6 @@ export class EmployeePayrollService {
     const transaction = await dbConnection.transaction();
     try {
       const identifier = crypto.randomUUID();
-      request.paymentDate = this.calculateDayOfMonth();
 
       const uploadDocumentResponse = await uploadFile(filePath, identifier, "application/pdf", "payroll");
       if (uploadDocumentResponse instanceof CustomError) {
@@ -109,7 +108,7 @@ export class EmployeePayrollService {
       await models.EmployeePayroll.create(
         {
           idEmployee: request.idEmployee,
-          paymentDate: request.paymentDate,
+          paymentDate: this.calculateDayOfMonth(),
           documentUrl: url,
         },
         { transaction }
@@ -135,7 +134,7 @@ export class EmployeePayrollService {
     let year = currentDate.year();
     let month = currentDate.month() + 1;
     let day;
-
+  
     if (dayOfMonth <= 15) {
       day = 30;
       month -= 1;
@@ -147,7 +146,7 @@ export class EmployeePayrollService {
       day = 15;
     }
 
-    return `${year}/${month}/${day}`;
+    return `${year}-${month}-${(month===2 && day===30)? 28:day}`;
   }
 
   async findById(id: number): Promise<ResponseEntity> {
