@@ -31,6 +31,8 @@ export const createNoveltySchema = z.object({
 });
 
 export const findEmployeeNoveltiesSchema = z.object({
+  page: z.coerce.number().optional(),
+  pageSize: z.coerce.number().optional(),
   idNovelty: z.coerce.number().optional(),
   firstName: z.string().optional(),
   identityCardNumber: z.string().optional(),

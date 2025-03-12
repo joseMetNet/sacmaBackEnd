@@ -24,6 +24,8 @@ export function noveltyRoutes(app: Application): void {
    *     summary: Get all novelties
    *     description: Get all novelties
    *     parameters:
+   *       - $ref: '#/components/parameters/page'
+   *       - $ref: '#/components/parameters/pageSize'
    *       - $ref: '#/components/parameters/idNovelty'
    *       - $ref: '#/components/parameters/firstName'
    *       - $ref: '#/components/parameters/identityCardNumber'
