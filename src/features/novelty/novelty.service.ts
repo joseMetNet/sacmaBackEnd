@@ -195,8 +195,14 @@ export class NoveltyService {
         employeeNoveltyFilter = { ...employeeNoveltyFilter, "noveltyMonth": sequelize.where(sequelize.fn("MONTH", sequelize.col("EmployeeNovelty.createdAt")), request.noveltyMonth) };
       }
       if (key === "idNovelty") {
-        employeeNoveltyFilter = { ...employeeNoveltyFilter, "idNovelty": request.idNovelty };
+        employeeNoveltyFilter = { ...employeeNoveltyFilter, 
+          [Op.and]: [
+            sequelize.where(sequelize.col("EmployeeNovelty.idNovelty"), { [Op.ne]: 10 }),
+            sequelize.where(sequelize.col("EmployeeNovelty.idNovelty"), request.idNovelty)
+          ]
+        };
       }
+      employeeNoveltyFilter = { ...employeeNoveltyFilter, "idNovelty": { [Op.ne]: 10 } };
     }
 
     let userFilter = {};
