@@ -49,6 +49,17 @@ export class QuotationRepository {
     });
   }
 
+  async findQuotationDetailItemsByIdQuotation(idQuotation: number): Promise<QuotationItemDetail[] | null> {
+    return await QuotationItemDetail.findAll({
+      include: [
+        {
+          model: QuotationItem,
+          where: { idQuotation },
+        }
+      ],
+    });
+  }
+
   async findQuotationAdditionalCostByQuotationId(
     idQuotation: number
   ): Promise<QuotationAdditionalCost | null> {
