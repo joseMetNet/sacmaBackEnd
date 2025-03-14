@@ -36,15 +36,15 @@ ProjectItem.init(
       allowNull: false,
     },
     quantity: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       allowNull: false,
     },
     unitPrice: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.STRING,
       allowNull: true,
     },
     total: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.STRING,
       allowNull: true,
     },
   },
