@@ -321,33 +321,29 @@ export class QuotationService {
       if (!quotation) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
       }
-
-      const [quotationItems, quotationItemDetails,
-        quotationComments, quotationAdditionalCost, quotationPercentage
+  
+      const [
+        quotationItems,
+        quotationItemDetails,
+        quotationAdditionalCost,
+        quotationPercentage
       ] = await Promise.all([
-        this.quotationRepository.findAllQuotationItem({ idQuotation: idQuotation }, -1, 0),
-        this.quotationRepository.findAllQuotationItemDetail({ idQuotation: idQuotation }, -1, 0),
-        this.quotationRepository.findAllQuotationComment({ idQuotation: idQuotation }, -1, 0),
+        this.quotationRepository.findAllQuotationItem({ idQuotation }, -1, 0),
+        this.quotationRepository.findQuotationDetailItemsByIdQuotation(idQuotation),
         this.quotationRepository.findQuotationAdditionalCostByQuotationId(idQuotation),
         this.quotationRepository.findQuotationPercentageByQuotationId(idQuotation),
-
       ]);
-
-      if (quotationItemDetails instanceof CustomError || quotationItems instanceof CustomError) {
-        return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get quotation items" });
-      }
-
+  
       await Promise.all([
-        ...quotationItemDetails.rows.map(itemDetail => itemDetail.destroy({ transaction })),
         ...quotationItems.rows.map(item => item.destroy({ transaction })),
-        ...quotationComments.rows.map(comment => comment.destroy({ transaction })),
+        ...(quotationItemDetails ? quotationItemDetails.map(itemDetail => itemDetail.destroy({ transaction })) : []),
         quotationAdditionalCost?.destroy({ transaction }),
         quotationPercentage?.destroy({ transaction }),
       ]);
-
+  
       await quotation.destroy({ transaction });
       await transaction.commit();
-
+  
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Quotation deleted successfully" });
     } catch (error) {
       await transaction.rollback();
@@ -474,7 +470,7 @@ export class QuotationService {
         quotationItemDetails.forEach(async (quotationItemDetail) => {
           quotationItemDetail.quantity = String(parseInt(String(parseFloat(quantity) / parseFloat(quotationItemDetail.performance))));
           quotationItemDetail.totalCost = (parseFloat(quotationItemDetail.cost) * Math.ceil(parseFloat(quantity) / parseFloat(quotationItemDetail.performance))).toFixed(2),
-            await quotationItemDetail.save();
+          await quotationItemDetail.save();
         });
       }
 

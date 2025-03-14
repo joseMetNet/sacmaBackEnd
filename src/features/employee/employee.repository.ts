@@ -2,6 +2,7 @@ import { Role, User } from "../authentication";
 import { Employee, Position } from ".";
 import { EmployeeNovelty, Novelty } from "../novelty";
 import { CustomError } from "../../utils";
+import { Op } from "sequelize";
 
 export class EmployeeRepository {
 
@@ -113,7 +114,7 @@ export class EmployeeRepository {
         attributes: {
           exclude: ["idNovelty", "idEmployee"]
         },
-        where: { idEmployee },
+        where: { idEmployee, idNovelty: { [Op.ne]: 10 } },
         include: [
           {
             model: Novelty,
