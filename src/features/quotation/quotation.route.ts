@@ -1085,6 +1085,9 @@ export function quotationRoute(app: Application): void {
  *         client:
  *           type: string
  *           example: "Client"
+ *         document:
+ *           type: string
+ *           format: binary
  *         executionTime:
  *           type: string
  *           example: "2021-01-01T00:00:00.000Z"
@@ -1269,6 +1272,9 @@ export function quotationRoute(app: Application): void {
  *         client:
  *           type: string
  *           example: "Client"
+ *         document:
+ *           type: string
+ *           format: binary
  *         executionTime:
  *           type: string
  *           example: "2021-01-01T00:00:00.000Z"

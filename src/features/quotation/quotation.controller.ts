@@ -3,6 +3,7 @@ import * as schemas from "./quotation.schema";
 import { QuotationService } from "./quotation.service";
 import { StatusCode, StatusValue } from "../../utils/general.interfase";
 import { formatZodError } from "../employee/utils";
+import { UploadedFile } from "express-fileupload";
 
 export class QuotationController {
   private readonly quotationService: QuotationService;
@@ -20,7 +21,11 @@ export class QuotationController {
       return;
     }
 
-    const response = await this.quotationService.createQuotation(request.data);
+    const fileName = req.files
+      ? (req.files.file as UploadedFile).tempFilePath
+      : undefined;
+
+    const response = await this.quotationService.createQuotation(request.data, fileName);
     res.status(response.code).json({
       status: response.status,
       data: response.data,
@@ -37,7 +42,11 @@ export class QuotationController {
       return;
     }
 
-    const response = await this.quotationService.updateQuotation(request.data);
+    const fileName = req.files
+      ? (req.files.document as UploadedFile).tempFilePath
+      : undefined;
+
+    const response = await this.quotationService.updateQuotation(request.data, fileName);
     res.status(response.code).json({
       status: response.status,
       data: response.data,
