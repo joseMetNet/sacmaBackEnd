@@ -94,7 +94,7 @@ export class QuotationRepository {
       limit,
       offset,
       distinct: true,
-      order: [["idQuotation", "ASC"]],
+      order: [["idQuotation", "DESC"]],
     });
     return quotations;
   }
