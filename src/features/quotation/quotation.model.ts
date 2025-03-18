@@ -24,6 +24,7 @@ export class Quotation extends Model {
   declare totalCost: string;
   declare perDiem: string;
   declare sisoNumber: string;
+  declare documentUrl: string;
   declare createdAt: string;
   declare updatedAt: string;
 }
@@ -76,6 +77,10 @@ Quotation.init(
       allowNull: true,
     },
     sisoNumber: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    documentUrl: {
       type: DataTypes.STRING,
       allowNull: true,
     },

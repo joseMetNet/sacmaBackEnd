@@ -2,7 +2,7 @@ import { QuotationRepository } from "./quotation.repository";
 import * as dtos from "./quotation.interfase";
 import { StatusCode } from "../../utils/general.interfase";
 import { Input } from "../input/input.model";
-import { CustomError, formatDate, getNextMonth } from "../../utils";
+import { CustomError, deleteFile, formatDate, getNextMonth, uploadFile } from "../../utils";
 import { ResponseEntity } from "../employee/interface";
 import { dbConnection } from "../../config";
 import { Quotation } from "./quotation.model";
@@ -30,7 +30,7 @@ export class QuotationService {
     this.employeeRepository = employeeRepository;
   }
 
-  createQuotation = async (quotationData: dtos.CreateQuotationDTO): Promise<ResponseEntity> => {
+  createQuotation = async (quotationData: dtos.CreateQuotationDTO, fileName?: string): Promise<ResponseEntity> => {
     const transaction = await dbConnection.transaction();
     try {
       quotationData = {
@@ -41,14 +41,22 @@ export class QuotationService {
       const quotation = await this.quotationRepository.create(quotationData, transaction);
       const consecutive = `COT SACIPR No. ${quotation.idQuotation}-${new Date().getFullYear()}`;
       quotation.consecutive = consecutive;
+
+      if(fileName) {
+        const identifier = crypto.randomUUID();
+        const contentType = "application/pdf";
+        await uploadFile(fileName, identifier, contentType, "order");
+        quotation.documentUrl = `https://sacmaback.blob.core.windows.net/order/${identifier}.pdf`;
+      }
+
       await quotation.save({ transaction });
 
       await transaction.commit();
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotation);
     } catch (err: any) {
       await transaction.rollback();
-      console.error("Error creating quotation:", err);
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to create quotation", error: err.message });
+      console.error("Error creating quotation", err);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to create quotation" });
     }
   };
 
@@ -298,12 +306,29 @@ export class QuotationService {
     }
   };
 
-  updateQuotation = async (quotationData: dtos.UpdateQuotationDTO): Promise<ResponseEntity> => {
+  updateQuotation = async (quotationData: dtos.UpdateQuotationDTO, filePath?: string): Promise<ResponseEntity> => {
     try {
       const quotation = await this.quotationRepository.findById(quotationData.idQuotation);
       if (!quotation) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
       }
+
+      if (filePath && quotation.documentUrl) {
+        const identifier = new URL(quotation.documentUrl).pathname.split("/").pop();
+        const deleted = await deleteFile(identifier!, "order");
+        if (deleted instanceof CustomError) {
+          console.error(deleted);
+          return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: deleted.message });
+        }
+      }
+
+      if (filePath) {
+        const identifier = crypto.randomUUID();
+        const contentType = "application/pdf";
+        await uploadFile(filePath, identifier, contentType, "order");
+        quotation.documentUrl = `https://sacmaback.blob.core.windows.net/order/${identifier}.pdf`;
+      }
+
       const updatedQuotation = this.buildQuotation(quotation, quotationData);
       const response = await updatedQuotation.save();
 
