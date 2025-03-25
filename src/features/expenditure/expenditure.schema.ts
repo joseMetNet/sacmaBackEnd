@@ -38,6 +38,7 @@ export const createSchema = z.object({
   refundRequestDate: z.string().optional(),
   fromDate: z.string().optional(),
   toDate: z.string().optional(),
+  createdAt: z.string().optional(),
 });
 
 export const createExpenditureItemSchema = z.object({
@@ -45,6 +46,7 @@ export const createExpenditureItemSchema = z.object({
   idCostCenterProject: z.coerce.number().optional(),
   value: z.string(),
   description: z.string(),
+  createdAt: z.string().optional(),
 });
 
 export const createExpenditureTypeSchema = z.object({

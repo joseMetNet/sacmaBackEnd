@@ -56,6 +56,7 @@ export interface CreateCostCenterProjectDTO {
 
 export interface CreateProjectDocumentDTO {
   idCostCenterProject: number;
+  consecutive?: string;
   description?: string;
   value?: string;
   documentUrl?: string;
@@ -86,6 +87,7 @@ export interface UpdateCostCenterContactDTO {
 
 export interface UpdateProjectDocumentDTO {
   idProjectDocument: number;
+  consecutive?: string;
   idCostCenterProject?: number;
   description?: string;
   value?: string;

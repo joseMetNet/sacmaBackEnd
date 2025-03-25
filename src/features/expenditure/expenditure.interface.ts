@@ -26,6 +26,7 @@ export interface CreateDTO {
   refundRequestDate?: string;
   fromDate?: string;
   toDate?: string;
+  createdAt?: string;
 }
 
 export interface CreateExpenditureItemDTO {
@@ -33,6 +34,7 @@ export interface CreateExpenditureItemDTO {
   idCostCenterProject?: number;
   value: string;
   description: string;
+  createdAt?: string;
 }
 
 export interface CreateExpenditureTypeDTO {

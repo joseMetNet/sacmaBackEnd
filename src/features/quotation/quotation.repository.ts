@@ -139,7 +139,7 @@ export class QuotationRepository {
       limit: limit === -1 ? undefined : limit,
       offset,
       distinct: true,
-      order: [["idQuotationItem", "ASC"]],
+      order: [["idQuotationItem", "DESC"]],
     });
     return quotationItems;
   }
@@ -193,7 +193,7 @@ export class QuotationRepository {
         limit: limit === -1 ? undefined : limit,
         offset,
         distinct: true,
-        order: [["idQuotationItemDetail", "ASC"]],
+        order: [["idQuotationItemDetail", "DESC"]],
       });
       return { rows: quotationItemDetails.rows, count: quotationItemDetails.count };
     } catch (error) {
@@ -266,7 +266,7 @@ export class QuotationRepository {
       limit: limit === -1 ? undefined : limit,
       offset,
       distinct: true,
-      order: [["idQuotationComment", "ASC"]],
+      order: [["idQuotationComment", "DESC"]],
     });
     return quotationComments;
   }
