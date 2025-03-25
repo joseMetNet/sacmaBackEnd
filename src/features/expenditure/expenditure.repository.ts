@@ -24,6 +24,7 @@ export class ExpenditureRepository {
       limit,
       offset,
       where: filter,
+      order: [["createdAt", "DESC"]],
     });
   }
 

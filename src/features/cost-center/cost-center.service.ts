@@ -52,7 +52,7 @@ class CostCenterService {
 
   createProjectItem = async (request: types.CreateProjectItemDTO): Promise<ResponseEntity> => {
     try {
-      request.total = String(parseInt(request.quantity) * parseFloat(request.unitPrice));
+      request.total = String(parseFloat(request.quantity) * parseFloat(request.unitPrice));
       const response = await this.costCenterRepository.createProjectItem(request);
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
     } catch (err: any) {
@@ -550,6 +550,7 @@ class CostCenterService {
 
       dbProjectDocument.description = request.description ?? dbProjectDocument.description;
       dbProjectDocument.value = request.value ?? dbProjectDocument.value;
+      dbProjectDocument.consecutive = request.consecutive ?? dbProjectDocument.consecutive;
 
       const response = await dbProjectDocument.save();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);

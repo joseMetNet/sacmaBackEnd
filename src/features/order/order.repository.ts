@@ -52,7 +52,7 @@ export class OrderRepository {
       where: filter,
       limit: limit,
       offset: offset,
-      order: [["createdAt", "ASC"]],
+      order: [["createdAt", "DESC"]],
     });
   };
 

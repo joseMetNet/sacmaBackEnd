@@ -75,6 +75,7 @@ export const createCostCenterContact = z.object({
 
 export const createProjectDocument = z.object({
   idCostCenterProject: z.coerce.number(),
+  consecutive: z.string().optional(),
   description: z.string().optional(),
   value: z.string().optional(),
 });
@@ -115,6 +116,7 @@ export const updateCostCenter = z.object({
 
 export const updateProjectDocument = z.object({
   idProjectDocument: z.coerce.number(),
+  consecutive: z.string().optional(),
   idCostCenterProject: z.coerce.number().optional(),
   description: z.string().optional(),
   value: z.string().optional()

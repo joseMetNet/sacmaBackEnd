@@ -7,6 +7,7 @@ export class ProjectDocument extends Model {
   declare idCostCenterProject: number;
   declare documentUrl: string;
   declare description: string;
+  declare consecutive: string;
   declare value: string;
   declare createdAt: Date;
   declare updatedAt: Date;
@@ -24,11 +25,15 @@ ProjectDocument.init({
   },
   documentUrl: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
   },
   description: {
     type: DataTypes.STRING,
     allowNull: false
+  },
+  consecutive: {
+    type: DataTypes.STRING,
+    allowNull: true
   },
   value: {
     type: DataTypes.STRING,
