@@ -78,6 +78,8 @@ export const createProjectDocument = z.object({
   consecutive: z.string().optional(),
   description: z.string().optional(),
   value: z.string().optional(),
+  fromDate: z.string().optional(),
+  toDate: z.string().optional(),
 });
 
 export const createProjectItem = z.object({
@@ -119,7 +121,9 @@ export const updateProjectDocument = z.object({
   consecutive: z.string().optional(),
   idCostCenterProject: z.coerce.number().optional(),
   description: z.string().optional(),
-  value: z.string().optional()
+  value: z.string().optional(),
+  fromDate: z.string().optional(),
+  toDate: z.string().optional()
 });
 
 export const updateProjectItem = z.object({

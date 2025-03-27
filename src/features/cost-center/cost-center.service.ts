@@ -551,6 +551,8 @@ class CostCenterService {
       dbProjectDocument.description = request.description ?? dbProjectDocument.description;
       dbProjectDocument.value = request.value ?? dbProjectDocument.value;
       dbProjectDocument.consecutive = request.consecutive ?? dbProjectDocument.consecutive;
+      dbProjectDocument.fromDate = request.fromDate ?? dbProjectDocument.fromDate;
+      dbProjectDocument.toDate = request.toDate ?? dbProjectDocument.toDate;
 
       const response = await dbProjectDocument.save();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);

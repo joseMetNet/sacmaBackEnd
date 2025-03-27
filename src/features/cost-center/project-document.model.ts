@@ -11,6 +11,8 @@ export class ProjectDocument extends Model {
   declare value: string;
   declare createdAt: Date;
   declare updatedAt: Date;
+  declare fromDate: string;
+  declare toDate: string;
 }
 
 ProjectDocument.init({
@@ -46,6 +48,14 @@ ProjectDocument.init({
   updatedAt: {
     type: DataTypes.DATE,
     allowNull: false
+  },
+  fromDate: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  toDate: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 }, {
   sequelize: dbConnection,

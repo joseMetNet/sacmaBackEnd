@@ -1048,6 +1048,12 @@ export function costCenterRoutes(app: Application): void {
  *         value:
  *           type: string
  *           format: string
+ *         fromDate:
+ *           type: string
+ *           example: 2021-01-01
+ *         toDate:
+ *           type: string
+ *           example: 2021-12-31
  *     UpdateCostCenter:
  *       type: object
  *       properties:
@@ -1136,4 +1142,10 @@ export function costCenterRoutes(app: Application): void {
  *         value:
  *           type: string
  *           format: string
+ *         fromDate:
+ *           type: string
+ *           example: 2021-01-01
+ *         toDate:
+ *           type: string
+ *           example: 2021-12-31
 */
