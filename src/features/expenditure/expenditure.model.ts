@@ -13,6 +13,7 @@ export class Expenditure extends Model {
   declare refundRequestDate: string;
   declare fromDate: string;
   declare toDate: string;
+  declare orderNumber?: string;
 }
 
 Expenditure.init(
@@ -51,6 +52,10 @@ Expenditure.init(
       allowNull: true,
     },
     toDate: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    orderNumber: {
       type: DataTypes.STRING,
       allowNull: true,
     },

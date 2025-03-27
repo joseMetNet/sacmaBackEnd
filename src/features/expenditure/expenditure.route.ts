@@ -574,6 +574,9 @@ export function expenditureRoute(app: Application) {
  *         toDate:
  *           type: string
  *           format: date
+ *         orderNumber:
+ *           type: string
+ *           example: "023923"
  *     CreateExpenditureItem:
  *       type: object
  *       required:
@@ -629,6 +632,9 @@ export function expenditureRoute(app: Application) {
  *         toDate:
  *           type: string
  *           format: string
+ *         orderNumber:
+ *           type: string
+ *           example: "023923"
  *     UpdateExpenditureItem:
  *       type: object
  *       required:

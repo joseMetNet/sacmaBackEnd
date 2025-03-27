@@ -57,7 +57,7 @@ export class ExpenditureService {
   findAllExpenditureType = async (): Promise<ResponseEntity> => {
     try {
       const expenditureTypes = await this.expenditureRepository.findAllExpenditureType();
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, expenditureTypes );
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, expenditureTypes);
     } catch (error) {
       console.error("An error occurred while trying to find all expenditure types", error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find all expenditure types" });
@@ -95,7 +95,7 @@ export class ExpenditureService {
   create = async (request: dtos.CreateDTO, filePath?: string): Promise<ResponseEntity> => {
     try {
       let expenditure = await this.expenditureRepository.create(request);
-      
+
       if (filePath) {
         const identifier = crypto.randomUUID();
         const contentType = "application/pdf";
@@ -149,6 +149,7 @@ export class ExpenditureService {
       expenditure.refundRequestDate = request.refundRequestDate || expenditure.refundRequestDate;
       expenditure.fromDate = request.fromDate || expenditure.fromDate;
       expenditure.toDate = request.toDate || expenditure.toDate;
+      expenditure.orderNumber = request.orderNumber || expenditure.orderNumber;
 
       if (expenditure.documentUrl && filePath) {
         const identifier = new URL(expenditure.documentUrl).pathname.split("/").pop();
@@ -219,7 +220,7 @@ export class ExpenditureService {
 
       const expenditureItems = await this.expenditureRepository.findAllExpenditureItem(-1, 0, { idExpenditure });
       await Promise.all(expenditureItems.rows.map(async (item) => await item.destroy()));
-      
+
       await expenditure.destroy();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Expenditure deleted successfully" });
     } catch (error) {
