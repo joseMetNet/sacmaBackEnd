@@ -27,6 +27,7 @@ export interface CreateDTO {
   fromDate?: string;
   toDate?: string;
   createdAt?: string;
+  orderNumber?: string;
 }
 
 export interface CreateExpenditureItemDTO {
@@ -56,6 +57,7 @@ export interface UpdateDTO {
   refundRequestDate?: string;
   fromDate?: string;
   toDate?: string;
+  orderNumber?: string;
 }
 
 export interface UpdateExpenditureItemDTO {

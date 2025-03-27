@@ -60,6 +60,8 @@ export interface CreateProjectDocumentDTO {
   description?: string;
   value?: string;
   documentUrl?: string;
+  fromDate?: string;
+  toDate?: string;
 }
 
 export interface CreateCostCenterDTO {
@@ -91,9 +93,9 @@ export interface UpdateProjectDocumentDTO {
   idCostCenterProject?: number;
   description?: string;
   value?: string;
+  fromDate?: string;
+  toDate?: string;
 }
-
-
 
 export interface UpdateCostCenterProjectDTO {
   idCostCenterProject: number;

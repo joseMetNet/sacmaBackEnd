@@ -39,6 +39,7 @@ export const createSchema = z.object({
   fromDate: z.string().optional(),
   toDate: z.string().optional(),
   createdAt: z.string().optional(),
+  orderNumber: z.string().optional(),
 });
 
 export const createExpenditureItemSchema = z.object({
@@ -62,6 +63,7 @@ export const updateSchema = z.object({
   refundRequestDate: z.string().optional(),
   fromDate: z.string().optional(),
   toDate: z.string().optional(),
+  orderNumber: z.string().optional(),
 });
 
 export const updateExpenditureItemSchema = z.object({
