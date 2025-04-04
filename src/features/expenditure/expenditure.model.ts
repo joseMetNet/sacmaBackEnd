@@ -14,6 +14,8 @@ export class Expenditure extends Model {
   declare fromDate: string;
   declare toDate: string;
   declare orderNumber?: string;
+  declare createdAt: string;
+  declare updatedAt: string;
 }
 
 Expenditure.init(
@@ -57,6 +59,14 @@ Expenditure.init(
     },
     orderNumber: {
       type: DataTypes.STRING,
+      allowNull: true,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
       allowNull: true,
     },
   },
