@@ -6,6 +6,7 @@ export class CustomError extends Error {
     public readonly message: string
   ) {
     super(message);
+    this.name = "CustomError";
   }
   static badRequest(message: string): CustomError {
     return new CustomError(StatusCode.BadRequest, message);
