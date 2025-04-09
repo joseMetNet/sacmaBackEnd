@@ -1,18 +1,23 @@
 import { RevenueCenterRepository } from "./revenue-center.repository";
-import { InputRepository } from "../input/input.repository";
 import { ResponseEntity } from "../employee/interface";
 import { BuildResponse } from "../../utils/build-response";
 import { findPagination, StatusCode } from "../../utils/general.interfase";
 import { IRevenueCenterCreate, IRevenueCenterUpdate } from "./revenue-center.interface";
 import * as schemas from "./revenue-center.schema";
+import { OrderRepository } from "../order/order.repository";
+import sequelize from "sequelize";
+import { idInput } from "../input/input.schema";
 
 export class RevenueCenterService {
   private readonly revenueCenterRepository: RevenueCenterRepository;
-  private readonly inputRepository: InputRepository;
+  private readonly orderRepository: OrderRepository;
 
-  constructor(revenueCenterRepository: RevenueCenterRepository, inputRepository: InputRepository) {
+  constructor(
+    revenueCenterRepository: RevenueCenterRepository,
+    orderRepository: OrderRepository
+  ) {
     this.revenueCenterRepository = revenueCenterRepository;
-    this.inputRepository = inputRepository;
+    this.orderRepository = orderRepository;
   }
 
   findAll = async (request: schemas.FindAllSchema): Promise<ResponseEntity> => {
@@ -131,7 +136,12 @@ export class RevenueCenterService {
   findAllMaterial = async (request: schemas.FindAllMaterialSchema): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);
-      const inputs = await this.inputRepository.findAll();
+      let filter = this.buildFilter(request);
+      filter = {
+        ...filter,
+        idInputType: sequelize.where(sequelize.col("Input.idInputType"), 1),
+      };
+      const inputs = await this.orderRepository.findAllOrderItemDetail(filter, limit, offset);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         data: inputs.rows,
         totalItems: inputs.count,
@@ -147,12 +157,17 @@ export class RevenueCenterService {
   findAllInputs = async (request: schemas.FindAllInputsSchema): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);
-      const inputs = await this.inputRepository.findAll();
+      let filter = this.buildFilter(request);
+      filter = {
+        ...filter,
+        idInputType: sequelize.where(sequelize.col("Input.idInputType"), 3),
+      };
+      const orderItemDetails = await this.orderRepository.findAllOrderItemDetail(filter, limit, offset);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
-        data: inputs.rows,
-        totalItems: inputs.count,
+        data: orderItemDetails.rows,
+        totalItems: orderItemDetails.count,
         currentPage: page,
-        totalPage: Math.ceil(inputs.count / pageSize),
+        totalPage: Math.ceil(orderItemDetails.count / pageSize),
       });
     } catch (error) {
       console.error("An error occurred while trying to find all inputs", error);
@@ -163,12 +178,18 @@ export class RevenueCenterService {
   findAllEpp = async (request: schemas.FindAllEppSchema): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);
-      const inputs = await this.inputRepository.findAll();
+      let filter = this.buildFilter(request);
+      filter = {
+        ...filter,
+        idInputType: sequelize.where(sequelize.col("Input.idInputType"), 2),
+      };
+
+      const orderItemDetails = await this.orderRepository.findAllOrderItemDetail(filter, limit, offset);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
-        data: inputs.rows,
-        totalItems: inputs.count,
+        data: orderItemDetails.rows,
+        totalItems: orderItemDetails.count,
         currentPage: page,
-        totalPage: Math.ceil(inputs.count / pageSize),
+        totalPage: Math.ceil(orderItemDetails.count / pageSize),
       });
     } catch (error) {
       console.error("An error occurred while trying to find all EPP", error);
@@ -179,12 +200,17 @@ export class RevenueCenterService {
   findAllPerDiem = async (request: schemas.FindAllPerDiemSchema): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);
-      const inputs = await this.inputRepository.findAll();
+      let filter = this.buildFilter(request);
+      filter = {
+        ...filter,
+        idInputType: sequelize.where(sequelize.col("Input.idInputType"), 2),
+      };
+      const orderItemDetails = await this.orderRepository.findAllOrderItemDetail(filter, limit, offset);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
-        data: inputs.rows,
-        totalItems: inputs.count,
+        data: orderItemDetails.rows,
+        totalItems: orderItemDetails.count,
         currentPage: page,
-        totalPage: Math.ceil(inputs.count / pageSize),
+        totalPage: Math.ceil(orderItemDetails.count / pageSize),
       });
     } catch (error) {
       console.error("An error occurred while trying to find all per diem", error);
@@ -195,12 +221,13 @@ export class RevenueCenterService {
   findAllPolicy = async (request: schemas.FindAllPolicySchema): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);
-      const inputs = await this.inputRepository.findAll();
+      const filter = this.buildFilter(request);
+      const orderItemDetails = await this.orderRepository.findAllOrderItemDetail(filter, limit, offset);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
-        data: inputs.rows,
-        totalItems: inputs.count,
+        data: orderItemDetails.rows,
+        totalItems: orderItemDetails.count,
         currentPage: page,
-        totalPage: Math.ceil(inputs.count / pageSize),
+        totalPage: Math.ceil(orderItemDetails.count / pageSize),
       });
     } catch (error) {
       console.error("An error occurred while trying to find all policies", error);
@@ -208,20 +235,18 @@ export class RevenueCenterService {
     }
   };
 
-  private buildFilter = (request: schemas.FindAllSchema): { [key: string]: any } => {
-    let filter = {};
+  private buildFilter = (
+    request: schemas.FindAllSchema
+  ): { [key: string]: any } => {
+    const filter: { [key: string]: any } = {};
+  
     if (request.name) {
-      filter = {
-        ...filter,
-        name: request.name,
-      };
+      filter.name = request.name;
     }
     if (request.idCostCenterProject) {
-      filter = {
-        ...filter,
-        idCostCenterProject: request.idCostCenterProject,
-      };
+      filter.idCostCenterProject = request.idCostCenterProject;
     }
+  
     return filter;
   };
 } 

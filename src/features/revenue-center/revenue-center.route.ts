@@ -2,13 +2,13 @@ import { Application, Router } from "express";
 import { RevenueCenterController } from "./revenue-center.controller";
 import { RevenueCenterRepository } from "./revenue-center.repository";
 import { RevenueCenterService } from "./revenue-center.service";
-import { InputRepository } from "../input/input.repository";
+import { OrderRepository } from "../order/order.repository";
 
 export function revenueCenterRoutes(app: Application): void {
   const routes: Router = Router();
   const revenueCenterRepository = new RevenueCenterRepository();
-  const inputRepository = new InputRepository();
-  const revenueCenterService = new RevenueCenterService(revenueCenterRepository, inputRepository);
+  const orderRepository = new OrderRepository();
+  const revenueCenterService = new RevenueCenterService(revenueCenterRepository, orderRepository);
   const revenueCenterController = new RevenueCenterController(revenueCenterService);
 
   routes.get("/v1/revenue-center", revenueCenterController.findAll);
@@ -494,6 +494,12 @@ export function revenueCenterRoutes(app: Application): void {
    *       schema:
    *         type: integer
    *       description: Number of items per page
+   *     idOrderItem:
+   *       in: query
+   *       name: idOrderItem
+   *       schema:
+   *         type: integer
+   *       description: ID of the order item
    */
 
   app.use("/api", routes);

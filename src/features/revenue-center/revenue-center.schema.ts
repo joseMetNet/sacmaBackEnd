@@ -5,6 +5,7 @@ export const findAllSchema = z.object({
   pageSize: z.coerce.number().optional(),
   name: z.string().optional(),
   idCostCenterProject: z.coerce.number().optional(),
+  idOrderItem: z.coerce.number().optional(),
 });
 
 export const idRevenueCenterSchema = z.object({
@@ -30,30 +31,40 @@ export const findAllMaterialSchema = z.object({
   idRevenueCenter: z.coerce.number(),
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
+  name: z.string().optional(),
+  idCostCenterProject: z.coerce.number().optional(),
 });
 
 export const findAllInputsSchema = z.object({
   idRevenueCenter: z.coerce.number(),
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
+  name: z.string().optional(),
+  idCostCenterProject: z.coerce.number().optional(),
 });
 
 export const findAllEppSchema = z.object({
   idRevenueCenter: z.coerce.number(),
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
+  name: z.string().optional(),
+  idCostCenterProject: z.coerce.number().optional(),
 });
 
 export const findAllPerDiemSchema = z.object({
   idRevenueCenter: z.coerce.number(),
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
+  name: z.string().optional(),
+  idCostCenterProject: z.coerce.number().optional(),
 });
 
 export const findAllPolicySchema = z.object({
   idRevenueCenter: z.coerce.number(),
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
+  name: z.string().optional(),
+  idCostCenterProject: z.coerce.number().optional(),
 });
 
 export type FindAllSchema = z.infer<typeof findAllSchema>;
