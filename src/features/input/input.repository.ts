@@ -1,6 +1,6 @@
 import { Input } from "./input.model";
 
-class InputRepository {
+export class InputRepository {
 
   async findAllAndSearch(
     filter: { [key: string]: any },
