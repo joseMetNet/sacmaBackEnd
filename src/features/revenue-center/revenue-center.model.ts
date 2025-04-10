@@ -2,13 +2,13 @@ import { Model, DataTypes } from "sequelize";
 import { dbConnection } from "../../config/database";
 
 export class RevenueCenter extends Model {
-  public idRevenueCenter!: number;
-  public name!: string;
-  public idCostCenterProject!: number;
-  public fromDate!: string;
-  public toDate!: string;
-  public createdAt!: string;
-  public updatedAt!: string;
+  declare idRevenueCenter: number;
+  declare name: string;
+  declare idCostCenterProject: number;
+  declare fromDate: string;
+  declare toDate: string;
+  declare createdAt: string;
+  declare updatedAt: string;
 }
 
 RevenueCenter.init(
@@ -35,17 +35,16 @@ RevenueCenter.init(
       allowNull: false,
     },
     createdAt: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      type: DataTypes.DATE,
+      allowNull: true,
     },
     updatedAt: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   },
   {
     sequelize: dbConnection,
-    tableName: "TB_RevenueCenter",
-    timestamps: true
+    tableName: "TB_RevenueCenter"
   }
 ); 

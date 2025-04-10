@@ -6,7 +6,6 @@ import { IRevenueCenterCreate, IRevenueCenterUpdate } from "./revenue-center.int
 import * as schemas from "./revenue-center.schema";
 import { OrderRepository } from "../order/order.repository";
 import sequelize from "sequelize";
-import { idInput } from "../input/input.schema";
 
 export class RevenueCenterService {
   private readonly revenueCenterRepository: RevenueCenterRepository;
@@ -26,13 +25,23 @@ export class RevenueCenterService {
       const filter = this.buildFilter(request);
       const revenueCenters = await this.revenueCenterRepository.findAll(limit, offset, filter);
 
+      revenueCenters.rows = revenueCenters.rows.map((revenueCenter) => ({
+        idRevenueCenter: revenueCenter.idRevenueCenter,
+        name: revenueCenter.name,
+        idCostCenterProject: revenueCenter.idCostCenterProject,
+        fromDate: revenueCenter.fromDate,
+        toDate: revenueCenter.toDate,
+        createdAt: revenueCenter.createdAt,
+        updatedAt: revenueCenter.updatedAt,
+        // Assuming these fields are calculated or fetched from another source
+        // Replace with actual logic to fetch these values 
+        invoice: "0.0",
+        spend: "0.0",
+        utility: "0.0"
+      }));
+
       const response = {
-        data: revenueCenters.rows.map(rc => ({
-          ...rc,
-          invoice: "0.0",
-          spend: "0.0",
-          utility: "0.0"
-        })),
+        data: revenueCenters.rows,
         totalItems: revenueCenters.count,
         currentPage: page,
         totalPage: Math.ceil(revenueCenters.count / pageSize),
@@ -53,7 +62,15 @@ export class RevenueCenterService {
       }
 
       const response = {
-        ...revenueCenter,
+        idRevenueCenter: revenueCenter.idRevenueCenter,
+        name: revenueCenter.name,
+        idCostCenterProject: revenueCenter.idCostCenterProject,
+        fromDate: revenueCenter.fromDate,
+        toDate: revenueCenter.toDate,
+        createdAt: revenueCenter.createdAt,
+        updatedAt: revenueCenter.updatedAt,
+        // Assuming these fields are calculated or fetched from another source
+        // Replace with actual logic to fetch these values 
         invoice: "0.0",
         spend: "0.0",
         utility: "0.0"
@@ -76,11 +93,20 @@ export class RevenueCenterService {
       };
       const revenueCenter = await this.revenueCenterRepository.create(createData);
       const response = {
-        ...revenueCenter,
+        idRevenueCenter: revenueCenter.idRevenueCenter,
+        name: revenueCenter.name,
+        idCostCenterProject: revenueCenter.idCostCenterProject,
+        fromDate: revenueCenter.fromDate,
+        toDate: revenueCenter.toDate,
+        createdAt: revenueCenter.createdAt,
+        updatedAt: revenueCenter.updatedAt,
+        // Assuming these fields are calculated or fetched from another source
+        // Replace with actual logic to fetch these values 
         invoice: "0.0",
         spend: "0.0",
         utility: "0.0"
       };
+
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
     } catch (error) {
       console.error("An error occurred while trying to create revenue center", error);
@@ -105,7 +131,15 @@ export class RevenueCenterService {
       await this.revenueCenterRepository.update(idRevenueCenter, updatePayload);
 
       const response = {
-        ...revenueCenter,
+        idRevenueCenter: revenueCenter.idRevenueCenter,
+        name: revenueCenter.name,
+        idCostCenterProject: revenueCenter.idCostCenterProject,
+        fromDate: revenueCenter.fromDate,
+        toDate: revenueCenter.toDate,
+        createdAt: revenueCenter.createdAt,
+        updatedAt: revenueCenter.updatedAt,
+        // Assuming these fields are calculated or fetched from another source
+        // Replace with actual logic to fetch these values 
         invoice: "0.0",
         spend: "0.0",
         utility: "0.0"
@@ -239,14 +273,14 @@ export class RevenueCenterService {
     request: schemas.FindAllSchema
   ): { [key: string]: any } => {
     const filter: { [key: string]: any } = {};
-  
+
     if (request.name) {
       filter.name = request.name;
     }
     if (request.idCostCenterProject) {
       filter.idCostCenterProject = request.idCostCenterProject;
     }
-  
+
     return filter;
   };
-} 
+}

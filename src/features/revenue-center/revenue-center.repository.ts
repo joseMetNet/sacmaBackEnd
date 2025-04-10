@@ -3,20 +3,20 @@ import { IRevenueCenter } from "./revenue-center.interface";
 
 export class RevenueCenterRepository {
   async findAll(limit: number, offset: number, filter?: { [key: string]: any }): Promise<{ rows: IRevenueCenter[]; count: number }> {
-    const { rows, count } = await RevenueCenter.findAndCountAll({
+    return await RevenueCenter.findAndCountAll({
       limit,
       offset,
       where: filter,
     });
-    return { rows, count };
   }
 
   async findById(idRevenueCenter: number): Promise<IRevenueCenter | null> {
     return await RevenueCenter.findByPk(idRevenueCenter);
   }
 
-  async create(data: Omit<IRevenueCenter, "idRevenueCenter" | "createdAt" | "updatedAt">): Promise<IRevenueCenter> {
-    return await RevenueCenter.create(data);
+  async create(data: Partial<IRevenueCenter>): Promise<IRevenueCenter> {
+    console.log("Creating revenue center with data:", data);
+    return await RevenueCenter.create(data as any);
   }
 
   async update(idRevenueCenter: number, data: Partial<IRevenueCenter>): Promise<[number]> {
