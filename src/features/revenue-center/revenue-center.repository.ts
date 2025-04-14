@@ -1,14 +1,27 @@
 import { RevenueCenter } from "./revenue-center.model";
 import { IRevenueCenter } from "./revenue-center.interface";
+import { CostCenterProject } from "../cost-center";
 
 export class RevenueCenterRepository {
-  async findAll(limit: number, offset: number, filter?: { [key: string]: any }): Promise<{ rows: IRevenueCenter[]; count: number }> {
-    return await RevenueCenter.findAndCountAll({
+
+  findAll = (
+    limit: number, 
+    offset: number, 
+    filter?: { [key: string]: any }
+  ) => {
+    return RevenueCenter.findAndCountAll({
       limit,
       offset,
       where: filter,
+      include: [
+        {
+          model: CostCenterProject,
+          required: true,
+        },
+      ],
     });
-  }
+  };
+
 
   async findById(idRevenueCenter: number): Promise<IRevenueCenter | null> {
     return await RevenueCenter.findByPk(idRevenueCenter);

@@ -1,5 +1,7 @@
 import { Model, DataTypes } from "sequelize";
 import { dbConnection } from "../../config/database";
+import { CostCenterContact } from "../cost-center/cost-center-contact.model";
+import { CostCenterProject } from "../cost-center";
 
 export class RevenueCenter extends Model {
   declare idRevenueCenter: number;
@@ -47,4 +49,9 @@ RevenueCenter.init(
     sequelize: dbConnection,
     tableName: "TB_RevenueCenter"
   }
-); 
+);
+
+RevenueCenter.hasOne(CostCenterProject, {
+  foreignKey: "idCostCenterProject",
+  sourceKey: "idRevenueCenter",
+});

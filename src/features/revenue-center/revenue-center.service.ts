@@ -25,7 +25,7 @@ export class RevenueCenterService {
       const filter = this.buildFilter(request);
       const revenueCenters = await this.revenueCenterRepository.findAll(limit, offset, filter);
 
-      revenueCenters.rows = revenueCenters.rows.map((revenueCenter) => ({
+      const rows = revenueCenters.rows.map((revenueCenter) => ({
         idRevenueCenter: revenueCenter.idRevenueCenter,
         name: revenueCenter.name,
         idCostCenterProject: revenueCenter.idCostCenterProject,
@@ -37,11 +37,12 @@ export class RevenueCenterService {
         // Replace with actual logic to fetch these values 
         invoice: "0.0",
         spend: "0.0",
-        utility: "0.0"
+        utility: "0.0",
+        CostCenterProject: revenueCenter.toJSON().CostCenterProject,
       }));
 
       const response = {
-        data: revenueCenters.rows,
+        data: rows,
         totalItems: revenueCenters.count,
         currentPage: page,
         totalPage: Math.ceil(revenueCenters.count / pageSize),
