@@ -1,13 +1,13 @@
 import { RevenueCenter } from "./revenue-center.model";
 import { IRevenueCenter } from "./revenue-center.interface";
 import { CostCenterProject } from "../cost-center";
+import { WhereOptions } from "sequelize";
 
 export class RevenueCenterRepository {
-
   findAll = (
-    limit: number, 
-    offset: number, 
-    filter?: { [key: string]: any }
+    limit: number,
+    offset: number,
+    filter?: WhereOptions<IRevenueCenter>
   ) => {
     return RevenueCenter.findAndCountAll({
       limit,
@@ -22,14 +22,13 @@ export class RevenueCenterRepository {
     });
   };
 
-
   async findById(idRevenueCenter: number): Promise<IRevenueCenter | null> {
     return await RevenueCenter.findByPk(idRevenueCenter);
   }
 
   async create(data: Partial<IRevenueCenter>): Promise<IRevenueCenter> {
     console.log("Creating revenue center with data:", data);
-    return await RevenueCenter.create(data as any);
+    return await RevenueCenter.create(data as Partial<IRevenueCenter>);
   }
 
   async update(idRevenueCenter: number, data: Partial<IRevenueCenter>): Promise<[number]> {
@@ -43,4 +42,107 @@ export class RevenueCenterRepository {
       where: { idRevenueCenter },
     });
   }
-} 
+
+  findAllWorkTracking = async (
+    limit: number,
+    offset: number,
+    filter?: { idRevenueCenter?: number; idCostCenterProject?: number }
+  ) => {
+    const currentYear = new Date().getFullYear();
+    const sequelize = RevenueCenter.sequelize!;
+
+    const monthlyWorkQuery = `
+      WITH MonthlyWork AS (
+        SELECT
+          CONCAT(u.firstName, ' ', u.lastName) AS Name,
+          tp.position AS Position,
+          ccp.name AS Project,
+          MONTH(wt.createdAt) AS WorkMonth,
+          YEAR(wt.createdAt) AS WorkYear,
+          COUNT(wt.createdAt) AS DaysWorked,
+          e.baseSalary / DAY(EOMONTH(wt.createdAt)) AS ValorDia,
+          COUNT(wt.createdAt) * (e.baseSalary / DAY(EOMONTH(wt.createdAt))) AS MonthlyTotal
+        FROM mvp1.TB_WorkTracking wt
+        INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
+        INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
+        INNER JOIN mvp1.TB_Position tp ON tp.idPosition = e.idPosition
+        INNER JOIN mvp1.TB_CostCenterProject ccp ON wt.idCostCenterProject = ccp.idCostCenterProject
+        INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = ccp.idCostCenterProject
+        WHERE YEAR(wt.createdAt) = :currentYear
+        ${filter?.idRevenueCenter ? "AND rc.idRevenueCenter = :idRevenueCenter" : ""}
+        ${filter?.idCostCenterProject ? "AND wt.idCostCenterProject = :idCostCenterProject" : ""}
+        GROUP BY
+          u.firstName,
+          u.lastName,
+          ccp.name,
+          tp.position,
+          MONTH(wt.createdAt),
+          YEAR(wt.createdAt),
+          e.baseSalary,
+          EOMONTH(wt.createdAt)
+      )
+      SELECT
+        Name,
+        Position,
+        Project,
+        MAX(CASE WHEN WorkMonth = 1 THEN DaysWorked ELSE 0 END) AS 'Enero',
+        MAX(CASE WHEN WorkMonth = 2 THEN DaysWorked ELSE 0 END) AS 'Febrero',
+        MAX(CASE WHEN WorkMonth = 3 THEN DaysWorked ELSE 0 END) AS 'Marzo',
+        MAX(CASE WHEN WorkMonth = 4 THEN DaysWorked ELSE 0 END) AS 'Abril',
+        MAX(CASE WHEN WorkMonth = 5 THEN DaysWorked ELSE 0 END) AS 'Mayo',
+        MAX(CASE WHEN WorkMonth = 6 THEN DaysWorked ELSE 0 END) AS 'Junio',
+        MAX(CASE WHEN WorkMonth = 7 THEN DaysWorked ELSE 0 END) AS 'Julio',
+        MAX(CASE WHEN WorkMonth = 8 THEN DaysWorked ELSE 0 END) AS 'Agosto',
+        MAX(CASE WHEN WorkMonth = 9 THEN DaysWorked ELSE 0 END) AS 'Septiembre',
+        MAX(CASE WHEN WorkMonth = 10 THEN DaysWorked ELSE 0 END) AS 'Octubre',
+        MAX(CASE WHEN WorkMonth = 11 THEN DaysWorked ELSE 0 END) AS 'Noviembre',
+        MAX(CASE WHEN WorkMonth = 12 THEN DaysWorked ELSE 0 END) AS 'Diciembre',
+        MAX(ValorDia) AS 'dailyWage',
+        SUM(DaysWorked) AS 'workedDays',
+        SUM(MonthlyTotal) AS 'monthlyTotal'
+      FROM MonthlyWork
+      GROUP BY Name, Project, Position
+      ORDER BY Name
+      OFFSET :offset ROWS
+      FETCH NEXT :limit ROWS ONLY;
+    `;
+
+    // Update the count query to match the grouping in the main query
+    const countQuery = `
+      SELECT COUNT(DISTINCT CONCAT(u.firstName, ' ', u.lastName, ccp.name)) as total
+      FROM mvp1.TB_WorkTracking wt
+      INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
+      INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
+      INNER JOIN mvp1.TB_CostCenterProject ccp ON wt.idCostCenterProject = ccp.idCostCenterProject
+      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = ccp.idCostCenterProject
+      WHERE YEAR(wt.createdAt) = :currentYear
+      ${filter?.idRevenueCenter ? "AND rc.idRevenueCenter = :idRevenueCenter" : ""}
+      ${filter?.idCostCenterProject ? "AND wt.idCostCenterProject = :idCostCenterProject" : ""}
+    `;
+
+    const [results, countResults] = await Promise.all([
+      sequelize.query(monthlyWorkQuery, {
+        replacements: {
+          currentYear,
+          limit,
+          offset,
+          ...filter
+        }
+      }),
+      sequelize.query(countQuery, {
+        replacements: {
+          currentYear,
+          ...filter
+        }
+      })
+    ]);
+
+    const countResult = countResults[0] as Array<{ total: number }>;
+    const total = countResult[0]?.total ?? 0;
+
+    return {
+      rows: results[0],
+      count: total
+    };
+  };
+}

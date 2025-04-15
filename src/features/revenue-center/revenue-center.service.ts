@@ -270,6 +270,28 @@ export class RevenueCenterService {
     }
   };
 
+  findAllWorkTracking = async (request: schemas.FindAllWorkTrackingSchema): Promise<ResponseEntity> => {
+    try {
+      const { page, pageSize, limit, offset } = findPagination(request);
+      const filter = {
+        idRevenueCenter: request.idRevenueCenter,
+        ...(request.idCostCenterProject && { idCostCenterProject: request.idCostCenterProject }),
+      };
+
+      const workTrackingData = await this.revenueCenterRepository.findAllWorkTracking(limit, offset, filter);
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        data: workTrackingData.rows,
+        totalItems: workTrackingData.count,
+        currentPage: page,
+        totalPage: Math.ceil(workTrackingData.count / pageSize),
+      });
+    } catch (error) {
+      console.error("An error occurred while trying to find all work tracking data", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find all work tracking data" });
+    }
+  };
+
   private buildFilter = (
     request: schemas.FindAllSchema
   ): { [key: string]: any } => {

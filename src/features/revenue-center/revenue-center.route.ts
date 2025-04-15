@@ -3,6 +3,7 @@ import { RevenueCenterController } from "./revenue-center.controller";
 import { RevenueCenterRepository } from "./revenue-center.repository";
 import { RevenueCenterService } from "./revenue-center.service";
 import { OrderRepository } from "../order/order.repository";
+import { verifyToken } from "../../middlewares";
 
 export function revenueCenterRoutes(app: Application): void {
   const routes: Router = Router();
@@ -11,18 +12,24 @@ export function revenueCenterRoutes(app: Application): void {
   const revenueCenterService = new RevenueCenterService(revenueCenterRepository, orderRepository);
   const revenueCenterController = new RevenueCenterController(revenueCenterService);
 
-  routes.get("/v1/revenue-center", revenueCenterController.findAll);
-  routes.post("/v1/revenue-center", revenueCenterController.create);
-  routes.patch("/v1/revenue-center", revenueCenterController.update);
+  routes.get("/v1/revenue-center", [verifyToken], revenueCenterController.findAll);
+  routes.post("/v1/revenue-center", [verifyToken], revenueCenterController.create);
+  routes.patch("/v1/revenue-center", [verifyToken], revenueCenterController.update);
 
-  routes.get("/v1/revenue-center/material", revenueCenterController.findAllMaterial);
-  routes.get("/v1/revenue-center/inputs", revenueCenterController.findAllInputs);
-  routes.get("/v1/revenue-center/epp", revenueCenterController.findAllEpp);
-  routes.get("/v1/revenue-center/per-diem", revenueCenterController.findAllPerDiem);
-  routes.get("/v1/revenue-center/policy", revenueCenterController.findAllPolicy);
+  routes.get("/v1/revenue-center/material", [verifyToken], revenueCenterController.findAllMaterial);
+  routes.get("/v1/revenue-center/inputs", [verifyToken], revenueCenterController.findAllInputs);
+  routes.get("/v1/revenue-center/epp", [verifyToken], revenueCenterController.findAllEpp);
+  routes.get("/v1/revenue-center/per-diem", [verifyToken], revenueCenterController.findAllPerDiem);
+  routes.get("/v1/revenue-center/policy", [verifyToken], revenueCenterController.findAllPolicy);
 
-  routes.get("/v1/revenue-center/:idRevenueCenter", revenueCenterController.findById);
-  routes.delete("/v1/revenue-center/:idRevenueCenter", revenueCenterController.delete);
+  routes.get("/v1/revenue-center/:idRevenueCenter", [verifyToken], revenueCenterController.findById);
+  routes.delete("/v1/revenue-center/:idRevenueCenter", [verifyToken], revenueCenterController.delete);
+
+  routes.get(
+    "/v1/revenue/center/work-tracking",
+    [verifyToken],
+    revenueCenterController.findAllWorkTracking
+  );
 
   /**
    * @openapi
@@ -404,6 +411,107 @@ export function revenueCenterRoutes(app: Application): void {
 
   /**
    * @openapi
+   * /v1/revenue/center/work-tracking:
+   *   get:
+   *     tags: [Revenue Center]
+   *     summary: Get work tracking data with monthly summary
+   *     parameters:
+   *       - in: query
+   *         name: idRevenueCenter
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID of the revenue center
+   *       - in: query
+   *         name: idCostCenterProject
+   *         schema:
+   *           type: integer
+   *         description: Optional ID of the cost center project
+   *       - $ref: '#/components/parameters/page'
+   *       - $ref: '#/components/parameters/pageSize'
+   *     responses:
+   *       200:
+   *         description: Monthly work tracking summary by employee
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       Name:
+   *                         type: string
+   *                         example: "John Doe"
+   *                       Position:
+   *                         type: string
+   *                         example: "Engineer"
+   *                       Enero:
+   *                         type: integer
+   *                         example: 20
+   *                       Febrero:
+   *                         type: integer
+   *                         example: 18
+   *                       Marzo:
+   *                         type: integer
+   *                         example: 22
+   *                       Abril:
+   *                         type: integer
+   *                         example: 21
+   *                       Mayo:
+   *                         type: integer
+   *                         example: 20
+   *                       Junio:
+   *                         type: integer
+   *                         example: 22
+   *                       Julio:
+   *                         type: integer
+   *                         example: 21
+   *                       Agosto:
+   *                         type: integer
+   *                         example: 23
+   *                       Septiembre:
+   *                         type: integer
+   *                         example: 20
+   *                       Octubre:
+   *                         type: integer
+   *                         example: 22
+   *                       Noviembre:
+   *                         type: integer
+   *                         example: 21
+   *                       Diciembre:
+   *                         type: integer
+   *                         example: 20
+   *                       ValorDia:
+   *                         type: number
+   *                         example: 100000
+   *                       DiasTrabajados:
+   *                         type: integer
+   *                         example: 250
+   *                       ValorTotal:
+   *                         type: number
+   *                         example: 25000000
+   *                 totalItems:
+   *                   type: integer
+   *                   example: 50
+   *                 currentPage:
+   *                   type: integer
+   *                   example: 1
+   *                 totalPage:
+   *                   type: integer
+   *                   example: 5
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       500:
+   *         description: Internal server error
+   */
+
+  /**
+   * @openapi
    * components:
    *   schemas:
    *     RevenueCenter:
@@ -503,4 +611,4 @@ export function revenueCenterRoutes(app: Application): void {
    */
 
   app.use("/api", routes);
-} 
+}
