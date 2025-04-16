@@ -1,6 +1,5 @@
 import { Model, DataTypes } from "sequelize";
 import { dbConnection } from "../../config/database";
-import { CostCenterContact } from "../cost-center/cost-center-contact.model";
 import { CostCenterProject } from "../cost-center";
 
 export class RevenueCenter extends Model {
@@ -53,5 +52,5 @@ RevenueCenter.init(
 
 RevenueCenter.hasOne(CostCenterProject, {
   foreignKey: "idCostCenterProject",
-  sourceKey: "idRevenueCenter",
+  sourceKey: "idCostCenterProject"
 });

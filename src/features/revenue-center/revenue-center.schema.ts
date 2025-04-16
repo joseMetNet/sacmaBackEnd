@@ -4,6 +4,7 @@ export const findAllSchema = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
   name: z.string().optional(),
+  idRevenueCenter: z.coerce.number().optional(),
   idCostCenterProject: z.coerce.number().optional(),
   idOrderItem: z.coerce.number().optional(),
 });

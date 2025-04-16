@@ -145,4 +145,93 @@ export class RevenueCenterRepository {
       count: total
     };
   };
+
+  findAllInput = async (
+    limit: number,
+    offset: number,
+    filter?: { idRevenueCenter?: number, idInputType?: number }
+  ) => {
+    const sequelize = RevenueCenter.sequelize!;
+
+    const materialQuery = `
+      SELECT
+        i.name AS material,
+        rc.name AS costCenter,
+        oid.quantity AS quantity,
+        iu.unitOfMeasure AS unitOfMeasure,
+        oid.createdAt AS createdAt,
+        oi.orderRequest AS orderRequest,
+        i.cost AS unitValue,
+        oid.quantity * CONVERT(FLOAT, i.cost) AS totalValue
+      FROM mvp1.TB_OrderItemDetail oid
+      INNER JOIN mvp1.TB_OrderItem oi on oi.idOrderItem = oid.idOrderItem
+      INNER JOIN mvp1.TB_Input i ON i.idInput=oid.idInput
+      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject=oi.idCostCenterProject
+      INNER JOIN mvp1.TB_InputUnitOfMeasure iu ON iu.idInputUnitOfMeasure=i.idInputUnitOfMeasure
+      WHERE rc.idRevenueCenter = :idRevenueCenter AND i.idInputType = :idInputType
+      ORDER BY oid.createdAt DESC
+      OFFSET :offset ROWS
+      FETCH NEXT :limit ROWS ONLY;
+    `;
+    const totalQuery = `
+      SELECT
+        i.name AS material,
+        rc.name AS costCenter,
+        oid.quantity AS quantity,
+        iu.unitOfMeasure AS unitOfMeasure,
+        oid.createdAt AS createdAt,
+        oi.orderRequest AS orderRequest,
+        i.cost AS unitValue,
+        oid.quantity * CONVERT(FLOAT, i.cost) AS totalValue
+      FROM mvp1.TB_OrderItemDetail oid
+      INNER JOIN mvp1.TB_OrderItem oi on oi.idOrderItem = oid.idOrderItem
+      INNER JOIN mvp1.TB_Input i ON i.idInput=oid.idInput
+      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject=oi.idCostCenterProject
+      INNER JOIN mvp1.TB_InputUnitOfMeasure iu ON iu.idInputUnitOfMeasure=i.idInputUnitOfMeasure
+      WHERE rc.idRevenueCenter = :idRevenueCenter AND i.idInputType = :idInputType
+      ORDER BY oid.createdAt DESC
+    `;
+
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM mvp1.TB_OrderItemDetail oid
+      INNER JOIN mvp1.TB_OrderItem oi on oi.idOrderItem = oid.idOrderItem
+      INNER JOIN mvp1.TB_Input i ON i.idInput=oid.idInput
+      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject=oi.idCostCenterProject
+      INNER JOIN mvp1.TB_InputUnitOfMeasure iu ON iu.idInputUnitOfMeasure=i.idInputUnitOfMeasure
+      WHERE rc.idRevenueCenter = :idRevenueCenter AND i.idInputType = :idInputType;
+    `;
+
+    const [results, countResults, totalResult] = await Promise.all([
+      sequelize.query(materialQuery, {
+        replacements: {
+          idRevenueCenter: filter?.idRevenueCenter,
+          idInputType: filter?.idInputType,
+          limit,
+          offset,
+        }
+      }),
+      sequelize.query(countQuery, {
+        replacements: {
+          idRevenueCenter: filter?.idRevenueCenter,
+          idInputType: filter?.idInputType,
+        }
+      }),
+      sequelize.query(totalQuery, {
+        replacements: {
+          idRevenueCenter: filter?.idRevenueCenter,
+          idInputType: filter?.idInputType,
+        }
+      })
+    ]);
+
+    const countResult = countResults[0] as Array<{ total: number }>;
+    const total = countResult[0]?.total ?? 0;
+
+    return {
+      rows: results[0],
+      totalRows: totalResult[0],
+      count: total
+    };
+  };
 }
