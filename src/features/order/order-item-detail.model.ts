@@ -1,6 +1,7 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../../config";
 import { Input } from "../input";
+import { OrderItem } from "./order-item.model";
 
 export class OrderItemDetail extends Model {
   declare idOrderItemDetail: number;
@@ -44,5 +45,10 @@ OrderItemDetail.init({
 
 OrderItemDetail.hasOne(Input, {
   foreignKey: "idInput",
-  sourceKey: "idInput"
+  sourceKey: "idInput",
+});
+
+OrderItemDetail.hasOne(OrderItem, {
+  foreignKey: "idOrderItem",
+  sourceKey: "idOrderItem"
 });
