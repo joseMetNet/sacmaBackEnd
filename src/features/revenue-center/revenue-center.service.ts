@@ -6,17 +6,22 @@ import { IRevenueCenterCreate, IRevenueCenterUpdate } from "./revenue-center.int
 import * as schemas from "./revenue-center.schema";
 import { OrderRepository } from "../order/order.repository";
 import sequelize from "sequelize";
+import { ExpenditureRepository } from "../expenditure";
+import { idCostCenter } from "../cost-center/cost-center.schema";
 
 export class RevenueCenterService {
   private readonly revenueCenterRepository: RevenueCenterRepository;
   private readonly orderRepository: OrderRepository;
+  private readonly expenditureRepository: ExpenditureRepository;
 
   constructor(
     revenueCenterRepository: RevenueCenterRepository,
-    orderRepository: OrderRepository
+    orderRepository: OrderRepository,
+    expenditureRepository: ExpenditureRepository
   ) {
     this.revenueCenterRepository = revenueCenterRepository;
     this.orderRepository = orderRepository;
+    this.expenditureRepository = expenditureRepository;
   }
 
   findAll = async (request: schemas.FindAllSchema): Promise<ResponseEntity> => {
@@ -235,18 +240,46 @@ export class RevenueCenterService {
   findAllPerDiem = async (request: schemas.FindAllPerDiemSchema): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);
+
+      const revenueCenter = await this.revenueCenterRepository.findById(request.idRevenueCenter);
+
+      if (!revenueCenter) {
+        return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+          data: [],
+          totalItems: 0,
+          currentPage: page,
+          totalPage: 0,
+        });
+      }
+
       let filter = this.buildFilter(request);
       filter = {
-        ...filter,
-        idInputType: sequelize.where(sequelize.col("Input.idInputType"), 2),
+        idCostCenterProject: revenueCenter.idCostCenterProject,
+        idExpenditureType: 2
       };
-      const orderItemDetails = await this.orderRepository.findAllOrderItemDetail(filter, limit, offset);
+      
+      const orderItemDetails = await this.expenditureRepository.findAll(limit, offset, filter);
+
+      const rows = orderItemDetails.rows.map((item) => ({
+        idCostCenterProject: item.idCostCenterProject,
+        description: item.description,
+        unitValue: item.value,
+        totalValue: item.value,
+        quantity: 1,
+        orderNumber: item.orderNumber,
+        refundRequestDate: item.refundRequestDate,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        projectName: item.toJSON().CostCenterProject.name,
+      }));
+
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
-        data: orderItemDetails.rows,
+        data: rows,
         totalItems: orderItemDetails.count,
         currentPage: page,
         totalPage: Math.ceil(orderItemDetails.count / pageSize),
       });
+
     } catch (error) {
       console.error("An error occurred while trying to find all per diem", error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find all per diem" });
@@ -256,10 +289,40 @@ export class RevenueCenterService {
   findAllPolicy = async (request: schemas.FindAllPolicySchema): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);
-      const filter = this.buildFilter(request);
-      const orderItemDetails = await this.orderRepository.findAllOrderItemDetail(filter, limit, offset);
+
+      const revenueCenter = await this.revenueCenterRepository.findById(request.idRevenueCenter);
+
+      if (!revenueCenter) {
+        return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+          data: [],
+          totalItems: 0,
+          currentPage: page,
+          totalPage: 0,
+        });
+      }
+
+      let filter = this.buildFilter(request);
+      filter = {
+        idCostCenterProject: revenueCenter.idCostCenterProject,
+        idExpenditureType: 26
+      };
+      
+      const orderItemDetails = await this.expenditureRepository.findAll(limit, offset, filter);
+
+      const rows = orderItemDetails.rows.map((item) => ({
+        idCostCenterProject: item.idCostCenterProject,
+        description: item.description,
+        unitValue: item.value,
+        totalValue: item.value,
+        quantity: 1,
+        orderNumber: item.orderNumber,
+        refundRequestDate: item.refundRequestDate,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        projectName: item.toJSON().CostCenterProject.name,
+      }));
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
-        data: orderItemDetails.rows,
+        data: rows,
         totalItems: orderItemDetails.count,
         currentPage: page,
         totalPage: Math.ceil(orderItemDetails.count / pageSize),
