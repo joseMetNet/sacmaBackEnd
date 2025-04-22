@@ -62,10 +62,10 @@ export const findAllPerDiemSchema = z.object({
 
 export const findAllPolicySchema = z.object({
   idRevenueCenter: z.coerce.number(),
+  idCostCenterProject: z.coerce.number().optional(),
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),
   name: z.string().optional(),
-  idCostCenterProject: z.coerce.number().optional(),
 });
 
 export const findAllWorkTrackingSchema = z.object({
