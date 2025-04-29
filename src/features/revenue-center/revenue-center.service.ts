@@ -5,9 +5,7 @@ import { findPagination, StatusCode } from "../../utils/general.interfase";
 import { IRevenueCenterCreate, IRevenueCenterUpdate } from "./revenue-center.interface";
 import * as schemas from "./revenue-center.schema";
 import { OrderRepository } from "../order/order.repository";
-import sequelize from "sequelize";
 import { ExpenditureRepository } from "../expenditure";
-import { idCostCenter } from "../cost-center/cost-center.schema";
 
 export class RevenueCenterService {
   private readonly revenueCenterRepository: RevenueCenterRepository;
@@ -28,23 +26,37 @@ export class RevenueCenterService {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);
       const filter = this.buildFilter(request);
-      const revenueCenters = await this.revenueCenterRepository.findAll(limit, offset, filter);
 
-      const rows = revenueCenters.rows.map((revenueCenter) => ({
-        idRevenueCenter: revenueCenter.idRevenueCenter,
-        name: revenueCenter.name,
-        idCostCenterProject: revenueCenter.idCostCenterProject,
-        fromDate: revenueCenter.fromDate,
-        toDate: revenueCenter.toDate,
-        createdAt: revenueCenter.createdAt,
-        updatedAt: revenueCenter.updatedAt,
-        // Assuming these fields are calculated or fetched from another source
-        // Replace with actual logic to fetch these values 
-        invoice: "0.0",
-        spend: "0.0",
-        utility: "0.0",
-        CostCenterProject: revenueCenter.toJSON().CostCenterProject,
-      }));
+      // Fetch data concurrently
+      const [revenueCenters, inputs, expenditures] = await Promise.all([
+        this.revenueCenterRepository.findAll(limit, offset, filter),
+        this.revenueCenterRepository.findInputValues(),
+        this.expenditureRepository.findAllValues(),
+      ]);
+
+      // Combine inputs and expenditures and group them in one pass
+      const groupedSpend = [...inputs, ...expenditures].reduce<Record<number, number>>((acc, curr) => {
+        const key = curr.idCostCenterProject;
+        acc[key] = (acc[key] || 0) + curr.totalValue;
+        return acc;
+      }, {});
+
+      const rows = revenueCenters.rows.map((revenueCenter) => {
+        const spend = groupedSpend[revenueCenter.idCostCenterProject] || 0;
+        return {
+          idRevenueCenter: revenueCenter.idRevenueCenter,
+          name: revenueCenter.name,
+          idCostCenterProject: revenueCenter.idCostCenterProject,
+          fromDate: revenueCenter.fromDate,
+          toDate: revenueCenter.toDate,
+          createdAt: revenueCenter.createdAt,
+          updatedAt: revenueCenter.updatedAt,
+          invoice: "0.0", // Consider if this needs calculation
+          spend: spend.toString(), // Ensure spend is a string if needed, or keep as number
+          utility: "0.0", // Consider if this needs calculation
+          CostCenterProject: revenueCenter.toJSON().CostCenterProject,
+        };
+      });
 
       const response = {
         data: rows,
@@ -257,7 +269,7 @@ export class RevenueCenterService {
         idCostCenterProject: revenueCenter.idCostCenterProject,
         idExpenditureType: 2
       };
-      
+
       const orderItemDetails = await this.expenditureRepository.findAll(limit, offset, filter);
 
       const rows = orderItemDetails.rows.map((item) => ({
@@ -306,7 +318,7 @@ export class RevenueCenterService {
         idCostCenterProject: revenueCenter.idCostCenterProject,
         idExpenditureType: 26
       };
-      
+
       const orderItemDetails = await this.expenditureRepository.findAll(limit, offset, filter);
 
       const rows = orderItemDetails.rows.map((item) => ({

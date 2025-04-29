@@ -1,7 +1,8 @@
 import { RevenueCenter } from "./revenue-center.model";
 import { IRevenueCenter } from "./revenue-center.interface";
 import { CostCenterProject } from "../cost-center";
-import { WhereOptions } from "sequelize";
+import { QueryTypes, WhereOptions } from "sequelize";
+import { dbConnection } from "../../config";
 
 export class RevenueCenterRepository {
   findAll = (
@@ -144,6 +145,38 @@ export class RevenueCenterRepository {
       rows: results[0],
       count: total
     };
+  };
+
+  findInputValues = async (
+  ) => {
+    const query = `
+    SELECT
+    	oi.idCostCenterProject,
+    	SUM(oid.quantity * CONVERT(FLOAT, i.cost)) AS totalValue
+    FROM
+    	mvp1.TB_OrderItemDetail oid
+    INNER JOIN mvp1.TB_OrderItem oi on
+    	oi.idOrderItem = oid.idOrderItem
+    INNER JOIN mvp1.TB_Input i ON
+    	i.idInput = oid.idInput
+    INNER JOIN mvp1.TB_RevenueCenter rc ON
+    	rc.idCostCenterProject = oi.idCostCenterProject
+    INNER JOIN mvp1.TB_InputUnitOfMeasure iu ON
+    	iu.idInputUnitOfMeasure = i.idInputUnitOfMeasure
+    WHERE
+    	i.idInputType IN (1, 2, 3)
+    GROUP BY
+    	oi.idCostCenterProject
+    `;
+
+    type result = {
+      idCostCenterProject: number;
+      totalValue: number;
+    };
+
+    return dbConnection.query<result>(query, {
+      type: QueryTypes.SELECT,
+    });
   };
 
   findAllInput = async (
