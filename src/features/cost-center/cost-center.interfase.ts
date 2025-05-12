@@ -52,6 +52,7 @@ export interface CreateCostCenterProjectDTO {
   location?: string;
   address?: string;
   phone?: string;
+  idQuotation?: number;
 }
 
 export interface CreateProjectDocumentDTO {
@@ -104,6 +105,7 @@ export interface UpdateCostCenterProjectDTO {
   location?: string;
   address?: string;
   phone?: string;
+  idQuotation?: number;
 }
 
 export interface UpdateProjectItemDTO {

@@ -12,21 +12,21 @@ export function costCenterRoutes(app: Application): void {
   router.get("/v1/cost-center/project/document", costCenterController.findAllProjectDocument);
   router.get("/v1/cost-center/download", costCenterController.download);
   router.get("/v1/cost-center/:idCostCenter", costCenterController.findById);
-  
+
   // POST routes
   router.post("/v1/cost-center", costCenterController.create);
   router.post("/v1/cost-center/contact", costCenterController.createCostCenterContact);
   router.post("/v1/cost-center/project", costCenterController.createCostCenterProject);
   router.post("/v1/cost-center/project/item", costCenterController.createProjectItem);
   router.post("/v1/cost-center/project/document", costCenterController.createProjectDocument);
-  
+
   // PATCH routes
   router.patch("/v1/cost-center", costCenterController.update);
   router.patch("/v1/cost-center/contact", costCenterController.updateCostCenterContact);
   router.patch("/v1/cost-center/project", costCenterController.updateCostCenterProject);
   router.patch("/v1/cost-center/project/item", costCenterController.updateProjectItem);
   router.patch("/v1/cost-center/project/document", costCenterController.updateProjectDocument);
-  
+
   // DELETE routes
   router.delete("/v1/cost-center/:idCostCenter", costCenterController.delete);
   router.delete("/v1/cost-center/contact/:idCostCenterContact", costCenterController.deleteCostCenterContact);
@@ -953,6 +953,8 @@ export function costCenterRoutes(app: Application): void {
  *           type: string
  *         phone:
  *           type: string
+ *         idQuotation:
+ *           type: integer
  *     CreateCostCenter:
  *       type: object
  *       properties:
@@ -1022,6 +1024,9 @@ export function costCenterRoutes(app: Application): void {
  *           type: string
  *     CreateCostCenterProject:
  *       type: object
+ *       required:
+ *         - idCostCenter
+ *         - name
  *       properties:
  *         idCostCenter:
  *           type: integer
@@ -1033,6 +1038,8 @@ export function costCenterRoutes(app: Application): void {
  *           type: string
  *         phone:
  *           type: string
+ *         idQuotation:
+ *           type: integer
  *     CreateProjectDocument:
  *       type: object
  *       properties:
@@ -1108,6 +1115,8 @@ export function costCenterRoutes(app: Application): void {
  *           type: string
  *     UpdateCostCenterProject:
  *       type: object
+ *       required:
+ *         - idCostCenterProject
  *       properties:
  *         idCostCenterProject:
  *           type: integer
@@ -1121,6 +1130,8 @@ export function costCenterRoutes(app: Application): void {
  *           type: string
  *         phone:
  *           type: string
+ *         idQuotation:
+ *           type: integer
  *         document:
  *           type: string
  *           format: binary
