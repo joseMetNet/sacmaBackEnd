@@ -267,4 +267,69 @@ export class RevenueCenterRepository {
       count: total
     };
   };
+
+  findAllQuotation = async (
+    limit: number,
+    offset: number,
+    filter?: { idRevenueCenter?: number }
+  ) => {
+    const sequelize = RevenueCenter.sequelize!;
+
+    const quotationQuery = `
+      SELECT 
+        ti.name as material,
+        tccp.name costCenter,
+        SUM(tqid.quantity) as quantity,
+        tiu.unitOfMeasure AS unitOfMeasure,
+        MAX(tq.createdAt) as createdAt,
+        AVG(tqid.performance) as performance,
+        SUM(tqid.totalCost) as totalCost
+      FROM mvp1.TB_QuotationItemDetail tqid
+      INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotationItem = tqid.idQuotationItem
+      INNER JOIN mvp1.TB_Quotation tq ON tq.idQuotation = tqi.idQuotation
+      INNER JOIN mvp1.TB_CostCenterProject tccp ON tccp.idQuotation = tqi.idQuotation
+      INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput 
+      INNER JOIN mvp1.TB_InputUnitOfMeasure tiu ON tiu.idInputUnitOfMeasure = ti.idInputUnitOfMeasure
+      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = tccp.idCostCenterProject
+      ${filter?.idRevenueCenter ? "WHERE rc.idRevenueCenter = :idRevenueCenter" : ""}
+      GROUP BY ti.idInput, ti.name, tccp.name, tiu.unitOfMeasure
+      ORDER BY SUM(tqid.totalCost) DESC
+      OFFSET :offset ROWS
+      FETCH NEXT :limit ROWS ONLY;
+    `;
+
+    const countQuery = `
+      SELECT COUNT(DISTINCT ti.idInput) as total
+      FROM mvp1.TB_QuotationItemDetail tqid
+      INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotationItem = tqid.idQuotationItem
+      INNER JOIN mvp1.TB_Quotation tq ON tq.idQuotation = tqi.idQuotation
+      INNER JOIN mvp1.TB_CostCenterProject tccp ON tccp.idQuotation = tqi.idQuotation
+      INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput 
+      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = tccp.idCostCenterProject
+      ${filter?.idRevenueCenter ? "WHERE rc.idRevenueCenter = :idRevenueCenter" : ""};
+    `;
+
+    const [results, countResults] = await Promise.all([
+      sequelize.query(quotationQuery, {
+        replacements: {
+          limit,
+          offset,
+          ...filter
+        }
+      }),
+      sequelize.query(countQuery, {
+        replacements: {
+          ...filter
+        }
+      })
+    ]);
+
+    const countResult = countResults[0] as Array<{ total: number }>;
+    const total = countResult[0]?.total ?? 0;
+
+    return {
+      rows: results[0],
+      count: total
+    };
+  };
 }

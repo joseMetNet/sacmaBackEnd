@@ -200,4 +200,21 @@ export class RevenueCenterController {
       data: response.data
     });
   };
+
+  findAllQuotation = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.findAllQuotationSchema.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.revenueCenterService.findAllQuotation(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
 }

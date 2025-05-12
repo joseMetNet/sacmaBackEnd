@@ -188,7 +188,7 @@ export class RevenueCenterService {
   findAllMaterial = async (request: schemas.FindAllMaterialSchema): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);
-      const filter = { 
+      const filter = {
         idRevenueCenter: request.idRevenueCenter,
         idInputType: 1
       };
@@ -364,6 +364,27 @@ export class RevenueCenterService {
     } catch (error) {
       console.error("An error occurred while trying to find all work tracking data", error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find all work tracking data" });
+    }
+  };
+
+  findAllQuotation = async (request: schemas.FindAllQuotationSchema): Promise<ResponseEntity> => {
+    try {
+      const { page, pageSize, limit, offset } = findPagination(request);
+      const filter = {
+        idRevenueCenter: request.idRevenueCenter
+      };
+
+      const quotations = await this.revenueCenterRepository.findAllQuotation(limit, offset, filter);
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        data: quotations.rows,
+        totalItems: quotations.count,
+        currentPage: page,
+        totalPage: Math.ceil(quotations.count / pageSize),
+      });
+    } catch (error) {
+      console.error("An error occurred while trying to find all quotations", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find all quotations" });
     }
   };
 
