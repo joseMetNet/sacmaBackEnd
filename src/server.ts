@@ -18,6 +18,7 @@ import { orderRoute } from "./features/order";
 import { employeeRoutes } from "./features/employee/employee.route";
 import { expenditureRoute } from "./features/expenditure";
 import { revenueCenterRoutes } from "./features/revenue-center/revenue-center.route";
+import { invoiceRoutes } from "./features/invoice";
 
 class Server {
   private app: Application;
@@ -69,6 +70,7 @@ class Server {
     orderRoute(this.app);
     expenditureRoute(this.app);
     revenueCenterRoutes(this.app);
+    invoiceRoutes(this.app);
   }
 
   public listen(): void {
