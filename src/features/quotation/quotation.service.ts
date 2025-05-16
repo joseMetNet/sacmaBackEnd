@@ -1049,7 +1049,8 @@ export class QuotationService {
           + (unitValueAIU * percentage.utility) * percentage.vat)
       };
 
-      const directCost = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost), 0);
+      //const directCost = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost), 0);
+      const directCost = summaryByItem.reduce((acc, item) => acc + item.totalCost, 0);
 
       const quotationAdditionalCost = {
         perDiem: String(otherCost.perDiem),
