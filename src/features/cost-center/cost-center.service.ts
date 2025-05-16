@@ -507,7 +507,7 @@ class CostCenterService {
       projectItemDb.unitMeasure = request.unitMeasure ?? projectItemDb.unitMeasure;
       projectItemDb.unitPrice = request.unitPrice ?? projectItemDb.unitPrice;
       if (request.unitPrice && request.quantity) {
-        projectItemDb.total = String(parseInt(request.quantity) * parseFloat(request.unitPrice));
+        projectItemDb.total = String(parseFloat(request.quantity) * parseFloat(request.unitPrice));
       }
 
       const projectItem = await projectItemDb.save();
