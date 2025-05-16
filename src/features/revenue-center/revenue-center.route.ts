@@ -33,6 +33,12 @@ export function revenueCenterRoutes(app: Application): void {
     revenueCenterController.findAllWorkTracking
   );
 
+  routes.get(
+    "/v1/revenue-center/quotation",
+    [verifyToken],
+    revenueCenterController.findAllQuotation
+  );
+
   /**
    * @openapi
    * /v1/revenue-center:
@@ -508,6 +514,74 @@ export function revenueCenterRoutes(app: Application): void {
    *         description: Unauthorized
    *       403:
    *         description: Forbidden
+   *       500:
+   *         description: Internal server error
+   */
+
+  /**
+   * @openapi
+   * /v1/revenue-center/quotation:
+   *   get:
+   *     tags: [Revenue Center]
+   *     summary: Find all quotations for a revenue center
+   *     parameters:
+   *       - in: query
+   *         name: idRevenueCenter
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID of the revenue center
+   *       - $ref: '#/components/parameters/page'
+   *       - $ref: '#/components/parameters/pageSize'
+   *     responses:
+   *       200:
+   *         description: A list of quotations grouped by input
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       material:
+   *                         type: string
+   *                         example: "Steel Pipes"
+   *                       costCenter:
+   *                         type: string
+   *                         example: "Project A"
+   *                       quantity:
+   *                         type: number
+   *                         example: 100
+   *                       unitOfMeasure:
+   *                         type: string
+   *                         example: "meters"
+   *                       createdAt:
+   *                         type: string
+   *                         format: date-time
+   *                       performance:
+   *                         type: number
+   *                         example: 0.95
+   *                       totalCost:
+   *                         type: number
+   *                         example: 1500.50
+   *                 totalItems:
+   *                   type: integer
+   *                   example: 50
+   *                 currentPage:
+   *                   type: integer
+   *                   example: 1
+   *                 totalPage:
+   *                   type: integer
+   *                   example: 5
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Not found
    *       500:
    *         description: Internal server error
    */

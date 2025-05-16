@@ -1,3 +1,5 @@
+import { QueryTypes } from "sequelize";
+import { dbConnection } from "../../config";
 import { CostCenterProject } from "../cost-center";
 import { ExpenditureItem } from "./expenditure-item.model";
 import * as dtos from "./expenditure.interface";
@@ -25,6 +27,26 @@ export class ExpenditureRepository {
       offset,
       where: filter,
       order: [["createdAt", "DESC"]],
+    });
+  }
+
+  findAllValues(
+  ) {
+    const query = `
+    SELECT
+    	te.idCostCenterProject, 
+    	SUM(te.value) as totalValue
+    FROM mvp1.TB_Expenditure te
+    WHERE
+       te.idExpenditureType IN (2, 26)
+    GROUP BY
+	  te.idCostCenterProject;`;
+    type result = {
+      idCostCenterProject: number;
+      totalValue: number;
+    }
+    return dbConnection.query<result>(query, {
+      type: QueryTypes.SELECT,
     });
   }
 

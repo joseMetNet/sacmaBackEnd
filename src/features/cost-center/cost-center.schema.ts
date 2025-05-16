@@ -97,7 +97,8 @@ export const createCostCenterProject = z.object({
   name: z.string(),
   location: z.string().optional(),
   address: z.string().optional(),
-  phone: z.string().optional()
+  phone: z.string().optional(),
+  idQuotation: z.coerce.number().optional()
 });
 
 export const updateCostCenterProject = z.object({
@@ -106,7 +107,8 @@ export const updateCostCenterProject = z.object({
   name: z.string().optional(),
   location: z.string().optional(),
   address: z.string().optional(),
-  phone: z.string().optional()
+  phone: z.string().optional(),
+  idQuotation: z.coerce.number().optional()
 });
 
 export const updateCostCenter = z.object({
