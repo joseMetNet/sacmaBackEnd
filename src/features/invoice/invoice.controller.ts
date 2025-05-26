@@ -1,17 +1,17 @@
-import { InvoiceService, invoiceService } from "./invoice.service";
+import { InvoiceService } from "./invoice.service";
 import * as schemas from "./invoice.schema";
 import { Request, Response } from "express";
 import { StatusCode, StatusValue } from "../../utils/general.interfase";
 import { formatZodError } from "../employee/utils";
 
-class InvoiceController {
+export class InvoiceController {
   private readonly invoiceService: InvoiceService;
 
   constructor(invoiceService: InvoiceService) {
     this.invoiceService = invoiceService;
   }
 
-  async findAll(req: Request, res: Response): Promise<void> {
+  findAll = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.findAll.safeParse(req.query);
     if (!request.success) {
       res.status(StatusCode.BadRequest)
@@ -25,9 +25,9 @@ class InvoiceController {
     res
       .status(response.code)
       .json({ status: response.status, data: response.data });
-  }
+  };
 
-  async findById(req: Request, res: Response): Promise<void> {
+  findById = async (req: Request, res: Response): Promise<void> => {
     try {
       const request = schemas.idInvoice.safeParse(req.params);
       if (!request.success) {
@@ -47,9 +47,9 @@ class InvoiceController {
         .status(StatusCode.InternalErrorServer)
         .json({ message: err.message });
     }
-  }
+  };
 
-  async create(req: Request, res: Response): Promise<void> {
+  create = async (req: Request, res: Response): Promise<void> => {
     try {
       const request = schemas.createInvoice.safeParse(req.body);
       if (!request.success) {
@@ -70,9 +70,9 @@ class InvoiceController {
         .status(StatusCode.InternalErrorServer)
         .json({ message: err.message });
     }
-  }
+  };
 
-  async update(req: Request, res: Response): Promise<void> {
+  update = async (req: Request, res: Response): Promise<void> => {
     try {
       const request = schemas.updateInvoice.safeParse(req.body);
       if (!request.success) {
@@ -93,9 +93,9 @@ class InvoiceController {
         .status(StatusCode.InternalErrorServer)
         .json({ message: err.message });
     }
-  }
+  };
 
-  async delete(req: Request, res: Response): Promise<void> {
+  delete = async (req: Request, res: Response): Promise<void> => {
     try {
       const request = schemas.idInvoice.safeParse(req.params);
       if (!request.success) {
@@ -115,9 +115,9 @@ class InvoiceController {
         .status(StatusCode.InternalErrorServer)
         .json({ message: err.message });
     }
-  }
+  };
 
-  async findAllInvoiceStatus(req: Request, res: Response): Promise<void> {
+  findAllInvoiceStatus = async (req: Request, res: Response): Promise<void> => {
     try {
       const response = await this.invoiceService.findAllInvoiceStatus();
       res
@@ -128,7 +128,5 @@ class InvoiceController {
         .status(StatusCode.InternalErrorServer)
         .json({ message: err.message });
     }
-  }
+  };
 }
-
-export const invoiceController = new InvoiceController(invoiceService); 
