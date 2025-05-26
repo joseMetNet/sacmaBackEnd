@@ -1,22 +1,27 @@
 import { Application, Router } from "express";
-import { invoiceController } from "./invoice.controller";
+import { InvoiceRepository } from "./invoice.repository";
+import { InvoiceService } from "./invoice.service";
+import { InvoiceController } from "./invoice.controller";
 
 export function invoiceRoutes(app: Application): void {
   const router: Router = Router();
+  const repository = new InvoiceRepository();
+  const service = new InvoiceService(repository);
+  const controller = new InvoiceController(service);
 
   // GET routes
-  router.get("/v1/invoice", invoiceController.findAll);
-  router.get("/v1/invoice/status", invoiceController.findAllInvoiceStatus);
-  router.get("/v1/invoice/:idInvoice", invoiceController.findById);
+  router.get("/v1/invoice", controller.findAll);
+  router.get("/v1/invoice/status", controller.findAllInvoiceStatus);
+  router.get("/v1/invoice/:idInvoice", controller.findById);
 
   // POST routes
-  router.post("/v1/invoice", invoiceController.create);
+  router.post("/v1/invoice", controller.create);
 
   // PATCH routes
-  router.patch("/v1/invoice", invoiceController.update);
+  router.patch("/v1/invoice", controller.update);
 
   // DELETE routes
-  router.delete("/v1/invoice/:idInvoice", invoiceController.delete);
+  router.delete("/v1/invoice/:idInvoice", controller.delete);
 
   app.use("/api/", router);
 }
