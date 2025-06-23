@@ -80,18 +80,20 @@ export class QuotationController {
       return;
     }
     const response = await this.quotationService.generateQuotationDocx(request.data.idQuotation);
-    if (response instanceof Buffer) {
+    if (Buffer.isBuffer(response)) {
       res.set({
         "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "Content-Disposition": "attachment; filename=\"COT_SACIPR_Generado.docx\"",
       });
       res.send(response);
-    } else {
-      res.status(response.code).json({
-        status: response.status,
-        data: response.data,
-      });
+      return;
     }
+
+    // Now TypeScript should know this is ResponseEntity
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data,
+    });
   };
 
   updateQuotationItem = async (req: Request, res: Response): Promise<void> => {
