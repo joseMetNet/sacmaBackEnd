@@ -18,8 +18,8 @@ export const createRevenueCenterSchema = z.object({
   name: z.string(),
   idCostCenterProject: z.coerce.number(),
   idRevenueCenterStatus: z.coerce.number(),
-  fromDate: z.string(),
-  toDate: z.string(),
+  fromDate: z.string().optional(),
+  toDate: z.string().optional(),
 });
 
 export const updateRevenueCenterSchema = z.object({

@@ -8,8 +8,8 @@ export class RevenueCenter extends Model {
   declare name: string;
   declare idCostCenterProject: number;
   declare idRevenueCenterStatus: number;
-  declare fromDate: string;
-  declare toDate: string;
+  declare fromDate?: string;
+  declare toDate?: string;
   declare createdAt: string;
   declare updatedAt: string;
 }
@@ -35,11 +35,11 @@ RevenueCenter.init(
     },
     fromDate: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     toDate: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     createdAt: {
       type: DataTypes.DATE,

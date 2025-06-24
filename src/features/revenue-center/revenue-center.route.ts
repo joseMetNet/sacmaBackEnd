@@ -736,13 +736,15 @@ export function revenueCenterRoutes(app: Application): void {
    *       required:
    *         - name
    *         - idCostCenterProject
-   *         - fromDate
-   *         - toDate
+   *         - idRevenueCenterStatus
    *       properties:
    *         name:
    *           type: string
    *           example: "Revenue Center 1"
    *         idCostCenterProject:
+   *           type: integer
+   *           example: 1
+   *         idRevenueCenterStatus:
    *           type: integer
    *           example: 1
    *         fromDate:
