@@ -19,25 +19,17 @@ export function revenueCenterRoutes(app: Application): void {
   routes.patch("/v1/revenue-center", [verifyToken], revenueCenterController.update);
 
   routes.get("/v1/revenue-center/material", [verifyToken], revenueCenterController.findAllMaterial);
+  routes.get("/v1/revenue-center/material/summary", [verifyToken], revenueCenterController.findAllMaterialSummary);
   routes.get("/v1/revenue-center/inputs", [verifyToken], revenueCenterController.findAllInputs);
   routes.get("/v1/revenue-center/epp", [verifyToken], revenueCenterController.findAllEpp);
   routes.get("/v1/revenue-center/per-diem", [verifyToken], revenueCenterController.findAllPerDiem);
   routes.get("/v1/revenue-center/policy", [verifyToken], revenueCenterController.findAllPolicy);
+  routes.get("/v1/revenue/center/work-tracking", [verifyToken], revenueCenterController.findAllWorkTracking);
+  routes.get("/v1/revenue-center/quotation", [verifyToken], revenueCenterController.findAllQuotation);
 
   routes.get("/v1/revenue-center/:idRevenueCenter", [verifyToken], revenueCenterController.findById);
+
   routes.delete("/v1/revenue-center/:idRevenueCenter", [verifyToken], revenueCenterController.delete);
-
-  routes.get(
-    "/v1/revenue/center/work-tracking",
-    [verifyToken],
-    revenueCenterController.findAllWorkTracking
-  );
-
-  routes.get(
-    "/v1/revenue-center/quotation",
-    [verifyToken],
-    revenueCenterController.findAllQuotation
-  );
 
   /**
    * @openapi
@@ -235,6 +227,88 @@ export function revenueCenterRoutes(app: Application): void {
    *                   type: integer
    *                 totalPage:
    *                   type: integer
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Not found
+   *       500:
+   *         description: Internal server error
+   */
+
+  /**
+   * @openapi
+   * /v1/revenue-center/material/summary:
+   *   get:
+   *     tags: [Revenue Center]
+   *     summary: Find all materials summary for a revenue center (grouped by material)
+   *     parameters:
+   *       - in: query
+   *         name: idRevenueCenter
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID of the revenue center
+   *       - $ref: '#/components/parameters/page'
+   *       - $ref: '#/components/parameters/pageSize'
+   *       - in: query
+   *         name: name
+   *         schema:
+   *           type: string
+   *         description: Optional filter by material name
+   *       - in: query
+   *         name: idCostCenterProject
+   *         schema:
+   *           type: integer
+   *         description: Optional filter by cost center project ID
+   *     responses:
+   *       200:
+   *         description: A list of materials summary grouped by material name
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       material:
+   *                         type: string
+   *                         example: "Cement"
+   *                         description: Name of the material
+   *                       quantity:
+   *                         type: number
+   *                         example: 100
+   *                         description: Total quantity of the material
+   *                       subTotal:
+   *                         type: number
+   *                         example: 50000
+   *                         description: Total value before markup (quantity * unit cost)
+   *                       totalValue:
+   *                         type: number
+   *                         example: 57785
+   *                         description: Total value with 15.57% markup (subTotal * 1.1557)
+   *                       total:
+   *                         type: number
+   *                         example: 5778500
+   *                         description: Final total (quantity * totalValue)
+   *                 totalItems:
+   *                   type: integer
+   *                   example: 25
+   *                   description: Total number of unique materials
+   *                 currentPage:
+   *                   type: integer
+   *                   example: 1
+   *                   description: Current page number
+   *                 totalPage:
+   *                   type: integer
+   *                   example: 3
+   *                   description: Total number of pages
+   *       400:
+   *         description: Bad request - Missing required parameters
    *       401:
    *         description: Unauthorized
    *       403:

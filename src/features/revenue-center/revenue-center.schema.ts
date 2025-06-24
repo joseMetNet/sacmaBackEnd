@@ -81,6 +81,14 @@ export const findAllQuotationSchema = z.object({
   pageSize: z.coerce.number().optional(),
 });
 
+export const findAllMaterialSummarySchema = z.object({
+  idRevenueCenter: z.coerce.number(),
+  page: z.coerce.number().optional(),
+  pageSize: z.coerce.number().optional(),
+  name: z.string().optional(),
+  idCostCenterProject: z.coerce.number().optional(),
+});
+
 export type FindAllSchema = z.infer<typeof findAllSchema>;
 export type IdRevenueCenterSchema = z.infer<typeof idRevenueCenterSchema>;
 export type CreateRevenueCenterSchema = z.infer<typeof createRevenueCenterSchema>;
@@ -92,3 +100,4 @@ export type FindAllPerDiemSchema = z.infer<typeof findAllPerDiemSchema>;
 export type FindAllPolicySchema = z.infer<typeof findAllPolicySchema>;
 export type FindAllWorkTrackingSchema = z.infer<typeof findAllWorkTrackingSchema>;
 export type FindAllQuotationSchema = z.infer<typeof findAllQuotationSchema>;
+export type FindAllMaterialSummarySchema = z.infer<typeof findAllMaterialSummarySchema>;

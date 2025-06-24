@@ -206,6 +206,26 @@ export class RevenueCenterService {
     }
   };
 
+  findAllMaterialSummary = async (request: schemas.FindAllMaterialSummarySchema): Promise<ResponseEntity> => {
+    try {
+      const { page, pageSize, limit, offset } = findPagination(request);
+      const filter = {
+        idRevenueCenter: request.idRevenueCenter,
+        idInputType: 1
+      };
+      const inputs = await this.revenueCenterRepository.findAllInputSummary(limit, offset, filter);
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        data: inputs.rows,
+        totalItems: inputs.count,
+        currentPage: page,
+        totalPage: Math.ceil(inputs.count / pageSize),
+      });
+    } catch (error) {
+      console.error("An error occurred while trying to find all materials summary", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find all materials summary" });
+    }
+  };
+
   findAllInputs = async (request: schemas.FindAllInputsSchema): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);

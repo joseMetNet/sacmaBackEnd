@@ -277,33 +277,33 @@ export class RevenueCenterRepository {
 
     const quotationQuery = `
       SELECT 
-        ti.name as material,
-        tccp.name costCenter,
-        SUM(tqid.quantity) as quantity,
+        ti.name AS material,
+        tccp.name AS costCenter,
+        SUM(tqid.quantity) AS quantity,
         tiu.unitOfMeasure AS unitOfMeasure,
-        MAX(tq.createdAt) as createdAt,
-        AVG(tqid.performance) as performance,
-        SUM(tqid.totalCost) as totalCost
+        MAX(tq.createdAt) AS createdAt,
+        MAX(tqid.performance) AS performance,
+        SUM(tqid.totalCost) AS totalCost
       FROM mvp1.TB_QuotationItemDetail tqid
       INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotationItem = tqid.idQuotationItem
       INNER JOIN mvp1.TB_Quotation tq ON tq.idQuotation = tqi.idQuotation
-      INNER JOIN mvp1.TB_CostCenterProject tccp ON tccp.idQuotation = tqi.idQuotation
+      INNER JOIN mvp1.TB_CostCenterProject tccp ON tccp.idQuotation = tq.idQuotation
       INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput 
       INNER JOIN mvp1.TB_InputUnitOfMeasure tiu ON tiu.idInputUnitOfMeasure = ti.idInputUnitOfMeasure
       INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = tccp.idCostCenterProject
       ${filter?.idRevenueCenter ? "WHERE rc.idRevenueCenter = :idRevenueCenter" : ""}
-      GROUP BY ti.idInput, ti.name, tccp.name, tiu.unitOfMeasure
+      GROUP BY ti.idInput, ti.name, tccp.idCostCenterProject, tccp.name, tiu.unitOfMeasure
       ORDER BY SUM(tqid.totalCost) DESC
       OFFSET :offset ROWS
       FETCH NEXT :limit ROWS ONLY;
     `;
 
     const countQuery = `
-      SELECT COUNT(DISTINCT ti.idInput) as total
+      SELECT COUNT(DISTINCT CONCAT(ti.idInput, '-', tccp.idCostCenterProject)) as total
       FROM mvp1.TB_QuotationItemDetail tqid
       INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotationItem = tqid.idQuotationItem
       INNER JOIN mvp1.TB_Quotation tq ON tq.idQuotation = tqi.idQuotation
-      INNER JOIN mvp1.TB_CostCenterProject tccp ON tccp.idQuotation = tqi.idQuotation
+      INNER JOIN mvp1.TB_CostCenterProject tccp ON tccp.idQuotation = tq.idQuotation
       INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput 
       INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = tccp.idCostCenterProject
       ${filter?.idRevenueCenter ? "WHERE rc.idRevenueCenter = :idRevenueCenter" : ""};
@@ -320,6 +320,68 @@ export class RevenueCenterRepository {
       sequelize.query(countQuery, {
         replacements: {
           ...filter
+        }
+      })
+    ]);
+
+    const countResult = countResults[0] as Array<{ total: number }>;
+    const total = countResult[0]?.total ?? 0;
+
+    return {
+      rows: results[0],
+      count: total
+    };
+  };
+
+  findAllInputSummary = async (
+    limit: number,
+    offset: number,
+    filter?: { idRevenueCenter?: number, idInputType?: number }
+  ) => {
+    const sequelize = RevenueCenter.sequelize!;
+
+    const summaryQuery = `
+      SELECT
+        i.name AS material,
+        SUM(oid.quantity) AS quantity,
+        SUM(oid.quantity * CONVERT(FLOAT, i.cost)) AS subTotal,
+        SUM(oid.quantity * CONVERT(FLOAT, i.cost)) * 1.1557 AS totalValue,
+        SUM(oid.quantity) * (SUM(oid.quantity * CONVERT(FLOAT, i.cost)) * 1.1557) AS total
+      FROM mvp1.TB_OrderItemDetail oid
+      INNER JOIN mvp1.TB_OrderItem oi on oi.idOrderItem = oid.idOrderItem
+      INNER JOIN mvp1.TB_Input i ON i.idInput=oid.idInput
+      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject=oi.idCostCenterProject
+      INNER JOIN mvp1.TB_InputUnitOfMeasure iu ON iu.idInputUnitOfMeasure=i.idInputUnitOfMeasure
+      WHERE rc.idRevenueCenter = :idRevenueCenter AND i.idInputType = :idInputType
+      GROUP BY i.name
+      ORDER BY SUM(oid.quantity) * (SUM(oid.quantity * CONVERT(FLOAT, i.cost)) * 1.1557) DESC
+      OFFSET :offset ROWS
+      FETCH NEXT :limit ROWS ONLY;
+    `;
+
+    const countQuery = `
+      SELECT COUNT(DISTINCT i.name) as total
+      FROM mvp1.TB_OrderItemDetail oid
+      INNER JOIN mvp1.TB_OrderItem oi on oi.idOrderItem = oid.idOrderItem
+      INNER JOIN mvp1.TB_Input i ON i.idInput=oid.idInput
+      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject=oi.idCostCenterProject
+      INNER JOIN mvp1.TB_InputUnitOfMeasure iu ON iu.idInputUnitOfMeasure=i.idInputUnitOfMeasure
+      WHERE rc.idRevenueCenter = :idRevenueCenter AND i.idInputType = :idInputType;
+    `;
+
+    const [results, countResults] = await Promise.all([
+      sequelize.query(summaryQuery, {
+        replacements: {
+          idRevenueCenter: filter?.idRevenueCenter,
+          idInputType: filter?.idInputType,
+          limit,
+          offset,
+        }
+      }),
+      sequelize.query(countQuery, {
+        replacements: {
+          idRevenueCenter: filter?.idRevenueCenter,
+          idInputType: filter?.idInputType,
         }
       })
     ]);
