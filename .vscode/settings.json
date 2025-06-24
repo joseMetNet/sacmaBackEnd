@@ -1,4 +1,4 @@
 {
-  "appService.defaultWebAppToDeploy": "/subscriptions/0bdf6479-bd7f-48a4-a58b-0bb37d04c429/resourceGroups/appsvc_linux_centralus/providers/Microsoft.Web/sites/sacma-dev",
-  "appService.deploySubpath": "."
+    "appService.defaultWebAppToDeploy": "/subscriptions/47708c2b-ff8e-4983-980c-e5bd72243e02/resourceGroups/sacmaFinal/providers/Microsoft.Web/sites/sacma-dev",
+    "appService.deploySubpath": "."
 }
