@@ -3,6 +3,7 @@ import { IRevenueCenter } from "./revenue-center.interface";
 import { CostCenterProject } from "../cost-center";
 import { QueryTypes, WhereOptions } from "sequelize";
 import { dbConnection } from "../../config";
+import { RevenueCenterStatus } from "./revenue-center-status-model";
 
 export class RevenueCenterRepository {
   findAll = (
@@ -19,6 +20,10 @@ export class RevenueCenterRepository {
           model: CostCenterProject,
           required: true,
         },
+        {
+          model: RevenueCenterStatus,
+          required: true,
+        }
       ],
     });
   };
@@ -394,4 +399,8 @@ export class RevenueCenterRepository {
       count: total
     };
   };
+
+  async findAllRevenueCenterStatus(): Promise<RevenueCenterStatus[]> {
+    return await RevenueCenterStatus.findAll();
+  }
 }

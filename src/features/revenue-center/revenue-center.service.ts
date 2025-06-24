@@ -47,6 +47,7 @@ export class RevenueCenterService {
           idRevenueCenter: revenueCenter.idRevenueCenter,
           name: revenueCenter.name,
           idCostCenterProject: revenueCenter.idCostCenterProject,
+          idRevenueCenterStatus: revenueCenter.idRevenueCenterStatus,
           fromDate: revenueCenter.fromDate,
           toDate: revenueCenter.toDate,
           createdAt: revenueCenter.createdAt,
@@ -83,6 +84,7 @@ export class RevenueCenterService {
         idRevenueCenter: revenueCenter.idRevenueCenter,
         name: revenueCenter.name,
         idCostCenterProject: revenueCenter.idCostCenterProject,
+        idRevenueCenterStatus: revenueCenter.idRevenueCenterStatus,
         fromDate: revenueCenter.fromDate,
         toDate: revenueCenter.toDate,
         createdAt: revenueCenter.createdAt,
@@ -106,6 +108,7 @@ export class RevenueCenterService {
       const createData: IRevenueCenterCreate = {
         name: request.name,
         idCostCenterProject: request.idCostCenterProject,
+        idRevenueCenterStatus: request.idRevenueCenterStatus,
         fromDate: request.fromDate,
         toDate: request.toDate,
       };
@@ -114,6 +117,7 @@ export class RevenueCenterService {
         idRevenueCenter: revenueCenter.idRevenueCenter,
         name: revenueCenter.name,
         idCostCenterProject: revenueCenter.idCostCenterProject,
+        idRevenueCenterStatus: revenueCenter.idRevenueCenterStatus,
         fromDate: revenueCenter.fromDate,
         toDate: revenueCenter.toDate,
         createdAt: revenueCenter.createdAt,
@@ -143,6 +147,7 @@ export class RevenueCenterService {
       const updatePayload: IRevenueCenterUpdate = {
         name: updateData.name,
         idCostCenterProject: updateData.idCostCenterProject,
+        idRevenueCenterStatus: updateData.idRevenueCenterStatus,
         fromDate: updateData.fromDate,
         toDate: updateData.toDate,
       };
@@ -152,6 +157,7 @@ export class RevenueCenterService {
         idRevenueCenter: revenueCenter.idRevenueCenter,
         name: revenueCenter.name,
         idCostCenterProject: revenueCenter.idCostCenterProject,
+        idRevenueCenterStatus: revenueCenter.idRevenueCenterStatus,
         fromDate: revenueCenter.fromDate,
         toDate: revenueCenter.toDate,
         createdAt: revenueCenter.createdAt,
@@ -408,6 +414,16 @@ export class RevenueCenterService {
     }
   };
 
+  findAllRevenueCenterStatus = async (): Promise<ResponseEntity> => {
+    try {
+      const data = await this.revenueCenterRepository.findAllRevenueCenterStatus();
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
+    } catch (error) {
+      console.error("An error occurred while trying to find all revenue center statuses", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find all revenue center statuses" });
+    }
+  };
+
   private buildFilter = (
     request: schemas.FindAllSchema
   ): { [key: string]: any } => {
@@ -423,6 +439,10 @@ export class RevenueCenterService {
 
     if (request.idCostCenterProject) {
       filter.idCostCenterProject = request.idCostCenterProject;
+    }
+
+    if (request.idRevenueCenterStatus) {
+      filter.idRevenueCenterStatus = request.idRevenueCenterStatus;
     }
 
     return filter;

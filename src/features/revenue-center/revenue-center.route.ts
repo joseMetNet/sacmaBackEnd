@@ -15,6 +15,7 @@ export function revenueCenterRoutes(app: Application): void {
   const revenueCenterController = new RevenueCenterController(revenueCenterService);
 
   routes.get("/v1/revenue-center", [verifyToken], revenueCenterController.findAll);
+  routes.get("/v1/revenue-center/status", [verifyToken], revenueCenterController.findAllRevenueCenterStatus);
   routes.post("/v1/revenue-center", [verifyToken], revenueCenterController.create);
   routes.patch("/v1/revenue-center", [verifyToken], revenueCenterController.update);
 
@@ -68,6 +69,37 @@ export function revenueCenterRoutes(app: Application): void {
    *                   type: integer
    *                 totalPage:
    *                   type: integer
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Not found
+   *       500:
+   *         description: Internal server error
+   */
+
+  /**
+   * @openapi
+   * /v1/revenue-center/status:
+   *   get:
+   *     tags: [Revenue Center]
+   *     summary: Find all revenue center statuses
+   *     description: Find all available revenue center statuses
+   *     responses:
+   *       200:
+   *         description: A list of revenue center statuses
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     $ref: '#/components/schemas/RevenueCenterStatus'
    *       401:
    *         description: Unauthorized
    *       403:
@@ -739,6 +771,15 @@ export function revenueCenterRoutes(app: Application): void {
    *         toDate:
    *           type: string
    *           example: "2024-12-31"
+   *     RevenueCenterStatus:
+   *       type: object
+   *       properties:
+   *         idRevenueCenterStatus:
+   *           type: integer
+   *           example: 1
+   *         status:
+   *           type: string
+   *           example: "Active"
    *   parameters:
    *     page:
    *       in: query

@@ -234,4 +234,12 @@ export class RevenueCenterController {
       data: response.data
     });
   };
+
+  findAllRevenueCenterStatus = async (req: Request, res: Response): Promise<void> => {
+    const response = await this.revenueCenterService.findAllRevenueCenterStatus();
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
 }

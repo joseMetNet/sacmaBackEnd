@@ -1,11 +1,13 @@
 import { Model, DataTypes } from "sequelize";
 import { dbConnection } from "../../config/database";
 import { CostCenterProject } from "../cost-center";
+import { RevenueCenterStatus } from "./revenue-center-status-model";
 
 export class RevenueCenter extends Model {
   declare idRevenueCenter: number;
   declare name: string;
   declare idCostCenterProject: number;
+  declare idRevenueCenterStatus: number;
   declare fromDate: string;
   declare toDate: string;
   declare createdAt: string;
@@ -24,6 +26,10 @@ RevenueCenter.init(
       allowNull: false,
     },
     idCostCenterProject: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    idRevenueCenterStatus: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
@@ -53,4 +59,9 @@ RevenueCenter.init(
 RevenueCenter.hasOne(CostCenterProject, {
   foreignKey: "idCostCenterProject",
   sourceKey: "idCostCenterProject"
+});
+
+RevenueCenter.hasOne(RevenueCenterStatus, {
+  foreignKey: "idRevenueCenterStatus",
+  sourceKey: "idRevenueCenterStatus"
 });

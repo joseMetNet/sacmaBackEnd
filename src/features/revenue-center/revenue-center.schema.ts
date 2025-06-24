@@ -6,6 +6,7 @@ export const findAllSchema = z.object({
   name: z.string().optional(),
   idRevenueCenter: z.coerce.number().optional(),
   idCostCenterProject: z.coerce.number().optional(),
+  idRevenueCenterStatus: z.coerce.number().optional(),
   idOrderItem: z.coerce.number().optional(),
 });
 
@@ -16,6 +17,7 @@ export const idRevenueCenterSchema = z.object({
 export const createRevenueCenterSchema = z.object({
   name: z.string(),
   idCostCenterProject: z.coerce.number(),
+  idRevenueCenterStatus: z.coerce.number(),
   fromDate: z.string(),
   toDate: z.string(),
 });
@@ -24,6 +26,7 @@ export const updateRevenueCenterSchema = z.object({
   idRevenueCenter: z.coerce.number(),
   name: z.string().optional(),
   idCostCenterProject: z.coerce.number().optional(),
+  idRevenueCenterStatus: z.coerce.number().optional(),
   fromDate: z.string().optional(),
   toDate: z.string().optional(),
 });
