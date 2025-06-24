@@ -3,6 +3,7 @@ import * as schemas from "./invoice.schema";
 import { Request, Response } from "express";
 import { StatusCode, StatusValue } from "../../utils/general.interfase";
 import { formatZodError } from "../employee/utils";
+import { UploadedFile } from "express-fileupload";
 
 export class InvoiceController {
   private readonly invoiceService: InvoiceService;
@@ -42,10 +43,10 @@ export class InvoiceController {
       res
         .status(response.code)
         .json({ status: response.status, data: response.data });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res
         .status(StatusCode.InternalErrorServer)
-        .json({ message: err.message });
+        .json({ message: err instanceof Error ? err.message : "Unknown error" });
     }
   };
 
@@ -61,14 +62,19 @@ export class InvoiceController {
         return;
       }
 
-      const response = await this.invoiceService.create(request.data);
+      const document = req.files
+        ? (req.files.document as UploadedFile)
+        : undefined;
+
+      const filePath = document ? document.tempFilePath : undefined;
+      const response = await this.invoiceService.create(request.data, filePath);
       res
         .status(response.code)
         .json({ status: response.status, data: response.data });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res
         .status(StatusCode.InternalErrorServer)
-        .json({ message: err.message });
+        .json({ message: err instanceof Error ? err.message : "Unknown error" });
     }
   };
 
@@ -84,14 +90,19 @@ export class InvoiceController {
         return;
       }
 
-      const response = await this.invoiceService.update(request.data);
+      const document = req.files
+        ? (req.files.document as UploadedFile)
+        : undefined;
+
+      const filePath = document ? document.tempFilePath : undefined;
+      const response = await this.invoiceService.update(request.data, filePath);
       res
         .status(response.code)
         .json({ status: response.status, data: response.data });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res
         .status(StatusCode.InternalErrorServer)
-        .json({ message: err.message });
+        .json({ message: err instanceof Error ? err.message : "Unknown error" });
     }
   };
 
@@ -110,10 +121,10 @@ export class InvoiceController {
       res
         .status(response.code)
         .json({ status: response.status, data: response.data });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res
         .status(StatusCode.InternalErrorServer)
-        .json({ message: err.message });
+        .json({ message: err instanceof Error ? err.message : "Unknown error" });
     }
   };
 
@@ -123,10 +134,10 @@ export class InvoiceController {
       res
         .status(response.code)
         .json({ status: response.status, data: response.data });
-    } catch (err: any) {
+    } catch (err: unknown) {
       res
         .status(StatusCode.InternalErrorServer)
-        .json({ message: err.message });
+        .json({ message: err instanceof Error ? err.message : "Unknown error" });
     }
   };
 }

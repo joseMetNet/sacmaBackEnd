@@ -172,11 +172,11 @@ export function invoiceRoutes(app: Application): void {
  *   post:
  *     tags: [Invoice]
  *     summary: Create a new invoice
- *     description: Create a new invoice
+ *     description: Create a new invoice with optional document upload
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required:
@@ -196,6 +196,10 @@ export function invoiceRoutes(app: Application): void {
  *                 type: string
  *               idInvoiceStatus:
  *                 type: integer
+ *               document:
+ *                 type: string
+ *                 format: binary
+ *                 description: Invoice document file (PDF)
  *     responses:
  *       201:
  *         description: Invoice created
@@ -228,11 +232,11 @@ export function invoiceRoutes(app: Application): void {
  *   patch:
  *     tags: [Invoice]
  *     summary: Update an invoice
- *     description: Update an invoice
+ *     description: Update an invoice with optional document upload
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required:
@@ -250,6 +254,10 @@ export function invoiceRoutes(app: Application): void {
  *                 type: string
  *               idInvoiceStatus:
  *                 type: integer
+ *               document:
+ *                 type: string
+ *                 format: binary
+ *                 description: Invoice document file (PDF)
  *     responses:
  *       200:
  *         description: Invoice updated
@@ -340,6 +348,9 @@ export function invoiceRoutes(app: Application): void {
  *           type: string
  *         idInvoiceStatus:
  *           type: integer
+ *         documentUrl:
+ *           type: string
+ *           description: URL of the invoice document
  *         createdAt:
  *           type: string
  *           format: date-time

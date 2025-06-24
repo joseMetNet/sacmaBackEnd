@@ -3,6 +3,8 @@ import { CreateInvoiceDTO, FindAllDTO, UpdateInvoiceDTO } from "./invoice.schema
 import { ResponseEntity } from "../employee/interface";
 import { StatusCode } from "../../utils/general.interfase";
 import { BuildResponse } from "../../utils/build-response";
+import { CustomError, uploadFile } from "../../utils";
+import crypto from "crypto";
 
 export class InvoiceService {
   private readonly invoiceRepository: InvoiceRepository;
@@ -11,15 +13,32 @@ export class InvoiceService {
     this.invoiceRepository = invoiceRepository;
   }
 
-  create = async (invoiceData: CreateInvoiceDTO): Promise<ResponseEntity> => {
+  create = async (invoiceData: CreateInvoiceDTO, filePath?: string): Promise<ResponseEntity> => {
     try {
-      const response = await this.invoiceRepository.create(invoiceData);
+      let documentUrl = undefined;
+      if (filePath) {
+        const identifier = crypto.randomUUID();
+        const contentType = "application/pdf";
+        const response = await uploadFile(filePath, identifier, contentType, "invoice");
+        if (response instanceof CustomError) {
+          console.error(response);
+          return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to upload document" });
+        }
+        documentUrl = `https://sacmaback.blob.core.windows.net/invoice/${identifier}.pdf`;
+      }
+
+      const invoicePayload = {
+        ...invoiceData,
+        documentUrl
+      };
+
+      const response = await this.invoiceRepository.create(invoicePayload);
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
-        { message: err.message }
+        { message: err instanceof Error ? err.message : "Unknown error" }
       );
     }
   };
@@ -35,11 +54,11 @@ export class InvoiceService {
       }
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
     }
-    catch (err: any) {
+    catch (err: unknown) {
       console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
-        { message: err.message }
+        { message: err instanceof Error ? err.message : "Unknown error" }
       );
     }
   };
@@ -61,16 +80,16 @@ export class InvoiceService {
         page: request.page || 0,
         pageSize: request.pageSize || 10
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
-        { message: err.message }
+        { message: err instanceof Error ? err.message : "Unknown error" }
       );
     }
   };
 
-  update = async (invoiceData: UpdateInvoiceDTO): Promise<ResponseEntity> => {
+  update = async (invoiceData: UpdateInvoiceDTO, filePath?: string): Promise<ResponseEntity> => {
     try {
       const invoice = await this.invoiceRepository.findById(invoiceData.idInvoice);
       if (!invoice) {
@@ -80,16 +99,33 @@ export class InvoiceService {
         );
       }
 
-      const [, [updatedInvoice]] = await this.invoiceRepository.update(invoiceData);
+      let documentUrl = invoiceData.documentUrl;
+      if (filePath) {
+        const identifier = crypto.randomUUID();
+        const contentType = "application/pdf";
+        const response = await uploadFile(filePath, identifier, contentType, "invoice");
+        if (response instanceof CustomError) {
+          console.error(response);
+          return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to upload document" });
+        }
+        documentUrl = `https://sacmaback.blob.core.windows.net/invoice/${identifier}.pdf`;
+      }
+
+      const updatePayload = {
+        ...invoiceData,
+        documentUrl
+      };
+
+      const [, [updatedInvoice]] = await this.invoiceRepository.update(updatePayload);
       return BuildResponse.buildSuccessResponse(
         StatusCode.Ok,
         updatedInvoice
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
-        { message: err.message }
+        { message: err instanceof Error ? err.message : "Unknown error" }
       );
     }
   };
@@ -98,11 +134,11 @@ export class InvoiceService {
     try {
       const response = await this.invoiceRepository.delete(id);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, { deleted: response > 0 });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
-        { message: err.message }
+        { message: err instanceof Error ? err.message : "Unknown error" }
       );
     }
   };
@@ -111,17 +147,17 @@ export class InvoiceService {
     try {
       const data = await this.invoiceRepository.findAllInvoiceStatus();
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
-        { message: err.message }
+        { message: err instanceof Error ? err.message : "Unknown error" }
       );
     }
   };
 
-  private buildFindAllFilter(request: FindAllDTO): { [key: string]: any } {
-    const filter: { [key: string]: any } = {};
+  private buildFindAllFilter(request: FindAllDTO): Record<string, unknown> {
+    const filter: Record<string, unknown> = {};
 
     if (request.idCostCenterProject) {
       filter.idCostCenterProject = request.idCostCenterProject;
