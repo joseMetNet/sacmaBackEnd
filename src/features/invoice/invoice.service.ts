@@ -3,7 +3,7 @@ import { CreateInvoiceDTO, FindAllDTO, UpdateInvoiceDTO } from "./invoice.schema
 import { ResponseEntity } from "../employee/interface";
 import { StatusCode } from "../../utils/general.interfase";
 import { BuildResponse } from "../../utils/build-response";
-import { CustomError, uploadFile } from "../../utils";
+import { CustomError, deleteFile, uploadFile } from "../../utils";
 import crypto from "crypto";
 
 export class InvoiceService {
@@ -101,6 +101,18 @@ export class InvoiceService {
 
       let documentUrl = invoiceData.documentUrl;
       if (filePath) {
+        // if documentUrl is provided, remove the old file
+        if (documentUrl) {
+          const oldIdentifier = documentUrl.split("/").pop()?.split(".")[0];
+          if (oldIdentifier) {
+            const oldFilePath = `invoice/${oldIdentifier}.pdf`;
+            const deleteResponse = await deleteFile(oldFilePath, "invoice");
+            if (deleteResponse instanceof CustomError) {
+              console.error(deleteResponse);
+              return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to delete old document" });
+            }
+          }
+        }
         const identifier = crypto.randomUUID();
         const contentType = "application/pdf";
         const response = await uploadFile(filePath, identifier, contentType, "invoice");

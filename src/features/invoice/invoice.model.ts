@@ -9,6 +9,7 @@ export class Invoice extends Model {
   declare idCostCenterProject: number;
   declare client: string;
   declare value: string;
+  declare contract: string;
   declare documentUrl: string;
   declare idInvoiceStatus: number;
   declare createdAt: string;
@@ -34,6 +35,10 @@ Invoice.init({
     allowNull: false
   },
   value: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  contract: {
     type: DataTypes.STRING,
     allowNull: false
   },
