@@ -21,5 +21,6 @@ RevenueCenterStatus.init(
   {
     sequelize: dbConnection,
     tableName: "TB_RevenueCenterStatus",
+    timestamps: false,
   }
 );

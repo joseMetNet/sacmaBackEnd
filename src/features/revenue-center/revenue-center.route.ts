@@ -20,7 +20,7 @@ export function revenueCenterRoutes(app: Application): void {
   routes.patch("/v1/revenue-center", [verifyToken], revenueCenterController.update);
 
   routes.get("/v1/revenue-center/material", [verifyToken], revenueCenterController.findAllMaterial);
-  routes.get("/v1/revenue-center/material/summary", [verifyToken], revenueCenterController.findAllMaterialSummary);
+  routes.get("/v1/revenue-center/quotation/summary", [verifyToken], revenueCenterController.findAllMaterialSummary);
   routes.get("/v1/revenue-center/inputs", [verifyToken], revenueCenterController.findAllInputs);
   routes.get("/v1/revenue-center/epp", [verifyToken], revenueCenterController.findAllEpp);
   routes.get("/v1/revenue-center/per-diem", [verifyToken], revenueCenterController.findAllPerDiem);
@@ -271,7 +271,7 @@ export function revenueCenterRoutes(app: Application): void {
 
   /**
    * @openapi
-   * /v1/revenue-center/material/summary:
+   * /v1/revenue-center/quotation/summary:
    *   get:
    *     tags: [Revenue Center]
    *     summary: Find all materials summary for a revenue center (grouped by material)
