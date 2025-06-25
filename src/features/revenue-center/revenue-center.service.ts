@@ -281,12 +281,14 @@ export class RevenueCenterService {
     }
   };
 
-  findAllPerDiem = async (request: schemas.FindAllPerDiemSchema): Promise<ResponseEntity> => {
+  /**
+   * Retrieve all expenditures for a revenue center (no type filter)
+   */
+  findAllExpenditures = async (request: schemas.FindAllExpendituresSchema): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);
-
+      // Get the revenue center to obtain cost center project
       const revenueCenter = await this.revenueCenterRepository.findById(request.idRevenueCenter);
-
       if (!revenueCenter) {
         return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
           data: [],
@@ -295,65 +297,10 @@ export class RevenueCenterService {
           totalPage: 0,
         });
       }
-
-      let filter = this.buildFilter(request);
-      filter = {
-        idCostCenterProject: revenueCenter.idCostCenterProject,
-        idExpenditureType: 2
-      };
-
-      const orderItemDetails = await this.expenditureRepository.findAll(limit, offset, filter);
-
-      const rows = orderItemDetails.rows.map((item) => ({
-        idCostCenterProject: item.idCostCenterProject,
-        description: item.description,
-        unitValue: item.value,
-        totalValue: item.value,
-        quantity: 1,
-        orderNumber: item.orderNumber,
-        refundRequestDate: item.refundRequestDate,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-        projectName: item.toJSON().CostCenterProject.name,
-      }));
-
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
-        data: rows,
-        totalItems: orderItemDetails.count,
-        currentPage: page,
-        totalPage: Math.ceil(orderItemDetails.count / pageSize),
-      });
-
-    } catch (error) {
-      console.error("An error occurred while trying to find all per diem", error);
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find all per diem" });
-    }
-  };
-
-  findAllPolicy = async (request: schemas.FindAllPolicySchema): Promise<ResponseEntity> => {
-    try {
-      const { page, pageSize, limit, offset } = findPagination(request);
-
-      const revenueCenter = await this.revenueCenterRepository.findById(request.idRevenueCenter);
-
-      if (!revenueCenter) {
-        return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
-          data: [],
-          totalItems: 0,
-          currentPage: page,
-          totalPage: 0,
-        });
-      }
-
-      let filter = this.buildFilter(request);
-      filter = {
-        idCostCenterProject: revenueCenter.idCostCenterProject,
-        idExpenditureType: 26
-      };
-
-      const orderItemDetails = await this.expenditureRepository.findAll(limit, offset, filter);
-
-      const rows = orderItemDetails.rows.map((item) => ({
+      // Filter only by cost center project
+      const filter = { idCostCenterProject: revenueCenter.idCostCenterProject };
+      const expenditures = await this.expenditureRepository.findAll(limit, offset, filter);
+      const rows = expenditures.rows.map((item) => ({
         idCostCenterProject: item.idCostCenterProject,
         description: item.description,
         unitValue: item.value,
@@ -367,35 +314,13 @@ export class RevenueCenterService {
       }));
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         data: rows,
-        totalItems: orderItemDetails.count,
+        totalItems: expenditures.count,
         currentPage: page,
-        totalPage: Math.ceil(orderItemDetails.count / pageSize),
+        totalPage: Math.ceil(expenditures.count / pageSize),
       });
     } catch (error) {
-      console.error("An error occurred while trying to find all policies", error);
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find all policies" });
-    }
-  };
-
-  findAllWorkTracking = async (request: schemas.FindAllWorkTrackingSchema): Promise<ResponseEntity> => {
-    try {
-      const { page, pageSize, limit, offset } = findPagination(request);
-      const filter = {
-        idRevenueCenter: request.idRevenueCenter,
-        ...(request.idCostCenterProject && { idCostCenterProject: request.idCostCenterProject }),
-      };
-
-      const workTrackingData = await this.revenueCenterRepository.findAllWorkTracking(limit, offset, filter);
-
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
-        data: workTrackingData.rows,
-        totalItems: workTrackingData.count,
-        currentPage: page,
-        totalPage: Math.ceil(workTrackingData.count / pageSize),
-      });
-    } catch (error) {
-      console.error("An error occurred while trying to find all work tracking data", error);
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find all work tracking data" });
+      console.error("An error occurred while trying to find all expenditures", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find all expenditures" });
     }
   };
 
@@ -459,6 +384,29 @@ export class RevenueCenterService {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
         message: "An error occurred while trying to find project items for revenue center"
       });
+    }
+  };
+
+  /**
+   * Find work tracking entries for a revenue center
+   */
+  findAllWorkTracking = async (request: schemas.FindAllWorkTrackingSchema): Promise<ResponseEntity> => {
+    try {
+      const { page, pageSize, limit, offset } = findPagination(request);
+      const filter = {
+        idRevenueCenter: request.idRevenueCenter,
+        ...(request.idCostCenterProject && { idCostCenterProject: request.idCostCenterProject }),
+      };
+      const workTrackingData = await this.revenueCenterRepository.findAllWorkTracking(limit, offset, filter);
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        data: workTrackingData.rows,
+        totalItems: workTrackingData.count,
+        currentPage: page,
+        totalPage: Math.ceil(workTrackingData.count / pageSize),
+      });
+    } catch (error) {
+      console.error("An error occurred while trying to find all work tracking data", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find all work tracking data" });
     }
   };
 

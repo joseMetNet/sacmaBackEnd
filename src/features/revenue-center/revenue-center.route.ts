@@ -24,8 +24,8 @@ export function revenueCenterRoutes(app: Application): void {
   routes.get("/v1/revenue-center/quotation/summary", [verifyToken], revenueCenterController.findAllMaterialSummary);
   routes.get("/v1/revenue-center/inputs", [verifyToken], revenueCenterController.findAllInputs);
   routes.get("/v1/revenue-center/epp", [verifyToken], revenueCenterController.findAllEpp);
-  routes.get("/v1/revenue-center/per-diem", [verifyToken], revenueCenterController.findAllPerDiem);
-  routes.get("/v1/revenue-center/policy", [verifyToken], revenueCenterController.findAllPolicy);
+  // Unified expenditures endpoint
+  routes.get("/v1/revenue-center/expenditures", [verifyToken], revenueCenterController.findAllExpenditures);
   routes.get("/v1/revenue/center/work-tracking", [verifyToken], revenueCenterController.findAllWorkTracking);
   routes.get("/v1/revenue-center/quotation", [verifyToken], revenueCenterController.findAllQuotation);
 
@@ -485,22 +485,22 @@ export function revenueCenterRoutes(app: Application): void {
 
   /**
    * @openapi
-   * /v1/revenue-center/per-diem:
+   * /v1/revenue-center/expenditures:
    *   get:
    *     tags: [Revenue Center]
-   *     summary: Find all per diem for a revenue center
+   *     summary: Retrieve all expenditures for a revenue center
    *     parameters:
    *       - in: query
    *         name: idRevenueCenter
-   *         required: true
    *         schema:
    *           type: integer
+   *         required: true
    *         description: ID of the revenue center
    *       - $ref: '#/components/parameters/page'
    *       - $ref: '#/components/parameters/pageSize'
    *     responses:
    *       200:
-   *         description: A list of per diem
+   *         description: A list of expenditures
    *         content:
    *           application/json:
    *             schema:
@@ -509,7 +509,7 @@ export function revenueCenterRoutes(app: Application): void {
    *                 data:
    *                   type: array
    *                   items:
-   *                     $ref: '#/components/schemas/Input'
+   *                     $ref: '#/components/schemas/Expenditure'
    *                 totalItems:
    *                   type: integer
    *                 currentPage:
@@ -520,51 +520,6 @@ export function revenueCenterRoutes(app: Application): void {
    *         description: Unauthorized
    *       403:
    *         description: Forbidden
-   *       404:
-   *         description: Not found
-   *       500:
-   *         description: Internal server error
-   */
-
-  /**
-   * @openapi
-   * /v1/revenue-center/policy:
-   *   get:
-   *     tags: [Revenue Center]
-   *     summary: Find all policies for a revenue center
-   *     parameters:
-   *       - in: query
-   *         name: idRevenueCenter
-   *         required: true
-   *         schema:
-   *           type: integer
-   *         description: ID of the revenue center
-   *       - $ref: '#/components/parameters/page'
-   *       - $ref: '#/components/parameters/pageSize'
-   *     responses:
-   *       200:
-   *         description: A list of policies
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 data:
-   *                   type: array
-   *                   items:
-   *                     $ref: '#/components/schemas/Input'
-   *                 totalItems:
-   *                   type: integer
-   *                 currentPage:
-   *                   type: integer
-   *                 totalPage:
-   *                   type: integer
-   *       401:
-   *         description: Unauthorized
-   *       403:
-   *         description: Forbidden
-   *       404:
-   *         description: Not found
    *       500:
    *         description: Internal server error
    */

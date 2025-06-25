@@ -167,8 +167,8 @@ export class RevenueCenterController {
     });
   };
 
-  findAllPerDiem = async (req: Request, res: Response): Promise<void> => {
-    const request = schemas.findAllPerDiemSchema.safeParse(req.query);
+  findAllExpenditures = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.findAllExpendituresSchema.safeParse(req.query);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -177,24 +177,7 @@ export class RevenueCenterController {
       return;
     }
 
-    const response = await this.revenueCenterService.findAllPerDiem(request.data);
-    res.status(response.code).json({
-      status: response.status,
-      data: response.data
-    });
-  };
-
-  findAllPolicy = async (req: Request, res: Response): Promise<void> => {
-    const request = schemas.findAllPolicySchema.safeParse(req.query);
-    if (!request.success) {
-      res.status(StatusCode.BadRequest).json({
-        status: StatusValue.Failed,
-        data: { error: formatZodError(request.error) }
-      });
-      return;
-    }
-
-    const response = await this.revenueCenterService.findAllPolicy(request.data);
+    const response = await this.revenueCenterService.findAllExpenditures(request.data);
     res.status(response.code).json({
       status: response.status,
       data: response.data
