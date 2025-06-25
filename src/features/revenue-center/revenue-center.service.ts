@@ -4,21 +4,17 @@ import { BuildResponse } from "../../utils/build-response";
 import { findPagination, StatusCode } from "../../utils/general.interfase";
 import { IRevenueCenterCreate, IRevenueCenterUpdate } from "./revenue-center.interface";
 import * as schemas from "./revenue-center.schema";
-import { OrderRepository } from "../order/order.repository";
 import { ExpenditureRepository } from "../expenditure";
 
 export class RevenueCenterService {
   private readonly revenueCenterRepository: RevenueCenterRepository;
-  private readonly orderRepository: OrderRepository;
   private readonly expenditureRepository: ExpenditureRepository;
 
   constructor(
     revenueCenterRepository: RevenueCenterRepository,
-    orderRepository: OrderRepository,
-    expenditureRepository: ExpenditureRepository
+    expenditureRepository: ExpenditureRepository,
   ) {
     this.revenueCenterRepository = revenueCenterRepository;
-    this.orderRepository = orderRepository;
     this.expenditureRepository = expenditureRepository;
   }
 
@@ -429,6 +425,7 @@ export class RevenueCenterService {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find all revenue center statuses" });
     }
   };
+
 
   private buildFilter = (
     request: schemas.FindAllSchema
