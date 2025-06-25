@@ -953,8 +953,6 @@ export function costCenterRoutes(app: Application): void {
  *           type: string
  *         phone:
  *           type: string
- *         idQuotation:
- *           type: integer
  *     CreateCostCenter:
  *       type: object
  *       properties:
@@ -1038,8 +1036,6 @@ export function costCenterRoutes(app: Application): void {
  *           type: string
  *         phone:
  *           type: string
- *         idQuotation:
- *           type: integer
  *     CreateProjectDocument:
  *       type: object
  *       properties:
@@ -1130,8 +1126,6 @@ export function costCenterRoutes(app: Application): void {
  *           type: string
  *         phone:
  *           type: string
- *         idQuotation:
- *           type: integer
  *         document:
  *           type: string
  *           format: binary

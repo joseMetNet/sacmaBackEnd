@@ -1,6 +1,5 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../../config";
-import { Quotation } from "../quotation/quotation.model";
 
 export class CostCenterProject extends Model {
   declare idCostCenterProject: number;
