@@ -2,16 +2,16 @@ import { Application, Router } from "express";
 import { RevenueCenterController } from "./revenue-center.controller";
 import { RevenueCenterRepository } from "./revenue-center.repository";
 import { RevenueCenterService } from "./revenue-center.service";
-import { OrderRepository } from "../order/order.repository";
 import { verifyToken } from "../../middlewares";
 import { ExpenditureRepository } from "../expenditure";
+import { CostCenterRepository } from "../cost-center/cost-center.repository";
 
 export function revenueCenterRoutes(app: Application): void {
   const routes: Router = Router();
   const revenueCenterRepository = new RevenueCenterRepository();
-  const orderRepository = new OrderRepository();
   const expenditureRepository = new ExpenditureRepository();
-  const revenueCenterService = new RevenueCenterService(revenueCenterRepository, orderRepository, expenditureRepository);
+  const costCenterRepository = new CostCenterRepository();
+  const revenueCenterService = new RevenueCenterService(revenueCenterRepository, expenditureRepository, costCenterRepository);
   const revenueCenterController = new RevenueCenterController(revenueCenterService);
 
   routes.get("/v1/revenue-center", [verifyToken], revenueCenterController.findAll);
@@ -20,6 +20,7 @@ export function revenueCenterRoutes(app: Application): void {
   routes.patch("/v1/revenue-center", [verifyToken], revenueCenterController.update);
 
   routes.get("/v1/revenue-center/material", [verifyToken], revenueCenterController.findAllMaterial);
+  routes.get("/v1/revenue-center/project-item", [verifyToken], revenueCenterController.findAllProjectItem);
   routes.get("/v1/revenue-center/quotation/summary", [verifyToken], revenueCenterController.findAllMaterialSummary);
   routes.get("/v1/revenue-center/inputs", [verifyToken], revenueCenterController.findAllInputs);
   routes.get("/v1/revenue-center/epp", [verifyToken], revenueCenterController.findAllEpp);
@@ -265,6 +266,51 @@ export function revenueCenterRoutes(app: Application): void {
    *         description: Forbidden
    *       404:
    *         description: Not found
+   *       500:
+   *         description: Internal server error
+   */
+
+  /**
+   * @openapi
+   * /v1/revenue-center/project-item:
+   *   get:
+   *     tags: [Revenue Center]
+   *     summary: Find all project items for a revenue center
+   *     parameters:
+   *       - in: query
+   *         name: idRevenueCenter
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID of the revenue center
+   *       - $ref: '#/components/parameters/page'
+   *       - $ref: '#/components/parameters/pageSize'
+   *     responses:
+   *       200:
+   *         description: A list of project items
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     $ref: '#/components/schemas/ProjectItem'
+   *                 totalItems:
+   *                   type: integer
+   *                 currentPage:
+   *                   type: integer
+   *                 totalPages:
+   *                   type: integer
+   *       400:
+   *         description: Bad request
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Revenue center not found
    *       500:
    *         description: Internal server error
    */
@@ -782,6 +828,33 @@ export function revenueCenterRoutes(app: Application): void {
    *         status:
    *           type: string
    *           example: "Active"
+   *     ProjectItem:
+   *       type: object
+   *       properties:
+   *         idProjectItem:
+   *           type: integer
+   *           example: 1
+   *         idCostCenterProject:
+   *           type: integer
+   *           example: 1
+   *         contract:
+   *           type: string
+   *           example: "Contract ABC-123"
+   *         item:
+   *           type: string
+   *           example: "Concrete work"
+   *         unitMeasure:
+   *           type: string
+   *           example: "m3"
+   *         quantity:
+   *           type: string
+   *           example: "100"
+   *         unitPrice:
+   *           type: string
+   *           example: "50000"
+   *         total:
+   *           type: string
+   *           example: "5000000"
    *   parameters:
    *     page:
    *       in: query

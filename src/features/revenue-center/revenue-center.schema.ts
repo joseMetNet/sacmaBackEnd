@@ -94,6 +94,12 @@ export const findAllMaterialSummarySchema = z.object({
   idCostCenterProject: z.coerce.number().optional(),
 });
 
+export const findAllProjectItemSchema = z.object({
+  page: z.coerce.number().optional(),
+  pageSize: z.coerce.number().optional(),
+  idRevenueCenter: z.coerce.number(),
+});
+
 export type FindAllSchema = z.infer<typeof findAllSchema>;
 export type IdRevenueCenterSchema = z.infer<typeof idRevenueCenterSchema>;
 export type CreateRevenueCenterSchema = z.infer<typeof createRevenueCenterSchema>;
@@ -106,3 +112,4 @@ export type FindAllPolicySchema = z.infer<typeof findAllPolicySchema>;
 export type FindAllWorkTrackingSchema = z.infer<typeof findAllWorkTrackingSchema>;
 export type FindAllQuotationSchema = z.infer<typeof findAllQuotationSchema>;
 export type FindAllMaterialSummarySchema = z.infer<typeof findAllMaterialSummarySchema>;
+export type FindAllProjectItemSchema = z.infer<typeof findAllProjectItemSchema>;

@@ -5,17 +5,21 @@ import { findPagination, StatusCode } from "../../utils/general.interfase";
 import { IRevenueCenterCreate, IRevenueCenterUpdate } from "./revenue-center.interface";
 import * as schemas from "./revenue-center.schema";
 import { ExpenditureRepository } from "../expenditure";
+import { CostCenterRepository } from "../cost-center/cost-center.repository";
 
 export class RevenueCenterService {
   private readonly revenueCenterRepository: RevenueCenterRepository;
   private readonly expenditureRepository: ExpenditureRepository;
+  private readonly costCenterRepository: CostCenterRepository;
 
   constructor(
     revenueCenterRepository: RevenueCenterRepository,
     expenditureRepository: ExpenditureRepository,
+    costCenterRepository: CostCenterRepository
   ) {
     this.revenueCenterRepository = revenueCenterRepository;
     this.expenditureRepository = expenditureRepository;
+    this.costCenterRepository = costCenterRepository;
   }
 
   findAll = async (request: schemas.FindAllSchema): Promise<ResponseEntity> => {
@@ -426,6 +430,37 @@ export class RevenueCenterService {
     }
   };
 
+  findAllProjectItem = async (request: schemas.FindAllProjectItemSchema): Promise<ResponseEntity> => {
+    try {
+      const { page, pageSize, limit, offset } = findPagination(request);
+
+      // First, find the revenue center to get the idCostCenterProject
+      const revenueCenter = await this.revenueCenterRepository.findById(request.idRevenueCenter);
+      if (!revenueCenter) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
+          message: "Revenue center not found"
+        });
+      }
+
+      // Now use the idCostCenterProject to find project items
+      const filter = { idCostCenterProject: revenueCenter.idCostCenterProject };
+      const data = await this.costCenterRepository.findAllProjectItem(filter, limit, offset);
+
+      const response = {
+        data: data.rows,
+        totalItems: data.count,
+        currentPage: page,
+        totalPages: Math.ceil(data.count / pageSize),
+      };
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
+    } catch (error) {
+      console.error("An error occurred while trying to find project items for revenue center", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "An error occurred while trying to find project items for revenue center"
+      });
+    }
+  };
 
   private buildFilter = (
     request: schemas.FindAllSchema
