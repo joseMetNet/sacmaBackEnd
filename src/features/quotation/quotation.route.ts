@@ -18,11 +18,10 @@ export function quotationRoute(app: Application): void {
   router.get("/v1/quotation-comment", quotationController.findAllQuotationComments);
   router.get("/v1/quotation-status", quotationController.findAllQuotationStatus);
   router.get("/v1/quotation", quotationController.findAllQuotations);
+  router.get("/v1/quotation/raw", quotationController.findAllRawQuotations);
   router.get("/v1/quotation-item-detail/:idQuotationItemDetail", quotationController.findQuotationItemDetailById);
   router.get("/v1/quotation-item/:idQuotationItem", quotationController.findQuotationItemById);
   router.get("/v1/quotation/:idQuotation", quotationController.findQuotationById);
-  // GET raw quotations without associations
-  router.get("/v1/quotation/raw", quotationController.findAllRawQuotations);
 
   // POST routes
   router.post("/v1/quotation", quotationController.createQuotation);
