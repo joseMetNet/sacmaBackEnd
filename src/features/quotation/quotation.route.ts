@@ -21,6 +21,8 @@ export function quotationRoute(app: Application): void {
   router.get("/v1/quotation-item-detail/:idQuotationItemDetail", quotationController.findQuotationItemDetailById);
   router.get("/v1/quotation-item/:idQuotationItem", quotationController.findQuotationItemById);
   router.get("/v1/quotation/:idQuotation", quotationController.findQuotationById);
+  // GET raw quotations without associations
+  router.get("/v1/quotation/raw", quotationController.findAllRawQuotations);
 
   // POST routes
   router.post("/v1/quotation", quotationController.createQuotation);
@@ -422,6 +424,30 @@ export function quotationRoute(app: Application): void {
  *             schema:
  *               $ref: '#/components/schemas/failedResponse'
 */
+
+/**
+ * @openapi
+ * /v1/quotation/raw:
+ *   get:
+ *     tags: [Quotation]
+ *     summary: Retrieve raw quotations
+ *     description: Get all quotations without associations
+ *     responses:
+ *       200:
+ *         description: A list of raw quotations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/QuotationDTO'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
 
 /**
  * @openapi

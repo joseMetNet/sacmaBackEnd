@@ -99,6 +99,10 @@ export class QuotationRepository {
     return quotations;
   }
 
+  async findAllRaw(): Promise<Quotation[]> {
+    return await Quotation.findAll();
+  }
+
   async findAllQuotationStatus(): Promise<QuotationStatus[]> {
     return await QuotationStatus.findAll();
   }

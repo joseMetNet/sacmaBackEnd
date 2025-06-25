@@ -169,3 +169,5 @@ export const FindAllQuotationCommentSchema = z.object({
 export const QuotationCommentSchema = z.object({
   idQuotationComment: z.coerce.number(),
 });
+
+export const FindAllRawQuotationSchema = z.object({});

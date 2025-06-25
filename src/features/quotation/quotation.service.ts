@@ -42,7 +42,7 @@ export class QuotationService {
       const consecutive = `COT SACIPR No. ${quotation.idQuotation}-${new Date().getFullYear()}`;
       quotation.consecutive = consecutive;
 
-      if(fileName) {
+      if (fileName) {
         const identifier = crypto.randomUUID();
         const contentType = "application/pdf";
         await uploadFile(fileName, identifier, contentType, "order");
@@ -348,7 +348,7 @@ export class QuotationService {
       if (!quotation) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
       }
-  
+
       const [
         quotationItems,
         quotationItemDetails,
@@ -360,17 +360,17 @@ export class QuotationService {
         this.quotationRepository.findQuotationAdditionalCostByQuotationId(idQuotation),
         this.quotationRepository.findQuotationPercentageByQuotationId(idQuotation),
       ]);
-  
+
       await Promise.all([
         ...quotationItems.rows.map(item => item.destroy({ transaction })),
         ...(quotationItemDetails ? quotationItemDetails.map(itemDetail => itemDetail.destroy({ transaction })) : []),
         quotationAdditionalCost?.destroy({ transaction }),
         quotationPercentage?.destroy({ transaction }),
       ]);
-  
+
       await quotation.destroy({ transaction });
       await transaction.commit();
-  
+
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Quotation deleted successfully" });
     } catch (error) {
       await transaction.rollback();
@@ -497,7 +497,7 @@ export class QuotationService {
         quotationItemDetails.forEach(async (quotationItemDetail) => {
           quotationItemDetail.quantity = String(parseInt(String(parseFloat(quantity) / parseFloat(quotationItemDetail.performance))));
           quotationItemDetail.totalCost = (parseFloat(quotationItemDetail.cost) * Math.ceil(parseFloat(quantity) / parseFloat(quotationItemDetail.performance))).toFixed(2),
-          await quotationItemDetail.save();
+            await quotationItemDetail.save();
         });
       }
 
@@ -850,6 +850,20 @@ export class QuotationService {
     } catch (error) {
       console.error(error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: error });
+    }
+  };
+
+  /**
+   * Retrieve raw quotations without associations
+   */
+  findAllRawQuotations = async (): Promise<ResponseEntity> => {
+    try {
+      const quotations = await this.quotationRepository.findAllRaw();
+      const data = quotations.map((q) => q.toJSON());
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
+    } catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get raw quotations" });
     }
   };
 

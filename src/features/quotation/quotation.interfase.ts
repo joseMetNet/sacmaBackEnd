@@ -56,8 +56,8 @@ export interface findAllQuotationItemDetailDTO {
 }
 
 export interface UpdateQuotationStatusDTO {
-	idQuotation: number;
-	idQuotationStatus: number;
+  idQuotation: number;
+  idQuotationStatus: number;
 }
 
 export interface CreateQuotationItemDTO {
@@ -198,4 +198,27 @@ export interface QuotationItemSummaryDTO {
   firstSum: number;
   unitValue: number;
   totalCost: number;
+}
+
+export interface QuotationDTORaw {
+  idQuotation: number;
+  consecutive: string;
+  name: string;
+  idQuotationStatus: number;
+  idResponsable: number;
+  builder: string;
+  client: string;
+  executionTime: string;
+  policy: string;
+  advance: string;
+  technicalCondition: string;
+  builderAddress: string;
+  projectName: string;
+  itemSummary: string;
+  totalCost: string;
+  perDiem: string;
+  sisoNumber: string;
+  documentUrl: string;
+  createdAt: string;
+  updatedAt: string;
 }

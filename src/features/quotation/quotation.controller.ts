@@ -4,6 +4,7 @@ import { QuotationService } from "./quotation.service";
 import { StatusCode, StatusValue } from "../../utils/general.interfase";
 import { formatZodError } from "../employee/utils";
 import { UploadedFile } from "express-fileupload";
+import { FindAllRawQuotationSchema } from "./quotation.schema";
 
 export class QuotationController {
   private readonly quotationService: QuotationService;
@@ -416,6 +417,26 @@ export class QuotationController {
     }
 
     const response = await this.quotationService.deleteQuotationComment(request.data.idQuotationComment);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data,
+    });
+  };
+
+  /**
+   * GET /v1/quotation/raw
+   * Retrieve all quotations without associations
+   */
+  findAllRawQuotations = async (req: Request, res: Response): Promise<void> => {
+    const request = FindAllRawQuotationSchema.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+    const response = await this.quotationService.findAllRawQuotations();
     res.status(response.code).json({
       status: response.status,
       data: response.data,
