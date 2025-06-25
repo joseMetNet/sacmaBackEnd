@@ -20,6 +20,7 @@ export function revenueCenterRoutes(app: Application): void {
   routes.patch("/v1/revenue-center", [verifyToken], revenueCenterController.update);
 
   routes.get("/v1/revenue-center/material", [verifyToken], revenueCenterController.findAllMaterial);
+  routes.get("/v1/revenue-center/material/summary", [verifyToken], revenueCenterController.findAllMaterialSummaryDetail);
   routes.get("/v1/revenue-center/project-item", [verifyToken], revenueCenterController.findAllProjectItem);
   routes.get("/v1/revenue-center/quotation/summary", [verifyToken], revenueCenterController.findAllMaterialSummary);
   routes.get("/v1/revenue-center/inputs", [verifyToken], revenueCenterController.findAllInputs);
@@ -683,6 +684,100 @@ export function revenueCenterRoutes(app: Application): void {
    *                 totalPage:
    *                   type: integer
    *                   example: 5
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Not found
+   *       500:
+   *         description: Internal server error
+   */
+
+  /**
+   * @openapi
+   * /v1/revenue-center/material/summary:
+   *   get:
+   *     tags: [Revenue Center]
+   *     summary: Find material summary detail for a revenue center
+   *     parameters:
+   *       - in: query
+   *         name: idRevenueCenter
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID of the revenue center
+   *       - $ref: '#/components/parameters/page'
+   *       - $ref: '#/components/parameters/pageSize'
+   *       - in: query
+   *         name: name
+   *         schema:
+   *           type: string
+   *         description: Optional filter by material name
+   *       - in: query
+   *         name: idCostCenterProject
+   *         schema:
+   *           type: integer
+   *         description: Optional filter by cost center project ID
+   *     responses:
+   *       200:
+   *         description: A list of material summary details
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       material:
+   *                         type: string
+   *                         example: "Cement"
+   *                         description: Name of the material
+   *                       shipped:
+   *                         type: number
+   *                         example: 500
+   *                         description: Amount shipped
+   *                       yield:
+   *                         type: number
+   *                         example: 0.95
+   *                         description: Material yield percentage
+   *                       quantityM2:
+   *                         type: number
+   *                         example: 475
+   *                         description: Quantity in square meters
+   *                       contracted:
+   *                         type: number
+   *                         example: 600
+   *                         description: Contracted amount
+   *                       invoiced:
+   *                         type: number
+   *                         example: 580
+   *                         description: Invoiced amount
+   *                       shippedAndInvoiced:
+   *                         type: number
+   *                         example: 475
+   *                         description: Amount both shipped and invoiced
+   *                       diff:
+   *                         type: number
+   *                         example: 25
+   *                         description: Difference between contracted and actual
+   *                 totalItems:
+   *                   type: integer
+   *                   example: 1
+   *                   description: Total number of materials
+   *                 currentPage:
+   *                   type: integer
+   *                   example: 1
+   *                   description: Current page number
+   *                 totalPage:
+   *                   type: integer
+   *                   example: 1
+   *                   description: Total number of pages
+   *       400:
+   *         description: Bad request - Missing required parameters
    *       401:
    *         description: Unauthorized
    *       403:

@@ -410,6 +410,39 @@ export class RevenueCenterService {
     }
   };
 
+  /**
+   * Find material summary detail for a revenue center
+   */
+  findAllMaterialSummaryDetail = async (request: schemas.FindAllMaterialSummaryDetailSchema): Promise<ResponseEntity> => {
+    try {
+      const { page, pageSize, limit, offset } = findPagination(request);
+
+      // Mock data for now - replace with actual repository call
+      const mockData = [
+        {
+          material: "Cement",
+          shipped: 500,
+          yield: 0.95,
+          quantityM2: 475,
+          contracted: 600,
+          invoiced: 580,
+          shippedAndInvoiced: 475,
+          diff: 25
+        }
+      ];
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        data: mockData,
+        totalItems: 1,
+        currentPage: page,
+        totalPage: Math.ceil(1 / pageSize),
+      });
+    } catch (error) {
+      console.error("An error occurred while trying to find material summary detail", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find material summary detail" });
+    }
+  };
+
   private buildFilter = (
     request: schemas.FindAllSchema
   ): { [key: string]: any } => {
