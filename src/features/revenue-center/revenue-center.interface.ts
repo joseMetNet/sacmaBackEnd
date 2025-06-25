@@ -3,6 +3,7 @@ export interface IRevenueCenter {
   name: string;
   idCostCenterProject: number;
   idRevenueCenterStatus: number;
+  idQuotation: number;
   fromDate?: string;
   toDate?: string;
   createdAt: string;
@@ -16,6 +17,7 @@ export interface IRevenueCenterCreate {
   name: string;
   idCostCenterProject: number;
   idRevenueCenterStatus: number;
+  idQuotation: number;
   fromDate?: string;
   toDate?: string;
 }
@@ -24,6 +26,7 @@ export interface IRevenueCenterUpdate {
   name?: string;
   idCostCenterProject?: number;
   idRevenueCenterStatus?: number;
+  idQuotation?: number;
   fromDate?: string;
   toDate?: string;
 } 

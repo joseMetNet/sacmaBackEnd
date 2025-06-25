@@ -10,7 +10,6 @@ export class CostCenterProject extends Model {
   declare location: string;
   declare address: string;
   declare phone: string;
-  declare idQuotation: number | null;
 }
 
 CostCenterProject.init({
@@ -43,17 +42,8 @@ CostCenterProject.init({
     type: DataTypes.STRING,
     allowNull: true
   },
-  idQuotation: {
-    type: DataTypes.INTEGER,
-    allowNull: true
-  }
 }, {
   sequelize: dbConnection,
   tableName: "TB_CostCenterProject",
   timestamps: false
-});
-
-CostCenterProject.hasOne(Quotation, {
-  foreignKey: "idQuotation",
-  sourceKey: "idQuotation"
 });

@@ -281,7 +281,7 @@ export class RevenueCenterRepository {
     const sequelize = RevenueCenter.sequelize!;
 
     const quotationQuery = `
-      SELECT 
+      SELECT
         ti.name AS material,
         tccp.name AS costCenter,
         SUM(tqid.quantity) AS quantity,
@@ -292,10 +292,10 @@ export class RevenueCenterRepository {
       FROM mvp1.TB_QuotationItemDetail tqid
       INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotationItem = tqid.idQuotationItem
       INNER JOIN mvp1.TB_Quotation tq ON tq.idQuotation = tqi.idQuotation
-      INNER JOIN mvp1.TB_CostCenterProject tccp ON tccp.idQuotation = tq.idQuotation
-      INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput 
+      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idQuotation = tq.idQuotation
+      INNER JOIN mvp1.TB_CostCenterProject tccp ON tccp.idCostCenterProject = rc.idCostCenterProject
+      INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
       INNER JOIN mvp1.TB_InputUnitOfMeasure tiu ON tiu.idInputUnitOfMeasure = ti.idInputUnitOfMeasure
-      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = tccp.idCostCenterProject
       ${filter?.idRevenueCenter ? "WHERE rc.idRevenueCenter = :idRevenueCenter" : ""}
       GROUP BY ti.idInput, ti.name, tccp.idCostCenterProject, tccp.name, tiu.unitOfMeasure
       ORDER BY SUM(tqid.totalCost) DESC
@@ -308,9 +308,9 @@ export class RevenueCenterRepository {
       FROM mvp1.TB_QuotationItemDetail tqid
       INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotationItem = tqid.idQuotationItem
       INNER JOIN mvp1.TB_Quotation tq ON tq.idQuotation = tqi.idQuotation
-      INNER JOIN mvp1.TB_CostCenterProject tccp ON tccp.idQuotation = tq.idQuotation
-      INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput 
-      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = tccp.idCostCenterProject
+      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idQuotation = tq.idQuotation
+      INNER JOIN mvp1.TB_CostCenterProject tccp ON tccp.idCostCenterProject = rc.idCostCenterProject
+      INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
       ${filter?.idRevenueCenter ? "WHERE rc.idRevenueCenter = :idRevenueCenter" : ""};
     `;
 
