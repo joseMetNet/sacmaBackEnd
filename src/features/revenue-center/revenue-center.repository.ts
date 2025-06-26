@@ -347,31 +347,33 @@ export class RevenueCenterRepository {
 
     const summaryQuery = `
       SELECT
-        i.name AS material,
-        SUM(oid.quantity) AS quantity,
-        SUM(oid.quantity * CONVERT(FLOAT, i.cost)) AS subTotal,
-        SUM(oid.quantity * CONVERT(FLOAT, i.cost)) * 1.1557 AS totalValue,
-        SUM(oid.quantity) * (SUM(oid.quantity * CONVERT(FLOAT, i.cost)) * 1.1557) AS total
-      FROM mvp1.TB_OrderItemDetail oid
-      INNER JOIN mvp1.TB_OrderItem oi on oi.idOrderItem = oid.idOrderItem
-      INNER JOIN mvp1.TB_Input i ON i.idInput=oid.idInput
-      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject=oi.idCostCenterProject
-      INNER JOIN mvp1.TB_InputUnitOfMeasure iu ON iu.idInputUnitOfMeasure=i.idInputUnitOfMeasure
-      WHERE rc.idRevenueCenter = :idRevenueCenter AND i.idInputType = :idInputType
-      GROUP BY i.name
-      ORDER BY SUM(oid.quantity) * (SUM(oid.quantity * CONVERT(FLOAT, i.cost)) * 1.1557) DESC
+        ti.name AS material,
+        SUM(tqid.quantity) AS quantity,
+        SUM(tqid.quantity * CONVERT(FLOAT, ti.cost)) AS subTotal,
+        SUM(tqid.quantity * CONVERT(FLOAT, ti.cost)) * 1.1557 AS totalValue,
+        SUM(tqid.quantity) * (SUM(tqid.quantity * CONVERT(FLOAT, ti.cost)) * 1.1557) AS total
+      FROM mvp1.TB_Quotation tq
+      INNER JOIN mvp1.TB_RevenueCenter tr ON tr.idQuotation = tq.idQuotation
+      INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotation = tq.idQuotation
+      INNER JOIN mvp1.TB_QuotationItemDetail tqid ON tqid.idQuotationItem = tqi.idQuotationItem
+      INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
+      INNER JOIN mvp1.TB_InputUnitOfMeasure tiu ON tiu.idInputUnitOfMeasure = ti.idInputUnitOfMeasure
+      WHERE tr.idRevenueCenter = :idRevenueCenter AND ti.idInputType = :idInputType
+      GROUP BY ti.name
+      ORDER BY SUM(tqid.quantity) * (SUM(tqid.quantity * CONVERT(FLOAT, ti.cost)) * 1.1557) DESC
       OFFSET :offset ROWS
       FETCH NEXT :limit ROWS ONLY;
     `;
 
     const countQuery = `
-      SELECT COUNT(DISTINCT i.name) as total
-      FROM mvp1.TB_OrderItemDetail oid
-      INNER JOIN mvp1.TB_OrderItem oi on oi.idOrderItem = oid.idOrderItem
-      INNER JOIN mvp1.TB_Input i ON i.idInput=oid.idInput
-      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject=oi.idCostCenterProject
-      INNER JOIN mvp1.TB_InputUnitOfMeasure iu ON iu.idInputUnitOfMeasure=i.idInputUnitOfMeasure
-      WHERE rc.idRevenueCenter = :idRevenueCenter AND i.idInputType = :idInputType;
+      SELECT COUNT(DISTINCT ti.name) as total
+      FROM mvp1.TB_Quotation tq
+      INNER JOIN mvp1.TB_RevenueCenter tr ON tr.idQuotation = tq.idQuotation
+      INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotation = tq.idQuotation
+      INNER JOIN mvp1.TB_QuotationItemDetail tqid ON tqid.idQuotationItem = tqi.idQuotationItem
+      INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
+      INNER JOIN mvp1.TB_InputUnitOfMeasure tiu ON tiu.idInputUnitOfMeasure = ti.idInputUnitOfMeasure
+      WHERE tr.idRevenueCenter = :idRevenueCenter AND ti.idInputType = :idInputType;
     `;
 
     const [results, countResults] = await Promise.all([
