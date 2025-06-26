@@ -403,4 +403,69 @@ export class RevenueCenterRepository {
   async findAllRevenueCenterStatus(): Promise<RevenueCenterStatus[]> {
     return await RevenueCenterStatus.findAll();
   }
+
+  findAllMaterialSummaryDetail = async (
+    limit: number,
+    offset: number,
+    filter: { idRevenueCenter: number }
+  ) => {
+    const sequelize = RevenueCenter.sequelize!;
+
+    const materialSummaryQuery = `
+      SELECT
+        ti.name AS material,
+        ti.performance,
+        500 AS shipped,
+        475 AS quantityM2,
+        600 AS contracted,
+        580 AS invoiced,
+        475 AS shippedAndInvoiced,
+        25 AS diff
+      FROM mvp1.TB_Quotation tq
+      INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idQuotation = tq.idQuotation
+      INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotation = tq.idQuotation
+      INNER JOIN mvp1.TB_QuotationItemDetail tqid ON tqid.idQuotationItem = tqi.idQuotationItem
+      INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
+      WHERE trc.idRevenueCenter = :idRevenueCenter
+      GROUP BY ti.name, ti.performance
+      ORDER BY ti.name
+      OFFSET :offset ROWS
+      FETCH NEXT :limit ROWS ONLY;
+    `;
+
+    const countQuery = `
+      SELECT COUNT(DISTINCT ti.name) as total
+      FROM mvp1.TB_Quotation tq
+      INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idQuotation = tq.idQuotation
+      INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotation = tq.idQuotation
+      INNER JOIN mvp1.TB_QuotationItemDetail tqid ON tqid.idQuotationItem = tqi.idQuotationItem
+      INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
+      WHERE trc.idRevenueCenter = :idRevenueCenter;
+    `;
+
+    const [results, countResults] = await Promise.all([
+      sequelize.query(materialSummaryQuery, {
+        replacements: {
+          idRevenueCenter: filter.idRevenueCenter,
+          limit,
+          offset,
+        },
+        type: QueryTypes.SELECT
+      }),
+      sequelize.query(countQuery, {
+        replacements: {
+          idRevenueCenter: filter.idRevenueCenter,
+        },
+        type: QueryTypes.SELECT
+      })
+    ]);
+
+    const countResult = countResults as Array<{ total: number }>;
+    const total = countResult[0]?.total ?? 0;
+
+    return {
+      rows: results,
+      count: total
+    };
+  };
 }
