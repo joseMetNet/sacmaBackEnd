@@ -353,8 +353,8 @@ export class RevenueCenterRepository {
       SELECT
         ti.name AS material,
         MAX(ti.performance) AS performance,
-        500 AS shipped,
-        475 AS quantityM2,
+        SUM(toid.quantity) AS shipped,
+        SUM(toid.quantity) * MAX(ti.performance) AS quantityM2,
         SUM(tqi.quantity) AS contracted,
         580 AS invoiced,
         475 AS shippedAndInvoiced,
@@ -364,8 +364,10 @@ export class RevenueCenterRepository {
       INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotation = tq.idQuotation
       INNER JOIN mvp1.TB_QuotationItemDetail tqid ON tqid.idQuotationItem = tqi.idQuotationItem
       INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
+      INNER JOIN mvp1.TB_OrderItem toi ON toi.idCostCenterProject = trc.idCostCenterProject
+      INNER JOIN mvp1.TB_OrderItemDetail toid ON toid.idOrderItem = toi.idOrderItem
       WHERE trc.idRevenueCenter = :idRevenueCenter
-      GROUP BY ti.name, ti.performance
+      GROUP BY ti.name
       ORDER BY ti.name
       OFFSET :offset ROWS
       FETCH NEXT :limit ROWS ONLY;
@@ -378,6 +380,8 @@ export class RevenueCenterRepository {
       INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotation = tq.idQuotation
       INNER JOIN mvp1.TB_QuotationItemDetail tqid ON tqid.idQuotationItem = tqi.idQuotationItem
       INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
+      INNER JOIN mvp1.TB_OrderItem toi ON toi.idCostCenterProject = trc.idCostCenterProject
+      INNER JOIN mvp1.TB_OrderItemDetail toid ON toid.idOrderItem = toi.idOrderItem
       WHERE trc.idRevenueCenter = :idRevenueCenter;
     `;
 
