@@ -21,8 +21,7 @@ export function revenueCenterRoutes(app: Application): void {
 
   routes.get("/v1/revenue-center/material", [verifyToken], revenueCenterController.findAllMaterial);
   routes.get("/v1/revenue-center/material/summary", [verifyToken], revenueCenterController.findAllMaterialSummaryDetail);
-  routes.get("/v1/revenue-center/project-item", [verifyToken], revenueCenterController.findAllProjectItem);
-  routes.get("/v1/revenue-center/quotation/summary", [verifyToken], revenueCenterController.findAllMaterialSummary);
+  routes.get("/v1/revenue-center/quotation/summary", [verifyToken], revenueCenterController.findAllProjectItem);
   routes.get("/v1/revenue-center/inputs", [verifyToken], revenueCenterController.findAllInputs);
   routes.get("/v1/revenue-center/epp", [verifyToken], revenueCenterController.findAllEpp);
   // Unified expenditures endpoint
@@ -267,51 +266,6 @@ export function revenueCenterRoutes(app: Application): void {
    *         description: Forbidden
    *       404:
    *         description: Not found
-   *       500:
-   *         description: Internal server error
-   */
-
-  /**
-   * @openapi
-   * /v1/revenue-center/project-item:
-   *   get:
-   *     tags: [Revenue Center]
-   *     summary: Find all project items for a revenue center
-   *     parameters:
-   *       - in: query
-   *         name: idRevenueCenter
-   *         required: true
-   *         schema:
-   *           type: integer
-   *         description: ID of the revenue center
-   *       - $ref: '#/components/parameters/page'
-   *       - $ref: '#/components/parameters/pageSize'
-   *     responses:
-   *       200:
-   *         description: A list of project items
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 data:
-   *                   type: array
-   *                   items:
-   *                     $ref: '#/components/schemas/ProjectItem'
-   *                 totalItems:
-   *                   type: integer
-   *                 currentPage:
-   *                   type: integer
-   *                 totalPages:
-   *                   type: integer
-   *       400:
-   *         description: Bad request
-   *       401:
-   *         description: Unauthorized
-   *       403:
-   *         description: Forbidden
-   *       404:
-   *         description: Revenue center not found
    *       500:
    *         description: Internal server error
    */

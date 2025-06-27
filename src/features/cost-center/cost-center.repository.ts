@@ -3,6 +3,7 @@ import { CostCenterProject } from "./cost-center-project.model";
 import { CostCenter } from "./cost-center.model";
 import { ProjectDocument } from "./project-document.model";
 import { ProjectItem } from "./project-item.model";
+import { literal } from "sequelize";
 
 export class CostCenterRepository {
 
@@ -69,7 +70,7 @@ export class CostCenterRepository {
       distinct: true,
       limit,
       offset,
-      order: [["idProjectItem", "ASC"]]
+      order: [[literal("unitPrice * quantity"), "DESC"]]
     });
     return projectItem;
   }

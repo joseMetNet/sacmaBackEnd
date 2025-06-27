@@ -371,8 +371,16 @@ export class RevenueCenterService {
       const filter = { idCostCenterProject: revenueCenter.idCostCenterProject };
       const data = await this.costCenterRepository.findAllProjectItem(filter, limit, offset);
 
+      const rows = data.rows.map((item) => ({
+        material: item.item,
+        quantity: item.quantity,
+        subTotal: (parseFloat(item.quantity) * parseFloat(item.unitPrice)).toFixed(2),
+        totalValue: ((parseFloat(item.quantity) * parseFloat(item.unitPrice))*1.1557).toFixed(2),
+        total: (parseFloat(item.quantity) * (parseFloat(item.quantity) * parseFloat(item.unitPrice))*1.1557).toFixed(2), // Assuming total is quantity * unitPrice * 1.1557
+      }));
+
       const response = {
-        data: data.rows,
+        data: rows,
         totalItems: data.count,
         currentPage: page,
         totalPages: Math.ceil(data.count / pageSize),
