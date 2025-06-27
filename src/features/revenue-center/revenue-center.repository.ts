@@ -338,70 +338,6 @@ export class RevenueCenterRepository {
     };
   };
 
-  findAllInputSummary = async (
-    limit: number,
-    offset: number,
-    filter?: { idRevenueCenter?: number, idInputType?: number }
-  ) => {
-    const sequelize = RevenueCenter.sequelize!;
-
-    const summaryQuery = `
-      SELECT
-        ti.name AS material,
-        SUM(tqid.quantity) AS quantity,
-        SUM(tqid.quantity * CONVERT(FLOAT, ti.cost)) AS subTotal,
-        SUM(tqid.quantity * CONVERT(FLOAT, ti.cost)) * 1.1557 AS totalValue,
-        SUM(tqid.quantity) * (SUM(tqid.quantity * CONVERT(FLOAT, ti.cost)) * 1.1557) AS total
-      FROM mvp1.TB_Quotation tq
-      INNER JOIN mvp1.TB_RevenueCenter tr ON tr.idQuotation = tq.idQuotation
-      INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotation = tq.idQuotation
-      INNER JOIN mvp1.TB_QuotationItemDetail tqid ON tqid.idQuotationItem = tqi.idQuotationItem
-      INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
-      INNER JOIN mvp1.TB_InputUnitOfMeasure tiu ON tiu.idInputUnitOfMeasure = ti.idInputUnitOfMeasure
-      WHERE tr.idRevenueCenter = :idRevenueCenter AND ti.idInputType = :idInputType
-      GROUP BY ti.name
-      ORDER BY SUM(tqid.quantity) * (SUM(tqid.quantity * CONVERT(FLOAT, ti.cost)) * 1.1557) DESC
-      OFFSET :offset ROWS
-      FETCH NEXT :limit ROWS ONLY;
-    `;
-
-    const countQuery = `
-      SELECT COUNT(DISTINCT ti.name) as total
-      FROM mvp1.TB_Quotation tq
-      INNER JOIN mvp1.TB_RevenueCenter tr ON tr.idQuotation = tq.idQuotation
-      INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotation = tq.idQuotation
-      INNER JOIN mvp1.TB_QuotationItemDetail tqid ON tqid.idQuotationItem = tqi.idQuotationItem
-      INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
-      INNER JOIN mvp1.TB_InputUnitOfMeasure tiu ON tiu.idInputUnitOfMeasure = ti.idInputUnitOfMeasure
-      WHERE tr.idRevenueCenter = :idRevenueCenter AND ti.idInputType = :idInputType;
-    `;
-
-    const [results, countResults] = await Promise.all([
-      sequelize.query(summaryQuery, {
-        replacements: {
-          idRevenueCenter: filter?.idRevenueCenter,
-          idInputType: filter?.idInputType,
-          limit,
-          offset,
-        }
-      }),
-      sequelize.query(countQuery, {
-        replacements: {
-          idRevenueCenter: filter?.idRevenueCenter,
-          idInputType: filter?.idInputType,
-        }
-      })
-    ]);
-
-    const countResult = countResults[0] as Array<{ total: number }>;
-    const total = countResult[0]?.total ?? 0;
-
-    return {
-      rows: results[0],
-      count: total
-    };
-  };
-
   async findAllRevenueCenterStatus(): Promise<RevenueCenterStatus[]> {
     return await RevenueCenterStatus.findAll();
   }
@@ -416,10 +352,10 @@ export class RevenueCenterRepository {
     const materialSummaryQuery = `
       SELECT
         ti.name AS material,
-        ti.performance,
+        MAX(ti.performance) AS performance,
         500 AS shipped,
         475 AS quantityM2,
-        600 AS contracted,
+        SUM(tqi.quantity) AS contracted,
         580 AS invoiced,
         475 AS shippedAndInvoiced,
         25 AS diff

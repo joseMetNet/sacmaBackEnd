@@ -116,23 +116,6 @@ export class RevenueCenterController {
     });
   };
 
-  findAllMaterialSummary = async (req: Request, res: Response): Promise<void> => {
-    const request = schemas.findAllMaterialSummarySchema.safeParse(req.query);
-    if (!request.success) {
-      res.status(StatusCode.BadRequest).json({
-        status: StatusValue.Failed,
-        data: { error: formatZodError(request.error) }
-      });
-      return;
-    }
-
-    const response = await this.revenueCenterService.findAllMaterialSummary(request.data);
-    res.status(response.code).json({
-      status: response.status,
-      data: response.data
-    });
-  };
-
   findAllInputs = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.findAllInputsSchema.safeParse(req.query);
     if (!request.success) {
