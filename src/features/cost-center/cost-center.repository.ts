@@ -3,7 +3,7 @@ import { CostCenterProject } from "./cost-center-project.model";
 import { CostCenter } from "./cost-center.model";
 import { ProjectDocument } from "./project-document.model";
 import { ProjectItem } from "./project-item.model";
-import { literal } from "sequelize";
+import { literal, Op } from "sequelize";
 
 export class CostCenterRepository {
 
@@ -73,6 +73,20 @@ export class CostCenterRepository {
       order: [[literal("unitPrice * quantity"), "DESC"]]
     });
     return projectItem;
+  }
+
+  async findProjectContracts(idCostCenterProject: number): Promise<ProjectItem[]> {
+    const projectItems = await ProjectItem.findAll({
+      where: {
+        idCostCenterProject,
+        contract: {
+          [Op.ne]: null
+        }
+      },
+      attributes: ["contract"],
+      group: ["contract"]
+    });
+    return projectItems;
   }
 
   async findAllAndSearchCostCenterProject(

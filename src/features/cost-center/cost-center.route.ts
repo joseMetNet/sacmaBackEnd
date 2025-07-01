@@ -9,6 +9,7 @@ export function costCenterRoutes(app: Application): void {
   router.get("/v1/cost-center/contact", costCenterController.findAllCostCenterContact);
   router.get("/v1/cost-center/project", costCenterController.findAllCostCenterProject);
   router.get("/v1/cost-center/project/item", costCenterController.findAllProjectItem);
+  router.get("/v1/cost-center/project/list-contract", costCenterController.listProjectContracts);
   router.get("/v1/cost-center/project/document", costCenterController.findAllProjectDocument);
   router.get("/v1/cost-center/download", costCenterController.download);
   router.get("/v1/cost-center/:idCostCenter", costCenterController.findById);
@@ -149,6 +150,53 @@ export function costCenterRoutes(app: Application): void {
  *         description: Forbidden
  *       404:
  *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
+ * /v1/cost-center/project/list-contract:
+ *   get:
+ *     tags: [Cost Center]
+ *     summary: List project contracts
+ *     description: Get all contracts associated with a project
+ *     parameters:
+ *       - in: query
+ *         name: idCostCenterProject
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID of the project
+ *     responses:
+ *       200:
+ *         description: A list of contracts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     contracts:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example: ["Contract A", "Contract B", "Contract C"]
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  *       500:
  *         description: Internal server error
  *         content:

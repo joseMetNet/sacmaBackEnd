@@ -38,6 +38,10 @@ export interface FindAllProjectItemDTO {
   idCostCenterProject: number;
 }
 
+export interface ListProjectContractsDTO {
+  idCostCenterProject: number;
+}
+
 export interface CreateCostCenterContactDTO {
   idCostCenter: number;
   name: string;

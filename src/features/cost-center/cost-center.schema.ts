@@ -33,6 +33,10 @@ export const findAllProjectItem = z.object({
   idCostCenterProject: z.coerce.number(),
 });
 
+export const listProjectContracts = z.object({
+  idCostCenterProject: z.coerce.number(),
+});
+
 export const findAllProjectDocument = z.object({
   page: z.coerce.number().optional(),
   pageSize: z.coerce.number().optional(),

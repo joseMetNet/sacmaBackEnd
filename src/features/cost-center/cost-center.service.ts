@@ -331,6 +331,19 @@ class CostCenterService {
     }
   };
 
+  listProjectContracts = async (request: types.ListProjectContractsDTO): Promise<ResponseEntity> => {
+    try {
+      const contracts = await this.costCenterRepository.findProjectContracts(request.idCostCenterProject);
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, contracts );
+    } catch (err: any) {
+      console.error(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  };
+
   findAllCostCenterProject = async (request: types.FindAllCostCenterProjectDTO): Promise<ResponseEntity> => {
     let page = 1;
     if (request.page) {
