@@ -183,7 +183,6 @@ export function invoiceRoutes(app: Application): void {
  *               - invoice
  *               - idCostCenterProject
  *               - contract
- *               - idInvoiceStatus
  *             properties:
  *               invoice:
  *                 type: string
@@ -191,8 +190,6 @@ export function invoiceRoutes(app: Application): void {
  *                 type: integer
  *               contract:
  *                 type: string
- *               idInvoiceStatus:
- *                 type: integer
  *               document:
  *                 type: string
  *                 format: binary
@@ -247,8 +244,6 @@ export function invoiceRoutes(app: Application): void {
  *                 type: integer
  *               contract:
  *                 type: string
- *               idInvoiceStatus:
- *                 type: integer
  *               document:
  *                 type: string
  *                 format: binary

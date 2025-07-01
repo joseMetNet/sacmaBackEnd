@@ -29,7 +29,8 @@ export class InvoiceService {
 
       const invoicePayload = {
         ...invoiceData,
-        documentUrl
+        documentUrl,
+        idInvoiceStatus: 1  // Default value for new invoices
       };
 
       const response = await this.invoiceRepository.create(invoicePayload);

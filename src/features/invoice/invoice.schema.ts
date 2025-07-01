@@ -16,7 +16,6 @@ export const createInvoice = z.object({
   idCostCenterProject: z.coerce.number(),
   contract: z.string(),
   documentUrl: z.string().optional(),
-  idInvoiceStatus: z.coerce.number(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -27,7 +26,6 @@ export const updateInvoice = z.object({
   idCostCenterProject: z.coerce.number().optional(),
   contract: z.string().optional(),
   documentUrl: z.string().optional(),
-  idInvoiceStatus: z.coerce.number().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
