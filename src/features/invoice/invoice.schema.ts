@@ -14,7 +14,6 @@ export const idInvoice = z.object({
 export const createInvoice = z.object({
   invoice: z.string(),
   idCostCenterProject: z.coerce.number(),
-  client: z.string(),
   contract: z.string(),
   documentUrl: z.string().optional(),
   idInvoiceStatus: z.coerce.number(),
@@ -26,7 +25,6 @@ export const updateInvoice = z.object({
   idInvoice: z.coerce.number(),
   invoice: z.string().optional(),
   idCostCenterProject: z.coerce.number().optional(),
-  client: z.string().optional(),
   contract: z.string().optional(),
   documentUrl: z.string().optional(),
   idInvoiceStatus: z.coerce.number().optional(),
