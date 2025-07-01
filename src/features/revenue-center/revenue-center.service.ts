@@ -275,11 +275,18 @@ export class RevenueCenterService {
           totalItems: 0,
           currentPage: page,
           totalPage: 0,
+          total: 0,
         });
       }
       // Filter only by cost center project
       const filter = { idCostCenterProject: revenueCenter.idCostCenterProject };
-      const expenditures = await this.expenditureRepository.findAll(limit, offset, filter);
+
+      // Fetch paginated data and all data for total calculation
+      const [expenditures, allExpenditures] = await Promise.all([
+        this.expenditureRepository.findAll(limit, offset, filter),
+        this.expenditureRepository.findAll(999999, 0, filter) // Get all records for total calculation
+      ]);
+
       const rows = expenditures.rows.map((item) => ({
         idCostCenterProject: item.idCostCenterProject,
         description: item.description,
@@ -292,11 +299,16 @@ export class RevenueCenterService {
         updatedAt: item.updatedAt,
         projectName: item.toJSON().CostCenterProject.name,
       }));
+
+      // Calculate total from all records
+      const total = allExpenditures.rows.reduce((acc: number, curr: any) => acc + curr.value, 0);
+
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         data: rows,
         totalItems: expenditures.count,
         currentPage: page,
         totalPage: Math.ceil(expenditures.count / pageSize),
+        total: total,
       });
     } catch (error) {
       console.error("An error occurred while trying to find all expenditures", error);
@@ -318,6 +330,7 @@ export class RevenueCenterService {
         totalItems: quotations.count,
         currentPage: page,
         totalPage: Math.ceil(quotations.count / pageSize),
+        total: quotations.totalRows.reduce((acc: number, curr: any) => acc + (parseFloat(curr.totalCost) || 0), 0),
       });
     } catch (error) {
       console.error("An error occurred while trying to find all quotations", error);
@@ -355,8 +368,8 @@ export class RevenueCenterService {
         material: item.item,
         quantity: item.quantity,
         subTotal: (parseFloat(item.quantity) * parseFloat(item.unitPrice)).toFixed(2),
-        totalValue: ((parseFloat(item.quantity) * parseFloat(item.unitPrice))*1.1557).toFixed(2),
-        total: (parseFloat(item.quantity) * (parseFloat(item.quantity) * parseFloat(item.unitPrice))*1.1557).toFixed(2), // Assuming total is quantity * unitPrice * 1.1557
+        totalValue: ((parseFloat(item.quantity) * parseFloat(item.unitPrice)) * 1.1557).toFixed(2),
+        total: (parseFloat(item.quantity) * (parseFloat(item.quantity) * parseFloat(item.unitPrice)) * 1.1557).toFixed(2), // Assuming total is quantity * unitPrice * 1.1557
       }));
 
       const response = {
@@ -364,6 +377,7 @@ export class RevenueCenterService {
         totalItems: data.count,
         currentPage: page,
         totalPages: Math.ceil(data.count / pageSize),
+        total: rows.reduce((acc: number, curr: any) => acc + parseFloat(curr.total), 0),
       };
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
@@ -391,6 +405,7 @@ export class RevenueCenterService {
         totalItems: workTrackingData.count,
         currentPage: page,
         totalPage: Math.ceil(workTrackingData.count / pageSize),
+        total: workTrackingData.totalRows.reduce((acc: number, curr: any) => acc + (parseFloat(curr.monthlyTotal) || 0), 0),
       });
     } catch (error) {
       console.error("An error occurred while trying to find all work tracking data", error);
@@ -419,6 +434,7 @@ export class RevenueCenterService {
         totalItems: materialSummaryData.count,
         currentPage: page,
         totalPage: Math.ceil(materialSummaryData.count / pageSize),
+        total: materialSummaryData.totalRows.reduce((acc: number, curr: any) => acc + (parseFloat(curr.shipped) || 0), 0),
       });
     } catch (error) {
       console.error("An error occurred while trying to find material summary detail", error);

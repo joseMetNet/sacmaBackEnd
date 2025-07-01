@@ -340,6 +340,9 @@ export function revenueCenterRoutes(app: Application): void {
    *                   type: integer
    *                   example: 3
    *                   description: Total number of pages
+   *                 total:
+   *                   type: number
+   *                   description: Sum of all total values for materials summary
    *       400:
    *         description: Bad request - Missing required parameters
    *       401:
@@ -471,6 +474,9 @@ export function revenueCenterRoutes(app: Application): void {
    *                   type: integer
    *                 totalPage:
    *                   type: integer
+   *                 total:
+   *                   type: number
+   *                   description: Sum of all expenditure values
    *       401:
    *         description: Unauthorized
    *       403:
@@ -572,6 +578,9 @@ export function revenueCenterRoutes(app: Application): void {
    *                 totalPage:
    *                   type: integer
    *                   example: 5
+   *                 total:
+   *                   type: number
+   *                   description: Sum of all ValorTotal values for work tracking
    *       401:
    *         description: Unauthorized
    *       403:
@@ -638,6 +647,9 @@ export function revenueCenterRoutes(app: Application): void {
    *                 totalPage:
    *                   type: integer
    *                   example: 5
+   *                 total:
+   *                   type: number
+   *                   description: Sum of all totalCost values for quotations
    *       401:
    *         description: Unauthorized
    *       403:
@@ -730,6 +742,9 @@ export function revenueCenterRoutes(app: Application): void {
    *                   type: integer
    *                   example: 1
    *                   description: Total number of pages
+   *                 total:
+   *                   type: number
+   *                   description: Sum of all shipped values for materials
    *       400:
    *         description: Bad request - Missing required parameters
    *       401:

@@ -113,6 +113,60 @@ export class RevenueCenterRepository {
       FETCH NEXT :limit ROWS ONLY;
     `;
 
+    const totalQuery = `
+      WITH MonthlyWork AS (
+        SELECT
+          CONCAT(u.firstName, ' ', u.lastName) AS Name,
+          tp.position AS Position,
+          ccp.name AS Project,
+          MONTH(wt.createdAt) AS WorkMonth,
+          YEAR(wt.createdAt) AS WorkYear,
+          COUNT(wt.createdAt) AS DaysWorked,
+          e.baseSalary / DAY(EOMONTH(wt.createdAt)) AS ValorDia,
+          COUNT(wt.createdAt) * (e.baseSalary / DAY(EOMONTH(wt.createdAt))) AS MonthlyTotal
+        FROM mvp1.TB_WorkTracking wt
+        INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
+        INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
+        INNER JOIN mvp1.TB_Position tp ON tp.idPosition = e.idPosition
+        INNER JOIN mvp1.TB_CostCenterProject ccp ON wt.idCostCenterProject = ccp.idCostCenterProject
+        INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = ccp.idCostCenterProject
+        WHERE YEAR(wt.createdAt) = :currentYear
+        ${filter?.idRevenueCenter ? "AND rc.idRevenueCenter = :idRevenueCenter" : ""}
+        ${filter?.idCostCenterProject ? "AND wt.idCostCenterProject = :idCostCenterProject" : ""}
+        GROUP BY
+          u.firstName,
+          u.lastName,
+          ccp.name,
+          tp.position,
+          MONTH(wt.createdAt),
+          YEAR(wt.createdAt),
+          e.baseSalary,
+          EOMONTH(wt.createdAt)
+      )
+      SELECT
+        Name,
+        Position,
+        Project,
+        MAX(CASE WHEN WorkMonth = 1 THEN DaysWorked ELSE 0 END) AS 'Enero',
+        MAX(CASE WHEN WorkMonth = 2 THEN DaysWorked ELSE 0 END) AS 'Febrero',
+        MAX(CASE WHEN WorkMonth = 3 THEN DaysWorked ELSE 0 END) AS 'Marzo',
+        MAX(CASE WHEN WorkMonth = 4 THEN DaysWorked ELSE 0 END) AS 'Abril',
+        MAX(CASE WHEN WorkMonth = 5 THEN DaysWorked ELSE 0 END) AS 'Mayo',
+        MAX(CASE WHEN WorkMonth = 6 THEN DaysWorked ELSE 0 END) AS 'Junio',
+        MAX(CASE WHEN WorkMonth = 7 THEN DaysWorked ELSE 0 END) AS 'Julio',
+        MAX(CASE WHEN WorkMonth = 8 THEN DaysWorked ELSE 0 END) AS 'Agosto',
+        MAX(CASE WHEN WorkMonth = 9 THEN DaysWorked ELSE 0 END) AS 'Septiembre',
+        MAX(CASE WHEN WorkMonth = 10 THEN DaysWorked ELSE 0 END) AS 'Octubre',
+        MAX(CASE WHEN WorkMonth = 11 THEN DaysWorked ELSE 0 END) AS 'Noviembre',
+        MAX(CASE WHEN WorkMonth = 12 THEN DaysWorked ELSE 0 END) AS 'Diciembre',
+        MAX(ValorDia) AS 'dailyWage',
+        SUM(DaysWorked) AS 'workedDays',
+        SUM(MonthlyTotal) AS 'monthlyTotal'
+      FROM MonthlyWork
+      GROUP BY Name, Project, Position
+      ORDER BY Name
+    `;
+
     // Update the count query to match the grouping in the main query
     const countQuery = `
       SELECT COUNT(DISTINCT CONCAT(u.firstName, ' ', u.lastName, ccp.name)) as total
@@ -126,12 +180,18 @@ export class RevenueCenterRepository {
       ${filter?.idCostCenterProject ? "AND wt.idCostCenterProject = :idCostCenterProject" : ""}
     `;
 
-    const [results, countResults] = await Promise.all([
+    const [results, totalResult, countResults] = await Promise.all([
       sequelize.query(monthlyWorkQuery, {
         replacements: {
           currentYear,
           limit,
           offset,
+          ...filter
+        }
+      }),
+      sequelize.query(totalQuery, {
+        replacements: {
+          currentYear,
           ...filter
         }
       }),
@@ -148,6 +208,7 @@ export class RevenueCenterRepository {
 
     return {
       rows: results[0],
+      totalRows: totalResult[0],
       count: total
     };
   };
@@ -303,6 +364,27 @@ export class RevenueCenterRepository {
       FETCH NEXT :limit ROWS ONLY;
     `;
 
+    const totalQuery = `
+      SELECT
+        ti.name AS material,
+        tccp.name AS costCenter,
+        SUM(tqid.quantity) AS quantity,
+        tiu.unitOfMeasure AS unitOfMeasure,
+        MAX(tq.createdAt) AS createdAt,
+        MAX(tqid.performance) AS performance,
+        SUM(tqid.totalCost) AS totalCost
+      FROM mvp1.TB_QuotationItemDetail tqid
+      INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotationItem = tqid.idQuotationItem
+      INNER JOIN mvp1.TB_Quotation tq ON tq.idQuotation = tqi.idQuotation
+      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idQuotation = tq.idQuotation
+      INNER JOIN mvp1.TB_CostCenterProject tccp ON tccp.idCostCenterProject = rc.idCostCenterProject
+      INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
+      INNER JOIN mvp1.TB_InputUnitOfMeasure tiu ON tiu.idInputUnitOfMeasure = ti.idInputUnitOfMeasure
+      ${filter?.idRevenueCenter ? "WHERE rc.idRevenueCenter = :idRevenueCenter" : ""}
+      GROUP BY ti.idInput, ti.name, tccp.idCostCenterProject, tccp.name, tiu.unitOfMeasure
+      ORDER BY SUM(tqid.totalCost) DESC
+    `;
+
     const countQuery = `
       SELECT COUNT(DISTINCT CONCAT(ti.idInput, '-', tccp.idCostCenterProject)) as total
       FROM mvp1.TB_QuotationItemDetail tqid
@@ -314,11 +396,16 @@ export class RevenueCenterRepository {
       ${filter?.idRevenueCenter ? "WHERE rc.idRevenueCenter = :idRevenueCenter" : ""};
     `;
 
-    const [results, countResults] = await Promise.all([
+    const [results, totalResult, countResults] = await Promise.all([
       sequelize.query(quotationQuery, {
         replacements: {
           limit,
           offset,
+          ...filter
+        }
+      }),
+      sequelize.query(totalQuery, {
+        replacements: {
           ...filter
         }
       }),
@@ -334,6 +421,7 @@ export class RevenueCenterRepository {
 
     return {
       rows: results[0],
+      totalRows: totalResult[0],
       count: total
     };
   };
@@ -373,6 +461,28 @@ export class RevenueCenterRepository {
       FETCH NEXT :limit ROWS ONLY;
     `;
 
+    const totalQuery = `
+      SELECT
+        ti.name AS material,
+        MAX(ti.performance) AS performance,
+        SUM(toid.quantity) AS shipped,
+        SUM(toid.quantity) * MAX(ti.performance) AS quantityM2,
+        SUM(tqi.quantity) AS contracted,
+        580 AS invoiced,
+        475 AS shippedAndInvoiced,
+        25 AS diff
+      FROM mvp1.TB_Quotation tq
+      INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idQuotation = tq.idQuotation
+      INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotation = tq.idQuotation
+      INNER JOIN mvp1.TB_QuotationItemDetail tqid ON tqid.idQuotationItem = tqi.idQuotationItem
+      INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
+      INNER JOIN mvp1.TB_OrderItem toi ON toi.idCostCenterProject = trc.idCostCenterProject
+      INNER JOIN mvp1.TB_OrderItemDetail toid ON toid.idOrderItem = toi.idOrderItem
+      WHERE trc.idRevenueCenter = :idRevenueCenter
+      GROUP BY ti.name
+      ORDER BY ti.name
+    `;
+
     const countQuery = `
       SELECT COUNT(DISTINCT ti.name) as total
       FROM mvp1.TB_Quotation tq
@@ -385,12 +495,18 @@ export class RevenueCenterRepository {
       WHERE trc.idRevenueCenter = :idRevenueCenter;
     `;
 
-    const [results, countResults] = await Promise.all([
+    const [results, totalResult, countResults] = await Promise.all([
       sequelize.query(materialSummaryQuery, {
         replacements: {
           idRevenueCenter: filter.idRevenueCenter,
           limit,
           offset,
+        },
+        type: QueryTypes.SELECT
+      }),
+      sequelize.query(totalQuery, {
+        replacements: {
+          idRevenueCenter: filter.idRevenueCenter,
         },
         type: QueryTypes.SELECT
       }),
@@ -407,6 +523,7 @@ export class RevenueCenterRepository {
 
     return {
       rows: results,
+      totalRows: totalResult,
       count: total
     };
   };
