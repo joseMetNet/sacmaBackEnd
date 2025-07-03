@@ -345,6 +345,9 @@ export function invoiceRoutes(app: Application): void {
  *         updatedAt:
  *           type: string
  *           format: date-time
+ *         totalValue:
+ *           type: number
+ *           description: Total value calculated from project items (unitPrice * invoicedQuantity)
  *         costCenterProject:
  *           $ref: '#/components/schemas/CostCenterProject'
  *         invoiceStatus:

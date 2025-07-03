@@ -1,5 +1,7 @@
 import { Invoice } from "./invoice.model";
 import { InvoiceStatus } from "./invoice-status.model";
+import { ProjectItem } from "../cost-center/project-item.model";
+import { Op, literal } from "sequelize";
 
 export class InvoiceRepository {
   constructor() { }
@@ -40,9 +42,24 @@ export class InvoiceRepository {
     return await Invoice.destroy({
       where: { idInvoice: id }
     });
+  } async calculateTotalValueByContract(contract: string): Promise<number> {
+    const result = await ProjectItem.findAll({
+      where: {
+        contract: contract,
+        invoicedQuantity: {
+          [Op.ne]: null
+        }
+      },
+      attributes: [
+        [literal("SUM(CAST(unitPrice AS DECIMAL) * CAST(invoicedQuantity AS DECIMAL))"), "totalValue"]
+      ],
+      raw: true
+    }) as any[];
+
+    return parseFloat(result[0]?.totalValue) || 0;
   }
 
   async findAllInvoiceStatus(): Promise<InvoiceStatus[]> {
     return await InvoiceStatus.findAll();
   }
-} 
+}

@@ -53,7 +53,15 @@ export class InvoiceService {
           { message: "Invoice not found" }
         );
       }
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
+
+      // Calculate totalValue for this invoice
+      const totalValue = await this.invoiceRepository.calculateTotalValueByContract(data.contract);
+      const invoiceWithTotalValue = {
+        ...data.toJSON(),
+        totalValue
+      };
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, invoiceWithTotalValue);
     }
     catch (err: unknown) {
       console.error(err);
@@ -75,8 +83,19 @@ export class InvoiceService {
         offset
       );
 
+      // Calculate totalValue for each invoice
+      const rowsWithTotalValue = await Promise.all(
+        data.rows.map(async (invoice: any) => {
+          const totalValue = await this.invoiceRepository.calculateTotalValueByContract(invoice.contract);
+          return {
+            ...invoice.toJSON(),
+            totalValue
+          };
+        })
+      );
+
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
-        rows: data.rows,
+        rows: rowsWithTotalValue,
         count: data.count,
         page: request.page || 0,
         pageSize: request.pageSize || 10
