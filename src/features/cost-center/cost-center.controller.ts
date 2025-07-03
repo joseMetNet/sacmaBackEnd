@@ -54,6 +54,22 @@ class CostCenterController {
       .json({ status: response.status, data: response.data });
   }
 
+  async findProjectItemsByContract(req: Request, res: Response): Promise<void> {
+    const request = schemas.findProjectItemsByContract.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) },
+        });
+      return;
+    }
+    const response = await costCenterService.findProjectItemsByContract(request.data);
+    res
+      .status(response.code)
+      .json({ status: response.status, data: response.data });
+  }
+
   async listProjectContracts(req: Request, res: Response): Promise<void> {
     const request = schemas.listProjectContracts.safeParse(req.query);
     if (!request.success) {

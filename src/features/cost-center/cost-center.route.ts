@@ -9,6 +9,7 @@ export function costCenterRoutes(app: Application): void {
   router.get("/v1/cost-center/contact", costCenterController.findAllCostCenterContact);
   router.get("/v1/cost-center/project", costCenterController.findAllCostCenterProject);
   router.get("/v1/cost-center/project/item", costCenterController.findAllProjectItem);
+  router.get("/v1/cost-center/project/item/by-contract", costCenterController.findProjectItemsByContract);
   router.get("/v1/cost-center/project/list-contract", costCenterController.listProjectContracts);
   router.get("/v1/cost-center/project/document", costCenterController.findAllProjectDocument);
   router.get("/v1/cost-center/download", costCenterController.download);
@@ -1201,4 +1202,49 @@ export function costCenterRoutes(app: Application): void {
  *         toDate:
  *           type: string
  *           example: 2021-12-31
+*/
+
+/**
+ * @openapi
+ * /v1/cost-center/project/item/by-contract:
+ *   get:
+ *     tags: [Cost Center]
+ *     summary: Find project items by contract
+ *     description: Find project items filtered by contract
+ *     parameters:
+ *       - in: query
+ *         name: contract
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Contract name to filter by
+ *     responses:
+ *       200:
+ *         description: A list of project items filtered by contract
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/ProjectItem'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
 */

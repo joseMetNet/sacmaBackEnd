@@ -149,3 +149,7 @@ export const updateCostCenterContact = z.object({
   phone: z.string().optional(),
   role: z.string().optional()
 });
+
+export const findProjectItemsByContract = z.object({
+  contract: z.string(),
+});

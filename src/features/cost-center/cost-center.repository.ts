@@ -63,15 +63,21 @@ export class CostCenterRepository {
     filter: { [key: string]: any },
     limit: number, offset: number
   ): Promise<{ rows: ProjectItem[], count: number }> {
-    const projectItem = await ProjectItem.findAndCountAll({
+    const queryOptions: any = {
       include: [{ all: true }],
       where: filter,
       nest: true,
       distinct: true,
-      limit,
-      offset,
       order: [[literal("unitPrice * quantity"), "DESC"]]
-    });
+    };
+
+    // Only apply pagination if limit is greater than 0
+    if (limit > 0) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+
+    const projectItem = await ProjectItem.findAndCountAll(queryOptions);
     return projectItem;
   }
 

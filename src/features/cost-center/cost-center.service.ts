@@ -331,10 +331,26 @@ class CostCenterService {
     }
   };
 
+  findProjectItemsByContract = async (request: types.FindProjectItemsByContractDTO): Promise<ResponseEntity> => {
+    try {
+      const filter = { contract: request.contract };
+      const data = await this.costCenterRepository.findAllProjectItem(filter, 0, 0);
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, data.rows);
+    }
+    catch (err: any) {
+      console.error(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  };
+
   listProjectContracts = async (request: types.ListProjectContractsDTO): Promise<ResponseEntity> => {
     try {
       const contracts = await this.costCenterRepository.findProjectContracts(request.idCostCenterProject);
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, contracts );
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, contracts);
     } catch (err: any) {
       console.error(err);
       return BuildResponse.buildErrorResponse(
