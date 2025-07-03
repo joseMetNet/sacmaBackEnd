@@ -27,6 +27,7 @@ export function costCenterRoutes(app: Application): void {
   router.patch("/v1/cost-center/contact", costCenterController.updateCostCenterContact);
   router.patch("/v1/cost-center/project", costCenterController.updateCostCenterProject);
   router.patch("/v1/cost-center/project/item", costCenterController.updateProjectItem);
+  router.patch("/v1/cost-center/project/item/multiple", costCenterController.updateMultipleProjectItems);
   router.patch("/v1/cost-center/project/document", costCenterController.updateProjectDocument);
 
   // DELETE routes
@@ -972,6 +973,12 @@ export function costCenterRoutes(app: Application): void {
  *         total:
  *           type: string
  *           format: string
+ *         contract:
+ *           type: string
+ *           format: string
+ *         invoicedQuantity:
+ *           type: string
+ *           format: string
  *     CostCenterContact:
  *       type: object
  *       properties:
@@ -1054,6 +1061,12 @@ export function costCenterRoutes(app: Application): void {
  *           type: string
  *           format: string
  *         unitPrice:
+ *           type: string
+ *           format: string
+ *         contract:
+ *           type: string
+ *           format: string
+ *         invoicedQuantity:
  *           type: string
  *           format: string
  *     CreateCostCenterContact:
@@ -1143,6 +1156,12 @@ export function costCenterRoutes(app: Application): void {
  *         unitPrice:
  *           type: string
  *           format: string
+ *         contract:
+ *           type: string
+ *           format: string
+ *         invoicedQuantity:
+ *           type: string
+ *           format: string
  *     UpdateCostCenterContact:
  *       type: object
  *       properties:
@@ -1221,6 +1240,66 @@ export function costCenterRoutes(app: Application): void {
  *     responses:
  *       200:
  *         description: A list of project items filtered by contract
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/ProjectItem'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
+ * /v1/cost-center/project/item/multiple:
+ *   patch:
+ *     tags: [Cost Center]
+ *     summary: Update multiple project items
+ *     description: Update invoiced quantity for multiple project items
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               projectItems:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     idProjectItem:
+ *                       type: integer
+ *                       description: ID of the project item
+ *                     invoicedQuantity:
+ *                       type: string
+ *                       description: Invoiced quantity for the item
+ *                   required:
+ *                     - idProjectItem
+ *             required:
+ *               - projectItems
+ *     responses:
+ *       200:
+ *         description: Successfully updated project items
  *         content:
  *           application/json:
  *             schema:

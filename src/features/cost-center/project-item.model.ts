@@ -10,6 +10,7 @@ export class ProjectItem extends Model {
   declare quantity: string;
   declare unitPrice: string;
   declare total: string;
+  declare invoicedQuantity: string;
 }
 
 ProjectItem.init(
@@ -44,6 +45,10 @@ ProjectItem.init(
       allowNull: true,
     },
     total: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    invoicedQuantity: {
       type: DataTypes.STRING,
       allowNull: true,
     },

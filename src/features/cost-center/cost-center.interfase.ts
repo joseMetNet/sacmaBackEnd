@@ -134,3 +134,10 @@ export interface CreateProjectItemDTO {
   unitPrice: string;
   total?: string;
 }
+
+export interface UpdateMultipleProjectItemsDTO {
+  projectItems: {
+    idProjectItem: number;
+    invoicedQuantity?: string;
+  }[];
+}

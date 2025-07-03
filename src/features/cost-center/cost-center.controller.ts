@@ -532,6 +532,22 @@ class CostCenterController {
         .json({ message: err.message });
     }
   }
+
+  async updateMultipleProjectItems(req: Request, res: Response): Promise<void> {
+    const request = schemas.updateMultipleProjectItems.safeParse(req.body);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) },
+        });
+      return;
+    }
+    const response = await costCenterService.updateMultipleProjectItems(request.data);
+    res
+      .status(response.code)
+      .json({ status: response.status, data: response.data });
+  }
 }
 
 export const costCenterController = new CostCenterController();

@@ -93,7 +93,8 @@ export const createProjectItem = z.object({
   unitMeasure: z.string(),
   quantity: z.string(),
   unitPrice: z.string(),
-  total: z.string().optional()
+  total: z.string().optional(),
+  invoicedQuantity: z.string().optional(),
 });
 
 export const createCostCenterProject = z.object({
@@ -138,7 +139,8 @@ export const updateProjectItem = z.object({
   unitMeasure: z.string().optional(),
   quantity: z.string().optional(),
   unitPrice: z.string().optional(),
-  total: z.string().optional()
+  total: z.string().optional(),
+  invoicedQuantity: z.string().optional(),
 });
 
 export const updateCostCenterContact = z.object({
@@ -148,6 +150,13 @@ export const updateCostCenterContact = z.object({
   email: z.string().optional(),
   phone: z.string().optional(),
   role: z.string().optional()
+});
+
+export const updateMultipleProjectItems = z.object({
+  projectItems: z.array(z.object({
+    idProjectItem: z.coerce.number(),
+    invoicedQuantity: z.string().optional(),
+  })),
 });
 
 export const findProjectItemsByContract = z.object({

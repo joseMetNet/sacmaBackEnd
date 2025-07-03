@@ -186,6 +186,25 @@ export class CostCenterRepository {
     });
   }
 
+  async updateMultipleProjectItems(projectItems: { idProjectItem: number; invoicedQuantity?: string }[]): Promise<ProjectItem[]> {
+    const updatedItems: ProjectItem[] = [];
+
+    for (const item of projectItems) {
+      const [, updated] = await ProjectItem.update(
+        { invoicedQuantity: item.invoicedQuantity },
+        {
+          where: { idProjectItem: item.idProjectItem },
+          returning: true
+        }
+      );
+      if (updated.length > 0) {
+        updatedItems.push(updated[0]);
+      }
+    }
+
+    return updatedItems;
+  }
+
   async create(costCenterData: Partial<CostCenter>): Promise<CostCenter> {
     return await CostCenter.create(costCenterData);
   }

@@ -789,6 +789,20 @@ class CostCenterService {
     const offset = (page - 1) * pageSize;
     return { page, pageSize, limit, offset };
   };
+
+  updateMultipleProjectItems = async (request: types.UpdateMultipleProjectItemsDTO): Promise<ResponseEntity> => {
+    try {
+      const updatedItems = await this.costCenterRepository.updateMultipleProjectItems(request.projectItems);
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, updatedItems);
+    }
+    catch (err: any) {
+      console.error(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  };
 }
 
 const costCenterRepository = new CostCenterRepository();
