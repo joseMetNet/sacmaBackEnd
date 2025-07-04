@@ -18,12 +18,6 @@ export class InvoiceRepository {
         {
           model: CostCenterProject,
           required: false,
-          include: [
-            {
-              model: CostCenter,
-              required: false
-            }
-          ]
         }
       ]
     });
