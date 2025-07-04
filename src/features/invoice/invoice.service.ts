@@ -5,12 +5,18 @@ import { StatusCode } from "../../utils/general.interfase";
 import { BuildResponse } from "../../utils/build-response";
 import { CustomError, deleteFile, uploadFile } from "../../utils";
 import crypto from "crypto";
+import { CostCenterRepository } from "../cost-center/cost-center.repository";
 
 export class InvoiceService {
   private readonly invoiceRepository: InvoiceRepository;
+  private readonly costCenterRepository: CostCenterRepository;
 
-  constructor(invoiceRepository: InvoiceRepository) {
+  constructor(
+    invoiceRepository: InvoiceRepository,
+    costCenterRepository: CostCenterRepository
+  ) {
     this.invoiceRepository = invoiceRepository;
+    this.costCenterRepository = costCenterRepository;
   }
 
   create = async (invoiceData: CreateInvoiceDTO, filePath?: string): Promise<ResponseEntity> => {
@@ -83,19 +89,57 @@ export class InvoiceService {
         offset
       );
 
-      // Calculate totalValue for each invoice
-      const rowsWithTotalValue = await Promise.all(
-        data.rows.map(async (invoice: any) => {
-          const totalValue = await this.invoiceRepository.calculateTotalValueByContract(invoice.contract);
-          return {
-            ...invoice.toJSON(),
-            totalValue
-          };
+      if (data.rows.length === 0) {
+        return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+          rows: [],
+          count: data.count,
+          page: request.page || 0,
+          pageSize: request.pageSize || 10
+        });
+      }
+
+      // Extract unique contracts and cost center project IDs for batch processing
+      const uniqueContracts = [...new Set(data.rows.map(invoice => invoice.contract))];
+      const uniqueCostCenterProjectIds = [...new Set(data.rows.map(invoice => invoice.idCostCenterProject))];
+
+      // Batch calculate total values for all unique contracts
+      const contractTotalValues = await Promise.all(
+        uniqueContracts.map(async (contract) => {
+          const totalValue = await this.invoiceRepository.calculateTotalValueByContract(contract);
+          return { contract, totalValue };
         })
       );
 
+      // Batch fetch clients for all unique cost center project IDs
+      const projectClients = await Promise.all(
+        uniqueCostCenterProjectIds.map(async (id) => {
+          const client = await this.costCenterRepository.findClientByCostCenterProjectId(id);
+          return { idCostCenterProject: id, client };
+        })
+      );
+
+      // Create lookup maps for O(1) access
+      const contractTotalValueMap = new Map(
+        contractTotalValues.map(item => [item.contract, item.totalValue])
+      );
+      const clientMap = new Map(
+        projectClients.map(item => [item.idCostCenterProject, item.client])
+      );
+
+      const rowsWithEnhancedData = data.rows.map(invoice => {
+        const invoiceData = invoice.toJSON();
+        const totalValue = contractTotalValueMap.get(invoice.contract) || 0;
+        const client = clientMap.get(invoice.idCostCenterProject) || null;
+
+        return {
+          ...invoiceData,
+          totalValue,
+          client
+        };
+      });
+
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
-        rows: rowsWithTotalValue,
+        rows: rowsWithEnhancedData,
         count: data.count,
         page: request.page || 0,
         pageSize: request.pageSize || 10
@@ -211,4 +255,7 @@ export class InvoiceService {
   };
 }
 
-export const invoiceService = new InvoiceService(new InvoiceRepository()); 
+export const invoiceService = new InvoiceService(
+  new InvoiceRepository(),
+  new CostCenterRepository()
+); 

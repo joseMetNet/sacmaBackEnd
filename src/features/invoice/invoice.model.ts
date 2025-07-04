@@ -55,12 +55,12 @@ Invoice.init({
 });
 
 // Define relations
-Invoice.hasOne(CostCenterProject, {
+Invoice.belongsTo(CostCenterProject, {
   foreignKey: "idCostCenterProject",
-  sourceKey: "idCostCenterProject"
+  targetKey: "idCostCenterProject"
 });
 
-Invoice.hasOne(InvoiceStatus, {
+Invoice.belongsTo(InvoiceStatus, {
   foreignKey: "idInvoiceStatus",
-  sourceKey: "idInvoiceStatus"
+  targetKey: "idInvoiceStatus"
 }); 

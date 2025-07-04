@@ -2,12 +2,31 @@ import { Invoice } from "./invoice.model";
 import { InvoiceStatus } from "./invoice-status.model";
 import { ProjectItem } from "../cost-center/project-item.model";
 import { Op, literal } from "sequelize";
+import { CostCenter } from "../cost-center/cost-center.model";
+import { CostCenterProject } from "../cost-center/cost-center-project.model";
 
 export class InvoiceRepository {
   constructor() { }
 
   async findById(id: number): Promise<Invoice | null> {
-    return await Invoice.findByPk(id, { include: [{ all: true }] });
+    return await Invoice.findByPk(id, {
+      include: [
+        {
+          model: InvoiceStatus,
+          required: false
+        },
+        {
+          model: CostCenterProject,
+          required: false,
+          include: [
+            {
+              model: CostCenter,
+              required: false
+            }
+          ]
+        }
+      ]
+    });
   }
 
   async findAll(

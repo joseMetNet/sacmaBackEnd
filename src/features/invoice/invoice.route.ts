@@ -2,11 +2,13 @@ import { Application, Router } from "express";
 import { InvoiceRepository } from "./invoice.repository";
 import { InvoiceService } from "./invoice.service";
 import { InvoiceController } from "./invoice.controller";
+import { CostCenterRepository } from "../cost-center/cost-center.repository";
 
 export function invoiceRoutes(app: Application): void {
   const router: Router = Router();
   const repository = new InvoiceRepository();
-  const service = new InvoiceService(repository);
+  const costCenterRepository = new CostCenterRepository();
+  const service = new InvoiceService(repository, costCenterRepository);
   const controller = new InvoiceController(service);
 
   // GET routes
