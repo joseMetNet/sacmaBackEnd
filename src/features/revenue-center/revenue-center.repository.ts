@@ -454,7 +454,7 @@ export class RevenueCenterRepository {
       INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
       INNER JOIN mvp1.TB_OrderItem toi ON toi.idCostCenterProject = trc.idCostCenterProject
       INNER JOIN mvp1.TB_OrderItemDetail toid ON toid.idOrderItem = toi.idOrderItem
-      WHERE trc.idRevenueCenter = :idRevenueCenter
+      WHERE ti.name<>131 AND trc.idRevenueCenter = :idRevenueCenter
       GROUP BY ti.name
       ORDER BY ti.name
       OFFSET :offset ROWS
@@ -478,7 +478,7 @@ export class RevenueCenterRepository {
       INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
       INNER JOIN mvp1.TB_OrderItem toi ON toi.idCostCenterProject = trc.idCostCenterProject
       INNER JOIN mvp1.TB_OrderItemDetail toid ON toid.idOrderItem = toi.idOrderItem
-      WHERE trc.idRevenueCenter = :idRevenueCenter
+      WHERE ti.name<>131 AND trc.idRevenueCenter = :idRevenueCenter
       GROUP BY ti.name
       ORDER BY ti.name
     `;
@@ -492,7 +492,7 @@ export class RevenueCenterRepository {
       INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
       INNER JOIN mvp1.TB_OrderItem toi ON toi.idCostCenterProject = trc.idCostCenterProject
       INNER JOIN mvp1.TB_OrderItemDetail toid ON toid.idOrderItem = toi.idOrderItem
-      WHERE trc.idRevenueCenter = :idRevenueCenter;
+      WHERE ti.name<>131 AND trc.idRevenueCenter = :idRevenueCenter;
     `;
 
     const [results, totalResult, countResults] = await Promise.all([
