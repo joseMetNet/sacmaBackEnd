@@ -367,9 +367,9 @@ export class RevenueCenterService {
       const rows = data.rows.map((item) => ({
         material: item.item,
         quantity: item.quantity,
-        subTotal: (parseFloat(item.quantity) * parseFloat(item.unitPrice)).toFixed(2),
-        totalValue: ((parseFloat(item.quantity) * parseFloat(item.unitPrice)) * 1.1557).toFixed(2),
-        total: (parseFloat(item.quantity) * (parseFloat(item.quantity) * parseFloat(item.unitPrice)) * 1.1557).toFixed(2), // Assuming total is quantity * unitPrice * 1.1557
+        subTotal: parseFloat(item.unitPrice).toFixed(2),
+        totalValue: (parseFloat(item.quantity) * parseFloat(item.unitPrice)).toFixed(2),
+        total: (parseFloat(item.quantity) * (parseFloat(item.quantity) * parseFloat(item.unitPrice)) * 1.1557).toFixed(2),
       }));
 
       const response = {
