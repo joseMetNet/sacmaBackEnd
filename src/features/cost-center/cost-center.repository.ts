@@ -74,7 +74,7 @@ export class CostCenterRepository {
       ],
       nest: true
     });
-  }   
+  }
 
   async findAllProjectItem(
     filter: { [key: string]: any },
@@ -106,8 +106,9 @@ export class CostCenterRepository {
           [Op.ne]: null
         }
       },
-      attributes: ["contract"],
-      group: ["contract"]
+      attributes: [[literal("TRIM(contract)"), "contract"]],
+      group: ["contract"],
+      raw: true
     });
     return projectItems;
   }

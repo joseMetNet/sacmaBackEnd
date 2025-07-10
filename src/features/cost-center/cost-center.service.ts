@@ -52,6 +52,11 @@ class CostCenterService {
 
   createProjectItem = async (request: types.CreateProjectItemDTO): Promise<ResponseEntity> => {
     try {
+      // Trim contract if it exists
+      if (request.contract) {
+        request.contract = request.contract.trim();
+      }
+
       request.total = String(parseFloat(request.quantity) * parseFloat(request.unitPrice));
       const response = await this.costCenterRepository.createProjectItem(request);
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
@@ -531,7 +536,7 @@ class CostCenterService {
 
       projectItemDb.idCostCenterProject = request.idCostCenterProject ?? projectItemDb.idCostCenterProject;
       projectItemDb.item = request.item ?? projectItemDb.item;
-      projectItemDb.contract = request.contract ?? projectItemDb.contract;
+      projectItemDb.contract = request.contract ? request.contract.trim() : projectItemDb.contract;
       projectItemDb.quantity = request.quantity ?? projectItemDb.quantity;
       projectItemDb.unitMeasure = request.unitMeasure ?? projectItemDb.unitMeasure;
       projectItemDb.unitPrice = request.unitPrice ?? projectItemDb.unitPrice;
