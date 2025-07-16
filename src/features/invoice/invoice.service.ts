@@ -6,6 +6,7 @@ import { BuildResponse } from "../../utils/build-response";
 import { CustomError, deleteFile, uploadFile } from "../../utils";
 import crypto from "crypto";
 import { CostCenterRepository } from "../cost-center/cost-center.repository";
+import { Op } from "sequelize";
 
 export class InvoiceService {
   private readonly invoiceRepository: InvoiceRepository;
@@ -241,6 +242,12 @@ export class InvoiceService {
 
     if (request.idInvoiceStatus) {
       filter.idInvoiceStatus = request.idInvoiceStatus;
+    }
+
+    if(request.invoice) {
+      filter.invoice = {
+        [Op.like]: `%${request.invoice}%`
+      };
     }
 
     return filter;

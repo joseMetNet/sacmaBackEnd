@@ -5,6 +5,7 @@ export const findAll = z.object({
   pageSize: z.coerce.number().optional(),
   idCostCenterProject: z.coerce.number().optional(),
   idInvoiceStatus: z.coerce.number().optional(),
+  invoice: z.string().optional(),
 });
 
 export const idInvoice = z.object({

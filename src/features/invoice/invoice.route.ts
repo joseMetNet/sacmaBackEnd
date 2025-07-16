@@ -56,6 +56,11 @@ export function invoiceRoutes(app: Application): void {
  *         schema:
  *           type: integer
  *         description: ID of the invoice status
+ *       - in: query
+ *         name: invoice
+ *         schema:
+ *           type: string
+ *         description: Invoice number or identifier
  *     responses:
  *       200:
  *         description: A list of invoices
