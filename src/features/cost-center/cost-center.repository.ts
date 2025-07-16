@@ -85,7 +85,7 @@ export class CostCenterRepository {
       where: filter,
       nest: true,
       distinct: true,
-      order: [[literal("unitPrice * quantity"), "DESC"]]
+      order: [["idProjectItem", "DESC"]],
     };
 
     // Only apply pagination if limit is greater than 0
