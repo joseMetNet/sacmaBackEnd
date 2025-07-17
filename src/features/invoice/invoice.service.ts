@@ -254,7 +254,7 @@ export class InvoiceService {
   }
 
   private getPagination = (request: { page?: number, pageSize?: number }) => {
-    const page = request.page || 0;
+    const page = request.page || 1;
     const pageSize = request.pageSize || 10;
     const limit = pageSize;
     const offset = page * pageSize;
