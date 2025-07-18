@@ -925,6 +925,12 @@ export class QuotationService {
         builder: sequelize.where(sequelize.col("builder"), "LIKE", `%${filter.builder}%`),
       };
     }
+    if (filter.name) {
+      where = {
+        ...where,
+        name: sequelize.where(sequelize.col("name"), "LIKE", `%${filter.name}%`),
+      };
+    }
     return where;
   };
 

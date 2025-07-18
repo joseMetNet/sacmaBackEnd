@@ -40,6 +40,7 @@ export interface findAllQuotationDTO {
   consecutive?: string;
   quotationStatus?: string;
   builder?: string;
+  name?: string;
 }
 
 export interface findAllQuotationItemDTO {

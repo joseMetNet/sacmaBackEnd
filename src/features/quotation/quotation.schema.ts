@@ -45,6 +45,7 @@ export const FindAllQuotationSchema = z.object({
   consecutive: z.string().optional(),
   quotationStatus: z.string().optional(),
   builder: z.string().optional(),
+  name: z.string().optional(),
 });
 
 export const FindAllQuotationItemSchema = z.object({

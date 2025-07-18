@@ -183,6 +183,11 @@ export function quotationRoute(app: Application): void {
  *         schema:
  *           type: string
  *         description: Builder of the quotation
+ *       - in: query
+ *         name: name
+ *         schema:
+ *           type: string
+ *         description: Name of the quotation
  *     responses:
  *       200:
  *         description: A list of quotations
