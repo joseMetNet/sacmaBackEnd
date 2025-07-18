@@ -82,7 +82,7 @@ export class InvoiceService {
   findAll = async (request: FindAllDTO): Promise<ResponseEntity> => {
     try {
       const filter = this.buildFindAllFilter(request);
-      const { limit, offset } = this.getPagination(request);
+      const { limit, offset, page, pageSize } = this.getPagination(request);
 
       const data = await this.invoiceRepository.findAll(
         filter,
@@ -92,10 +92,10 @@ export class InvoiceService {
 
       if (data.rows.length === 0) {
         return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
-          rows: [],
-          count: data.count,
-          page: request.page || 0,
-          pageSize: request.pageSize || 10
+          data: [],
+          totalItems: data.count,
+          currentPage: page,
+          totalPages: Math.ceil(data.count / pageSize)
         });
       }
 
@@ -140,10 +140,10 @@ export class InvoiceService {
       });
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
-        rows: rowsWithEnhancedData,
-        count: data.count,
-        page: request.page || 0,
-        pageSize: request.pageSize || 10
+        data: rowsWithEnhancedData,
+        totalItems: data.count,
+        currentPage: page,
+        totalPages: Math.ceil(data.count / pageSize)
       });
     } catch (err: unknown) {
       console.error(err);
@@ -257,12 +257,12 @@ export class InvoiceService {
     const page = request.page || 1;
     const pageSize = request.pageSize || 10;
     const limit = pageSize;
-    const offset = page * pageSize;
-    return { limit, offset };
+    const offset = (page - 1) * pageSize;
+    return { page, pageSize, limit, offset };
   };
 }
 
 export const invoiceService = new InvoiceService(
   new InvoiceRepository(),
   new CostCenterRepository()
-); 
+);
