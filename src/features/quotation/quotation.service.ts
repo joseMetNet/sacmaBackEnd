@@ -928,7 +928,7 @@ export class QuotationService {
     if (filter.name) {
       where = {
         ...where,
-        name: sequelize.where(sequelize.col("name"), "LIKE", `%${filter.name}%`),
+        projectName: sequelize.where(sequelize.col("projectName"), "LIKE", `%${filter.name}%`),
       };
     }
     return where;
