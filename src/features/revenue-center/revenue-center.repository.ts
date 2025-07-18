@@ -438,62 +438,55 @@ export class RevenueCenterRepository {
     const sequelize = RevenueCenter.sequelize!;
 
     const materialSummaryQuery = `
-      SELECT
-        ti.name AS material,
-        MAX(ti.performance) AS performance,
-        SUM(toid.quantity) AS shipped,
-        SUM(toid.quantity) * MAX(ti.performance) AS quantityM2,
-        SUM(tqi.quantity) AS contracted,
-        580 AS invoiced,
-        475 AS shippedAndInvoiced,
-        25 AS diff
-      FROM mvp1.TB_Quotation tq
-      INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idQuotation = tq.idQuotation
-      INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotation = tq.idQuotation
-      INNER JOIN mvp1.TB_QuotationItemDetail tqid ON tqid.idQuotationItem = tqi.idQuotationItem
-      INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
-      INNER JOIN mvp1.TB_OrderItem toi ON toi.idCostCenterProject = trc.idCostCenterProject
-      INNER JOIN mvp1.TB_OrderItemDetail toid ON toid.idOrderItem = toi.idOrderItem
-      WHERE ti.idInput<>131 AND trc.idRevenueCenter = :idRevenueCenter
-      GROUP BY ti.name
-      ORDER BY ti.name
-      OFFSET :offset ROWS
-      FETCH NEXT :limit ROWS ONLY;
-    `;
+    SELECT
+      ti.name AS material,
+      MAX(ti.performance) AS performance,
+      SUM(toid.quantity) AS shipped,
+      SUM(toid.quantity) * MAX(ti.performance) AS quantityM2,
+      0 AS budgeted,
+      0 AS contracted,
+      580 AS invoiced,
+      475 AS shippedAndInvoiced,
+      25 AS diff
+    FROM mvp1.TB_OrderItemDetail toid
+    INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
+    INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
+    INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idCostCenterProject = toi.idCostCenterProject
+    WHERE trc.idRevenueCenter = :idRevenueCenter AND ti.idInputType = 1
+    GROUP BY ti.name
+    ORDER BY ti.name
+    OFFSET :offset ROWS
+    FETCH NEXT :limit ROWS ONLY;
+  `;
 
     const totalQuery = `
-      SELECT
-        ti.name AS material,
-        MAX(ti.performance) AS performance,
-        SUM(toid.quantity) AS shipped,
-        SUM(toid.quantity) * MAX(ti.performance) AS quantityM2,
-        SUM(tqi.quantity) AS contracted,
-        580 AS invoiced,
-        475 AS shippedAndInvoiced,
-        25 AS diff
-      FROM mvp1.TB_Quotation tq
-      INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idQuotation = tq.idQuotation
-      INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotation = tq.idQuotation
-      INNER JOIN mvp1.TB_QuotationItemDetail tqid ON tqid.idQuotationItem = tqi.idQuotationItem
-      INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
-      INNER JOIN mvp1.TB_OrderItem toi ON toi.idCostCenterProject = trc.idCostCenterProject
-      INNER JOIN mvp1.TB_OrderItemDetail toid ON toid.idOrderItem = toi.idOrderItem
-      WHERE ti.idInput<>131 AND trc.idRevenueCenter = :idRevenueCenter
-      GROUP BY ti.name
-      ORDER BY ti.name
-    `;
+    SELECT
+      ti.name AS material,
+      MAX(ti.performance) AS performance,
+      SUM(toid.quantity) AS shipped,
+      SUM(toid.quantity) * MAX(ti.performance) AS quantityM2,
+      0 AS budgeted,
+      0 AS contracted,
+      580 AS invoiced,
+      475 AS shippedAndInvoiced,
+      25 AS diff
+    FROM mvp1.TB_OrderItemDetail toid
+    INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
+    INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
+    INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idCostCenterProject = toi.idCostCenterProject
+    WHERE trc.idRevenueCenter = :idRevenueCenter AND ti.idInputType = 1
+    GROUP BY ti.name
+    ORDER BY ti.name
+  `;
 
     const countQuery = `
-      SELECT COUNT(DISTINCT ti.name) as total
-      FROM mvp1.TB_Quotation tq
-      INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idQuotation = tq.idQuotation
-      INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotation = tq.idQuotation
-      INNER JOIN mvp1.TB_QuotationItemDetail tqid ON tqid.idQuotationItem = tqi.idQuotationItem
-      INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
-      INNER JOIN mvp1.TB_OrderItem toi ON toi.idCostCenterProject = trc.idCostCenterProject
-      INNER JOIN mvp1.TB_OrderItemDetail toid ON toid.idOrderItem = toi.idOrderItem
-      WHERE ti.idInput<>131 AND trc.idRevenueCenter = :idRevenueCenter;
-    `;
+    SELECT COUNT(DISTINCT ti.name) as total
+    FROM mvp1.TB_OrderItemDetail toid
+    INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
+    INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
+    INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idCostCenterProject = toi.idCostCenterProject
+    WHERE trc.idRevenueCenter = :idRevenueCenter AND ti.idInputType = 1;
+  `;
 
     const [results, totalResult, countResults] = await Promise.all([
       sequelize.query(materialSummaryQuery, {
