@@ -5,7 +5,7 @@ import { QuotationItemDetail } from "./quotation-item-detail.model";
 import { Employee } from "../employee";
 import { Input } from "../input/input.model";
 import { CustomError } from "../../utils";
-import { Transaction } from "sequelize";
+import { Transaction, QueryTypes } from "sequelize";
 import { QuotationPercentage } from "./quotation-percentage.model";
 import { QuotationStatus } from "./quotation-status.model";
 import { QuotationComment } from "./quotation-comment.model";
@@ -283,5 +283,27 @@ export class QuotationRepository {
     return await QuotationComment.destroy({
       where: { idQuotationComment },
     });
+  }
+
+  async findQuotationItemDetailsByQuotationId(idQuotation: number): Promise<{ idInput: number; quantity: number }[]> {
+    const sequelize = Quotation.sequelize!;
+
+    const query = `
+      SELECT
+        tqid.idInput,
+        SUM(tqid.quantity) AS quantity
+      FROM mvp1.TB_Quotation tq
+      INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotation = tq.idQuotation
+      INNER JOIN mvp1.TB_QuotationItemDetail tqid ON tqid.idQuotationItem = tqi.idQuotationItem
+      WHERE tq.idQuotation = :idQuotation
+      GROUP BY tqid.idInput
+    `;
+
+    const results = await sequelize.query(query, {
+      replacements: { idQuotation },
+      type: QueryTypes.SELECT
+    });
+
+    return results as { idInput: number; quantity: number }[];
   }
 }

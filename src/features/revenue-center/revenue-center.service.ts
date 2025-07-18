@@ -6,20 +6,24 @@ import { IRevenueCenterCreate, IRevenueCenterUpdate } from "./revenue-center.int
 import * as schemas from "./revenue-center.schema";
 import { ExpenditureRepository } from "../expenditure";
 import { CostCenterRepository } from "../cost-center/cost-center.repository";
+import { QuotationRepository } from "../quotation/quotation.repository";
 
 export class RevenueCenterService {
   private readonly revenueCenterRepository: RevenueCenterRepository;
   private readonly expenditureRepository: ExpenditureRepository;
   private readonly costCenterRepository: CostCenterRepository;
+  private readonly quotationRepository: QuotationRepository;
 
   constructor(
     revenueCenterRepository: RevenueCenterRepository,
     expenditureRepository: ExpenditureRepository,
-    costCenterRepository: CostCenterRepository
+    costCenterRepository: CostCenterRepository,
+    quotationRepository: QuotationRepository
   ) {
     this.revenueCenterRepository = revenueCenterRepository;
     this.expenditureRepository = expenditureRepository;
     this.costCenterRepository = costCenterRepository;
+    this.quotationRepository = quotationRepository;
   }
 
   findAll = async (request: schemas.FindAllSchema): Promise<ResponseEntity> => {
@@ -420,14 +424,36 @@ export class RevenueCenterService {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);
 
+      // Step 1: Find the revenue center to get the idQuotation
+      const revenueCenter = await this.revenueCenterRepository.findById(request.idRevenueCenter);
+      if (!revenueCenter) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Revenue center not found" });
+      }
+
       const filter = { idRevenueCenter: request.idRevenueCenter };
       const materialSummaryData = await this.revenueCenterRepository.findAllMaterialSummaryDetail(limit, offset, filter);
 
-      // add the field yield on the response
-      materialSummaryData.rows = materialSummaryData.rows.map((item) => ({
-        ...item,
-        yield: 1
-      }));
+      // Step 2: Get quotation item details if idQuotation exists
+      let quotationItemDetails: { idInput: number; quantity: number }[] = [];
+      if (revenueCenter.idQuotation) {
+        quotationItemDetails = await this.quotationRepository.findQuotationItemDetailsByQuotationId(revenueCenter.idQuotation);
+      }
+
+      // Step 3: Create a map for quick lookup of contracted quantities by idInput
+      const contractedQuantitiesMap = new Map<number, number>();
+      quotationItemDetails.forEach(item => {
+        contractedQuantitiesMap.set(item.idInput, item.quantity);
+      });
+
+      // Step 4: Map the results and set contracted values
+      materialSummaryData.rows = materialSummaryData.rows.map((item: any) => {
+        const contractedQuantity = contractedQuantitiesMap.get(item.idInput) || 0;
+        return {
+          ...item,
+          yield: 1,
+          contracted: contractedQuantity
+        };
+      });
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         data: materialSummaryData.rows,
