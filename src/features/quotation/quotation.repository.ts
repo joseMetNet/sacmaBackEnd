@@ -285,18 +285,19 @@ export class QuotationRepository {
     });
   }
 
-  async findQuotationItemDetailsByQuotationId(idQuotation: number): Promise<{ idInput: number; quantity: number }[]> {
+  async findQuotationItemDetailsByQuotationId(idQuotation: number): Promise<{ idInput: number; budgeted: number; contracted: number }[]> {
     const sequelize = Quotation.sequelize!;
 
     const query = `
-      SELECT
-        tqid.idInput,
-        SUM(tqid.quantity) AS quantity
-      FROM mvp1.TB_Quotation tq
-      INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotation = tq.idQuotation
-      INNER JOIN mvp1.TB_QuotationItemDetail tqid ON tqid.idQuotationItem = tqi.idQuotationItem
-      WHERE tq.idQuotation = :idQuotation
-      GROUP BY tqid.idInput
+        SELECT
+          tqid.idInput,
+          SUM(tqid.quantity) AS budgeted,
+          SUM(DISTINCT tqi.quantity) AS contracted
+        FROM mvp1.TB_Quotation tq
+        INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotation = tq.idQuotation
+        INNER JOIN mvp1.TB_QuotationItemDetail tqid ON tqid.idQuotationItem = tqi.idQuotationItem
+        WHERE tq.idQuotation = :idQuotation
+        GROUP BY tqid.idInput
     `;
 
     const results = await sequelize.query(query, {
@@ -304,6 +305,6 @@ export class QuotationRepository {
       type: QueryTypes.SELECT
     });
 
-    return results as { idInput: number; quantity: number }[];
+    return results as { idInput: number; budgeted: number; contracted: number }[];
   }
 }

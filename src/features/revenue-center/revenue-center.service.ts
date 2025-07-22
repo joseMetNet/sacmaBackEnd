@@ -434,23 +434,27 @@ export class RevenueCenterService {
       const materialSummaryData = await this.revenueCenterRepository.findAllMaterialSummaryDetail(limit, offset, filter);
 
       // Step 2: Get quotation item details if idQuotation exists
-      let quotationItemDetails: { idInput: number; quantity: number }[] = [];
+      let quotationItemDetails: { idInput: number; budgeted: number; contracted: number }[] = [];
       if (revenueCenter.idQuotation) {
         quotationItemDetails = await this.quotationRepository.findQuotationItemDetailsByQuotationId(revenueCenter.idQuotation);
       }
 
-      // Step 3: Create a map for quick lookup of contracted quantities by idInput
+      // Step 3: Create a map for quick lookup of budgeted and contracted quantities by idInput
+      const budgetedQuantitiesMap = new Map<number, number>();
       const contractedQuantitiesMap = new Map<number, number>();
       quotationItemDetails.forEach(item => {
-        contractedQuantitiesMap.set(item.idInput, item.quantity);
+        budgetedQuantitiesMap.set(item.idInput, item.budgeted);
+        contractedQuantitiesMap.set(item.idInput, item.contracted);
       });
 
-      // Step 4: Map the results and set contracted values
+      // Step 4: Map the results and set budgeted values
       materialSummaryData.rows = materialSummaryData.rows.map((item: any) => {
+        const budgetedQuantity = budgetedQuantitiesMap.get(item.idInput) || 0;
         const contractedQuantity = contractedQuantitiesMap.get(item.idInput) || 0;
         return {
           ...item,
           yield: 1,
+          budgeted: budgetedQuantity,
           contracted: contractedQuantity
         };
       });
