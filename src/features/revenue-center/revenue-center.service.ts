@@ -352,7 +352,7 @@ export class RevenueCenterService {
     }
   };
 
-  findAllProjectItem = async (request: schemas.FindAllProjectItemSchema): Promise<ResponseEntity> => {
+  findAllContractedSummary = async (request: schemas.FindAllContractedSummarySchema): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);
 
@@ -414,6 +414,72 @@ export class RevenueCenterService {
     } catch (error) {
       console.error("An error occurred while trying to find all work tracking data", error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find all work tracking data" });
+    }
+  };
+
+  findAllInvoiceSummary = async (request: schemas.FindAllInvoiceSummarySchema): Promise<ResponseEntity> => {
+    try {
+      // First, find the revenue center to get the idCostCenterProject
+      const revenueCenter = await this.revenueCenterRepository.findById(request.idRevenueCenter);
+      if (!revenueCenter) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
+          message: "Revenue center not found"
+        });
+      }
+
+      // Now use the idCostCenterProject to find project items
+      const filter = { idCostCenterProject: revenueCenter.idCostCenterProject };
+      const data = await this.costCenterRepository.findAllProjectItem(filter, -1, 0); // Get all items without pagination
+
+      // Group items by contract number and then by project item
+      const contractGroups = new Map<string, Map<string, { quantity: number; unitPrice: number; total: number }>>();
+
+      data.rows.forEach((item) => {
+        const quantity = parseFloat(item.quantity);
+        const unitPrice = parseFloat(item.unitPrice);
+        const totalValue = quantity * unitPrice;
+        const contractNumber = item.contract;
+        const projectItemName = item.item;
+
+        // Initialize contract group if it doesn't exist
+        if (!contractGroups.has(contractNumber)) {
+          contractGroups.set(contractNumber, new Map());
+        }
+
+        const contractItems = contractGroups.get(contractNumber)!;
+
+        // If project item already exists in this contract, sum the quantities
+        if (contractItems.has(projectItemName)) {
+          const existingItem = contractItems.get(projectItemName)!;
+          existingItem.quantity += quantity;
+          existingItem.total = existingItem.quantity * existingItem.unitPrice;
+        } else {
+          // Add new project item to this contract
+          contractItems.set(projectItemName, {
+            quantity: quantity,
+            unitPrice: unitPrice,
+            total: totalValue
+          });
+        }
+      });
+
+      // Convert grouped data to the desired format
+      const contracts = Array.from(contractGroups.entries()).map(([contractNumber, itemsMap]) => ({
+        contractNumber: contractNumber,
+        items: Array.from(itemsMap.entries()).map(([projectItemName, itemData]) => ({
+          projectItem: projectItemName,
+          quantity: itemData.quantity,
+          unitPrice: itemData.unitPrice,
+          total: itemData.total
+        }))
+      }));
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, contracts);
+    } catch (error) {
+      console.error("An error occurred while trying to find invoice summary for revenue center", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "An error occurred while trying to find invoice summary for revenue center"
+      });
     }
   };
 

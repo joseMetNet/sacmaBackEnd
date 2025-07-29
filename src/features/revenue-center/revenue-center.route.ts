@@ -23,7 +23,8 @@ export function revenueCenterRoutes(app: Application): void {
 
   routes.get("/v1/revenue-center/material", [verifyToken], revenueCenterController.findAllMaterial);
   routes.get("/v1/revenue-center/material/summary", [verifyToken], revenueCenterController.findAllMaterialSummaryDetail);
-  routes.get("/v1/revenue-center/quotation/summary", [verifyToken], revenueCenterController.findAllProjectItem);
+  routes.get("/v1/revenue-center/quotation/summary", [verifyToken], revenueCenterController.findAllContractedSummary);
+  routes.get("/v1/revenue-center/invoice/summary", [verifyToken], revenueCenterController.findAllInvoiceSummary);
   routes.get("/v1/revenue-center/inputs", [verifyToken], revenueCenterController.findAllInputs);
   routes.get("/v1/revenue-center/epp", [verifyToken], revenueCenterController.findAllEpp);
   // Unified expenditures endpoint
@@ -747,6 +748,67 @@ export function revenueCenterRoutes(app: Application): void {
    *                 total:
    *                   type: number
    *                   description: Sum of all shipped values for materials
+   *       400:
+   *         description: Bad request - Missing required parameters
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Not found
+   *       500:
+   *         description: Internal server error
+   */
+
+  /**
+   * @openapi
+   * /v1/revenue-center/invoice/summary:
+   *   get:
+   *     tags: [Revenue Center]
+   *     summary: Find invoice summary for a revenue center
+   *     description: Retrieve invoice summary data grouped by contract for easy table rendering
+   *     parameters:
+   *       - in: query
+   *         name: idRevenueCenter
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID of the revenue center
+   *     responses:
+   *       200:
+   *         description: Array of contracts with their respective items
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 type: object
+   *                 properties:
+   *                   contractNumber:
+   *                     type: string
+   *                     example: "CO-96909"
+   *                     description: Contract identification number
+   *                   items:
+   *                     type: array
+   *                     items:
+   *                       type: object
+   *                       properties:
+   *                         projectItem:
+   *                           type: string
+   *                           example: "IMPERMEABILZACION CUBIERTA- M.O regata manto"
+   *                           description: Name of the project item
+   *                         quantity:
+   *                           type: number
+   *                           example: 187
+   *                           description: Quantity of the project item
+   *                         unitPrice:
+   *                           type: number
+   *                           example: 1213
+   *                           description: Unit price of the project item
+   *                         total:
+   *                           type: number
+   *                           example: 226831
+   *                           description: Total value (quantity * unitPrice)
    *       400:
    *         description: Bad request - Missing required parameters
    *       401:

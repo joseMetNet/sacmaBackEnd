@@ -209,8 +209,8 @@ export class RevenueCenterController {
     });
   };
 
-  findAllProjectItem = async (req: Request, res: Response): Promise<void> => {
-    const request = schemas.findAllProjectItemSchema.safeParse(req.query);
+  findAllInvoiceSummary = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.findAllInvoiceSummarySchema.safeParse(req.query);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -219,7 +219,24 @@ export class RevenueCenterController {
       return;
     }
 
-    const response = await this.revenueCenterService.findAllProjectItem(request.data);
+    const response = await this.revenueCenterService.findAllInvoiceSummary(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
+  findAllContractedSummary = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.findAllContractedSummarySchema.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.revenueCenterService.findAllContractedSummary(request.data);
     res.status(response.code).json({
       status: response.status,
       data: response.data
