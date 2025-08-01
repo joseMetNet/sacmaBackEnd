@@ -111,15 +111,15 @@ export class RevenueCenterService {
 
   create = async (request: schemas.CreateRevenueCenterSchema): Promise<ResponseEntity> => {
     try {
-      const createData: IRevenueCenterCreate = {
-        name: request.name,
-        idCostCenterProject: request.idCostCenterProject,
-        idRevenueCenterStatus: request.idRevenueCenterStatus,
-        idQuotation: request.idQuotation,
-        fromDate: request.fromDate,
-        toDate: request.toDate,
-      };
-      const revenueCenter = await this.revenueCenterRepository.create(createData);
+      //const createData: IRevenueCenterCreate = {
+      //  name: request.name,
+      //  idCostCenterProject: request.idCostCenterProject,
+      //  idRevenueCenterStatus: request.idRevenueCenterStatus,
+      //  idQuotation: request.idQuotation,
+      //  fromDate: request.fromDate,
+      //  toDate: request.toDate,
+      //};
+      const revenueCenter = await this.revenueCenterRepository.create(request);
       const response = {
         idRevenueCenter: revenueCenter.idRevenueCenter,
         name: revenueCenter.name,
