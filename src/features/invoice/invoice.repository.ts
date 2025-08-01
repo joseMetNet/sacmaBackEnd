@@ -2,7 +2,6 @@ import { Invoice } from "./invoice.model";
 import { InvoiceStatus } from "./invoice-status.model";
 import { ProjectItem } from "../cost-center/project-item.model";
 import { Op, literal } from "sequelize";
-import { CostCenter } from "../cost-center/cost-center.model";
 import { CostCenterProject } from "../cost-center/cost-center-project.model";
 
 export class InvoiceRepository {
@@ -55,7 +54,9 @@ export class InvoiceRepository {
     return await Invoice.destroy({
       where: { idInvoice: id }
     });
-  } async calculateTotalValueByContract(contract: string): Promise<number> {
+  }
+
+  async calculateTotalValueByContract(contract: string): Promise<number> {
     const result = await ProjectItem.findAll({
       where: {
         contract: contract,
