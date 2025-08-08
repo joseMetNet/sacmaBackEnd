@@ -368,7 +368,7 @@ class CostCenterService {
           "total": item.total,
           "invoicedQuantity": request.idInvoice == 0? invoiceProjectItems.
             find(pi => pi.idProjectItem === item.idProjectItem && pi.idInvoice === latestIdInvoice)?.
-            invoicedQuantity || null: ""
+            invoicedQuantity || "": ""
         };
       });
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
