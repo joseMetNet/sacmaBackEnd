@@ -166,9 +166,6 @@ export class InvoiceService {
           .find(item => item.idInvoice === invoice.idInvoice && item.contract === invoice.contract)
           ?.invoicedQuantity || 0;
 
-        // Find the corresponding cost center project for this invoice, CostCenterProject is assumed to be included in the invoice model
-        // and can be null, idCostCenterProject is a field of the CostCenterProject model
-        // so we have CostCenter -> CostCenterProject -> idCostCenterProject
         const costCenterProject = costCenters.filter(cc =>
           cc.CostCenterProjects &&
           Array.isArray(cc.CostCenterProjects) &&
