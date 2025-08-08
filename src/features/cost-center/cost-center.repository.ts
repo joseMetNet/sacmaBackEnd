@@ -1,3 +1,4 @@
+import { InvoiceProjectItem } from "../invoice/invoice-project-item.model";
 import { CostCenterContact } from "./cost-center-contact.model";
 import { CostCenterProject } from "./cost-center-project.model";
 import { CostCenter } from "./cost-center.model";
@@ -204,14 +205,16 @@ export class CostCenterRepository {
     });
   }
 
-  async updateMultipleProjectItems(projectItems: { idProjectItem: number; invoicedQuantity?: string }[]): Promise<ProjectItem[]> {
+  async upsertInvoiceProjectItems(invoiceProjectItems: Partial<InvoiceProjectItem>[]): Promise<ProjectItem[]> {
     const updatedItems: ProjectItem[] = [];
 
-    for (const item of projectItems) {
+    for (const item of invoiceProjectItems) {
       const [, updated] = await ProjectItem.update(
         { invoicedQuantity: item.invoicedQuantity },
         {
-          where: { idProjectItem: item.idProjectItem },
+          where: {
+            idInvoice: item.idInvoice, idProjectItem: item.idProjectItem, contract: item.contract
+          },
           returning: true
         }
       );

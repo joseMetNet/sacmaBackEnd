@@ -533,7 +533,7 @@ class CostCenterController {
     }
   }
 
-  async updateMultipleProjectItems(req: Request, res: Response): Promise<void> {
+  async upsertInvoiceProjectItems(req: Request, res: Response): Promise<void> {
     const request = schemas.updateMultipleProjectItems.safeParse(req.body);
     if (!request.success) {
       res.status(StatusCode.BadRequest)
@@ -543,7 +543,7 @@ class CostCenterController {
         });
       return;
     }
-    const response = await costCenterService.updateMultipleProjectItems(request.data);
+    const response = await costCenterService.upsertInvoiceProjectItems(request.data);
     res
       .status(response.code)
       .json({ status: response.status, data: response.data });

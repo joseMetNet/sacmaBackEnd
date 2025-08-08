@@ -6,6 +6,7 @@ import { CustomError, deleteFile, uploadFile } from "../../utils";
 import * as ExcelJS from "exceljs";
 import { StatusCode } from "../../utils/general.interfase";
 import { BuildResponse } from "../../utils/build-response";
+import { InvoiceProjectItem } from "../invoice";
 
 
 class CostCenterService {
@@ -341,7 +342,37 @@ class CostCenterService {
       const filter = { contract: request.contract };
       const data = await this.costCenterRepository.findAllProjectItem(filter, 0, 0);
 
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, data.rows);
+      if( data.count === 0) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "No project items found for this contract" });
+      }
+
+      const invoiceProjectItems = await InvoiceProjectItem.findAll({
+        where: { contract: request.contract },
+      });
+
+      if (invoiceProjectItems.length === 0) {
+        return BuildResponse.buildSuccessResponse(StatusCode.Ok, data.rows);
+      }
+
+      const latestIdInvoice = Math.max(...invoiceProjectItems.map(inv => inv.idInvoice));
+      console.log("Latest ID Invoice:", latestIdInvoice);
+
+      const response = data.rows.map(item => {
+        return {
+          "idProjectItem": item.idProjectItem,
+          "idCostCenterProject": item.idCostCenterProject,
+          "contract": item.contract,
+          "item": item.item,
+          "unitMeasure": item.unitMeasure,
+          "quantity": item.quantity,
+          "unitPrice": item.unitPrice,
+          "total": item.total,
+          "invoicedQuantity": invoiceProjectItems.
+            find(pi => pi.idProjectItem === item.idProjectItem && pi.idInvoice === latestIdInvoice)?.
+            invoicedQuantity || null,
+        };
+      });
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
     }
     catch (err: any) {
       console.error(err);
@@ -795,9 +826,9 @@ class CostCenterService {
     return { page, pageSize, limit, offset };
   };
 
-  updateMultipleProjectItems = async (request: types.UpdateMultipleProjectItemsDTO): Promise<ResponseEntity> => {
+  upsertInvoiceProjectItems = async (request: types.UpdateMultipleProjectItemsDTO): Promise<ResponseEntity> => {
     try {
-      const updatedItems = await this.costCenterRepository.updateMultipleProjectItems(request.projectItems);
+      const updatedItems = await this.costCenterRepository.upsertInvoiceProjectItems(request.projectItems);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, updatedItems);
     }
     catch (err: any) {

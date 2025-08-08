@@ -27,7 +27,7 @@ export function costCenterRoutes(app: Application): void {
   router.patch("/v1/cost-center/contact", costCenterController.updateCostCenterContact);
   router.patch("/v1/cost-center/project", costCenterController.updateCostCenterProject);
   router.patch("/v1/cost-center/project/item", costCenterController.updateProjectItem);
-  router.patch("/v1/cost-center/project/item/multiple", costCenterController.updateMultipleProjectItems);
+  router.patch("/v1/cost-center/project/item/multiple", costCenterController.upsertInvoiceProjectItems);
   router.patch("/v1/cost-center/project/document", costCenterController.updateProjectDocument);
 
   // DELETE routes
@@ -1287,9 +1287,15 @@ export function costCenterRoutes(app: Application): void {
  *                 items:
  *                   type: object
  *                   properties:
+ *                     idInvoice:
+ *                       type: integer
+ *                       description: ID of the invoice
  *                     idProjectItem:
  *                       type: integer
  *                       description: ID of the project item
+ *                     contract:
+ *                       type: string
+ *                       description: Contract name for the item
  *                     invoicedQuantity:
  *                       type: string
  *                       description: Invoiced quantity for the item
