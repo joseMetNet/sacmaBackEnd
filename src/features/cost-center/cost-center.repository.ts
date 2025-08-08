@@ -60,17 +60,14 @@ export class CostCenterRepository {
     return costCenterContact;
   }
 
-  async findClientByCostCenterProjectId(
-    idCostCenterProject: number
-  ): Promise<CostCenter | null> {
-    return await CostCenter.findOne({
+  async findClients(): Promise<CostCenter[]> {
+    return await CostCenter.findAll({
       attributes: ["name"],
       include: [
         {
           model: CostCenterProject,
-          where: { idCostCenterProject },
           required: true,
-          attributes: []
+          attributes: ["idCostCenterProject"]
         }
       ],
       nest: true

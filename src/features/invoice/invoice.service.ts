@@ -159,18 +159,26 @@ export class InvoiceService {
 
       // Extract unique contracts and cost center project IDs for batch processing
       const invoiceProjectItems = await this.invoiceRepository.findAllInvoiceProjectItems();
-      const costCenterProjects = await this.costCenterRepository.findAll();
+      const costCenters = await this.costCenterRepository.findClients();
 
       const responseData = data.rows.map(invoice => {
         const totalValue = invoiceProjectItems
           .find(item => item.idInvoice === invoice.idInvoice && item.contract === invoice.contract)
           ?.invoicedQuantity || 0;
 
-        const costCenterProject = costCenterProjects.rows.find(ccp => ccp.idCostCenterProject === invoice.idCostCenterProject);
+        // Find the corresponding cost center project for this invoice, CostCenterProject is assumed to be included in the invoice model
+        // and can be null, idCostCenterProject is a field of the CostCenterProject model
+        // so we have CostCenter -> CostCenterProject -> idCostCenterProject
+        const costCenterProject = costCenters.filter(cc =>
+          cc.CostCenterProjects &&
+          Array.isArray(cc.CostCenterProjects) &&
+          cc.CostCenterProjects.find((ccp: any) => ccp.idCostCenterProject === invoice.idCostCenterProject)
+        );
+        console.log(JSON.stringify(costCenterProject));
         return {
           ...invoice.toJSON(),
           totalValue,
-          client: costCenterProject ? costCenterProject.client : null,
+          client: costCenterProject && costCenterProject.length > 0 ? costCenterProject[0].name : null
         };
       });
 
