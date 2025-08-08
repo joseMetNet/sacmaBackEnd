@@ -10,7 +10,7 @@ export class ProjectItem extends Model {
   declare quantity: string;
   declare unitPrice: string;
   declare total: string;
-  declare invoicedQuantity: string;
+  declare invoicedQuantity?: string;
 }
 
 ProjectItem.init(

@@ -7,6 +7,7 @@ import { CustomError, deleteFile, uploadFile } from "../../utils";
 import crypto from "crypto";
 import { CostCenterRepository } from "../cost-center/cost-center.repository";
 import { Op } from "sequelize";
+import { dbConnection } from "../../config/database";
 
 export class InvoiceService {
   private readonly invoiceRepository: InvoiceRepository;
@@ -21,32 +22,44 @@ export class InvoiceService {
   }
 
   create = async (invoiceData: CreateInvoiceDTO, filePath?: string): Promise<ResponseEntity> => {
+    // Use database transaction for data consistency
+    const transaction = await dbConnection.transaction();
+
     try {
-      let documentUrl = undefined;
+      let documentUrl: string | undefined = undefined;
       if (filePath) {
         const identifier = crypto.randomUUID();
         const contentType = "application/pdf";
-        const response = await uploadFile(filePath, identifier, contentType, "invoice");
-        if (response instanceof CustomError) {
-          console.error(response);
-          return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to upload document" });
+        const uploadResponse = await uploadFile(filePath, identifier, contentType, "invoice");
+
+        if (uploadResponse instanceof CustomError) {
+          console.error("File upload failed:", uploadResponse);
+          await transaction.rollback();
+          return BuildResponse.buildErrorResponse(
+            StatusCode.InternalErrorServer,
+            { message: "Failed to upload document" }
+          );
         }
+
         documentUrl = `https://sacmaback.blob.core.windows.net/invoice/${identifier}.pdf`;
       }
 
       const invoicePayload = {
         ...invoiceData,
         documentUrl,
-        idInvoiceStatus: 1  // Default value for new invoices
+        idInvoiceStatus: 1
       };
 
       const response = await this.invoiceRepository.create(invoicePayload);
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
     } catch (err: unknown) {
-      console.error(err);
+      // Rollback transaction on any error
+      await transaction.rollback();
+
+      console.error("Error creating invoice:", err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
-        { message: err instanceof Error ? err.message : "Unknown error" }
+        { message: err instanceof Error ? err.message : "Unknown error occurred while creating invoice" }
       );
     }
   };
@@ -244,7 +257,7 @@ export class InvoiceService {
       filter.idInvoiceStatus = request.idInvoiceStatus;
     }
 
-    if(request.invoice) {
+    if (request.invoice) {
       filter.invoice = {
         [Op.like]: `%${request.invoice}%`
       };
