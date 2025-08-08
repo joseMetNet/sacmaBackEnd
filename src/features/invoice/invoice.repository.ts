@@ -1,7 +1,5 @@
 import { Invoice } from "./invoice.model";
 import { InvoiceStatus } from "./invoice-status.model";
-import { ProjectItem } from "../cost-center/project-item.model";
-import { Op, literal } from "sequelize";
 import { CostCenterProject } from "../cost-center/cost-center-project.model";
 import { InvoiceProjectItem } from "./invoice-project-item.model";
 
@@ -57,23 +55,6 @@ export class InvoiceRepository {
     });
   }
 
-  async calculateTotalValueByContract(contract: string): Promise<number> {
-    const result = await ProjectItem.findAll({
-      where: {
-        contract: contract,
-        invoicedQuantity: {
-          [Op.ne]: null
-        }
-      },
-      attributes: [
-        [literal("SUM(CAST(unitPrice AS DECIMAL) * CAST(invoicedQuantity AS DECIMAL))"), "totalValue"]
-      ],
-      raw: true
-    }) as any[];
-
-    return parseFloat(result[0]?.totalValue) || 0;
-  }
-
   async findAllInvoiceStatus(): Promise<InvoiceStatus[]> {
     return await InvoiceStatus.findAll();
   }
@@ -82,11 +63,10 @@ export class InvoiceRepository {
   async createInvoiceProjectItem(invoiceProjectItemData: Partial<InvoiceProjectItem>): Promise<InvoiceProjectItem> {
     return await InvoiceProjectItem.create(invoiceProjectItemData);
   }
-  // Method to find invoice project items by invoice ID
-  async findInvoiceProjectItemsByInvoiceId(idInvoice: number): Promise<InvoiceProjectItem[]> {
-    return await InvoiceProjectItem.findAll({
-      where: { idInvoice: idInvoice }
-    });
+
+  // Find all invoice project items
+  async findAllInvoiceProjectItems(): Promise<InvoiceProjectItem[]> {
+    return await InvoiceProjectItem.findAll();
   }
 
   // Method to delete invoice project items by invoice ID

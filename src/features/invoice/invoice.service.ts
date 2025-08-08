@@ -156,47 +156,24 @@ export class InvoiceService {
       }
 
       // Extract unique contracts and cost center project IDs for batch processing
-      const uniqueContracts = [...new Set(data.rows.map(invoice => invoice.contract))];
-      const uniqueCostCenterProjectIds = [...new Set(data.rows.map(invoice => invoice.idCostCenterProject))];
+      const invoiceProjectItems = await this.invoiceRepository.findAllInvoiceProjectItems();
+      const costCenterProjects = await this.costCenterRepository.findAll();
 
-      // Batch calculate total values for all unique contracts
-      const contractTotalValues = await Promise.all(
-        uniqueContracts.map(async (contract) => {
-          const totalValue = await this.invoiceRepository.calculateTotalValueByContract(contract);
-          return { contract, totalValue };
-        })
-      );
+      const responseData = data.rows.map(invoice => {
+        const totalValue = invoiceProjectItems
+          .find(item => item.idInvoice === invoice.idInvoice && item.contract === invoice.contract)
+          ?.invoicedQuantity || 0;
 
-      // Batch fetch clients for all unique cost center project IDs
-      const projectClients = await Promise.all(
-        uniqueCostCenterProjectIds.map(async (id) => {
-          const client = await this.costCenterRepository.findClientByCostCenterProjectId(id);
-          return { idCostCenterProject: id, client };
-        })
-      );
-
-      // Create lookup maps for O(1) access
-      const contractTotalValueMap = new Map(
-        contractTotalValues.map(item => [item.contract, item.totalValue])
-      );
-      const clientMap = new Map(
-        projectClients.map(item => [item.idCostCenterProject, item.client])
-      );
-
-      const rowsWithEnhancedData = data.rows.map(invoice => {
-        const invoiceData = invoice.toJSON();
-        const totalValue = contractTotalValueMap.get(invoice.contract) || 0;
-        const client = clientMap.get(invoice.idCostCenterProject) || null;
-
+        const costCenterProject = costCenterProjects.rows.find(ccp => ccp.idCostCenterProject === invoice.idCostCenterProject);
         return {
-          ...invoiceData,
+          ...invoice.toJSON(),
           totalValue,
-          client
+          client: costCenterProject ? costCenterProject.client : null,
         };
       });
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
-        data: rowsWithEnhancedData,
+        data: responseData,
         totalItems: data.count,
         currentPage: page,
         totalPages: Math.ceil(data.count / pageSize)
