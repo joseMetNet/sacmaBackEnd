@@ -7,6 +7,7 @@ import * as ExcelJS from "exceljs";
 import { StatusCode } from "../../utils/general.interfase";
 import { BuildResponse } from "../../utils/build-response";
 import { InvoiceProjectItem } from "../invoice";
+import { idInvoice } from "../invoice/invoice.schema";
 
 
 class CostCenterService {
@@ -347,7 +348,10 @@ class CostCenterService {
       }
 
       const invoiceProjectItems = await InvoiceProjectItem.findAll({
-        where: { contract: request.contract },
+        where: { 
+          contract: request.contract,
+          idInvoice: request.idInvoice
+        },
       });
 
       if (invoiceProjectItems.length === 0) {
