@@ -355,7 +355,6 @@ class CostCenterService {
       }
 
       const latestIdInvoice = Math.max(...invoiceProjectItems.map(inv => inv.idInvoice));
-      console.log("Latest ID Invoice:", latestIdInvoice);
 
       const response = data.rows.map(item => {
         return {
@@ -367,9 +366,9 @@ class CostCenterService {
           "quantity": item.quantity,
           "unitPrice": item.unitPrice,
           "total": item.total,
-          "invoicedQuantity": invoiceProjectItems.
+          "invoicedQuantity": request.idInvoice == 0? invoiceProjectItems.
             find(pi => pi.idProjectItem === item.idProjectItem && pi.idInvoice === latestIdInvoice)?.
-            invoicedQuantity || null,
+            invoicedQuantity || null: ""
         };
       });
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);

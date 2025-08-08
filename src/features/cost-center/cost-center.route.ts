@@ -1237,6 +1237,11 @@ export function costCenterRoutes(app: Application): void {
  *           type: string
  *         required: true
  *         description: Contract name to filter by
+ *       - in: query
+ *         name: idInvoice
+ *         schema:
+ *           type: integer
+ *         description: ID of the invoice
  *     responses:
  *       200:
  *         description: A list of project items filtered by contract

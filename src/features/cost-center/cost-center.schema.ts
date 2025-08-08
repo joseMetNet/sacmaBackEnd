@@ -163,4 +163,5 @@ export const updateMultipleProjectItems = z.object({
 
 export const findProjectItemsByContract = z.object({
   contract: z.string(),
+  idInvoice: z.coerce.number()
 });

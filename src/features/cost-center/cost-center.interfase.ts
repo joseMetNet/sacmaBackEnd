@@ -40,6 +40,7 @@ export interface FindAllProjectItemDTO {
 
 export interface FindProjectItemsByContractDTO {
   contract: string;
+  idInvoice: number;
 }
 
 export interface ListProjectContractsDTO {
