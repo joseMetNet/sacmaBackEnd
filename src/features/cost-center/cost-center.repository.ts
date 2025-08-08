@@ -222,11 +222,11 @@ export class CostCenterRepository {
     return updatedItems;
   }
 
-  async upsertInvoiceProjectItems(invoiceProjectItems: Partial<InvoiceProjectItem>[]): Promise<ProjectItem[]> {
-    const updatedItems: ProjectItem[] = [];
+  async upsertInvoiceProjectItems(invoiceProjectItems: Partial<InvoiceProjectItem>[]): Promise<InvoiceProjectItem[]> {
+    const updatedItems: InvoiceProjectItem[] = [];
 
     for (const item of invoiceProjectItems) {
-      const [, updated] = await ProjectItem.update(
+      await InvoiceProjectItem.update(
         { invoicedQuantity: item.invoicedQuantity },
         {
           where: {
@@ -235,8 +235,13 @@ export class CostCenterRepository {
           returning: true
         }
       );
+      const updated = await InvoiceProjectItem.findAll({
+        where: {
+          idInvoice: item.idInvoice, idProjectItem: item.idProjectItem, contract: item.contract
+        }
+      });
       if (updated.length > 0) {
-        updatedItems.push(updated[0]);
+        updatedItems.push(...updated);
       }
     }
 
