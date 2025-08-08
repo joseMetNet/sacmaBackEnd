@@ -3,6 +3,7 @@ import { InvoiceStatus } from "./invoice-status.model";
 import { ProjectItem } from "../cost-center/project-item.model";
 import { Op, literal } from "sequelize";
 import { CostCenterProject } from "../cost-center/cost-center-project.model";
+import { InvoiceProjectItem } from "./invoice-project-item.model";
 
 export class InvoiceRepository {
   constructor() { }
@@ -75,5 +76,41 @@ export class InvoiceRepository {
 
   async findAllInvoiceStatus(): Promise<InvoiceStatus[]> {
     return await InvoiceStatus.findAll();
+  }
+
+  // Method to create an invoice project item
+  async createInvoiceProjectItem(invoiceProjectItemData: Partial<InvoiceProjectItem>): Promise<InvoiceProjectItem> {
+    return await InvoiceProjectItem.create(invoiceProjectItemData);
+  }
+  // Method to find invoice project items by invoice ID
+  async findInvoiceProjectItemsByInvoiceId(idInvoice: number): Promise<InvoiceProjectItem[]> {
+    return await InvoiceProjectItem.findAll({
+      where: { idInvoice: idInvoice }
+    });
+  }
+
+  // Method to delete invoice project items by invoice ID
+  async deleteInvoiceProjectItemsByInvoiceId(idInvoice: number): Promise<number> {
+    return await InvoiceProjectItem.destroy({
+      where: { idInvoice: idInvoice }
+    });
+  }
+
+  async updateInvoiceProjectItem(invoiceProjectItemData: Partial<InvoiceProjectItem>): Promise<[number, InvoiceProjectItem[]]> {
+    return await InvoiceProjectItem.update(invoiceProjectItemData, {
+      where: { idInvoiceProjectItem: invoiceProjectItemData.idInvoiceProjectItem },
+      returning: true
+    });
+  }
+
+  async deleteInvoiceProjectItem(idInvoiceProjectItem: number): Promise<number> {
+    return await InvoiceProjectItem.destroy({
+      where: { idInvoiceProjectItem: idInvoiceProjectItem }
+    });
+  }
+
+  // bulk create invoice project items
+  async bulkCreate(invoiceProjectItems: Partial<InvoiceProjectItem>[]): Promise<InvoiceProjectItem[]> {
+    return await InvoiceProjectItem.bulkCreate(invoiceProjectItems);
   }
 }

@@ -828,6 +828,12 @@ class CostCenterService {
 
   upsertInvoiceProjectItems = async (request: types.UpdateMultipleProjectItemsDTO): Promise<ResponseEntity> => {
     try {
+      const sumIdInvoice = request.projectItems.reduce((sum, item) => sum + (item.idInvoice || 0), 0);
+      if (sumIdInvoice === 0) {
+        const updatedItems = await this.costCenterRepository.updateProjectItems(request.projectItems);
+        return BuildResponse.buildSuccessResponse(StatusCode.Ok, updatedItems);
+      }
+
       const updatedItems = await this.costCenterRepository.upsertInvoiceProjectItems(request.projectItems);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, updatedItems);
     }

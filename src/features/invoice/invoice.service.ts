@@ -26,6 +26,7 @@ export class InvoiceService {
     const transaction = await dbConnection.transaction();
 
     try {
+      // Handle file upload first (fail fast if upload fails)
       let documentUrl: string | undefined = undefined;
       if (filePath) {
         const identifier = crypto.randomUUID();
@@ -47,11 +48,53 @@ export class InvoiceService {
       const invoicePayload = {
         ...invoiceData,
         documentUrl,
-        idInvoiceStatus: 1
+        idInvoiceStatus: 1  // Default value for new invoices
       };
 
-      const response = await this.invoiceRepository.create(invoicePayload);
-      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
+      // Create invoice within transaction
+      const newInvoice = await this.invoiceRepository.create(invoicePayload);
+
+      // Fetch project items with contract filter
+      const projectItemsFilter = {
+        idCostCenterProject: invoicePayload.idCostCenterProject,
+        contract: { [Op.ne]: null }
+      };
+
+      const projectItemsResult = await this.costCenterRepository.findAllProjectItem(
+        projectItemsFilter,
+        100,
+        0
+      );
+
+      const projectItems = projectItemsResult.rows;
+      if (projectItems.length > 0) {
+        console.log(`Processing ${projectItems.length} project items for invoice ${newInvoice.idInvoice}`);
+
+        // Prepare invoice-project item relationships for bulk insert
+        const invoiceProjectItems = projectItems.map(item => ({
+          idInvoice: newInvoice.idInvoice,
+          idProjectItem: item.idProjectItem,
+          invoicedQuantity: item.invoicedQuantity,
+          contract: item.contract
+        }));
+
+        // Bulk create invoice project items
+        await this.invoiceRepository.bulkCreate(invoiceProjectItems);
+
+        // get project item id and contract
+        const projectItemData = projectItems.map(pi => ({
+          projectItemId: pi.idProjectItem,
+          contract: pi.contract
+        }));
+        // Update project items to set invoicedQuantity to null
+        await this.costCenterRepository.setInvoicedQuantityToNull(projectItemData);
+      }
+
+      // Commit transaction
+      await transaction.commit();
+
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, newInvoice);
+
     } catch (err: unknown) {
       // Rollback transaction on any error
       await transaction.rollback();

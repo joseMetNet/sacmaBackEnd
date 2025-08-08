@@ -1300,7 +1300,9 @@ export function costCenterRoutes(app: Application): void {
  *                       type: string
  *                       description: Invoiced quantity for the item
  *                   required:
+ *                     - contract
  *                     - idProjectItem
+ *                     - invoicedQuantity
  *             required:
  *               - projectItems
  *     responses:

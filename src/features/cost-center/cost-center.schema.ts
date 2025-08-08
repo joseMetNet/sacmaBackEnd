@@ -154,7 +154,7 @@ export const updateCostCenterContact = z.object({
 
 export const updateMultipleProjectItems = z.object({
   projectItems: z.array(z.object({
-    idInvoice: z.coerce.number(),
+    idInvoice: z.coerce.number().optional(),
     idProjectItem: z.coerce.number(),
     contract: z.string(),
     invoicedQuantity: z.string(),

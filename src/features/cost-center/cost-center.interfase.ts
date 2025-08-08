@@ -137,7 +137,7 @@ export interface CreateProjectItemDTO {
 
 export interface UpdateMultipleProjectItemsDTO {
   projectItems: {
-    idInvoice: number;
+    idInvoice?: number;
     idProjectItem: number;
     contract: string;
     invoicedQuantity: string;

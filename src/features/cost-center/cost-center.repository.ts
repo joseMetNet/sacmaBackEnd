@@ -205,6 +205,23 @@ export class CostCenterRepository {
     });
   }
 
+  async updateProjectItems(projectItemsData: Partial<ProjectItem>[]): Promise<ProjectItem[]> {
+    const updatedItems: ProjectItem[] = [];
+    for (const item of projectItemsData) {
+      await ProjectItem.update(
+        { invoicedQuantity: item.invoicedQuantity },
+        {
+          where: { idProjectItem: item.idProjectItem },
+        }
+      );
+      const updated = await ProjectItem.findAll({
+        where: { idProjectItem: item.idProjectItem }
+      });
+      updatedItems.push(...updated);
+    }
+    return updatedItems;
+  }
+
   async upsertInvoiceProjectItems(invoiceProjectItems: Partial<InvoiceProjectItem>[]): Promise<ProjectItem[]> {
     const updatedItems: ProjectItem[] = [];
 
@@ -221,6 +238,31 @@ export class CostCenterRepository {
       if (updated.length > 0) {
         updatedItems.push(updated[0]);
       }
+    }
+
+    return updatedItems;
+  }
+
+  async setInvoicedQuantityToNull(data: {projectItemId: number, contract: string}[]): Promise<ProjectItem[]> {
+    const updatedItems: ProjectItem[] = [];
+
+    for (const item of data) {
+      await ProjectItem.update(
+        { invoicedQuantity: null },
+        {
+          where: {
+            idProjectItem: item.projectItemId,
+            contract: item.contract
+          }
+        }
+      );
+      const updated = await ProjectItem.findAll({
+        where: {
+          idProjectItem: item.projectItemId,
+          contract: item.contract
+        }
+      });
+      updatedItems.push(...updated);
     }
 
     return updatedItems;
