@@ -118,13 +118,15 @@ export class InvoiceService {
       }
 
       // Calculate totalValue for this invoice
-      const totalValue = await this.invoiceRepository.calculateTotalValueByContract(data.contract);
-      const invoiceWithTotalValue = {
+      const invoiceProjectItems = await this.invoiceRepository.findAllInvoiceProjectItems();
+      const totalValue = invoiceProjectItems
+        .find(item => item.idInvoice === data.idInvoice && item.contract === data.contract)
+        ?.invoicedQuantity || 0;
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         ...data.toJSON(),
         totalValue
-      };
-
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, invoiceWithTotalValue);
+      });
     }
     catch (err: unknown) {
       console.error(err);
