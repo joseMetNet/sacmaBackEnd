@@ -430,7 +430,7 @@ export class RevenueCenterService {
       // Now use the idCostCenterProject to find project items
       const filter = { idCostCenterProject: revenueCenter.idCostCenterProject };
       const data = await this.costCenterRepository.findAllProjectItem(filter, -1, 0); // Get all items without pagination
-
+      
       // Group items by contract number without aggregation
       const contractGroups: Record<string, Array<{
         idProjectItem: number;
