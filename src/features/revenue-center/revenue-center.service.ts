@@ -430,7 +430,6 @@ export class RevenueCenterService {
       // Now use the idCostCenterProject to find project items
       const filter = { idCostCenterProject: revenueCenter.idCostCenterProject };
       const data = await this.costCenterRepository.findAllProjectItem(filter, -1, 0); // Get all items without pagination
-      console.log(JSON.stringify(data));
 
       // Group items by contract number without aggregation
       const contractGroups: Record<string, Array<{
@@ -462,9 +461,6 @@ export class RevenueCenterService {
           invoicedQuantity: item.invoicedQuantity ? parseFloat(item.invoicedQuantity) : null
         });
       });
-
-      console.log("============================");
-      console.log(JSON.stringify(contractGroups));
 
       // Convert grouped data to the desired format
       const contracts = Object.entries(contractGroups).map(([contractNumber, items]) => ({
