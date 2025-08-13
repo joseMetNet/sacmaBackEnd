@@ -430,48 +430,46 @@ export class RevenueCenterService {
       // Now use the idCostCenterProject to find project items
       const filter = { idCostCenterProject: revenueCenter.idCostCenterProject };
       const data = await this.costCenterRepository.findAllProjectItem(filter, -1, 0); // Get all items without pagination
+      console.log(JSON.stringify(data));
 
-      // Group items by contract number and then by project item
-      const contractGroups = new Map<string, Map<string, { quantity: number; unitPrice: number; total: number }>>();
+      // Group items by contract number without aggregation
+      const contractGroups: Record<string, Array<{
+        idProjectItem: number;
+        projectItem: string;
+        unitMeasure: string;
+        quantity: number;
+        unitPrice: number;
+        total: number;
+        invoicedQuantity: number | null;
+      }>> = {};
 
       data.rows.forEach((item) => {
-        const quantity = parseFloat(item.quantity);
-        const unitPrice = parseFloat(item.unitPrice);
-        const totalValue = quantity * unitPrice;
         const contractNumber = item.contract;
-        const projectItemName = item.item;
 
         // Initialize contract group if it doesn't exist
-        if (!contractGroups.has(contractNumber)) {
-          contractGroups.set(contractNumber, new Map());
+        if (!contractGroups[contractNumber]) {
+          contractGroups[contractNumber] = [];
         }
 
-        const contractItems = contractGroups.get(contractNumber)!;
-
-        // If project item already exists in this contract, sum the quantities
-        if (contractItems.has(projectItemName)) {
-          const existingItem = contractItems.get(projectItemName)!;
-          existingItem.quantity += quantity;
-          existingItem.total = existingItem.quantity * existingItem.unitPrice;
-        } else {
-          // Add new project item to this contract
-          contractItems.set(projectItemName, {
-            quantity: quantity,
-            unitPrice: unitPrice,
-            total: totalValue
-          });
-        }
+        // Add the complete item to the contract group
+        contractGroups[contractNumber].push({
+          idProjectItem: item.idProjectItem,
+          projectItem: item.item,
+          unitMeasure: item.unitMeasure,
+          quantity: parseFloat(item.quantity),
+          unitPrice: parseFloat(item.unitPrice),
+          total: parseFloat(item.total),
+          invoicedQuantity: item.invoicedQuantity ? parseFloat(item.invoicedQuantity) : null
+        });
       });
 
+      console.log("============================");
+      console.log(JSON.stringify(contractGroups));
+
       // Convert grouped data to the desired format
-      const contracts = Array.from(contractGroups.entries()).map(([contractNumber, itemsMap]) => ({
+      const contracts = Object.entries(contractGroups).map(([contractNumber, items]) => ({
         contractNumber: contractNumber,
-        items: Array.from(itemsMap.entries()).map(([projectItemName, itemData]) => ({
-          projectItem: projectItemName,
-          quantity: itemData.quantity,
-          unitPrice: itemData.unitPrice,
-          total: itemData.total
-        }))
+        items: items
       }));
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, contracts);
