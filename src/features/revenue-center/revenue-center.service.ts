@@ -533,7 +533,8 @@ export class RevenueCenterService {
           ...item,
           yield: 1,
           budgeted: budgetedQuantity,
-          contracted: contractedQuantity
+          contracted: contractedQuantity,
+          diff: budgetedQuantity - contractedQuantity
         };
       });
 
