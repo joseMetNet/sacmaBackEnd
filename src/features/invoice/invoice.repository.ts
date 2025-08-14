@@ -2,6 +2,7 @@ import { Invoice } from "./invoice.model";
 import { InvoiceStatus } from "./invoice-status.model";
 import { CostCenterProject } from "../cost-center/cost-center-project.model";
 import { InvoiceProjectItem } from "./invoice-project-item.model";
+import { isPipelineLike } from "@azure/storage-blob";
 
 export class InvoiceRepository {
   constructor() { }
@@ -26,15 +27,20 @@ export class InvoiceRepository {
     limit: number,
     offset: number
   ): Promise<{ rows: Invoice[], count: number }> {
-    const invoice = await Invoice.findAndCountAll({
+    const queryOptions: any = {
       include: [{ all: true }],
       nest: true,
       where: filter,
-      limit,
-      offset,
       distinct: true,
       order: [["idInvoice", "DESC"]]
-    });
+    };
+
+    if(limit > 0) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+
+    const invoice = await Invoice.findAndCountAll(queryOptions);
     return invoice;
   }
 
@@ -65,7 +71,10 @@ export class InvoiceRepository {
   }
 
   // Find all invoice project items
-  async findAllInvoiceProjectItems(): Promise<InvoiceProjectItem[]> {
+  async findAllInvoiceProjectItems(filter?: { [key: string]: any }): Promise<InvoiceProjectItem[]> {
+    if (filter) {
+      return await InvoiceProjectItem.findAll({ where: filter });
+    }
     return await InvoiceProjectItem.findAll();
   }
 

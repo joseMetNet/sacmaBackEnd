@@ -2,28 +2,32 @@ import { RevenueCenterRepository } from "./revenue-center.repository";
 import { ResponseEntity } from "../employee/interface";
 import { BuildResponse } from "../../utils/build-response";
 import { findPagination, StatusCode } from "../../utils/general.interfase";
-import { IRevenueCenterCreate, IRevenueCenterUpdate } from "./revenue-center.interface";
+import { IRevenueCenterUpdate } from "./revenue-center.interface";
 import * as schemas from "./revenue-center.schema";
 import { ExpenditureRepository } from "../expenditure";
 import { CostCenterRepository } from "../cost-center/cost-center.repository";
 import { QuotationRepository } from "../quotation/quotation.repository";
+import { InvoiceRepository } from "../invoice/invoice.repository";
+import { InvoiceProjectItem } from "../invoice";
 
 export class RevenueCenterService {
   private readonly revenueCenterRepository: RevenueCenterRepository;
   private readonly expenditureRepository: ExpenditureRepository;
   private readonly costCenterRepository: CostCenterRepository;
   private readonly quotationRepository: QuotationRepository;
-
+  private readonly invoiceRepository: InvoiceRepository;
   constructor(
     revenueCenterRepository: RevenueCenterRepository,
     expenditureRepository: ExpenditureRepository,
     costCenterRepository: CostCenterRepository,
-    quotationRepository: QuotationRepository
+    quotationRepository: QuotationRepository,
+    invoiceRepository: InvoiceRepository
   ) {
     this.revenueCenterRepository = revenueCenterRepository;
     this.expenditureRepository = expenditureRepository;
     this.costCenterRepository = costCenterRepository;
     this.quotationRepository = quotationRepository;
+    this.invoiceRepository = invoiceRepository;
   }
 
   findAll = async (request: schemas.FindAllSchema): Promise<ResponseEntity> => {
@@ -430,7 +434,9 @@ export class RevenueCenterService {
       // Now use the idCostCenterProject to find project items
       const filter = { idCostCenterProject: revenueCenter.idCostCenterProject };
       const data = await this.costCenterRepository.findAllProjectItem(filter, -1, 0); // Get all items without pagination
-      
+      const invoices = await this.invoiceRepository.findAll({}, -1, 0);
+      const invoiceProjectItemData = await this.invoiceRepository.findAllInvoiceProjectItems(); // Get all invoices without pagination
+
       // Group items by contract number without aggregation
       const contractGroups: Record<string, Array<{
         idProjectItem: number;
@@ -440,6 +446,7 @@ export class RevenueCenterService {
         unitPrice: number;
         total: number;
         invoicedQuantity: number | null;
+        invoiceGroups: Record<string, Array<any>>;
       }>> = {};
 
       data.rows.forEach((item) => {
@@ -458,13 +465,24 @@ export class RevenueCenterService {
           quantity: parseFloat(item.quantity),
           unitPrice: parseFloat(item.unitPrice),
           total: parseFloat(item.total),
-          invoicedQuantity: item.invoicedQuantity ? parseFloat(item.invoicedQuantity) : null
+          invoicedQuantity: item.invoicedQuantity ? parseFloat(item.invoicedQuantity) : null,
+          invoiceGroups: {
+            items: invoiceProjectItemData
+              .filter((invItem) => invItem.idProjectItem === item.idProjectItem)
+              .map((invItem) => ({
+                invoice: invoices.rows.find(i => i.idInvoice === invItem.idInvoice)?.invoice || "Unknown",
+                quantity: parseFloat(invItem.invoicedQuantity),
+                total: parseFloat(invItem.invoicedQuantity) * parseFloat(item.unitPrice)
+              }))
+          },
         });
+
       });
 
       // Convert grouped data to the desired format
       const contracts = Object.entries(contractGroups).map(([contractNumber, items]) => ({
         contractNumber: contractNumber,
+        invoices: invoices.rows.filter(i => i.contract === contractNumber).map(i => i.invoice),
         items: items
       }));
 

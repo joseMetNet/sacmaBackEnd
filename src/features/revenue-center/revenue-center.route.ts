@@ -6,6 +6,7 @@ import { verifyToken } from "../../middlewares";
 import { ExpenditureRepository } from "../expenditure";
 import { CostCenterRepository } from "../cost-center/cost-center.repository";
 import { QuotationRepository } from "../quotation/quotation.repository";
+import { InvoiceRepository } from "../invoice/invoice.repository";
 
 export function revenueCenterRoutes(app: Application): void {
   const routes: Router = Router();
@@ -13,7 +14,8 @@ export function revenueCenterRoutes(app: Application): void {
   const expenditureRepository = new ExpenditureRepository();
   const costCenterRepository = new CostCenterRepository();
   const quotationRepository = new QuotationRepository();
-  const revenueCenterService = new RevenueCenterService(revenueCenterRepository, expenditureRepository, costCenterRepository, quotationRepository);
+  const invoiceRepository = new InvoiceRepository();
+  const revenueCenterService = new RevenueCenterService(revenueCenterRepository, expenditureRepository, costCenterRepository, quotationRepository, invoiceRepository);
   const revenueCenterController = new RevenueCenterController(revenueCenterService);
 
   routes.get("/v1/revenue-center", [verifyToken], revenueCenterController.findAll);
