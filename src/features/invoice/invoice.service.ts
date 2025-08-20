@@ -157,10 +157,8 @@ export class InvoiceService {
         });
       }
 
-      // Extract unique values for optimized queries
       const uniqueContracts = [...new Set(data.rows.map(invoice => invoice.contract).filter(Boolean))];
 
-      // Parallel execution of optimized queries
       const [invoiceProjectItems, costCenters, projectItems] = await Promise.all([
         this.invoiceRepository.findAllInvoiceProjectItems(),
         this.costCenterRepository.findClients(),
@@ -170,7 +168,6 @@ export class InvoiceService {
           : Promise.resolve({ rows: [], count: 0 })
       ]);
 
-      // Create optimized lookup maps for O(1) access instead of O(n) searches
       const invoiceProjectItemsMap = new Map<string, typeof invoiceProjectItems[0]>();
       invoiceProjectItems.forEach(item => {
         const key = `${item.contract}-${item.idProjectItem}`;
@@ -195,7 +192,6 @@ export class InvoiceService {
         }
       });
 
-      // Optimized mapping with O(1) lookups
       const responseData = data.rows.map(invoice => {
         let totalValue = 0;
 
