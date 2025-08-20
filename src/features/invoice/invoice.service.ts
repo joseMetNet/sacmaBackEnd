@@ -157,25 +157,69 @@ export class InvoiceService {
         });
       }
 
-      // Extract unique contracts and cost center project IDs for batch processing
-      const invoiceProjectItems = await this.invoiceRepository.findAllInvoiceProjectItems();
-      const costCenters = await this.costCenterRepository.findClients();
+      // Extract unique values for optimized queries
+      const uniqueContracts = [...new Set(data.rows.map(invoice => invoice.contract).filter(Boolean))];
 
+      // Parallel execution of optimized queries
+      const [invoiceProjectItems, costCenters, projectItems] = await Promise.all([
+        this.invoiceRepository.findAllInvoiceProjectItems(),
+        this.costCenterRepository.findClients(),
+        // Only fetch project items for the contracts we actually need
+        uniqueContracts.length > 0
+          ? this.costCenterRepository.findAllProjectItem({ contract: { [Op.in]: uniqueContracts } }, -1, 0)
+          : Promise.resolve({ rows: [], count: 0 })
+      ]);
+
+      // Create optimized lookup maps for O(1) access instead of O(n) searches
+      const invoiceProjectItemsMap = new Map<string, typeof invoiceProjectItems[0]>();
+      invoiceProjectItems.forEach(item => {
+        const key = `${item.contract}-${item.idProjectItem}`;
+        invoiceProjectItemsMap.set(key, item);
+      });
+
+      const projectItemsByContract = new Map<string, typeof projectItems.rows>();
+      projectItems.rows.forEach(item => {
+        if (!projectItemsByContract.has(item.contract)) {
+          projectItemsByContract.set(item.contract, []);
+        }
+        projectItemsByContract.get(item.contract)!.push(item);
+      });
+
+      // Create cost center lookup map with flattened structure
+      const costCenterMap = new Map<number, string>();
+      costCenters.forEach(cc => {
+        if (cc.CostCenterProjects && Array.isArray(cc.CostCenterProjects)) {
+          cc.CostCenterProjects.forEach((ccp: { idCostCenterProject: number }) => {
+            costCenterMap.set(ccp.idCostCenterProject, cc.name);
+          });
+        }
+      });
+
+      // Optimized mapping with O(1) lookups
       const responseData = data.rows.map(invoice => {
-        const totalValue = invoiceProjectItems
-          .find(item => item.idInvoice === invoice.idInvoice && item.contract === invoice.contract)
-          ?.invoicedQuantity || 0;
+        let totalValue = 0;
 
-        const costCenterProject = costCenters.filter(cc =>
-          cc.CostCenterProjects &&
-          Array.isArray(cc.CostCenterProjects) &&
-          cc.CostCenterProjects.find((ccp: any) => ccp.idCostCenterProject === invoice.idCostCenterProject)
-        );
-        console.log(JSON.stringify(costCenterProject));
+        // Get project items for this contract efficiently
+        const contractItems = projectItemsByContract.get(invoice.contract) || [];
+
+        for (const item of contractItems) {
+          const invoiceItemKey = `${item.contract}-${item.idProjectItem}`;
+          const invoiceProjectItem = invoiceProjectItemsMap.get(invoiceItemKey);
+
+          if (invoiceProjectItem) {
+            const invoicedQuantity = parseFloat(invoiceProjectItem.invoicedQuantity) || 0;
+            const unitPrice = parseFloat(item.unitPrice) || 0;
+            totalValue += invoicedQuantity * unitPrice;
+          }
+        }
+
+        // Get client name efficiently
+        const client = costCenterMap.get(invoice.idCostCenterProject) || null;
+
         return {
           ...invoice.toJSON(),
           totalValue,
-          client: costCenterProject && costCenterProject.length > 0 ? costCenterProject[0].name : null
+          client
         };
       });
 
