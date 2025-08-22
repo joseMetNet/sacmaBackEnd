@@ -245,43 +245,7 @@ export class CostCenterRepository {
     return updatedItems;
   }
 
-  async upsertInvoiceProjectItemsTESTS(invoiceProjectItems: Partial<InvoiceProjectItem>[]): Promise<InvoiceProjectItem[]> {
-    const updatedItems: InvoiceProjectItem[] = [];
-
-    for (const item of invoiceProjectItems) {
-      // Sequelize upsert: crea si no existe, actualiza si ya existe
-      const [record] = await InvoiceProjectItem.upsert(
-        {
-          idInvoice: item.idInvoice,
-          idProjectItem: item.idProjectItem,
-          contract: item.contract,
-          invoicedQuantity: item.invoicedQuantity
-        },
-        {
-          returning: true // ⚠️ PostgreSQL/SQLite: devuelve el registro, MySQL: no siempre lo devuelve
-        }
-      );
-
-      // Para motores que no soportan "returning" (ej: MySQL), record puede venir vacío
-      if (!record) {
-        const fetched = await InvoiceProjectItem.findOne({
-          where: {
-            idInvoice: item.idInvoice,
-            idProjectItem: item.idProjectItem,
-            contract: item.contract
-          }
-        });
-        if (fetched) updatedItems.push(fetched);
-      } else {
-        updatedItems.push(record);
-      }
-    }
-
-    return updatedItems;
-  }
-
-
-  async setInvoicedQuantityToNull(data: { projectItemId: number, contract: string }[]): Promise<ProjectItem[]> {
+  async setInvoicedQuantityToNull(data: {projectItemId: number, contract: string}[]): Promise<ProjectItem[]> {
     const updatedItems: ProjectItem[] = [];
 
     for (const item of data) {
