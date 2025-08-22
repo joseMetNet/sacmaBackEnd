@@ -343,12 +343,12 @@ class CostCenterService {
       const filter = { contract: request.contract };
       const data = await this.costCenterRepository.findAllProjectItem(filter, 0, 0);
 
-      if( data.count === 0) {
+      if (data.count === 0) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "No project items found for this contract" });
       }
 
       const invoiceProjectItems = await InvoiceProjectItem.findAll({
-        where: { 
+        where: {
           contract: request.contract,
           idInvoice: request.idInvoice
         },
@@ -370,7 +370,7 @@ class CostCenterService {
           "quantity": item.quantity,
           "unitPrice": item.unitPrice,
           "total": item.total,
-          "invoicedQuantity": request.idInvoice == 0? "": invoiceProjectItems.
+          "invoicedQuantity": request.idInvoice == 0 ? "" : invoiceProjectItems.
             find(pi => pi.idProjectItem === item.idProjectItem && pi.idInvoice === latestIdInvoice)?.
             invoicedQuantity || ""
         };
@@ -848,6 +848,37 @@ class CostCenterService {
       );
     }
   };
+
+  upsertInvoiceProjectItemsTESTS = async (request: types.UpdateMultipleProjectItemsDTO): Promise<ResponseEntity> => {
+    try {
+      // ✅ Forzamos a número para evitar concatenaciones de string
+      const sumIdInvoice = request.projectItems.reduce((sum, item) => sum + Number(item.idInvoice || 0), 0 );
+
+      if (sumIdInvoice === 0) {
+        // 👉 Caso: ningún item tiene factura
+        const updatedItems = await this.costCenterRepository.updateProjectItems(request.projectItems);
+        return BuildResponse.buildSuccessResponse(StatusCode.Ok, updatedItems);
+      }
+
+      // 👉 Caso: al menos un item tiene factura
+      const updatedItems = await this.costCenterRepository.upsertInvoiceProjectItems(request.projectItems);
+
+      // ✅ Si quieres calcular también la suma de cantidades facturadas:
+      const totalInvoiced = request.projectItems.reduce((sum, item) => sum + Number(item.invoicedQuantity || 0), 0);
+
+      // Puedes incluirlo en la respuesta si lo necesitas
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        updatedItems,
+        totalInvoiced, // 👈 total de la suma
+      });
+    } catch (err: any) {
+      console.error(err);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: err.message,
+      });
+    }
+  };
+
 }
 
 const costCenterRepository = new CostCenterRepository();
