@@ -31,6 +31,9 @@ export const updateRevenueCenterSchema = z.object({
   idQuotation: z.coerce.number().optional(),
   fromDate: z.string().optional(),
   toDate: z.string().optional(),
+  invoice: z.string().optional(),   // nuevo
+  spend: z.string().optional(),     // nuevo
+  utility: z.string().optional(),   // nuevo
 });
 
 export const findAllMaterialSchema = z.object({

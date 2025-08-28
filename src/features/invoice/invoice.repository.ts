@@ -43,6 +43,27 @@ export class InvoiceRepository {
     const invoice = await Invoice.findAndCountAll(queryOptions);
     return invoice;
   }
+  async findAllByRenueveCenter(
+    filter: { [key: string]: any },
+    limit: number,
+    offset: number
+  ): Promise<{ rows: Invoice[], count: number }> {
+    const queryOptions: any = {
+      include: [{ all: true }],
+      nest: true,
+      where: filter,
+      distinct: true,
+      order: [["idInvoice", "ASC"]]
+    };
+
+    if(limit > 0) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+
+    const invoice = await Invoice.findAndCountAll(queryOptions);
+    return invoice;
+  }
 
   async create(invoiceData: Partial<Invoice>): Promise<Invoice> {
     return await Invoice.create(invoiceData);

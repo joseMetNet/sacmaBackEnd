@@ -29,4 +29,7 @@ export interface IRevenueCenterUpdate {
   idQuotation?: number;
   fromDate?: string;
   toDate?: string;
+  invoice?: string;   // nuevo
+  spend?: string;     // nuevo
+  utility?: string;   // nuevo
 } 
