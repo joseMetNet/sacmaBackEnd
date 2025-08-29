@@ -244,11 +244,10 @@ export class InvoiceService {
         );
       }
 
-      let documentUrl = invoiceData.documentUrl;
+      let documentUrl = invoice.documentUrl; // tomar siempre el actual de DB
       if (filePath) {
-        // if documentUrl is provided, remove the old file
-        if (documentUrl) {
-          const oldIdentifier = documentUrl.split("/").pop()?.split(".")[0];
+        if (invoice.documentUrl) {
+          const oldIdentifier = invoice.documentUrl.split("/").pop()?.split(".")[0];
           if (oldIdentifier) {
             const oldFilePath = `invoice/${oldIdentifier}.pdf`;
             const deleteResponse = await deleteFile(oldFilePath, "invoice");
@@ -258,6 +257,7 @@ export class InvoiceService {
             }
           }
         }
+
         const identifier = crypto.randomUUID();
         const contentType = "application/pdf";
         const response = await uploadFile(filePath, identifier, contentType, "invoice");
@@ -265,19 +265,56 @@ export class InvoiceService {
           console.error(response);
           return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to upload document" });
         }
+
         documentUrl = `https://sacmaback.blob.core.windows.net/invoice/${identifier}.pdf`;
       }
 
+      // ⚠️ aquí quitamos documentUrl de invoiceData para evitar sobrescribir con el del body
+      const { documentUrl: _ignored, ...restInvoiceData } = invoiceData;
+
       const updatePayload = {
-        ...invoiceData,
+        ...restInvoiceData,
         documentUrl
       };
 
       const [, [updatedInvoice]] = await this.invoiceRepository.update(updatePayload);
-      return BuildResponse.buildSuccessResponse(
-        StatusCode.Ok,
-        updatedInvoice
-      );
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, updatedInvoice);
+
+
+      // let documentUrl = invoiceData.documentUrl;
+      // if (filePath) {
+      //   // if documentUrl is provided, remove the old file
+      //   if (documentUrl) {
+      //     const oldIdentifier = documentUrl.split("/").pop()?.split(".")[0];
+      //     if (oldIdentifier) {
+      //       const oldFilePath = `invoice/${oldIdentifier}.pdf`;
+      //       const deleteResponse = await deleteFile(oldFilePath, "invoice");
+      //       if (deleteResponse instanceof CustomError) {
+      //         console.error(deleteResponse);
+      //         return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to delete old document" });
+      //       }
+      //     }
+      //   }
+      //   const identifier = crypto.randomUUID();
+      //   const contentType = "application/pdf";
+      //   const response = await uploadFile(filePath, identifier, contentType, "invoice");
+      //   if (response instanceof CustomError) {
+      //     console.error(response);
+      //     return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to upload document" });
+      //   }
+      //   documentUrl = `https://sacmaback.blob.core.windows.net/invoice/${identifier}.pdf`;
+      // }
+
+      // const updatePayload = {
+      //   ...invoiceData,
+      //   documentUrl
+      // };
+
+      // const [, [updatedInvoice]] = await this.invoiceRepository.update(updatePayload);
+      // return BuildResponse.buildSuccessResponse(
+      //   StatusCode.Ok,
+      //   updatedInvoice
+      // );
     } catch (err: unknown) {
       console.error(err);
       return BuildResponse.buildErrorResponse(

@@ -35,6 +35,48 @@ export class RevenueCenterService {
       const { page, pageSize, limit, offset } = findPagination(request);
       const filter = this.buildFilter(request);
 
+      // ✅ Solo traemos de la BD
+      const revenueCenters = await this.revenueCenterRepository.findAll(limit, offset, filter);
+
+      const rows = revenueCenters.rows.map((revenueCenter: any) => ({
+        idRevenueCenter: revenueCenter.idRevenueCenter,
+        name: revenueCenter.name,
+        idCostCenterProject: revenueCenter.idCostCenterProject,
+        idRevenueCenterStatus: revenueCenter.idRevenueCenterStatus,
+        idQuotation: revenueCenter.idQuotation,
+        fromDate: revenueCenter.fromDate,
+        toDate: revenueCenter.toDate,
+        createdAt: revenueCenter.createdAt,
+        updatedAt: revenueCenter.updatedAt,
+        invoice: revenueCenter.invoice,   // ✅ directo de la BD
+        spend: revenueCenter.spend,       // ✅ directo de la BD
+        utility: revenueCenter.utility,   // ✅ directo de la BD
+        CostCenterProject: revenueCenter.toJSON().CostCenterProject,
+      }));
+
+      const response = {
+        data: rows,
+        totalItems: revenueCenters.count,
+        currentPage: page,
+        totalPage: Math.ceil(revenueCenters.count / pageSize),
+      };
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
+    } catch (error) {
+      console.error("An error occurred while trying to find all revenue centers", error);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "An error occurred while trying to find all revenue centers" }
+      );
+    }
+  };
+
+
+  findAllOriginCalculatedsEfraim = async (request: schemas.FindAllSchema): Promise<ResponseEntity> => {
+    try {
+      const { page, pageSize, limit, offset } = findPagination(request);
+      const filter = this.buildFilter(request);
+
       // Fetch data concurrently
       const [revenueCenters, inputs, expenditures] = await Promise.all([
         this.revenueCenterRepository.findAll(limit, offset, filter),
@@ -115,6 +157,62 @@ export class RevenueCenterService {
 
   create = async (request: schemas.CreateRevenueCenterSchema): Promise<ResponseEntity> => {
     try {
+      // 1️⃣ Crear el revenue center en la BD
+      const revenueCenter = await this.revenueCenterRepository.create(request);
+
+      // 2️⃣ Obtener inputs y expenditures relacionados al proyecto
+      const [inputs, expenditures] = await Promise.all([
+        this.revenueCenterRepository.findInputValues(),
+        this.expenditureRepository.findAllValues(),
+      ]);
+
+      // 3️⃣ Agrupar los valores
+      const groupedSpend = [...inputs, ...expenditures].reduce<Record<number, number>>((acc, curr) => {
+        const key = curr.idCostCenterProject;
+        acc[key] = (acc[key] || 0) + curr.totalValue;
+        return acc;
+      }, {});
+
+      // 4️⃣ Calcular el spend para este revenue center recién creado
+      const spend = groupedSpend[revenueCenter.idCostCenterProject] || 0;
+
+      // 5️⃣ Opcional: persistir el valor calculado en la BD
+      await this.revenueCenterRepository.update(revenueCenter.idRevenueCenter, {
+        spend: spend.toString(),
+      });
+
+      // 6️⃣ Respuesta con los valores finales
+      const response = {
+        idRevenueCenter: revenueCenter.idRevenueCenter,
+        name: revenueCenter.name,
+        idCostCenterProject: revenueCenter.idCostCenterProject,
+        idRevenueCenterStatus: revenueCenter.idRevenueCenterStatus,
+        idQuotation: revenueCenter.idQuotation,
+        fromDate: revenueCenter.fromDate,
+        toDate: revenueCenter.toDate,
+        createdAt: revenueCenter.createdAt,
+        updatedAt: revenueCenter.updatedAt,
+        invoice: "0.0",                // puedes dejarlo fijo o calcularlo similar
+        spend: spend.toString(),       // 👈 ya viene del cálculo
+        utility: "0.0",                // pendiente cálculo
+      };
+
+      console.log("🔍 groupedSpend:", groupedSpend);
+      console.log("🔍 Buscando id:", revenueCenter.idCostCenterProject);
+      console.log("🔍 Valor encontrado:", groupedSpend[revenueCenter.idCostCenterProject]);
+
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
+    } catch (error) {
+      console.error("An error occurred while trying to create revenue center", error);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "An error occurred while trying to create revenue center" }
+      );
+    }
+  };
+
+  createOrigin = async (request: schemas.CreateRevenueCenterSchema): Promise<ResponseEntity> => {
+    try {
       //const createData: IRevenueCenterCreate = {
       //  name: request.name,
       //  idCostCenterProject: request.idCostCenterProject,
@@ -156,6 +254,24 @@ export class RevenueCenterService {
       }
 
       const { idRevenueCenter, ...updateData } = request;
+
+      // // 🔹 Aquí calculamos el spend real
+      // const [inputs, expenditures] = await Promise.all([
+      //   this.revenueCenterRepository.findInputValues(),
+      //   this.expenditureRepository.findAllValues(),
+      // ]);
+
+      // // Agrupar como en findAll
+      // const groupedSpend = [...inputs, ...expenditures].reduce<Record<number, number>>((acc, curr) => {
+      //   const key = curr.idCostCenterProject;
+      //   acc[key] = (acc[key] || 0) + curr.totalValue;
+      //   return acc;
+      // }, {});
+
+      // // Buscar el spend específico de este RevenueCenter
+      // const calculatedSpend = groupedSpend[revenueCenter.idCostCenterProject] || 0;
+
+
       const updatePayload: IRevenueCenterUpdate = {
         name: updateData.name,
         idCostCenterProject: updateData.idCostCenterProject,
@@ -163,8 +279,15 @@ export class RevenueCenterService {
         idQuotation: updateData.idQuotation,
         fromDate: updateData.fromDate,
         toDate: updateData.toDate,
+        invoice: updateData.invoice ?? "0.0",   // 👈 nuevo
+        // spend: calculatedSpend.toString(),       // 👈 nuevo
+        spend: updateData.spend,       // 👈 nuevo
+        utility: updateData.utility ?? "0.0"    // 👈 nuevo
       };
       await this.revenueCenterRepository.update(idRevenueCenter, updatePayload);
+
+      // Volvemos a consultar el registro actualizado
+      // const updatedRevenueCenter = await this.revenueCenterRepository.findById(idRevenueCenter);
 
       const response = {
         idRevenueCenter: revenueCenter.idRevenueCenter,
@@ -178,9 +301,9 @@ export class RevenueCenterService {
         updatedAt: revenueCenter.updatedAt,
         // Assuming these fields are calculated or fetched from another source
         // Replace with actual logic to fetch these values 
-        invoice: "0.0",
-        spend: "0.0",
-        utility: "0.0"
+        invoice: revenueCenter.invoice,
+        spend: revenueCenter.spend,
+        utility: revenueCenter.utility
       };
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
@@ -189,6 +312,8 @@ export class RevenueCenterService {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to update revenue center" });
     }
   };
+
+  
 
   delete = async (idRevenueCenter: number): Promise<ResponseEntity> => {
     try {
@@ -421,7 +546,7 @@ export class RevenueCenterService {
     }
   };
 
-  findAllInvoiceSummary = async (request: schemas.FindAllInvoiceSummarySchema): Promise<ResponseEntity> => {
+  findAllInvoiceSummaryEfrain = async (request: schemas.FindAllInvoiceSummarySchema): Promise<ResponseEntity> => {
     try {
       // First, find the revenue center to get the idCostCenterProject
       const revenueCenter = await this.revenueCenterRepository.findById(request.idRevenueCenter);
@@ -434,7 +559,7 @@ export class RevenueCenterService {
       // Now use the idCostCenterProject to find project items
       const filter = { idCostCenterProject: revenueCenter.idCostCenterProject };
       const data = await this.costCenterRepository.findAllProjectItem(filter, -1, 0); // Get all items without pagination
-      const invoices = await this.invoiceRepository.findAll({}, -1, 0);
+      const invoices = await this.invoiceRepository.findAllByRenueveCenter({}, -1, 0);
       const invoiceProjectItemData = await this.invoiceRepository.findAllInvoiceProjectItems(); // Get all invoices without pagination
 
       // Group items by contract number without aggregation
@@ -494,6 +619,163 @@ export class RevenueCenterService {
       });
     }
   };
+
+  findAllInvoiceSummary = async (
+    request: schemas.FindAllInvoiceSummarySchema
+  ): Promise<ResponseEntity> => {
+    try {
+      // Buscar revenue center
+      const revenueCenter = await this.revenueCenterRepository.findById(
+        request.idRevenueCenter
+      );
+      if (!revenueCenter) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
+          message: "Revenue center not found",
+        });
+      }
+
+      // Buscar items del proyecto
+      const filter = { idCostCenterProject: revenueCenter.idCostCenterProject };
+      const data = await this.costCenterRepository.findAllProjectItem(
+        filter,
+        -1,
+        0
+      );
+
+      // Facturas y sus detalles
+      const invoices = await this.invoiceRepository.findAllByRenueveCenter(
+        {},
+        -1,
+        0
+      );
+      const invoiceProjectItemData =
+        await this.invoiceRepository.findAllInvoiceProjectItems();
+
+      // Totales generales
+      let totalAcumulado = 0;
+      let totalPendiente = 0;
+
+      // Agrupar por contrato
+      const contractGroups: Record<
+        string,
+        Array<{
+          idProjectItem: number;
+          projectItem: string;
+          unitMeasure: string;
+          quantity: number;
+          unitPrice: number;
+          total: number;
+          invoicedQuantity: number | null;
+          invoiceGroups: {
+            items: Array<any>;
+            ACUMULADO: { CANT: number; TOTAL: number };
+            PENDIENTE: { CANT: number; TOTAL: number };
+          };
+        }>
+      > = {};
+
+      data.rows.forEach((item) => {
+        const contractNumber = item.contract;
+
+        // Inicializar contrato
+        if (!contractGroups[contractNumber]) {
+          contractGroups[contractNumber] = [];
+        }
+
+        // Items de facturas por este projectItem
+        const invoiceItems = invoiceProjectItemData
+          .filter((invItem) => invItem.idProjectItem === item.idProjectItem)
+          .map((invItem) => ({
+            invoice:
+              invoices.rows.find((i) => i.idInvoice === invItem.idInvoice)
+                ?.invoice || "Unknown",
+            quantity: invItem.invoicedQuantity
+              ? parseFloat(invItem.invoicedQuantity)
+              : null,
+            total: invItem.invoicedQuantity
+              ? parseFloat(invItem.invoicedQuantity) * parseFloat(item.unitPrice)
+              : null,
+          }));
+
+        // Calcular acumulado
+        // const acumuladoCant = invoiceItems
+        //   .map((x) => x.quantity || 0)
+        //   .reduce((a, b) => a + b, 0);
+        // 🔹 Calcular acumulado SOLO con facturas válidas (no Unknown)
+        const acumuladoCant = invoiceItems
+          .filter((x) => x.invoice !== "Unknown") // 👈 solo facturas reales
+          .map((x) => x.quantity || 0)
+          .reduce((a, b) => a + b, 0);
+
+        const acumuladoTotal = acumuladoCant * parseFloat(item.unitPrice);
+
+        // Calcular pendiente
+        const pendienteCant = parseFloat(item.quantity) - acumuladoCant;
+        const pendienteTotal = parseFloat(item.total) - acumuladoTotal;
+
+        // Sumar a los totales globales
+        totalAcumulado += acumuladoTotal;
+        totalPendiente += pendienteTotal;
+
+        // Agregar item al contrato
+        contractGroups[contractNumber].push({
+          idProjectItem: item.idProjectItem,
+          projectItem: item.item,
+          unitMeasure: item.unitMeasure,
+          quantity: parseFloat(item.quantity),
+          unitPrice: parseFloat(item.unitPrice),
+          total: parseFloat(item.total),
+          invoicedQuantity: item.invoicedQuantity
+            ? parseFloat(item.invoicedQuantity)
+            : null,
+          invoiceGroups: {
+            items: invoiceItems,
+            ACUMULADO: {
+              CANT: acumuladoCant,
+              TOTAL: acumuladoTotal,
+            },
+            PENDIENTE: {
+              CANT: pendienteCant,
+              TOTAL: pendienteTotal,
+            },
+          },
+        });
+      });
+
+      // Convertir a array
+      const contracts = Object.entries(contractGroups).map(
+        ([contractNumber, items]) => ({
+          contractNumber: contractNumber,
+          invoices: invoices.rows
+            .filter((i) => i.contract === contractNumber)
+            .map((i) => i.invoice),
+          items: items,
+        })
+      );
+
+      // Respuesta final con totales globales
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        contracts,
+        totals: {
+          ACUMULADO: totalAcumulado,
+          PENDIENTE: totalPendiente,
+        },
+      });
+    } catch (error) {
+      console.error(
+        "An error occurred while trying to find invoice summary for revenue center",
+        error
+      );
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        {
+          message:
+            "An error occurred while trying to find invoice summary for revenue center",
+        }
+      );
+    }
+  };
+
 
   /**
    * Find material summary detail for a revenue center

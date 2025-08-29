@@ -47,6 +47,21 @@ RevenueCenter.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    invoice: {                // nuevo campo
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: "0.0"
+    },
+    spend: {                  // nuevo campo
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: "0.0"
+    },
+    utility: {                //  nuevo campo
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: "0.0"
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: true,
