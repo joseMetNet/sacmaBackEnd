@@ -1,18 +1,22 @@
 import { QueryTypes } from "sequelize";
 import { dbConnection } from "../../config";
 import { CostCenterProject } from "../cost-center";
-import { ExpenditureItem } from "./expenditure-item.model";
-import * as dtos from "./expenditure.interface";
-import { Expenditure } from "./expenditure.model";
-import { ExpenditureType } from "./expendityre-type.model";
+import { ExpenditureItem } from "../expenditure/expenditure-item.model";
+// import * as dtos from "../expenditure/expenditure.interface";
+// import { Expenditure } from "../expenditure/expenditure.model";
 
-export class ExpenditureRepository {
+import * as dtos from "./incomin.interface";
+import { Incomin } from "./incomin.model";
+import { ExpenditureType } from "../expenditure/expendityre-type.model";
+import { Invoice } from "../invoice/invoice.model";
+
+export class IncominRepository {
   async findAll(
     limit: number,
     offset: number,
     filter: { [key: string]: any }
   ) {
-    return Expenditure.findAndCountAll({
+    return Incomin.findAndCountAll({
       include: [
         {
           model: ExpenditureType,
@@ -20,6 +24,10 @@ export class ExpenditureRepository {
         },
         {
           model: CostCenterProject,
+          required: false,
+        },
+        {
+          model: Invoice,
           required: false,
         },
       ],
@@ -30,15 +38,6 @@ export class ExpenditureRepository {
     });
   }
 
-  // de dentro de este metodo se debe hacer la consulta SQL que me traiga el total de gastos por proyecto findAllValues()
-  //  SELECT
-  //     	te.idCostCenterProject, 
-  //     	SUM(te.value) as totalValue
-  //     FROM mvp1.TB_Expenditure te
-  //     WHERE
-  //        te.idExpenditureType IN (2, 26)
-  //     GROUP BY
-  // 	  te.idCostCenterProject;
   findAllValues(
   ) {
     const query = `
@@ -81,8 +80,8 @@ export class ExpenditureRepository {
     return ExpenditureType.findAll();
   }
 
-  async findById(idExpenditure: number) {
-    return Expenditure.findByPk(idExpenditure, {
+  async findById(idIncome: number) {
+    return Incomin.findByPk(idIncome, {
       include: [
         {
           model: ExpenditureType,
@@ -90,6 +89,10 @@ export class ExpenditureRepository {
         },
         {
           model: CostCenterProject,
+          required: false,
+        },
+        {
+          model: Invoice,
           required: false,
         },
       ],
@@ -112,7 +115,7 @@ export class ExpenditureRepository {
   }
 
   async create(data: dtos.CreateDTO) {
-    return Expenditure.create(data as any);
+    return Incomin.create(data as any);
   }
 
   async createExpenditureItem(data: dtos.CreateExpenditureItemDTO

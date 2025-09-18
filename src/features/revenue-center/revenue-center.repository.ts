@@ -229,7 +229,8 @@ export class RevenueCenterRepository {
         MONTH(wt.createdAt) AS WorkMonth,
         YEAR(wt.createdAt) AS WorkYear,
         COUNT(wt.createdAt) AS DaysWorked,
-        e.baseSalary / DAY(EOMONTH(wt.createdAt)) AS ValorDia,
+        --e.baseSalary / DAY(EOMONTH(wt.createdAt)) AS ValorDia,
+        e.baseSalary / 24 * 1.35 AS ValorDia,
         COUNT(wt.createdAt) * (e.baseSalary / DAY(EOMONTH(wt.createdAt))) AS MonthlyTotal
       FROM mvp1.TB_WorkTracking wt
       INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
@@ -286,7 +287,8 @@ export class RevenueCenterRepository {
         MONTH(wt.createdAt) AS WorkMonth,
         YEAR(wt.createdAt) AS WorkYear,
         COUNT(wt.createdAt) AS DaysWorked,
-        e.baseSalary / DAY(EOMONTH(wt.createdAt)) AS ValorDia,
+        --e.baseSalary / DAY(EOMONTH(wt.createdAt)) AS ValorDia,
+        e.baseSalary / 24 * 1.35 AS ValorDia,
         COUNT(wt.createdAt) * (e.baseSalary / DAY(EOMONTH(wt.createdAt))) AS MonthlyTotal
       FROM mvp1.TB_WorkTracking wt
       INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
@@ -374,6 +376,28 @@ export class RevenueCenterRepository {
     };
   };
 
+  findAllWorkTrackingTotals = async () => {
+    const sequelize = RevenueCenter.sequelize!;
+
+    const query = `
+    WITH MonthlyWork AS (
+      SELECT
+        rc.idRevenueCenter,
+        COUNT(wt.createdAt) * (e.baseSalary / DAY(EOMONTH(wt.createdAt))) AS MonthlyTotal
+      FROM mvp1.TB_WorkTracking wt
+      INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
+      INNER JOIN mvp1.TB_CostCenterProject ccp ON wt.idCostCenterProject = ccp.idCostCenterProject
+      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = ccp.idCostCenterProject
+      GROUP BY rc.idRevenueCenter, wt.createdAt, e.baseSalary
+    )
+    SELECT idRevenueCenter, SUM(MonthlyTotal) as totalWorkTracking
+    FROM MonthlyWork
+    GROUP BY idRevenueCenter;
+  `;
+
+    const [results] = await sequelize.query(query);
+    return results as Array<{ idRevenueCenter: number; totalWorkTracking: number }>;
+  };
 
   findInputValues = async (
   ) => {

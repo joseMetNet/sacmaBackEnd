@@ -35,6 +35,90 @@ export class RevenueCenterService {
       const { page, pageSize, limit, offset } = findPagination(request);
       const filter = this.buildFilter(request);
 
+      // Fetch data concurrently
+      const [revenueCenters, inputs, expenditures, invoiceTotals, workTrackingTotals] = await Promise.all([
+        this.revenueCenterRepository.findAll(limit, offset, filter),
+        this.revenueCenterRepository.findInputValues(),
+        this.expenditureRepository.findAllValues(),
+        this.invoiceRepository.findAllTotalsByRevenueCenter(), // 👈 nuevo método
+        this.revenueCenterRepository.findAllWorkTrackingTotals(), // 👈 nuevo método
+      ]);
+
+      // Agrupar inputs + expenditures por proyecto
+      const groupedSpend = [...inputs, ...expenditures].reduce<Record<number, number>>(
+        (acc, curr) => {
+          const key = curr.idCostCenterProject;
+          acc[key] = (acc[key] || 0) + curr.totalValue;
+          return acc;
+        },
+        {}
+      );
+
+      // Agrupar invoices (totalAcumulado) por revenueCenter
+      const groupedInvoice = invoiceTotals.reduce<Record<number, number>>((acc, curr) => {
+        acc[curr.idRevenueCenter] = curr.totalAcumulado;
+        return acc;
+      }, {});
+
+      // Agrupar workTrackingTotals por revenueCenter
+      const groupedWorkTracking = workTrackingTotals.reduce<Record<number, number>>((acc, curr) => {
+        acc[curr.idRevenueCenter] = curr.totalWorkTracking;
+        return acc;
+      }, {});
+
+      // Construir respuesta fila por fila
+      const rows = revenueCenters.rows.map((revenueCenter: any) => {
+        const spendInputs = groupedSpend[revenueCenter.idCostCenterProject] || 0;
+        const workTracking = groupedWorkTracking[revenueCenter.idRevenueCenter] || 0;
+        const spend = spendInputs + workTracking; // 👈 inputs + expenditures + workTracking
+        // const spend = groupedSpend[revenueCenter.idCostCenterProject] || 0;
+        const invoice = groupedInvoice[revenueCenter.idRevenueCenter] || 0;
+
+        // const utility = invoice - spend;
+        // const utility = (invoice - spend) / (invoice === 0 ? 1 : invoice) * 100; // Evitar división por cero
+
+        const utility = invoice - spend / invoice * 100;
+
+        return {
+          idRevenueCenter: revenueCenter.idRevenueCenter,
+          name: revenueCenter.name,
+          idCostCenterProject: revenueCenter.idCostCenterProject,
+          idRevenueCenterStatus: revenueCenter.idRevenueCenterStatus,
+          idQuotation: revenueCenter.idQuotation,
+          fromDate: revenueCenter.fromDate,
+          toDate: revenueCenter.toDate,
+          createdAt: revenueCenter.createdAt,
+          updatedAt: revenueCenter.updatedAt,
+          invoice: invoice.toString(),
+          spend: spend.toString(),
+          utility: utility.toString(),
+          CostCenterProject: revenueCenter.toJSON().CostCenterProject,
+        };
+      });
+
+      // Respuesta final
+      const response = {
+        data: rows,
+        totalItems: revenueCenters.count,
+        currentPage: page,
+        totalPage: Math.ceil(revenueCenters.count / pageSize),
+      };
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
+    } catch (error) {
+      console.error("An error occurred while trying to find all revenue centers", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "An error occurred while trying to find all revenue centers",
+      });
+    }
+  };
+
+
+  findAllOriginCalculatedsEfraim = async (request: schemas.FindAllSchema): Promise<ResponseEntity> => {
+    try {
+      const { page, pageSize, limit, offset } = findPagination(request);
+      const filter = this.buildFilter(request);
+
       // ✅ Solo traemos de la BD
       const revenueCenters = await this.revenueCenterRepository.findAll(limit, offset, filter);
 
@@ -72,7 +156,7 @@ export class RevenueCenterService {
   };
 
 
-  findAllOriginCalculatedsEfraim = async (request: schemas.FindAllSchema): Promise<ResponseEntity> => {
+  findAlloRIGIN = async (request: schemas.FindAllSchema): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);
       const filter = this.buildFilter(request);
@@ -313,7 +397,7 @@ export class RevenueCenterService {
     }
   };
 
-  
+
 
   delete = async (idRevenueCenter: number): Promise<ResponseEntity> => {
     try {
@@ -510,7 +594,7 @@ export class RevenueCenterService {
         totalItems: data.count,
         currentPage: page,
         totalPages: Math.ceil(data.count / pageSize),
-        total: rows.reduce((acc: number, curr: any) => acc + parseFloat(curr.total), 0),
+        total: rows.reduce((acc: number, curr: any) => acc + parseFloat(curr.totalValue), 0),
       };
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
@@ -620,7 +704,7 @@ export class RevenueCenterService {
     }
   };
 
-  findAllInvoiceSummary = async (
+  findAllInvoiceSummaryActually = async (
     request: schemas.FindAllInvoiceSummarySchema
   ): Promise<ResponseEntity> => {
     try {
@@ -636,20 +720,11 @@ export class RevenueCenterService {
 
       // Buscar items del proyecto
       const filter = { idCostCenterProject: revenueCenter.idCostCenterProject };
-      const data = await this.costCenterRepository.findAllProjectItem(
-        filter,
-        -1,
-        0
-      );
+      const data = await this.costCenterRepository.findAllProjectItem(filter, -1, 0);
 
       // Facturas y sus detalles
-      const invoices = await this.invoiceRepository.findAllByRenueveCenter(
-        {},
-        -1,
-        0
-      );
-      const invoiceProjectItemData =
-        await this.invoiceRepository.findAllInvoiceProjectItems();
+      const invoices = await this.invoiceRepository.findAllByRenueveCenter({}, -1, 0);
+      const invoiceProjectItemData = await this.invoiceRepository.findAllInvoiceProjectItems();
 
       // Totales generales
       let totalAcumulado = 0;
@@ -657,8 +732,7 @@ export class RevenueCenterService {
 
       // Agrupar por contrato
       const contractGroups: Record<
-        string,
-        Array<{
+        string, Array<{
           idProjectItem: number;
           projectItem: string;
           unitMeasure: string;
@@ -671,8 +745,7 @@ export class RevenueCenterService {
             ACUMULADO: { CANT: number; TOTAL: number };
             PENDIENTE: { CANT: number; TOTAL: number };
           };
-        }>
-      > = {};
+        }>> = {};
 
       data.rows.forEach((item) => {
         const contractNumber = item.contract;
@@ -686,15 +759,9 @@ export class RevenueCenterService {
         const invoiceItems = invoiceProjectItemData
           .filter((invItem) => invItem.idProjectItem === item.idProjectItem)
           .map((invItem) => ({
-            invoice:
-              invoices.rows.find((i) => i.idInvoice === invItem.idInvoice)
-                ?.invoice || "Unknown",
-            quantity: invItem.invoicedQuantity
-              ? parseFloat(invItem.invoicedQuantity)
-              : null,
-            total: invItem.invoicedQuantity
-              ? parseFloat(invItem.invoicedQuantity) * parseFloat(item.unitPrice)
-              : null,
+            invoice: invoices.rows.find((i) => i.idInvoice === invItem.idInvoice)?.invoice || "Unknown",
+            quantity: invItem.invoicedQuantity ? parseFloat(invItem.invoicedQuantity) : null,
+            total: invItem.invoicedQuantity ? parseFloat(invItem.invoicedQuantity) * parseFloat(item.unitPrice) : null,
           }));
 
         // Calcular acumulado
@@ -725,9 +792,7 @@ export class RevenueCenterService {
           quantity: parseFloat(item.quantity),
           unitPrice: parseFloat(item.unitPrice),
           total: parseFloat(item.total),
-          invoicedQuantity: item.invoicedQuantity
-            ? parseFloat(item.invoicedQuantity)
-            : null,
+          invoicedQuantity: item.invoicedQuantity ? parseFloat(item.invoicedQuantity) : null,
           invoiceGroups: {
             items: invoiceItems,
             ACUMULADO: {
@@ -773,6 +838,482 @@ export class RevenueCenterService {
             "An error occurred while trying to find invoice summary for revenue center",
         }
       );
+    }
+  };
+
+  findAllInvoiceSummaryRetornaTotalDeCadaAcumulado = async (
+    request: schemas.FindAllInvoiceSummarySchema
+  ): Promise<ResponseEntity> => {
+    try {
+      // Buscar revenue center
+      const revenueCenter = await this.revenueCenterRepository.findById(
+        request.idRevenueCenter
+      );
+      if (!revenueCenter) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
+          message: "Revenue center not found",
+        });
+      }
+
+      // Buscar items del proyecto
+      const filter = { idCostCenterProject: revenueCenter.idCostCenterProject };
+      const data = await this.costCenterRepository.findAllProjectItem(filter, -1, 0);
+
+      // Facturas y sus detalles
+      const invoices = await this.invoiceRepository.findAllByRenueveCenter({}, -1, 0);
+      const invoiceProjectItemData = await this.invoiceRepository.findAllInvoiceProjectItems();
+
+      // Totales generales
+      let totalAcumulado = 0;
+      let totalPendiente = 0;
+
+      // Agrupar por contrato
+      const contractGroups: Record<
+        string,
+        {
+          items: Array<{
+            idProjectItem: number;
+            projectItem: string;
+            unitMeasure: string;
+            quantity: number;
+            unitPrice: number;
+            total: number;
+            invoicedQuantity: number | null;
+            invoiceGroups: {
+              items: Array<any>;
+              ACUMULADO: { CANT: number; TOTAL: number };
+              PENDIENTE: { CANT: number; TOTAL: number };
+            };
+          }>;
+          totals: { ACUMULADO: number; PENDIENTE: number };
+        }
+      > = {};
+
+      data.rows.forEach((item) => {
+        const contractNumber = item.contract;
+
+        // Inicializar contrato
+        if (!contractGroups[contractNumber]) {
+          contractGroups[contractNumber] = {
+            items: [],
+            totals: { ACUMULADO: 0, PENDIENTE: 0 },
+          };
+        }
+
+        // Items de facturas por este projectItem
+        const invoiceItems = invoiceProjectItemData
+          .filter((invItem) => invItem.idProjectItem === item.idProjectItem)
+          .map((invItem) => ({
+            invoice:
+              invoices.rows.find((i) => i.idInvoice === invItem.idInvoice)?.invoice ||
+              "Unknown",
+            quantity: invItem.invoicedQuantity
+              ? parseFloat(invItem.invoicedQuantity)
+              : null,
+            total: invItem.invoicedQuantity
+              ? parseFloat(invItem.invoicedQuantity) * parseFloat(item.unitPrice)
+              : null,
+          }));
+
+        // Calcular acumulado
+        const acumuladoCant = invoiceItems
+          .filter((x) => x.invoice !== "Unknown")
+          .map((x) => x.quantity || 0)
+          .reduce((a, b) => a + b, 0);
+
+        const acumuladoTotal = acumuladoCant * parseFloat(item.unitPrice);
+
+        // Calcular pendiente
+        const pendienteCant = parseFloat(item.quantity) - acumuladoCant;
+        const pendienteTotal = parseFloat(item.total) - acumuladoTotal;
+
+        // Sumar a los totales globales
+        totalAcumulado += acumuladoTotal;
+        totalPendiente += pendienteTotal;
+
+        // Sumar a los totales del contrato
+        contractGroups[contractNumber].totals.ACUMULADO += acumuladoTotal;
+        contractGroups[contractNumber].totals.PENDIENTE += pendienteTotal;
+
+        // Agregar item al contrato
+        contractGroups[contractNumber].items.push({
+          idProjectItem: item.idProjectItem,
+          projectItem: item.item,
+          unitMeasure: item.unitMeasure,
+          quantity: parseFloat(item.quantity),
+          unitPrice: parseFloat(item.unitPrice),
+          total: parseFloat(item.total),
+          invoicedQuantity: item.invoicedQuantity
+            ? parseFloat(item.invoicedQuantity)
+            : null,
+          invoiceGroups: {
+            items: invoiceItems,
+            ACUMULADO: {
+              CANT: acumuladoCant,
+              TOTAL: acumuladoTotal,
+            },
+            PENDIENTE: {
+              CANT: pendienteCant,
+              TOTAL: pendienteTotal,
+            },
+          },
+        });
+      });
+
+      // Convertir a array
+      const contracts = Object.entries(contractGroups).map(
+        ([contractNumber, contractData]) => ({
+          contractNumber,
+          invoices: invoices.rows
+            .filter((i) => i.contract === contractNumber)
+            .map((i) => i.invoice),
+          items: contractData.items,
+          totals: contractData.totals, // 👈 Totales por contrato
+        })
+      );
+
+      // Respuesta final con totales globales
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        contracts,
+        totals: {
+          ACUMULADO: totalAcumulado,
+          PENDIENTE: totalPendiente,
+        },
+      });
+    } catch (error) {
+      console.error(
+        "An error occurred while trying to find invoice summary for revenue center",
+        error
+      );
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message:
+          "An error occurred while trying to find invoice summary for revenue center",
+      });
+    }
+  };
+
+  findAllInvoiceSummaryRetornaTotalDeCadaAcumuladoYtotalcontrato = async (
+    request: schemas.FindAllInvoiceSummarySchema
+  ): Promise<ResponseEntity> => {
+    try {
+      // Buscar revenue center
+      const revenueCenter = await this.revenueCenterRepository.findById(
+        request.idRevenueCenter
+      );
+      if (!revenueCenter) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
+          message: "Revenue center not found",
+        });
+      }
+
+      // Buscar items del proyecto
+      const filter = { idCostCenterProject: revenueCenter.idCostCenterProject };
+      const data = await this.costCenterRepository.findAllProjectItem(filter, -1, 0);
+
+      // Facturas y sus detalles
+      const invoices = await this.invoiceRepository.findAllByRenueveCenter({}, -1, 0);
+      const invoiceProjectItemData = await this.invoiceRepository.findAllInvoiceProjectItems();
+
+      // Totales generales
+      let totalAcumulado = 0;
+      let totalPendiente = 0;
+
+      // Agrupar por contrato
+      const contractGroups: Record<
+        string,
+        {
+          items: Array<{
+            idProjectItem: number;
+            projectItem: string;
+            unitMeasure: string;
+            quantity: number;
+            unitPrice: number;
+            total: number;
+            invoicedQuantity: number | null;
+            invoiceGroups: {
+              items: Array<any>;
+              ACUMULADO: { CANT: number; TOTAL: number };
+              PENDIENTE: { CANT: number; TOTAL: number };
+            };
+          }>;
+          totals: { ACUMULADO: number; PENDIENTE: number; TOTAL_CONTRATO: number };
+        }
+      > = {};
+
+      data.rows.forEach((item) => {
+        const contractNumber = item.contract;
+
+        // Inicializar contrato
+        if (!contractGroups[contractNumber]) {
+          contractGroups[contractNumber] = {
+            items: [],
+            totals: { ACUMULADO: 0, PENDIENTE: 0, TOTAL_CONTRATO: 0 },
+          };
+        }
+
+        // Items de facturas por este projectItem
+        const invoiceItems = invoiceProjectItemData
+          .filter((invItem) => invItem.idProjectItem === item.idProjectItem)
+          .map((invItem) => ({
+            invoice:
+              invoices.rows.find((i) => i.idInvoice === invItem.idInvoice)?.invoice ||
+              "Unknown",
+            quantity: invItem.invoicedQuantity
+              ? parseFloat(invItem.invoicedQuantity)
+              : null,
+            total: invItem.invoicedQuantity
+              ? parseFloat(invItem.invoicedQuantity) * parseFloat(item.unitPrice)
+              : null,
+          }));
+
+        // Calcular acumulado
+        const acumuladoCant = invoiceItems
+          .filter((x) => x.invoice !== "Unknown")
+          .map((x) => x.quantity || 0)
+          .reduce((a, b) => a + b, 0);
+
+        const acumuladoTotal = acumuladoCant * parseFloat(item.unitPrice);
+
+        // Calcular pendiente
+        const pendienteCant = parseFloat(item.quantity) - acumuladoCant;
+        const pendienteTotal = parseFloat(item.total) - acumuladoTotal;
+
+        // Sumar a los totales globales
+        totalAcumulado += acumuladoTotal;
+        totalPendiente += pendienteTotal;
+
+        // Sumar a los totales del contrato
+        contractGroups[contractNumber].totals.ACUMULADO += acumuladoTotal;
+        contractGroups[contractNumber].totals.PENDIENTE += pendienteTotal;
+        contractGroups[contractNumber].totals.TOTAL_CONTRATO += parseFloat(item.total); // 👈 agregado
+
+        // Agregar item al contrato
+        contractGroups[contractNumber].items.push({
+          idProjectItem: item.idProjectItem,
+          projectItem: item.item,
+          unitMeasure: item.unitMeasure,
+          quantity: parseFloat(item.quantity),
+          unitPrice: parseFloat(item.unitPrice),
+          total: parseFloat(item.total),
+          invoicedQuantity: item.invoicedQuantity
+            ? parseFloat(item.invoicedQuantity)
+            : null,
+          invoiceGroups: {
+            items: invoiceItems,
+            ACUMULADO: {
+              CANT: acumuladoCant,
+              TOTAL: acumuladoTotal,
+            },
+            PENDIENTE: {
+              CANT: pendienteCant,
+              TOTAL: pendienteTotal,
+            },
+          },
+        });
+      });
+
+      // Convertir a array
+      const contracts = Object.entries(contractGroups).map(
+        ([contractNumber, contractData]) => ({
+          contractNumber,
+          invoices: invoices.rows
+            .filter((i) => i.contract === contractNumber)
+            .map((i) => i.invoice),
+          items: contractData.items,
+          totals: contractData.totals, // 👈 ahora incluye TOTAL_CONTRATO
+        })
+      );
+
+      // Respuesta final con totales globales
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        contracts,
+        totals: {
+          ACUMULADO: totalAcumulado,
+          PENDIENTE: totalPendiente,
+        },
+      });
+    } catch (error) {
+      console.error(
+        "An error occurred while trying to find invoice summary for revenue center",
+        error
+      );
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message:
+          "An error occurred while trying to find invoice summary for revenue center",
+      });
+    }
+  };
+
+  findAllInvoiceSummary = async (
+    request: schemas.FindAllInvoiceSummarySchema
+  ): Promise<ResponseEntity> => {
+    try {
+      // Buscar revenue center
+      const revenueCenter = await this.revenueCenterRepository.findById(
+        request.idRevenueCenter
+      );
+      if (!revenueCenter) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
+          message: "Revenue center not found",
+        });
+      }
+
+      // Buscar items del proyecto
+      const filter = { idCostCenterProject: revenueCenter.idCostCenterProject };
+      const data = await this.costCenterRepository.findAllProjectItem(filter, -1, 0);
+
+      // Facturas y sus detalles
+      const invoices = await this.invoiceRepository.findAllByRenueveCenter({}, -1, 0);
+      const invoiceProjectItemData = await this.invoiceRepository.findAllInvoiceProjectItems();
+
+      // Totales generales
+      let totalAcumulado = 0;
+      let totalPendiente = 0;
+
+      // Agrupar por contrato
+      const contractGroups: Record<
+        string,
+        {
+          items: Array<{
+            idProjectItem: number;
+            projectItem: string;
+            unitMeasure: string;
+            quantity: number;
+            unitPrice: number;
+            total: number;
+            invoicedQuantity: number | null;
+            invoiceGroups: {
+              items: Array<any>;
+              ACUMULADO: { CANT: number; TOTAL: number };
+              PENDIENTE: { CANT: number; TOTAL: number };
+            };
+          }>;
+          totals: {
+            ACUMULADO: number;
+            PENDIENTE: number;
+            TOTAL_CONTRATO: number;
+            FACTURAS: Record<string, number>; // 👈 Totales por factura
+          };
+        }
+      > = {};
+
+      data.rows.forEach((item) => {
+        const contractNumber = item.contract;
+
+        // Inicializar contrato
+        if (!contractGroups[contractNumber]) {
+          contractGroups[contractNumber] = {
+            items: [],
+            totals: { ACUMULADO: 0, PENDIENTE: 0, TOTAL_CONTRATO: 0, FACTURAS: {} },
+          };
+        }
+
+        // Items de facturas por este projectItem
+        const invoiceItems = invoiceProjectItemData
+          .filter((invItem) => invItem.idProjectItem === item.idProjectItem)
+          .map((invItem) => {
+            const factura = invoices.rows.find((i) => i.idInvoice === invItem.idInvoice);
+            return {
+              invoice: factura?.invoice || "Unknown",
+              quantity: invItem.invoicedQuantity
+                ? parseFloat(invItem.invoicedQuantity)
+                : null,
+              total: invItem.invoicedQuantity
+                ? parseFloat(invItem.invoicedQuantity) * parseFloat(item.unitPrice)
+                : null,
+            };
+          });
+
+        // Calcular acumulado
+        const acumuladoCant = invoiceItems
+          .filter((x) => x.invoice !== "Unknown")
+          .map((x) => x.quantity || 0)
+          .reduce((a, b) => a + b, 0);
+
+        const acumuladoTotal = acumuladoCant * parseFloat(item.unitPrice);
+
+        // Calcular pendiente
+        const pendienteCant = parseFloat(item.quantity) - acumuladoCant;
+        const pendienteTotal = parseFloat(item.total) - acumuladoTotal;
+
+        // Sumar a los totales globales
+        totalAcumulado += acumuladoTotal;
+        totalPendiente += pendienteTotal;
+
+        // Sumar a los totales del contrato
+        contractGroups[contractNumber].totals.ACUMULADO += acumuladoTotal;
+        contractGroups[contractNumber].totals.PENDIENTE += pendienteTotal;
+        contractGroups[contractNumber].totals.TOTAL_CONTRATO += parseFloat(item.total);
+
+        // 👇 Sumar totales por factura
+        invoiceItems.forEach((inv) => {
+          if (inv.invoice !== "Unknown" && inv.total) {
+            if (!contractGroups[contractNumber].totals.FACTURAS[inv.invoice]) {
+              contractGroups[contractNumber].totals.FACTURAS[inv.invoice] = 0;
+            }
+            contractGroups[contractNumber].totals.FACTURAS[inv.invoice] += inv.total;
+          }
+        });
+
+        // Agregar item al contrato
+        contractGroups[contractNumber].items.push({
+          idProjectItem: item.idProjectItem,
+          projectItem: item.item,
+          unitMeasure: item.unitMeasure,
+          quantity: parseFloat(item.quantity),
+          unitPrice: parseFloat(item.unitPrice),
+          total: parseFloat(item.total),
+          invoicedQuantity: item.invoicedQuantity
+            ? parseFloat(item.invoicedQuantity)
+            : null,
+          invoiceGroups: {
+            items: invoiceItems,
+            ACUMULADO: {
+              CANT: acumuladoCant,
+              TOTAL: acumuladoTotal,
+            },
+            PENDIENTE: {
+              CANT: pendienteCant,
+              TOTAL: pendienteTotal,
+            },
+          },
+        });
+      });
+
+      // Convertir a array
+      const contracts = Object.entries(contractGroups).map(
+        ([contractNumber, contractData]) => ({
+          contractNumber,
+          invoices: invoices.rows
+            .filter((i) => i.contract === contractNumber)
+            .map((i) => i.invoice),
+          items: contractData.items,
+          totals: contractData.totals, // 👈 ahora incluye FACTURAS
+        })
+      );
+
+      await this.revenueCenterRepository.update(request.idRevenueCenter, {
+        invoice: totalAcumulado.toString(),
+      });//se agrega de prueba para que guarde el total acumulado en el revenue center
+
+
+      // Respuesta final con totales globales
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        contracts,
+        totals: {
+          ACUMULADO: totalAcumulado,
+          PENDIENTE: totalPendiente,
+        },
+      });
+    } catch (error) {
+      console.error(
+        "An error occurred while trying to find invoice summary for revenue center",
+        error
+      );
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message:
+          "An error occurred while trying to find invoice summary for revenue center",
+      });
     }
   };
 

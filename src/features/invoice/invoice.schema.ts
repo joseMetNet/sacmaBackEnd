@@ -12,6 +12,10 @@ export const idInvoice = z.object({
   idInvoice: z.coerce.number(),
 });
 
+export const listInvoicesContracts = z.object({
+  idCostCenterProject: z.coerce.number(),
+});
+
 export const createInvoice = z.object({
   invoice: z.string(),
   idCostCenterProject: z.coerce.number(),
@@ -36,3 +40,4 @@ export type FindAllDTO = z.infer<typeof findAll>;
 export type IdInvoiceDTO = z.infer<typeof idInvoice>;
 export type CreateInvoiceDTO = z.infer<typeof createInvoice>;
 export type UpdateInvoiceDTO = z.infer<typeof updateInvoice>; 
+export type FindInvoiceDTO = z.infer<typeof listInvoicesContracts>; 

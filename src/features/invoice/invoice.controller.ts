@@ -140,4 +140,20 @@ export class InvoiceController {
         .json({ message: err instanceof Error ? err.message : "Unknown error" });
     }
   };
+
+  async listInvoicesContracts(req: Request, res: Response): Promise<void> {
+    const request = schemas.listInvoicesContracts.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest)
+        .json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) },
+        });
+      return;
+    }
+    const response = await this.invoiceService.listProjectInvoices(request.data);
+    res
+      .status(response.code)
+      .json({ status: response.status, data: response.data });
+  }
 }

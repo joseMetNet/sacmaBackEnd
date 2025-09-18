@@ -8,6 +8,7 @@ import crypto from "crypto";
 import { CostCenterRepository } from "../cost-center/cost-center.repository";
 import { Op } from "sequelize";
 import { dbConnection } from "../../config/database";
+import * as types from "./invoice.interface";
 
 export class InvoiceService {
   private readonly invoiceRepository: InvoiceRepository;
@@ -309,7 +310,7 @@ export class InvoiceService {
           if (invoiceProjectItem) {
             const invoicedQuantity = parseFloat(invoiceProjectItem.invoicedQuantity) || 0;
             const unitPrice = parseFloat(item.unitPrice) || 0;
-            totalValue += invoicedQuantity * unitPrice;
+            totalValue += invoicedQuantity * unitPrice; // 👈 Aquí ocurre el cálculo
           }
         }
 
@@ -473,6 +474,19 @@ export class InvoiceService {
 
     return filter;
   }
+
+  listProjectInvoices = async (request: types.ListInvoiceContractsDTO): Promise<ResponseEntity> => {
+    try {
+      const invoices = await this.invoiceRepository.findProjectInvioices(request.idCostCenterProject);
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, invoices);
+    } catch (err: any) {
+      console.error(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  };
 
   private getPagination = (request: { page?: number, pageSize?: number }) => {
     const page = request.page || 1;
