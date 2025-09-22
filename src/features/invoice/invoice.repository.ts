@@ -170,6 +170,9 @@ export class InvoiceRepository {
     const invoicesItems = await Invoice.findAll({
       where: {
         idCostCenterProject: idCostCenterProject,
+        idInvoiceStatus: {
+          [Op.ne]: 1, // ✅ excluir facturas con estado 1
+        },
         // invoice: {
         //   [Op.ne]: null
         // }

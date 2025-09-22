@@ -21,8 +21,8 @@ export const createInvoice = z.object({
   idCostCenterProject: z.coerce.number(),
   contract: z.string(),
   documentUrl: z.string().optional(),
-  createdAt: z.string().optional(),
-  updatedAt: z.string().optional(),
+  // createdAt: z.string().optional(),
+  // updatedAt: z.string().optional(),
 });
 
 export const updateInvoice = z.object({
@@ -33,6 +33,7 @@ export const updateInvoice = z.object({
   documentUrl: z.string().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
+  idInvoiceStatus: z.coerce.number().optional(),
 });
 
 // Export the inferred types as DTOs

@@ -137,7 +137,7 @@ export class IncominService {
             return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, expenditure);
         } catch (error) {
             console.error("An error occurred while trying to create expenditure", error);
-            return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to create expenditure" });
+            return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to create income" });
         }
     };
 

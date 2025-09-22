@@ -22,6 +22,8 @@ import { invoiceRoutes } from "./features/invoice";
 // import { incominRoute } from "./features/incomin/incomin.route";
 import { incominRoute } from "./features/incomin";
 
+import "./jobs/invoice.job";
+
 class Server {
   private app: Application;
   private port: number;

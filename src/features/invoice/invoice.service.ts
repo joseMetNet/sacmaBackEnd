@@ -49,7 +49,7 @@ export class InvoiceService {
       const invoicePayload = {
         ...invoiceData,
         documentUrl,
-        idInvoiceStatus: 1  // Default value for new invoices
+        idInvoiceStatus: 2  // Default value for new invoices
       };
 
       // Create invoice within transaction
