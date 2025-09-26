@@ -6,6 +6,7 @@ import { StatusCode, StatusValue } from "../../utils/general.interfase";
 import { CustomError, deleteFile, uploadFile } from "../../utils";
 import { dbConnection } from "../../config";
 import { BuildResponse } from "../../utils/build-response";
+import { Op } from "sequelize";
 
 export class OrderService {
   private orderRepository: OrderRepository;
@@ -41,9 +42,7 @@ export class OrderService {
     }
   };
 
-  findAllOrderItemDetail = async (
-    request: dtos.FindAllOrderItemDetailDTO
-  ): Promise<ResponseEntity> => {
+  findAllOrderItemDetail = async ( request: dtos.FindAllOrderItemDetailDTO ): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = this.getPagination(request);
       const filter = this.buildItemDetailFilter(request);
@@ -65,6 +64,32 @@ export class OrderService {
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
         { message: "Error while fetching orders item details" }
+      );
+    }
+  };
+
+  findAllOrderItemDetailMachineryUsed = async (request: dtos.FindAllOrderItemDetailMachineryUsedDTO): Promise<ResponseEntity> => {
+    try {
+      const { page, pageSize, limit, offset } = this.getPagination(request);
+      const filter = this.buildItemDetailFilterMachinery(request);
+      const orderItems = await this.orderRepository.findAllOrderItemDetailMachineryUsed(filter, limit, offset);
+
+      const response = {
+        data: orderItems.rows,
+        totalItems: orderItems.count,
+        currentPage: page,
+        totalPages: Math.ceil(orderItems.count / pageSize)
+      };
+
+      return BuildResponse.buildSuccessResponse(
+        StatusCode.Ok,
+        response
+      );
+    } catch (err: any) {
+      console.error(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "Error while fetching orders item details machineries" }
       );
     }
   };
@@ -145,6 +170,19 @@ export class OrderService {
   createOrderItemDetail = async (orderItemDetail: dtos.CreateOrderItemDetail): Promise<ResponseEntity> => {
     try {
       const newOrderItemDetail = await this.orderRepository.createOrderItemDetail(orderItemDetail);
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, newOrderItemDetail);
+    } catch (err: any) {
+      console.error(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "Error while fetching orders item details" }
+      );
+    }
+  };
+
+  createOrderItemDetailMachineryUsed = async (orderItemDetailMachineryUsed: dtos.CreateOrderItemDetailMachineryUsed): Promise<ResponseEntity> => {
+    try {
+      const newOrderItemDetail = await this.orderRepository.createOrderItemDetailMachineryUsed(orderItemDetailMachineryUsed);
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, newOrderItemDetail);
     } catch (err: any) {
       console.error(err);
@@ -241,6 +279,28 @@ export class OrderService {
     }
   };
 
+  updateOrderItemDetailMachineryUsed = async (orderItemDetailMachineryUsed: dtos.UpdateOrderItemDetailMachineryUsed): Promise<ResponseEntity> => {
+    try {
+      const orderItemDetailDb = await this.orderRepository.findByIdOrderItemDetailMachineryUsed(orderItemDetailMachineryUsed.idOrderItemDetailMachineryUsed);
+      if (!orderItemDetailDb) {
+        return BuildResponse.buildErrorResponse(
+          StatusCode.NotFound,
+          { message: "Order item detail not found" }
+        );
+      }
+
+      const updatedOrderItemDetail = await orderItemDetailDb.update(orderItemDetailMachineryUsed);
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, updatedOrderItemDetail);
+    } catch (err: any) {
+      console.error(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "Error while fetching orders item details" }
+      );
+    }
+  };
+
   deleteOrderItem = async (id: number): Promise<ResponseEntity> => {
     const transaction = await dbConnection.transaction();
     try {
@@ -287,6 +347,30 @@ export class OrderService {
     }
   };
 
+  deleteOrderItemDetailMachineryUsed = async (id: number): Promise<ResponseEntity> => {
+    try {
+      const orderItemDetailMachineryUsed = await this.orderRepository.findByIdOrderItemDetailMachineryUsed(id);
+      if (!orderItemDetailMachineryUsed) {
+        return {
+          status: StatusValue.Failed,
+          code: StatusCode.NotFound,
+          data: { message: "Order item detail not found" }
+        };
+      }
+
+      await this.orderRepository.deleteOrderItemDetailMachineryUsed(id);
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Order item detail deleted successfully" });
+
+    } catch (err: any) {
+      console.error(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "Error deleting fetching orders item details" }
+      );
+    }
+  };
+
   private buildItemDetailFilter = (request: dtos.FindAllOrderItemDetailDTO) => {
     const filter: any = {};
     if (request.idOrderItem) {
@@ -294,6 +378,40 @@ export class OrderService {
     }
     return filter;
   };
+  private buildItemDetailFilterMachinery = (request: dtos.FindAllOrderItemDetailMachineryUsedDTO) => {
+    const filter: any = {};
+    if (request.idOrderItem) {
+      filter.idOrderItem = request.idOrderItem;
+    }
+    return filter;
+  };
+
+  // private buildFindAllFilter(request: dtos.FindAllOrderItemDetailMachineryUsedDTO): { [key: string]: any } {
+  //   let filter: { [key: string]: any } = {};
+  //   for (const key of Object.getOwnPropertyNames(request)) {
+  //     if (/^id/.test(key)) {
+  //       filter = {
+  //         ...filter,
+  //         [key]: request[key as keyof dtos.FindAllOrderItemDetailMachineryUsedDTO],
+  //       };
+  //     } else if (key === "serial") {
+  //       filter = {
+  //         ...filter,
+  //         serial: {
+  //           [Op.like]: `%${request.serial}%`,
+  //         },
+  //       };
+  //     } else if (key === "machineryBrand") {
+  //       filter = {
+  //         ...filter,
+  //         machineryBrand: {
+  //           [Op.like]: `%${request.machineryBrand}%`,
+  //         },
+  //       };
+  //     }
+  //   }
+  //   return filter;
+  // }
 
   private buildItemFilter = (request: dtos.FindAllOrderItemDTO) => {
     let where: { [key: string]: any } = {};

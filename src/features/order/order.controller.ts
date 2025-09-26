@@ -45,6 +45,23 @@ export class OrderController {
     });
   };
 
+  findAllOrderItemDetailMachineryUsed = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.findAllOrderItemDetailMachinerySchema.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.orderService.findAllOrderItemDetailMachineryUsed(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
   findByIdOrderItem = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.idOrderItemSchema.safeParse(req.params);
     if (!request.success) {
@@ -120,6 +137,23 @@ export class OrderController {
     });
   };
 
+  createOrderItemDetailMachineryUsed = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.createOrderItemDetailMachineryUsedSchema.safeParse(req.body);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.orderService.createOrderItemDetailMachineryUsed(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
   updateOrderItem = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.updateOrderItemSchema.safeParse(req.body);
     if (!request.success) {
@@ -172,6 +206,23 @@ export class OrderController {
     });
   };
 
+  updateOrderItemDetailMachineryUsed = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.updateOrderItemDetailMachinerySchema.safeParse(req.body);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.orderService.updateOrderItemDetailMachineryUsed(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
   deleteOrderItem = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.idOrderItemSchema.safeParse(req.params);
     if (!request.success) {
@@ -205,4 +256,22 @@ export class OrderController {
       data: response.data
     });
   };
+
+  deleteOrderItemDetailMachineryUsed = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.idOrderItemDetailMachineryUsed.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.orderService.deleteOrderItemDetailMachineryUsed(request.data.idOrderItemDetailMachineryUsed);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
 }

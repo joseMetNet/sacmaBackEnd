@@ -12,17 +12,22 @@ export function orderRoute(app: Application) {
   router.get("/v1/order/item", orderController.findAllOrderItem);
   router.get("/v1/order/item/status", orderController.findOrderItemStatus);
   router.get("/v1/order/item/detail", orderController.findAllOrderItemDetail);
+  router.get("/v1/order/item/getDetailMachineryUsed", orderController.findAllOrderItemDetailMachineryUsed);
   router.get("/v1/order/item/:idOrderItem", orderController.findByIdOrderItem);
-  router.get("/v1/order/item/detail/:idOrderItemDetail", orderController.findByIdOrderItemDetail);
+  router.get("/v1/order/item/detail/:idOrderItemDetail", orderController.findByIdOrderItemDetail);  
+  // router.get("/v1/order/item/getDetailByIdMachineryUsed/:idOrderItem", orderController.findByIdOrderItemMachineryUsed);
 
   router.post("/v1/order/item", orderController.createOrderItem);
   router.post("/v1/order/item/detail", orderController.createOrderItemDetail);
+  router.post("/v1/order/item/detailMachineryUsed", orderController.createOrderItemDetailMachineryUsed);
   
   router.patch("/v1/order/item", orderController.updateOrderItem);
   router.patch("/v1/order/item/detail", orderController.updateOrderItemDetail);
+  router.patch("/v1/order/item/updateDetailMachineryUsed", orderController.updateOrderItemDetailMachineryUsed);
 
   router.delete("/v1/order/item/:idOrderItem", orderController.deleteOrderItem);
   router.delete("/v1/order/item/detail/:idOrderItemDetail", orderController.deleteOrderItemDetail);
+  router.delete("/v1/order/item/deleteDetailMachineryUsed/:idOrderItemDetailMachineryUsed", orderController.deleteOrderItemDetailMachineryUsed);
 
   app.use("/api/", router);
 }

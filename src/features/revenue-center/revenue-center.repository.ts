@@ -632,20 +632,21 @@ export class RevenueCenterRepository {
       SUM(toid.quantity) AS shipped,
       --SUM(toid.quantity) * MAX(ti.performance) AS quantityM2,
 	  SUM(toid.quantity) * MAX(CAST(ti.performance AS DECIMAL(10,2))) AS quantityM2,
+    SUM(toid.quantity) * MAX(ti.cost) AS totalCostSend,
       0 AS budgeted,
       MAX(trc.idCostCenterProject) AS idCostCenterProject,
       MAX(trc.idQuotation) AS idQuotation,
       0 AS contracted,
-      580 AS invoiced,
-      475 AS shippedAndInvoiced,
-      25 AS diff
+      0 AS invoiced,
+      0 AS shippedAndInvoiced,
+      0 AS diff
     FROM mvp1.TB_OrderItemDetail toid
     INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
     INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
     INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idCostCenterProject = toi.idCostCenterProject
     WHERE trc.idRevenueCenter = :idRevenueCenter AND ti.idInputType = 1
     GROUP BY ti.idInput, ti.name
-    ORDER BY ti.name
+    ORDER BY totalCostSend DESC
     OFFSET :offset ROWS
     FETCH NEXT :limit ROWS ONLY;
   `;
@@ -659,20 +660,21 @@ export class RevenueCenterRepository {
       SUM(toid.quantity) AS shipped,
       --SUM(toid.quantity) * MAX(ti.performance) AS quantityM2,
       SUM(toid.quantity) * MAX(CAST(ti.performance AS DECIMAL(10,2))) AS quantityM2,
+      SUM(toid.quantity) * MAX(ti.cost) AS totalCostSend,
       0 AS budgeted,
       MAX(trc.idCostCenterProject) AS idCostCenterProject,
       MAX(trc.idQuotation) AS idQuotation,
       0 AS contracted,
-      580 AS invoiced,
-      475 AS shippedAndInvoiced,
-      25 AS diff
+      0 AS invoiced,
+      0 AS shippedAndInvoiced,
+      0 AS diff
     FROM mvp1.TB_OrderItemDetail toid
     INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
     INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
     INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idCostCenterProject = toi.idCostCenterProject
     WHERE trc.idRevenueCenter = :idRevenueCenter AND ti.idInputType = 1
     GROUP BY ti.idInput, ti.name
-    ORDER BY ti.name
+    ORDER BY totalCostSend DESC
   `;
 
     const countQuery = `
