@@ -18,6 +18,13 @@ export class Incomin extends Model {
   declare orderNumber?: string;
   declare createdAt: string;
   declare updatedAt: string;
+  declare advance?: number;
+  declare reteguarantee?: number;
+  declare retesource?: number;
+  declare reteica?: number;
+  declare fic?: number;
+  declare other?: number;
+  declare totalDiscounts?: number;
 }
 
 Incomin.init(
@@ -73,6 +80,46 @@ Incomin.init(
     },
     updatedAt: {
       type: DataTypes.DATE,
+      allowNull: true,
+    },
+    advance: {
+      type: DataTypes.DECIMAL(18, 2),
+      allowNull: true,
+      defaultValue: 0.00,
+      // field: "advance",
+    },
+    reteguarantee: {
+      type: DataTypes.DECIMAL(18, 2),
+      allowNull: true,
+      defaultValue: 0.00,
+      // field: "reteguarantee",
+    },
+    retesource: {
+      type: DataTypes.DECIMAL(18, 2),
+      allowNull: true,
+      defaultValue: 0.00,
+      // field: "retesource",
+    },
+    reteica: {
+      type: DataTypes.DECIMAL(18, 2),
+      allowNull: true,
+      defaultValue: 0.00,
+      // field: "reteica",
+    },
+    fic: {
+      type: DataTypes.DECIMAL(18, 2),
+      allowNull: true,
+      defaultValue: 0.00,
+      // field: "fic",
+    },
+    other: {
+      type: DataTypes.DECIMAL(18, 2),
+      allowNull: true,
+      defaultValue: 0.00,
+      // field: "other",
+    },
+    totalDiscounts: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
   },

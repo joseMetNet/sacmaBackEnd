@@ -8,6 +8,12 @@ export const idOrderItemDetailSchema = z.object({
   idOrderItemDetail: z.coerce.number()
 });
 
+export const deleteOrderItemDetailSchema = z.object({
+  idOrderItemDetail: z.coerce.number(),
+  quantity: z.coerce.number().optional(),
+  idPurchaseRequest: z.coerce.number().optional()
+});
+
 export const idOrderItemDetailMachineryUsed = z.object({
   idOrderItemDetailMachineryUsed: z.coerce.number()
 });
@@ -57,6 +63,7 @@ export const createOrderItemDetailMachineryUsedSchema = z.object({
   idMachineryModel: z.coerce.number(),
   idMachineryType: z.coerce.number(),
   idMachineryStatus: z.coerce.number(),
+  idCostCenterProject: z.coerce.number(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional()
 });

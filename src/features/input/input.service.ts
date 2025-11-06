@@ -291,6 +291,19 @@ class InputService {
     }
   }
 
+  async findAllByIdSupplier(idSupplier: number): Promise<ResponseEntity> {
+    try {
+      const inputs = await inputRepository.findAllByIdSupplier(idSupplier);
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, inputs.rows);
+    } catch (err: any) {
+      console.error("Error finding inputs by supplier:", err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  }
+
   private buildFindAllInputFilter(request: dtos.FindAllDTO) {
     let inputFilter = {};
     for (const key of Object.getOwnPropertyNames(request)) {

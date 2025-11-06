@@ -21,6 +21,11 @@ import { revenueCenterRoutes } from "./features/revenue-center/revenue-center.ro
 import { invoiceRoutes } from "./features/invoice";
 // import { incominRoute } from "./features/incomin/incomin.route";
 import { incominRoute } from "./features/incomin";
+import { incomeDiscountInvoiceRoute } from "./features/incomeDiscountsInvoice";
+import { setupModelRelations } from "./config/model-relations";
+import { purchaseRoute } from "./features/purchase";
+import { wareHouseRoute } from "./features/warwHouse";
+import { inputMovementRoute } from "./features/inputMovement";
 
 import "./jobs/invoice.job";
 
@@ -34,6 +39,8 @@ class Server {
     this.initializeSwagger();
     this.middlewares();
     this.routes();
+    // Configurar relaciones de modelos después de que todos los modelos estén inicializados
+    setupModelRelations();
   }
 
   private middlewares(): void {
@@ -76,6 +83,10 @@ class Server {
     revenueCenterRoutes(this.app);
     invoiceRoutes(this.app);
     incominRoute(this.app);
+    incomeDiscountInvoiceRoute(this.app);
+    purchaseRoute(this.app);
+    wareHouseRoute(this.app);
+    inputMovementRoute(this.app);
   }
 
   public listen(): void {

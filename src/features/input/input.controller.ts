@@ -185,6 +185,28 @@ class InputController {
     }
   }
 
+  async findAllByIdSupplier(req: Request, res: Response): Promise<void> {
+    try {
+      const request = schemas.idSupplier.safeParse(req.params);
+      if (!request.success) {
+        res.status(StatusCode.BadRequest)
+          .json({
+            status: StatusValue.Failed,
+            data: { error: formatZodError(request.error) },
+          });
+        return;
+      }
+      const response = await inputService.findAllByIdSupplier(request.data.idSupplier);
+      res
+        .status(response.code)
+        .json({ status: response.status, data: response.data });
+    } catch (err: any) {
+      res
+        .status(StatusCode.InternalErrorServer)
+        .json({ message: err.message });
+    }
+  }
+
 }
 
 const inputController = new InputController();

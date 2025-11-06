@@ -13,6 +13,7 @@ export function orderRoute(app: Application) {
   router.get("/v1/order/item/status", orderController.findOrderItemStatus);
   router.get("/v1/order/item/detail", orderController.findAllOrderItemDetail);
   router.get("/v1/order/item/getDetailMachineryUsed", orderController.findAllOrderItemDetailMachineryUsed);
+  router.get("/v1/order/item/getDetailMachineryUsedPaginatorNot", orderController.findAllOrderItemDetailMachineryUsedPaginatorNot);
   router.get("/v1/order/item/:idOrderItem", orderController.findByIdOrderItem);
   router.get("/v1/order/item/detail/:idOrderItemDetail", orderController.findByIdOrderItemDetail);  
   // router.get("/v1/order/item/getDetailByIdMachineryUsed/:idOrderItem", orderController.findByIdOrderItemMachineryUsed);
@@ -444,8 +445,11 @@ export function orderRoute(app: Application) {
  * /v1/order/item/detail/{idOrderItemDetail}:
  *   delete:
  *     tags: [Order]
- *     summary: Delete an existing order item detail
- *     description: Delete an existing order item detail
+ *     summary: Delete an existing order item detail (with optional stock return)
+ *     description: |
+ *       Delete an order item detail with two modes:
+ *       1. **Simple delete**: Only provide idOrderItemDetail in path - deletes without returning stock
+ *       2. **Delete with stock return**: Provide idOrderItemDetail in path + idPurchaseRequest and quantity in body - returns stock to TB_PurchaseRequest before deleting
  *     parameters:
  *       - in: path
  *         name: idOrderItemDetail
@@ -453,9 +457,44 @@ export function orderRoute(app: Application) {
  *         schema:
  *           type: integer
  *         description: ID of the order item detail to delete
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               quantity:
+ *                 type: number
+ *                 example: 3
+ *                 description: Quantity to return to stock
+ *               idPurchaseRequest:
+ *                 type: integer
+ *                 example: 6
+ *                 description: ID of purchase request to return stock to
  *     responses:
- *       204:
+ *       200:
  *         description: Order item detail deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "SUCCESS"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Order item detail deleted and stock returned successfully"
+ *                     returnedQuantity:
+ *                       type: number
+ *                       example: 3
+ *                     newStockQuantity:
+ *                       type: string
+ *                       example: "10"
  *       401:
  *         description: Unauthorized
  *       403:

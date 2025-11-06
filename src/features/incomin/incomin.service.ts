@@ -123,7 +123,7 @@ export class IncominService {
     };
 
     create = async (request: dtos.CreateDTO, filePath?: string): Promise<ResponseEntity> => {
-        console.log("service line 101", request);
+       
         try {
             let expenditure = await this.expenditureRepository.create(request);
             console.log("service line 101", expenditure);
@@ -182,6 +182,14 @@ export class IncominService {
             expenditure.fromDate = request.fromDate || expenditure.fromDate;
             expenditure.toDate = request.toDate || expenditure.toDate;
             expenditure.orderNumber = request.orderNumber || expenditure.orderNumber;
+
+            expenditure.advance = request.advance || expenditure.advance;
+            expenditure.reteguarantee = request.reteguarantee || expenditure.reteguarantee;
+            expenditure.retesource = request.retesource || expenditure.retesource;
+            expenditure.reteica = request.reteica || expenditure.reteica;
+            expenditure.fic = request.fic || expenditure.fic;
+            expenditure.other = request.other || expenditure.other;
+            expenditure.totalDiscounts = request.totalDiscounts || expenditure.totalDiscounts;
 
             if (expenditure.documentUrl && filePath) {
                 const identifier = new URL(expenditure.documentUrl).pathname.split("/").pop();

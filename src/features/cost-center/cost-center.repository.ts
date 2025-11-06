@@ -1,4 +1,5 @@
 import { InvoiceProjectItem } from "../invoice/invoice-project-item.model";
+import { Quotation } from "../quotation/quotation.model";
 import { CostCenterContact } from "./cost-center-contact.model";
 import { CostCenterProject } from "./cost-center-project.model";
 import { CostCenter } from "./cost-center.model";
@@ -80,13 +81,20 @@ export class CostCenterRepository {
   ): Promise<{ rows: ProjectItem[], count: number }> {
     const queryOptions: any = {
       include: [{ all: true }],
+      // include: [
+      //   {
+      //     model: Quotation,
+      //     required: false,
+      //   }
+
+      // ],
       where: filter,
       nest: true,
       distinct: true,
       order: [["idProjectItem", "ASC"]],
     };
 
-    // Only apply pagination if limit is greater than 0
+    // Only apply pagination if limit is greater than 0Quotation
     if (limit > 0) {
       queryOptions.limit = limit;
       queryOptions.offset = offset;

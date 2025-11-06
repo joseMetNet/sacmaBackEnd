@@ -77,7 +77,23 @@ export class IncominRepository {
   }
 
   async findAllExpenditureType() {
-    return ExpenditureType.findAll();
+    return Incomin.findAndCountAll({
+      include: [
+        {
+          model: ExpenditureType,
+          required: true,
+        },
+        {
+          model: CostCenterProject,
+          required: false,
+        },
+        {
+          model: Invoice,
+          required: false,
+        },
+      ],order: [["createdAt", "DESC"]],
+    });
+    // return Incomin.findAll();
   }
 
   async findById(idIncome: number) {

@@ -9,6 +9,7 @@ import { Machinery } from "../machinery/machinery.model";
 import { MachineryType } from "../machinery/machinery-type.model";
 import { MachineryModel } from "../machinery/machinery-model.model";
 import { MachineryStatus } from "../machinery/machinery-status.model";
+import { PurchaseRequest } from "../purchase/purchase-request.model";
 
 export class OrderRepository {
 
@@ -50,9 +51,15 @@ export class OrderRepository {
             {
               model: InputUnitOfMeasure,
               required: true,
+            },
+            {
+              model: PurchaseRequest,
+              as: "PurchaseRequests",
+              required: false,
             }
           ]
         }
+
       ],
       where: filter,
       limit: limit,
@@ -90,6 +97,33 @@ export class OrderRepository {
       order: [["createdAt", "DESC"]],
     });
   };
+
+  findAllOrderItemDetailMachineryWhitoutPaginator = (filter: { [key: string]: any } = {},) => {
+
+    return OrderItemDetailMachineryUsed.findAndCountAll({
+      include: [
+        {
+          model: Machinery,
+          required: true,
+        },
+        {
+          model: MachineryType,
+          required: true,
+        },
+        {
+          model: MachineryModel,
+          required: true,
+        },
+        {
+          model: MachineryStatus,
+          required: true,
+        }
+      ],
+      where: filter,
+      order: [["createdAt", "DESC"]],
+    });
+
+  }
 
   findOrderItemStatus = () => {
     return OrderItemStatus.findAll();
@@ -146,24 +180,24 @@ export class OrderRepository {
         //     ]
         //   }
         // ],
-         include: [
-        {
-          model: Machinery,
-          required: true,
-        },
-        {
-          model: MachineryType,
-          required: true,
-        },
-        {
-          model: MachineryModel,
-          required: true,
-        },
-        {
-          model: MachineryStatus,
-          required: true,
-        }
-      ],
+        include: [
+          {
+            model: Machinery,
+            required: true,
+          },
+          {
+            model: MachineryType,
+            required: true,
+          },
+          {
+            model: MachineryModel,
+            required: true,
+          },
+          {
+            model: MachineryStatus,
+            required: true,
+          }
+        ],
       }
     );
   };
@@ -175,9 +209,17 @@ export class OrderRepository {
   createOrderItemDetail = (orderItemDetail: dtos.CreateOrderItemDetail) => {
     return OrderItemDetail.create(orderItemDetail as any);
   };
+
   createOrderItemDetailMachineryUsed = (orderItemDetailMachineryUsed: dtos.CreateOrderItemDetailMachineryUsed) => {
     return OrderItemDetailMachineryUsed.create(orderItemDetailMachineryUsed as any);
   };
+  // createOrderItemDetailMachineryUsed = (orderItemDetailMachineryUsed: dtos.CreateOrderItemDetailMachineryUsed, transaction?: any) => {
+  //   const options: any = {};
+  //   if (transaction) {
+  //     options.transaction = transaction;
+  //   }
+  //   return OrderItemDetailMachineryUsed.create(orderItemDetailMachineryUsed as any, options);
+  // };
 
   updateOrderItem = (orderItem: dtos.UpdateOrderItem) => {
     return OrderItem.update(orderItem, { where: { idOrderItem: orderItem.idOrderItem } });
@@ -194,7 +236,26 @@ export class OrderRepository {
   deleteOrderItemDetail = (id: number) => {
     return OrderItemDetail.destroy({ where: { idOrderItemDetail: id } });
   };
+  
   deleteOrderItemDetailMachineryUsed = (id: number) => {
     return OrderItemDetailMachineryUsed.destroy({ where: { idOrderItemDetailMachineryUsed: id } });
+  };
+
+  // Devolver stock a PurchaseRequest
+  returnStockToPurchaseRequest = async (idPurchaseRequest: number, quantityToReturn: number) => {
+    const purchaseRequest = await PurchaseRequest.findByPk(idPurchaseRequest);
+    if (!purchaseRequest) {
+      throw new Error("Purchase request not found");
+    }
+
+    const currentQuantity = parseFloat(purchaseRequest.quantity || "0");
+    const newQuantity = (currentQuantity + quantityToReturn).toString();
+
+    await PurchaseRequest.update(
+      { quantity: newQuantity },
+      { where: { idPurchaseRequest } }
+    );
+
+    return newQuantity;
   };
 }

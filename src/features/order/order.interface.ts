@@ -24,6 +24,10 @@ export interface FindAllOrderItemDetailMachineryUsedDTO {
   // idMachineryStatus?: number;
 }
 
+export interface FindAllOrderItemDetailMachineryUsedDTOPs {
+  idOrderItem?: number;
+}
+
 export interface CreateOrderItem {
   idOrderItemStatus: number;
   idEmployee: number;
@@ -60,6 +64,7 @@ export interface CreateOrderItemDetailMachineryUsed {
   idMachineryModel: number;
   idMachineryType: number;
   idMachineryStatus: number;
+  idCostCenterProject: number;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -31,6 +31,14 @@ export interface CreateDTO {
   toDate?: string;
   createdAt?: string;
   orderNumber?: string;
+
+  advance?: number;
+  reteguarantee?: number;
+  retesource?:  number;
+  reteica?: number;
+  fic?: number;
+  other?: number;
+  totalDiscounts?: number;
 }
 
 export interface CreateExpenditureItemDTO {
@@ -40,6 +48,7 @@ export interface CreateExpenditureItemDTO {
   value: string;
   description: string;
   createdAt?: string;
+  totalDiscounts?: number;
 }
 
 export interface CreateExpenditureTypeDTO {
@@ -63,6 +72,13 @@ export interface UpdateDTO {
   fromDate?: string;
   toDate?: string;
   orderNumber?: string;
+  advance?: number;
+  reteguarantee?: number;
+  retesource?: number;
+  reteica?: number;
+  fic?: number;
+  other?: number;
+  totalDiscounts?: number;
 }
 
 export interface UpdateExpenditureItemDTO {
@@ -74,4 +90,5 @@ export interface UpdateExpenditureItemDTO {
   description?: string;
   createdAt?: string;
   updatedAt?: string;
+  totalDiscounts?: number;
 }

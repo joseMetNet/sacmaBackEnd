@@ -41,6 +41,14 @@ export const createSchema = z.object({
     toDate: z.string().optional(),
     createdAt: z.string().optional(),
     orderNumber: z.string().optional(),
+
+    advance: z.coerce.number().optional(),
+    reteguarantee: z.coerce.number().optional(),
+    retesource: z.coerce.number().optional(),
+    reteica: z.coerce.number().optional(),
+    fic: z.coerce.number().optional(),
+    other: z.coerce.number().optional(),
+    totalDiscounts: z.coerce.number().optional(),
 });
 
 export const createExpenditureItemSchema = z.object({
@@ -66,6 +74,15 @@ export const updateSchema = z.object({
     fromDate: z.string().optional(),
     toDate: z.string().optional(),
     orderNumber: z.string().optional(),
+
+    
+    advance: z.coerce.number().optional(),
+    reteguarantee: z.coerce.number().optional(),
+    retesource: z.coerce.number().optional(),
+    reteica: z.coerce.number().optional(),
+    fic: z.coerce.number().optional(),
+    other: z.coerce.number().optional(),
+    totalDiscounts: z.coerce.number().optional(),
 });
 
 export const updateExpenditureItemSchema = z.object({

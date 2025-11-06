@@ -17,6 +17,7 @@ export function inputRoutes(app: Application): void {
   router.get("/v1/inputs/:idInput", inputController.findById);
   router.delete("/v1/inputs/:idInput", inputController.delete);
   router.get("/v1/inputs", inputController.findAll);
+  router.get("/v1/inputs/supplier/:idSupplier", inputController.findAllByIdSupplier);
   app.use("/api/", router);
 }
 
@@ -344,6 +345,51 @@ export function inputRoutes(app: Application): void {
  *               $ref: '#/components/schemas/Input'
  *       400:
  *         description: Bad Request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
+
+/**
+ * @openapi
+ * /v1/inputs/supplier/{idSupplier}:
+ *   get:
+ *     tags: [Input]
+ *     summary: Find all inputs by supplier ID
+ *     description: Retrieve all inputs filtered by supplier ID without pagination
+ *     parameters:
+ *       - in: path
+ *         name: idSupplier
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the supplier to filter inputs
+ *     responses:
+ *       200:
+ *         description: A list of inputs filtered by supplier
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "SUCCESS"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Input'
+ *       400:
+ *         description: Bad Request - Invalid supplier ID
  *       401:
  *         description: Unauthorized
  *       403:

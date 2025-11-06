@@ -61,6 +61,23 @@ export class OrderController {
       data: response.data
     });
   };
+  
+  findAllOrderItemDetailMachineryUsedPaginatorNot = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.findAllOrderItemDetailMachinerySchema.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.orderService.findAllOrderItemDetailMachineryUsedPaginatorNot(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
 
   findByIdOrderItem = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.idOrderItemSchema.safeParse(req.params);
@@ -241,7 +258,13 @@ export class OrderController {
   };
 
   deleteOrderItemDetail = async (req: Request, res: Response): Promise<void> => {
-    const request = schemas.idOrderItemDetailSchema.safeParse(req.params);
+    // Combinar params y body para validación
+    const combinedData = {
+      idOrderItemDetail: req.params.idOrderItemDetail,
+      ...req.body
+    };
+    
+    const request = schemas.deleteOrderItemDetailSchema.safeParse(combinedData);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -250,7 +273,7 @@ export class OrderController {
       return;
     }
 
-    const response = await this.orderService.deleteOrderItemDetail(request.data.idOrderItemDetail);
+    const response = await this.orderService.deleteOrderItemDetail(request.data);
     res.status(response.code).json({
       status: response.status,
       data: response.data

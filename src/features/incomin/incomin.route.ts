@@ -20,6 +20,7 @@ export function incominRoute(app: Application) {
 
     router.get("/v1/getIncomin", incominController.findAll);
     // router.get("/v1/expenditure/item", expenditureController.findAllExpenditureItem);
+    router.get("/v1/getIncominAllSinPaginator", incominController.findAllExpenditureType);
     // router.get("/v1/expenditure/type", expenditureController.findAllExpenditureType);
     router.get("/v1/incominById/:idIncome", incominController.findById);
 
@@ -300,6 +301,27 @@ export function incominRoute(app: Application) {
  *         orderNumber:
  *           type: string
  *           example: "023923"
+ *         advance:
+ *           type: number
+ *           example: 1000.00
+ *         reteguarantee:
+ *           type: number
+ *           example: 1000.00
+ *         retesource:
+ *           type: number
+ *           example: 1000.00
+ *         reteica:
+ *           type: number
+ *           example: 1000.00
+ *         fic:
+ *           type: number
+ *           example: 1000.00
+ *         other:
+ *           type: number
+ *           example: 1000.00
+ *         totalDiscounts:
+ *           type: number
+ *           example: 23923
  *     UpdateIncomin:
  *       type: object
  *       properties:
@@ -336,4 +358,25 @@ export function incominRoute(app: Application) {
  *         orderNumber:
  *           type: string
  *           example: "023923"
+ *         advance:
+ *           type: number
+ *           example: 1000.00
+ *         reteguarantee:
+ *           type: number
+ *           example: 1000.00
+ *         retesource:
+ *           type: number
+ *           example: 1000.00
+ *         reteica:
+ *           type: number
+ *           example: 1000.00
+ *         fic:
+ *           type: number
+ *           example: 1000.00
+ *         other:
+ *           type: number
+ *           example: 1000.00
+ *         totalDiscounts:
+ *           type: number
+ *           example: 23923
  */

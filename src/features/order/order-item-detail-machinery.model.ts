@@ -39,6 +39,10 @@ OrderItemDetailMachineryUsed.init({
     type: DataTypes.INTEGER,
     allowNull: false
   },
+  idCostCenterProject: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
   createdAt: {
     type: DataTypes.DATE,
     allowNull: false

@@ -565,7 +565,7 @@ export class RevenueCenterService {
     }
   };
 
-  findAllContractedSummary = async (request: schemas.FindAllContractedSummarySchema): Promise<ResponseEntity> => {
+  findAllContractedSummaryOrigin = async (request: schemas.FindAllContractedSummarySchema): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);
 
@@ -582,6 +582,7 @@ export class RevenueCenterService {
       const data = await this.costCenterRepository.findAllProjectItem(filter, limit, offset);
 
       const rows = data.rows.map((item) => ({
+        contract: item.contract,
         material: item.item,
         quantity: item.quantity,
         subTotal: parseFloat(item.unitPrice).toFixed(2),
@@ -605,6 +606,79 @@ export class RevenueCenterService {
       });
     }
   };
+
+  findAllContractedSummary = async (
+    request: schemas.FindAllContractedSummarySchema
+  ): Promise<ResponseEntity> => {
+    try {
+      const { page, pageSize, limit, offset } = findPagination(request);
+
+      // 1️⃣ Buscar el revenue center
+      const revenueCenter = await this.revenueCenterRepository.findById(request.idRevenueCenter);
+      if (!revenueCenter) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
+          message: "Revenue center not found"
+        });
+      }
+
+      // 2️⃣ Buscar los items por idCostCenterProject
+      const filter = { idCostCenterProject: revenueCenter.idCostCenterProject };
+      const data = await this.costCenterRepository.findAllProjectItem(filter, limit, offset);
+
+      // 3️⃣ Transformar los resultados base
+      const rows = data.rows.map((item) => ({
+        contract: item.contract,
+        material: item.item,
+        quantity: parseFloat(item.quantity),
+        subTotal: parseFloat(item.unitPrice).toFixed(2),
+        totalValue: (parseFloat(item.quantity) * parseFloat(item.unitPrice)).toFixed(2),
+        total: (parseFloat(item.quantity) * (parseFloat(item.quantity) * parseFloat(item.unitPrice)) * 1.1557).toFixed(2),
+      }));
+
+      // 4️⃣ Agrupar por contrato
+      const groupedByContract = rows.reduce((acc: any, curr: any) => {
+        const contract = curr.contract;
+        if (!acc[contract]) {
+          acc[contract] = {
+            contract,
+            items: [],
+            totalValueContract: 0
+          };
+        }
+
+        acc[contract].items.push(curr);
+        acc[contract].totalValueContract += parseFloat(curr.totalValue);
+        return acc;
+      }, {});
+
+      // 5️⃣ Convertir el objeto en un array
+      const contracts = Object.values(groupedByContract);
+
+      // 6️⃣ Calcular totales generales
+      const totalGeneral = contracts.reduce(
+        (acc: number, curr: any) => acc + curr.totalValueContract,
+        0
+      );
+
+      // 7️⃣ Construir la respuesta final
+      const response = {
+        contracts,
+        totalContracts: contracts.length,
+        totalItems: data.count,
+        currentPage: page,
+        totalPages: Math.ceil(data.count / pageSize),
+        totalGeneral: parseFloat(totalGeneral.toFixed(2))
+      };
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
+    } catch (error) {
+      console.error("An error occurred while trying to find project items for revenue center", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "An error occurred while trying to find project items for revenue center"
+      });
+    }
+  };
+
 
   /**
    * Find work tracking entries for a revenue center

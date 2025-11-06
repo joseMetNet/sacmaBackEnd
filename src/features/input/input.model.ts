@@ -4,6 +4,7 @@ import { InputType } from "./input-type.model";
 import { Supplier } from "../supplier";
 import { InputUnitOfMeasure } from "./input-unit-of-measure.model";
 import { InputDocument } from "./input-document.model";
+import { PurchaseRequest } from "../purchase/purchase-request.model";
 
 export class Input extends Model {
   declare idInput: number;
@@ -53,22 +54,27 @@ Input.init({
   timestamps: false,
 });
 
-Input.hasOne(InputType, {
-  foreignKey: "idInputType",
-  sourceKey: "idInputType"
-});
+// Input.hasOne(InputType, {
+//   foreignKey: "idInputType",
+//   sourceKey: "idInputType"
+// });
 
-Input.hasOne(Supplier, {
-  foreignKey: "idSupplier",
-  sourceKey: "idSupplier"
-});
+// Input.hasOne(Supplier, {
+//   foreignKey: "idSupplier",
+//   sourceKey: "idSupplier"
+// });
 
-Input.hasOne(InputUnitOfMeasure, {
-  foreignKey: "idInputUnitOfMeasure",
-  sourceKey: "idInputUnitOfMeasure"
-});
+// Input.hasOne(InputUnitOfMeasure, {
+//   foreignKey: "idInputUnitOfMeasure",
+//   sourceKey: "idInputUnitOfMeasure"
+// });
 
-Input.hasMany(InputDocument, {
-  foreignKey: "idInput",
-  sourceKey: "idInput"
-});
+// Input.hasMany(InputDocument, {
+//   foreignKey: "idInput",
+//   sourceKey: "idInput"
+// });
+
+// Input.hasMany(PurchaseRequest, {
+//   foreignKey: "idInput",
+//   sourceKey: "idInput"
+// });
