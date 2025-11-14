@@ -26,6 +26,7 @@ import { setupModelRelations } from "./config/model-relations";
 import { purchaseRoute } from "./features/purchase";
 import { wareHouseRoute } from "./features/warwHouse";
 import { inputMovementRoute } from "./features/inputMovement";
+import { inventoryRoute } from "./features/inventory";
 
 import "./jobs/invoice.job";
 
@@ -87,6 +88,7 @@ class Server {
     purchaseRoute(this.app);
     wareHouseRoute(this.app);
     inputMovementRoute(this.app);
+    inventoryRoute(this.app);
   }
 
   public listen(): void {

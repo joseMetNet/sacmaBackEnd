@@ -69,12 +69,46 @@ export interface UpdatePurchaseRequestIn {
   fileExtensionRequest?: string;
 }
 
+// export interface CreatePurchaseRequestDetail {
+//   idPurchaseRequest: number;
+//   idInput: number;
+//   quantity: number;
+//   createdAt?: string;
+//   updatedAt?: string;
+// }
+
+
 export interface CreatePurchaseRequestDetail {
   idPurchaseRequest: number;
-  idInput: number;
-  quantity: number;
+  idInput: number; 
+  idWarehouse?: number;
+  idSupplier?: number;
+  purchaseRequest?: string;
+  quantity?: string;
   createdAt?: string;
   updatedAt?: string;
+  price?: string;
+  requestDocumentUrl?: string;
+  documentUrl?: string;
+  isActive?: boolean;
+}
+
+export interface CreatePurchaseRequestDetailWithItems {
+  idPurchaseRequest: number;
+  isActive?: boolean;
+  purchaseRequest?: string;
+  idWarehouse?: number;
+  idSupplier?: number;
+  items: Array<{
+    idInput: number;
+    quantity: number;
+    price: number;
+    originalPrice?: number | string;
+    name?: string;
+    subtotal?: number;
+    unitOfMeasure?: string;
+    notes?: string;
+  }>;
 }
 
 export interface CreatePurchaseRequestDetailMachineryUsed {
@@ -107,7 +141,12 @@ export interface UpdatePurchaseRequestDetail {
   idPurchaseRequestDetail: number;
   idPurchaseRequest?: number;
   idInput?: number;
-  quantity?: number;
+  idWarehouse?: number;
+  idSupplier?: number;
+  purchaseRequest?: string;
+  quantity?: number | string;
+  price?: number | string;
+  isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

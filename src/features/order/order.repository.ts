@@ -10,6 +10,7 @@ import { MachineryType } from "../machinery/machinery-type.model";
 import { MachineryModel } from "../machinery/machinery-model.model";
 import { MachineryStatus } from "../machinery/machinery-status.model";
 import { PurchaseRequest } from "../purchase/purchase-request.model";
+import { PurchaseRequestDetail } from "../purchase/purchase-request-detail.model";
 
 export class OrderRepository {
 
@@ -51,12 +52,18 @@ export class OrderRepository {
             {
               model: InputUnitOfMeasure,
               required: true,
-            },
+            }
+            ,
             {
-              model: PurchaseRequest,
-              as: "PurchaseRequests",
+              model: PurchaseRequestDetail,
+              as: "PurchaseRequestDetails",
               required: false,
             }
+            // {
+            //   model: PurchaseRequest,
+            //   as: "PurchaseRequests",
+            //   required: false,
+            // }
           ]
         }
 
@@ -242,18 +249,18 @@ export class OrderRepository {
   };
 
   // Devolver stock a PurchaseRequest
-  returnStockToPurchaseRequest = async (idPurchaseRequest: number, quantityToReturn: number) => {
-    const purchaseRequest = await PurchaseRequest.findByPk(idPurchaseRequest);
-    if (!purchaseRequest) {
+  returnStockToPurchaseRequest = async (idPurchaseRequestDetail: number, quantityToReturn: number) => {
+    const purchaseRequestDetail = await PurchaseRequestDetail.findByPk(idPurchaseRequestDetail);
+    if (!purchaseRequestDetail) {
       throw new Error("Purchase request not found");
     }
 
-    const currentQuantity = parseFloat(purchaseRequest.quantity || "0");
+    const currentQuantity = parseFloat(purchaseRequestDetail.quantity?.toString() || "0");
     const newQuantity = (currentQuantity + quantityToReturn).toString();
 
-    await PurchaseRequest.update(
+    await PurchaseRequestDetail.update(
       { quantity: newQuantity },
-      { where: { idPurchaseRequest } }
+      { where: { idPurchaseRequestDetail } }
     );
 
     return newQuantity;

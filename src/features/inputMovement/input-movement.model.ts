@@ -3,6 +3,7 @@ import { dbConnection } from "../../config";
 import { PurchaseRequest } from "../purchase/purchase-request.model";
 import { Input } from "../input";
 import { WareHouse } from "../warwHouse/warehouse.model";
+import { PurchaseRequestDetail } from "../purchase/purchase-request-detail.model";
 
 export class InputMovement extends Model {
   declare idInputMovement: number;
@@ -15,6 +16,7 @@ export class InputMovement extends Model {
   declare remarks?: string;
   declare createdBy?: string;
   declare createdAt?: Date;
+  declare idPurchaseRequestDetail?: number;
 }
 
 InputMovement.init({
@@ -39,7 +41,7 @@ InputMovement.init({
     type: DataTypes.STRING(10),
     allowNull: false,
     validate: {
-      isIn: [['Entrada', 'Salida']]
+      isIn: [['Entrada', 'Salida', 'Retorno']]
     }
   },
   quantity: {
@@ -61,7 +63,11 @@ InputMovement.init({
   createdAt: {
     type: DataTypes.DATE,
     allowNull: true
-  }
+  },
+  idPurchaseRequestDetail: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
 }, {
   sequelize: dbConnection,
   tableName: "TB_InputMovement",
@@ -87,3 +93,9 @@ InputMovement.belongsTo(WareHouse, {
   targetKey: "idWarehouse",
   as: "WareHouse"
 });
+
+// InputMovement.belongsTo(PurchaseRequestDetail, {
+//   foreignKey: "idPurchaseRequestDetail",
+//   targetKey: "idPurchaseRequestDetail",
+//   as: "PurchaseRequestDetail"
+// });

@@ -3,6 +3,7 @@ import { dbConnection } from "../../config";
 import { WareHouse } from "../warwHouse/warehouse.model";
 import { Input } from "../input";
 import { Supplier } from "../supplier/supplier.model";
+import { PurchaseRequestStatus } from "./purchase-request-status.model";
 
 export class PurchaseRequest extends Model {
   declare idPurchaseRequest: number;
@@ -13,6 +14,7 @@ export class PurchaseRequest extends Model {
   declare idInput?: number;
   declare idWarehouse?: number;
   declare idSupplier?: number;
+  declare idPurchaseRequestStatus?: number;
   declare purchaseRequest?: string;
   declare quantity?: string;
   declare price?: string;
@@ -54,6 +56,11 @@ PurchaseRequest.init({
     type: DataTypes.INTEGER,
     allowNull: true
   },
+  idPurchaseRequestStatus: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: 2
+  },
   purchaseRequest: {
     type: DataTypes.STRING(64),
     allowNull: true
@@ -79,6 +86,12 @@ PurchaseRequest.init({
   sequelize: dbConnection,
   tableName: "TB_PurchaseRequest",
   schema: "mvp1"
+});
+
+PurchaseRequest.belongsTo(PurchaseRequestStatus, {
+  foreignKey: "idPurchaseRequestStatus",
+  targetKey: "idPurchaseRequestStatus",
+  as: "PurchaseRequestStatus"
 });
 
 // PurchaseRequest.belongsTo(WareHouse, {

@@ -13,6 +13,7 @@ import { PurchaseRequest } from "../features/purchase/purchase-request.model";
 import { WareHouse } from "../features/warwHouse/warehouse.model";
 import { OrderItemDetail } from "../features/order/order-item-detail.model";
 import { OrderItem } from "../features/order/order-item.model";
+import { PurchaseRequestDetail } from "../features/purchase/purchase-request-detail.model";
 
 export function setupModelRelations() {
   // Relaciones para IncomeDiscountInvoice
@@ -57,10 +58,16 @@ export function setupModelRelations() {
     sourceKey: "idInput"
   });
 
-  Input.hasMany(PurchaseRequest, {
+  // Input.hasMany(PurchaseRequest, {
+  //   foreignKey: "idInput",
+  //   sourceKey: "idInput",
+  //   as: "PurchaseRequests"
+  // });
+
+  Input.hasMany(PurchaseRequestDetail, {
     foreignKey: "idInput",
     sourceKey: "idInput",
-    as: "PurchaseRequests"
+    as: "PurchaseRequestDetails"
   });
 
   // Relaciones para PurchaseRequest

@@ -348,18 +348,58 @@ export function purchaseRoute(app: Application) {
  * /v1/purchase/request:
  *   patch:
  *     tags: [Purchase]
- *     summary: Update an existing purchase request (with automatic cost sync)
+ *     summary: Update an existing purchase request (with file upload and automatic cost sync)
  *     description: |
- *       Update an existing purchase request. If both idInput and price are provided, the system will:
- *       1. Compare the new price with the current price in TB_PurchaseRequest
- *       2. If prices differ, automatically update the cost field in TB_Input
- *       3. Update the purchase request with all provided fields
+ *       Update an existing purchase request with support for document uploads. The system will:
+ *       1. Delete old documents from Azure Blob Storage if new ones are provided
+ *       2. Upload new documents (document and/or requestDocument) to Azure Blob Storage
+ *       3. Generate proper URLs (e.g., https://sacmaback.blob.core.windows.net/purchase/{uuid}.pdf)
+ *       4. If both idInput and price are provided and price changed, automatically update the cost field in TB_Input
+ *       5. Update the purchase request with all provided fields
  *     requestBody:
  *       required: true
  *       content:
  *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/UpdatePurchaseRequest'
+ *             type: object
+ *             required:
+ *               - idPurchaseRequest
+ *             properties:
+ *               idPurchaseRequest:
+ *                 type: integer
+ *                 example: 1
+ *               consecutive:
+ *                 type: string
+ *                 example: "PR-001"
+ *               document:
+ *                 type: string
+ *                 format: binary
+ *                 description: Main document file (PDF or image)
+ *               requestDocument:
+ *                 type: string
+ *                 format: binary
+ *                 description: Request document file (PDF or image)
+ *               idInput:
+ *                 type: integer
+ *                 example: 1
+ *               idWarehouse:
+ *                 type: integer
+ *                 example: 1
+ *               idSupplier:
+ *                 type: integer
+ *                 example: 1
+ *               purchaseRequest:
+ *                 type: string
+ *                 example: "Purchase request description"
+ *               quantity:
+ *                 type: string
+ *                 example: "10"
+ *               price:
+ *                 type: string
+ *                 example: "150000"
+ *               isActive:
+ *                 type: boolean
+ *                 example: true
  *     responses:
  *       200:
  *         description: Purchase Request updated successfully
@@ -403,8 +443,15 @@ export function purchaseRoute(app: Application) {
  * /v1/purchase/request/detail:
  *   patch:
  *     tags: [Purchase]
- *     summary: Update an existing purchase request detail
- *     description: Update an existing purchase request detail
+ *     summary: Update an existing purchase request detail (with automatic price recalculation)
+ *     description: |
+ *       Update an existing purchase request detail and automatically recalculate the total price in TB_PurchaseRequest.
+ *       The system will:
+ *       1. Update the detail record with the provided data (quantity, price, etc.)
+ *       2. Recalculate the total price by summing (quantity * price) of all details for that purchase request
+ *       3. Update the price field in TB_PurchaseRequest with the new total
+ *       
+ *       This ensures that TB_PurchaseRequest.price always reflects the sum of all its details.
  *     requestBody:
  *       required: true
  *       content:
@@ -413,17 +460,35 @@ export function purchaseRoute(app: Application) {
  *             $ref: '#/components/schemas/UpdatePurchaseRequestDetail'
  *     responses:
  *       200:
- *         description: Purchase Request Detail updated successfully
+ *         description: Purchase Request Detail updated successfully with price recalculation
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/PurchaseRequest'
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "SUCCESS"
+ *                 data:
+ *                   allOf:
+ *                     - $ref: '#/components/schemas/PurchaseRequestDetail'
+ *                     - type: object
+ *                       properties:
+ *                         message:
+ *                           type: string
+ *                           example: "Purchase request detail updated successfully"
+ *                         totalPriceRecalculated:
+ *                           type: number
+ *                           example: 10200000
+ *                           description: New total price in TB_PurchaseRequest after recalculation
  *       400:
  *         description: Bad request
  *       401:
  *         description: Unauthorized
  *       403:
  *         description: Forbidden
+ *       404:
+ *         description: Purchase request detail not found
  *       500:
  *         description: Internal server error
  *         content:
@@ -468,8 +533,14 @@ export function purchaseRoute(app: Application) {
  * /v1/purchase/request/detail/{idPurchaseRequestDetail}:
  *   delete:
  *     tags: [Purchase]
- *     summary: Delete an existing purchase request detail
- *     description: Delete an existing purchase request detail
+ *     summary: Delete an existing purchase request detail (with automatic price recalculation)
+ *     description: |
+ *       Delete an existing purchase request detail and automatically recalculate the total price in TB_PurchaseRequest.
+ *       The system will:
+ *       1. Retrieve the detail to be deleted (to get quantity and price)
+ *       2. Delete the detail record
+ *       3. Recalculate the total price by summing (quantity * price) of all remaining details
+ *       4. Update the price field in TB_PurchaseRequest with the new total
  *     parameters:
  *       - in: path
  *         name: idPurchaseRequestDetail
@@ -478,14 +549,36 @@ export function purchaseRoute(app: Application) {
  *           type: integer
  *         description: ID of the purchase request detail to delete
  *     responses:
- *       204:
- *         description: Purchase request detail deleted successfully
+ *       200:
+ *         description: Purchase request detail deleted successfully with price recalculation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "SUCCESS"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Purchase request detail deleted successfully"
+ *                     amountSubtracted:
+ *                       type: number
+ *                       example: 3400000
+ *                       description: Amount subtracted from total (quantity * price of deleted detail)
+ *                     newTotalPrice:
+ *                       type: number
+ *                       example: 6800000
+ *                       description: New total price in TB_PurchaseRequest after recalculation
  *       401:
  *         description: Unauthorized
  *       403:
  *         description: Forbidden
  *       404:
- *         description: Not found
+ *         description: Purchase request detail not found
  *       500:
  *         description: Internal server error
  *         content:
@@ -621,6 +714,15 @@ export function purchaseRoute(app: Application) {
  *         idInput:
  *           type: integer
  *           example: 1
+ *         idWarehouse:
+ *           type: integer
+ *           example: 1
+ *         idSupplier:
+ *           type: integer
+ *           example: 1
+ *         purchaseRequest:
+ *           type: string
+ *           example: "Purchase request description"
  *         quantity:
  *           type: number
  *           example: 1
@@ -630,6 +732,18 @@ export function purchaseRoute(app: Application) {
  *         updatedAt:
  *           type: string
  *           example: "2021-09-01T00:00:00.000Z"
+ *         price:
+ *           type: string
+ *           example: "150000"
+ *         requestDocumentUrl:
+ *           type: string
+ *           example: "https://example.com/request.pdf"
+ *         documentUrl:
+ *           type: string
+ *           example: "https://example.com/document.pdf"
+ *         isActive:
+ *           type: boolean
+ *           example: true
  *     UpdatePurchaseRequest:
  *       type: object
  *       required:
@@ -706,23 +820,38 @@ export function purchaseRoute(app: Application) {
  *                 type: number
  *                 example: 85000
  *     
- *     UpdatePurchaseRequest:
+ *     UpdatePurchaseRequestDetail:
  *       type: object
  *       required:
  *         - idPurchaseRequestDetail
  *       properties:
  *         idPurchaseRequestDetail:
  *           type: integer
- *           example: 1
+ *           example: 27
  *         idPurchaseRequest:
  *           type: integer
  *           example: 1
  *         idInput:
  *           type: integer
+ *           example: 200
+ *         idWarehouse:
+ *           type: integer
  *           example: 1
+ *         idSupplier:
+ *           type: integer
+ *           example: 92
+ *         purchaseRequest:
+ *           type: string
+ *           example: "002"
  *         quantity:
- *           type: number
- *           example: 1
+ *           type: string
+ *           example: "10"
+ *         price:
+ *           type: string
+ *           example: "10451"
+ *         isActive:
+ *           type: boolean
+ *           example: true
  *         createdAt:           
  *           type: string
  *           example: "2021-09-01T00:00:00.000Z"

@@ -123,43 +123,42 @@ export class PurchaseController {
 
   createPurchaseRequest = async (req: Request, res: Response): Promise<void> => {
     // Verificar si el request contiene items (array)
-    if (req.body.items && Array.isArray(req.body.items)) {
-      // Usar el esquema para requests con items
-      const request = schemas.createPurchaseRequestWithItemsSchema.safeParse(req.body);
-      if (!request.success) {
-        res.status(StatusCode.BadRequest).json({
-          status: StatusValue.Failed,
-          data: { error: formatZodError(request.error) }
-        });
-        return;
-      }
+    // if (req.body.items && Array.isArray(req.body.items)) {
+    //   // Usar el esquema para requests con items
+    //   const request = schemas.createPurchaseRequestWithItemsSchema.safeParse(req.body);
+    //   if (!request.success) {
+    //     res.status(StatusCode.BadRequest).json({
+    //       status: StatusValue.Failed,
+    //       data: { error: formatZodError(request.error) }
+    //     });
+    //     return;
+    //   }
 
-      const response = await this.purchaseService.createPurchaseRequestWithItems(request.data);
-      res.status(response.code).json({
-        status: response.status,
-        data: response.data
-      });
-    } else {
-      // Usar el esquema original para requests individuales
-      const request = schemas.createPurchaseRequestSchema.safeParse(req.body);
-      if (!request.success) {
-        res.status(StatusCode.BadRequest).json({
-          status: StatusValue.Failed,
-          data: { error: formatZodError(request.error) }
-        });
-        return;
-      }
+    //   const response = await this.purchaseService.createPurchaseRequestWithItems(request.data);
+    //   res.status(response.code).json({
+    //     status: response.status,
+    //     data: response.data
+    //   });
+    // } else {
+    //   // Usar el esquema original para requests individuales
+    //   const request = schemas.createPurchaseRequestSchema.safeParse(req.body);
+    //   if (!request.success) {
+    //     res.status(StatusCode.BadRequest).json({
+    //       status: StatusValue.Failed,
+    //       data: { error: formatZodError(request.error) }
+    //     });
+    //     return;
+    //   }
 
-      const response = await this.purchaseService.createPurchaseRequest(request.data);
-      res.status(response.code).json({
-        status: response.status,
-        data: response.data
-      });
-    }
-  };
+    //   const response = await this.purchaseService.createPurchaseRequest(request.data);
+    //   res.status(response.code).json({
+    //     status: response.status,
+    //     data: response.data
+    //   });
+    // }
 
-  createPurchaseRequestDetail = async (req: Request, res: Response): Promise<void> => {
-    const request = schemas.createPurchaseRequestDetailSchema.safeParse(req.body);
+    // Usar el esquema original para requests individuales
+    const request = schemas.createPurchaseRequestSchema.safeParse(req.body);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
         status: StatusValue.Failed,
@@ -168,11 +167,53 @@ export class PurchaseController {
       return;
     }
 
-    const response = await this.purchaseService.createPurchaseRequestDetail(request.data);
+    const response = await this.purchaseService.createPurchaseRequest(request.data);
     res.status(response.code).json({
       status: response.status,
       data: response.data
     });
+  };
+
+  createPurchaseRequestDetail = async (req: Request, res: Response): Promise<void> => {
+
+    // Verificar si el request contiene items (array)
+    if (req.body.items && Array.isArray(req.body.items)) {
+      // Usar el esquema para requests con items
+      const request = schemas.createPurchaseRequestDetailWithItemsSchema.safeParse(req.body);
+      if (!request.success) {
+        res.status(StatusCode.BadRequest).json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) }
+        });
+        return;
+      }
+
+      const response = await this.purchaseService.CreatePurchaseRequestDetailWithItems(request.data);
+      res.status(response.code).json({
+        status: response.status,
+        data: response.data
+      });
+    } else {
+      // Usar el esquema original para requests individuales    
+      const request = schemas.createPurchaseRequestDetailSchema.safeParse(req.body);
+      if (!request.success) {
+        res.status(StatusCode.BadRequest).json({
+          status: StatusValue.Failed,
+          data: { error: formatZodError(request.error) }
+        });
+        return;
+      }
+
+      const response = await this.purchaseService.createPurchaseRequestDetail(request.data);
+      res.status(response.code).json({
+        status: response.status,
+        data: response.data
+      });
+
+
+
+    }
+
   };
 
   createPurchaseRequestDetailMachineryUsed = async (req: Request, res: Response): Promise<void> => {
@@ -202,16 +243,22 @@ export class PurchaseController {
       return;
     }
 
-    const document = req.files ? (req.files.document as UploadedFile) : undefined;
-    const requestDocument = req.files ? (req.files.requestDocument as UploadedFile) : undefined;
+    const { document: uploadedDocument, requestDocument: uploadedRequestDocument } = req.files as {
+      document?: UploadedFile;
+      requestDocument?: UploadedFile;
+    } || {};
 
-    const filePath = document ? document.tempFilePath : undefined;
-    const filePathRequest = requestDocument ? requestDocument.tempFilePath : undefined;
+    const filePath = uploadedDocument?.tempFilePath;
+    const filePathRequest = uploadedRequestDocument?.tempFilePath;
+    const fileExtension = uploadedDocument?.name.split(".").pop();
+    const fileExtensionRequest = uploadedRequestDocument?.name.split(".").pop();
 
     const requestData = {
       data: request.data,
       filePath,
-      filePathRequest
+      fileExtension,
+      filePathRequest,
+      fileExtensionRequest
     };
 
     const response = await this.purchaseService.updatePurchaseRequest(requestData);

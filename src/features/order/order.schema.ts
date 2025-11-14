@@ -11,7 +11,7 @@ export const idOrderItemDetailSchema = z.object({
 export const deleteOrderItemDetailSchema = z.object({
   idOrderItemDetail: z.coerce.number(),
   quantity: z.coerce.number().optional(),
-  idPurchaseRequest: z.coerce.number().optional()
+  idPurchaseRequestDetail: z.coerce.number().optional()
 });
 
 export const idOrderItemDetailMachineryUsed = z.object({

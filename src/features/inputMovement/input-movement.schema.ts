@@ -2,8 +2,12 @@ import z from "zod";
 
 export const moveInputSchema = z.object({
   idPurchaseRequest: z.coerce.number(),
-  movementType: z.enum(['Entrada', 'Salida']),
+  idPurchaseRequestDetail: z.coerce.number().optional(),
+  idInput: z.coerce.number(),
+  idWarehouse: z.coerce.number(),
+  movementType: z.enum(['Entrada', 'Salida', 'Retorno']),
   quantity: z.string().min(1),
+  price: z.string().optional(),
   remarks: z.string().optional(),
   createdBy: z.string().optional(),
 });
@@ -14,7 +18,7 @@ export const findAllInputMovementSchema = z.object({
   idPurchaseRequest: z.coerce.number().optional(),
   idInput: z.coerce.number().optional(),
   idWarehouse: z.coerce.number().optional(),
-  movementType: z.enum(['Entrada', 'Salida']).optional(),
+  movementType: z.enum(['Entrada', 'Salida', 'Retorno']).optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
 });

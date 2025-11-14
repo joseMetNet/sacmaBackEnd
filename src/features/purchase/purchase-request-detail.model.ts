@@ -7,9 +7,16 @@ export class PurchaseRequestDetail extends Model {
   declare idPurchaseRequestDetail: number;
   declare idPurchaseRequest: number;
   declare idInput: number;
+  declare idWarehouse?: number;
+  declare idSupplier?: number;
+  declare purchaseRequest?: string;
   declare quantity: number;
-  declare createdAt: string;
-  declare updatedAt: string;
+  declare createdAt?: Date;
+  declare updatedAt?: Date;
+  declare price?: string;
+  declare requestDocumentUrl?: string;
+  declare documentUrl?: string;
+  declare isActive?: boolean;
 }
 
 PurchaseRequestDetail.init({
@@ -26,8 +33,20 @@ PurchaseRequestDetail.init({
     type: DataTypes.INTEGER,
     allowNull: false
   },
-  quantity: {
+  idWarehouse: {
     type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  idSupplier: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  purchaseRequest: {
+    type: DataTypes.STRING(64),
+    allowNull: true
+  },
+  quantity: {
+    type: DataTypes.STRING(64),
     allowNull: false
   },
   createdAt: {
@@ -37,6 +56,23 @@ PurchaseRequestDetail.init({
   updatedAt: {
     type: DataTypes.DATE,
     allowNull: false
+  },
+  price: {
+    type: DataTypes.STRING(64),
+    allowNull: true
+  },
+  requestDocumentUrl: {
+    type: DataTypes.STRING(128),
+    allowNull: true
+  },
+  documentUrl: {
+    type: DataTypes.STRING(128),
+    allowNull: true
+  },
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true,
+    defaultValue: true
   }
 }, {
   sequelize: dbConnection,

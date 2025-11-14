@@ -35,6 +35,11 @@ export class PurchaseRepository {
           model: Supplier,
           as: "Supplier",
           required: false,
+        },
+        {
+          model: PurchaseRequestStatus,
+          as: "PurchaseRequestStatus",
+          required: false,
         }
       ],
       where: filter,
@@ -281,6 +286,34 @@ export class PurchaseRepository {
   deletePurchaseRequestDetail = (id: number) => {
     return PurchaseRequestDetail.destroy({ where: { idPurchaseRequestDetail: id } });
   };
+  
+  // Calcular el precio total de todos los detalles de una PurchaseRequest
+  calculateTotalPriceForPurchaseRequest = async (idPurchaseRequest: number): Promise<number> => {
+    const details = await PurchaseRequestDetail.findAll({
+      where: { idPurchaseRequest },
+      attributes: ['quantity', 'price']
+    });
+
+    const total = details.reduce((sum, detail) => {
+      const quantity = parseFloat(detail.quantity?.toString() || "0");
+      const price = parseFloat(detail.price?.toString() || "0");
+      return sum + (quantity * price);
+    }, 0);
+
+    return total;
+  };
+
+  // Actualizar el precio en TB_PurchaseRequest
+  updatePurchaseRequestPrice = async (idPurchaseRequest: number, newPrice: string) => {
+    return PurchaseRequest.update(
+      { 
+        price: newPrice,
+        updatedAt: new Date()
+      },
+      { where: { idPurchaseRequest } }
+    );
+  };
+  
   deletePurchaseRequestDetailMachineryUsed = (id: number) => {
     return PurchaseRequestDetailMachineryUsed.destroy({ where: { idPurchaseRequestDetailMachineryUsed: id } });
   };

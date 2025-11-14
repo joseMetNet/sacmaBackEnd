@@ -232,6 +232,9 @@ export function inputMovementRoute(app: Application) {
  *         idPurchaseRequest:
  *           type: integer
  *           example: 101
+ *         idPurchaseRequestDetail:
+ *           type: integer
+ *           example: 1014
  *         idInput:
  *           type: integer
  *           example: 214

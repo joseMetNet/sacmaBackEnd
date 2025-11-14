@@ -15,33 +15,54 @@ export class InputMovementService {
   // Ejecutar movimiento de entrada o salida
   moveInput = async (request: dtos.MoveInputDTO): Promise<ResponseEntity> => {
     try {
-      await this.inputMovementRepository.executeMoveInput(request);
+      console.log('Executing moveInput with data:', request);
+      
+      const result = await this.inputMovementRepository.executeMoveInput(request);
+      
+      console.log('SP_MoveInput result:', result);
       
       return BuildResponse.buildSuccessResponse(
         StatusCode.Ok,
         { 
           message: `Movimiento de ${request.movementType} registrado correctamente`,
           movementType: request.movementType,
-          quantity: request.quantity
+          quantity: request.quantity,
+          idPurchaseRequest: request.idPurchaseRequest,
+          idPurchaseRequestDetail: request.idPurchaseRequestDetail
         }
       );
     } catch (err: any) {
       console.error("Error executing SP_MoveInput:", err);
+      console.error("Error message:", err.message);
+      console.error("Error stack:", err.stack);
       
       // Manejo de errores específicos del procedimiento almacenado
       let errorMessage = "Error al registrar el movimiento";
       
-      if (err.message.includes("No existe la solicitud")) {
-        errorMessage = "No existe la solicitud de compra especificada";
-      } else if (err.message.includes("No hay suficiente stock")) {
-        errorMessage = "No hay suficiente stock disponible para realizar la salida";
-      } else if (err.message.includes("Tipo de movimiento no válido")) {
-        errorMessage = "Tipo de movimiento no válido. Debe ser 'Entrada' o 'Salida'";
+      if (err.message) {
+        if (err.message.includes("No existe la solicitud")) {
+          errorMessage = "No existe la solicitud de compra especificada";
+        } else if (err.message.includes("No hay suficiente stock")) {
+          errorMessage = "No hay suficiente stock disponible para realizar la salida";
+        } else if (err.message.includes("Tipo de movimiento no válido")) {
+          errorMessage = "Tipo de movimiento no válido. Debe ser 'Entrada', 'Salida' o 'Retorno'";
+        } else if (err.message.includes("El idPurchaseRequestDetail es obligatorio")) {
+          errorMessage = "El idPurchaseRequestDetail es obligatorio para movimientos de Retorno";
+        } else if (err.message.includes("No existe el registro de detalle")) {
+          errorMessage = "No existe el registro de detalle especificado";
+        } else {
+          // Usar el mensaje original del error si no coincide con ningún patrón
+          errorMessage = err.message;
+        }
       }
       
       return BuildResponse.buildErrorResponse(
         StatusCode.BadRequest,
-        { message: errorMessage, details: err.message }
+        { 
+          message: errorMessage, 
+          details: err.message || "",
+          originalError: err.original?.message || ""
+        }
       );
     }
   };

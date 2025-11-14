@@ -423,9 +423,9 @@ export class OrderService {
     }
   };
 
-  deleteOrderItemDetail = async (data: { idOrderItemDetail: number; quantity?: number; idPurchaseRequest?: number }): Promise<ResponseEntity> => {
+  deleteOrderItemDetail = async (data: { idOrderItemDetail: number; quantity?: number; idPurchaseRequestDetail?: number }): Promise<ResponseEntity> => {
     try {
-      const { idOrderItemDetail, quantity, idPurchaseRequest } = data;
+      const { idOrderItemDetail, quantity, idPurchaseRequestDetail } = data;
       
       const orderItemDetail = await this.orderRepository.findByIdOrderItemDetail(idOrderItemDetail);
       if (!orderItemDetail) {
@@ -437,10 +437,10 @@ export class OrderService {
       }
 
       // Si viene idPurchaseRequest y quantity, devolver stock antes de eliminar
-      if (idPurchaseRequest && quantity) {
+      if (idPurchaseRequestDetail && quantity) {
         try {
           const newQuantity = await this.orderRepository.returnStockToPurchaseRequest(
-            idPurchaseRequest,
+            idPurchaseRequestDetail,
             quantity
           );
           

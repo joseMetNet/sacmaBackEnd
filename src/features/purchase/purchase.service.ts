@@ -7,6 +7,7 @@ import { CustomError, deleteFile, uploadFile } from "../../utils";
 import { dbConnection } from "../../config";
 import { BuildResponse } from "../../utils/build-response";
 import { Op } from "sequelize";
+import * as crypto from "crypto";
 // import { machineryService } from "../machinery/machinery.service";
 import { machineryService } from "../machinery/machinery.service";
 
@@ -14,7 +15,7 @@ export class PurchaseService {
   private purchaseRepository: PurchaseRepository;
   constructor(
     purchaseRepository: PurchaseRepository,
-    
+
   ) {
     this.purchaseRepository = purchaseRepository;
   }
@@ -25,7 +26,7 @@ export class PurchaseService {
     try {
       const { page, pageSize, limit, offset, returnAll } = this.getPagination(request);
       const filter = this.buildRequestFilter(request);
-      
+
       if (returnAll) {
         // Si pageSize es -1, retornar todos los registros sin paginación
         const purchaseRequests = await this.purchaseRepository.findAllPurchaseRequest(filter);
@@ -63,11 +64,27 @@ export class PurchaseService {
       const filter = this.buildRequestDetailFilter(request);
       const purchaseRequests = await this.purchaseRepository.findAllPurchaseRequestDetail(filter, limit, offset);
 
+      // Calcular totalGeneral: suma de (quantity * price) de cada detalle
+      const totalGeneral = purchaseRequests.rows.reduce((sum, detail) => {
+        const quantity = parseFloat(detail.quantity?.toString() || "0");
+        const price = parseFloat(detail.price?.toString() || "0");
+        return sum + (quantity * price);
+      }, 0);
+
+      // Si hay un idPurchaseRequest en el filtro, actualizar el precio en TB_PurchaseRequest
+      if (request.idPurchaseRequest) {
+        await this.purchaseRepository.updatePurchaseRequestPrice(
+          request.idPurchaseRequest,
+          totalGeneral.toFixed(2)
+        );
+      }
+
       const response = {
         data: purchaseRequests.rows,
         totalItems: purchaseRequests.count,
         currentPage: page,
-        totalPages: Math.ceil(purchaseRequests.count / pageSize)
+        totalPages: Math.ceil(purchaseRequests.count / pageSize),
+        totalGeneral: totalGeneral.toFixed(2)
       };
 
       return BuildResponse.buildSuccessResponse(
@@ -188,8 +205,7 @@ export class PurchaseService {
     }
   };
 
-  createPurchaseRequest = async (request: dtos.CreatePurchaseRequest):
-    Promise<ResponseEntity> => {
+  createPurchaseRequest = async (request: dtos.CreatePurchaseRequest): Promise<ResponseEntity> => {
     try {
       const newPurchaseRequest = await this.purchaseRepository.createPurchaseRequest(request);
       newPurchaseRequest.setDataValue("consecutive", `PR-${newPurchaseRequest.idPurchaseRequest}`);
@@ -206,107 +222,106 @@ export class PurchaseService {
     }
   };
 
-  createPurchaseRequestWithItems = async (request: dtos.CreatePurchaseRequestWithItems):
-    Promise<ResponseEntity> => {
-    const transaction = await dbConnection.transaction();
-    try {
-      const createdRequests = [];
-      const updatedRequests = [];
-      const updatedInputCosts = [];
-      
-      for (const item of request.items) {
-        // Validar que los IDs requeridos existan
-        if (!request.idWarehouse || !request.idSupplier || !item.idInput) {
-          continue; // Saltar items inválidos
-        }
+  // createPurchaseRequestWithItems = async (request: dtos.CreatePurchaseRequestWithItems): Promise<ResponseEntity> => {
+  //   const transaction = await dbConnection.transaction();
+  //   try {
+  //     const createdRequests = [];
+  //     const updatedRequests = [];
+  //     const updatedInputCosts = [];
 
-        // Validar si el precio cambió y actualizar costo en TB_Input
-        if (item.price && item.originalPrice && item.price !== item.originalPrice) {
-          try {
-            await this.purchaseRepository.updateInputCost(item.idInput, item.price.toString());
-            updatedInputCosts.push({
-              idInput: item.idInput,
-              oldCost: item.originalPrice,
-              newCost: item.price
-            });
-          } catch (costError) {
-            console.error(`Error updating cost for idInput ${item.idInput}:`, costError);
-            // Continuar aunque falle la actualización de costo
-          }
-        }
+  //     for (const item of request.items) {
+  //       // Validar que los IDs requeridos existan
+  //       if (!request.idWarehouse || !request.idSupplier || !item.idInput) {
+  //         continue; // Saltar items inválidos
+  //       }
 
-        // Buscar si ya existe un registro con idWarehouse + idSupplier + idInput
-        const existingRequest = await this.purchaseRepository.findPurchaseRequestByUnique(
-          request.idWarehouse,
-          request.idSupplier,
-          item.idInput
-        );
+  //       // Validar si el precio cambió y actualizar costo en TB_Input
+  //       if (item.price && item.originalPrice && item.price !== item.originalPrice) {
+  //         try {
+  //           await this.purchaseRepository.updateInputCost(item.idInput, item.price.toString());
+  //           updatedInputCosts.push({
+  //             idInput: item.idInput,
+  //             oldCost: item.originalPrice,
+  //             newCost: item.price
+  //           });
+  //         } catch (costError) {
+  //           console.error(`Error updating cost for idInput ${item.idInput}:`, costError);
+  //           // Continuar aunque falle la actualización de costo
+  //         }
+  //       }
 
-        if (existingRequest) {
-          // Si existe, actualizar los campos que cambiaron
-          const currentQuantity = parseFloat(existingRequest.quantity || "0");
-          const newQuantity = parseFloat(item.quantity.toString());
-          const updatedQuantity = (currentQuantity + newQuantity).toString();
+  //       // Buscar si ya existe un registro con idWarehouse + idSupplier + idInput
+  //       const existingRequest = await this.purchaseRepository.findPurchaseRequestByUnique(
+  //         request.idWarehouse,
+  //         request.idSupplier,
+  //         item.idInput
+  //       );
 
-          await this.purchaseRepository.updatePurchaseRequestById(
-            existingRequest.idPurchaseRequest,
-            {
-              quantity: updatedQuantity,
-              price: item.price.toString(),
-              purchaseRequest: request.purchaseRequest
-            }
-          );
+  //       if (existingRequest) {
+  //         // Si existe, actualizar los campos que cambiaron
+  //         const currentQuantity = parseFloat(existingRequest.quantity || "0");
+  //         const newQuantity = parseFloat(item.quantity.toString());
+  //         const updatedQuantity = (currentQuantity + newQuantity).toString();
 
-          // Obtener el registro actualizado
-          const updated = await this.purchaseRepository.findByIdPurchaseRequest(
-            existingRequest.idPurchaseRequest
-          );
-          updatedRequests.push(updated);
-        } else {
-          // Si no existe, crear nuevo registro
-          const purchaseRequestData: dtos.CreatePurchaseRequest = {
-            isActive: request.isActive,
-            purchaseRequest: request.purchaseRequest,
-            idWarehouse: request.idWarehouse,
-            idSupplier: request.idSupplier,
-            idInput: item.idInput,
-            quantity: item.quantity.toString(),
-            price: item.price.toString(),
-          };
+  //         await this.purchaseRepository.updatePurchaseRequestById(
+  //           existingRequest.idPurchaseRequest,
+  //           {
+  //             quantity: updatedQuantity,
+  //             price: item.price.toString(),
+  //             purchaseRequest: request.purchaseRequest
+  //           }
+  //         );
 
-          const newPurchaseRequest = await this.purchaseRepository.createPurchaseRequest(purchaseRequestData);
-          newPurchaseRequest.setDataValue("consecutive", `PR-${newPurchaseRequest.idPurchaseRequest}`);
-          await newPurchaseRequest.save({ transaction });
-          
-          createdRequests.push(newPurchaseRequest);
-        }
-      }
+  //         // Obtener el registro actualizado
+  //         const updated = await this.purchaseRepository.findByIdPurchaseRequest(
+  //           existingRequest.idPurchaseRequest
+  //         );
+  //         updatedRequests.push(updated);
+  //       } else {
+  //         // Si no existe, crear nuevo registro
+  //         const purchaseRequestData: dtos.CreatePurchaseRequest = {
+  //           isActive: request.isActive,
+  //           purchaseRequest: request.purchaseRequest,
+  //           idWarehouse: request.idWarehouse,
+  //           idSupplier: request.idSupplier,
+  //           idInput: item.idInput,
+  //           quantity: item.quantity.toString(),
+  //           price: item.price.toString(),
+  //         };
 
-      await transaction.commit();
-      
-      const totalOperations = createdRequests.length + updatedRequests.length;
-      const responseData: any = {
-        message: `${totalOperations} purchase requests processed (${createdRequests.length} created, ${updatedRequests.length} updated)`,
-        created: createdRequests,
-        updated: updatedRequests
-      };
+  //         const newPurchaseRequest = await this.purchaseRepository.createPurchaseRequest(purchaseRequestData);
+  //         newPurchaseRequest.setDataValue("consecutive", `PR-${newPurchaseRequest.idPurchaseRequest}`);
+  //         await newPurchaseRequest.save({ transaction });
 
-      // Agregar información de costos actualizados si hay
-      if (updatedInputCosts.length > 0) {
-        responseData.inputCostsUpdated = updatedInputCosts;
-        responseData.message += ` - ${updatedInputCosts.length} input costs updated`;
-      }
+  //         createdRequests.push(newPurchaseRequest);
+  //       }
+  //     }
 
-      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, responseData);
-    } catch (err: any) {
-      await transaction.rollback();
-      console.error(err);
-      return BuildResponse.buildErrorResponse(
-        StatusCode.InternalErrorServer,
-        { message: "Error while creating purchase requests with items" }
-      );
-    }
-  };
+  //     await transaction.commit();
+
+  //     const totalOperations = createdRequests.length + updatedRequests.length;
+  //     const responseData: any = {
+  //       message: `${totalOperations} purchase requests processed (${createdRequests.length} created, ${updatedRequests.length} updated)`,
+  //       created: createdRequests,
+  //       updated: updatedRequests
+  //     };
+
+  //     // Agregar información de costos actualizados si hay
+  //     if (updatedInputCosts.length > 0) {
+  //       responseData.inputCostsUpdated = updatedInputCosts;
+  //       responseData.message += ` - ${updatedInputCosts.length} input costs updated`;
+  //     }
+
+  //     return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, responseData);
+  //   } catch (err: any) {
+  //     await transaction.rollback();
+  //     console.error(err);
+  //     return BuildResponse.buildErrorResponse(
+  //       StatusCode.InternalErrorServer,
+  //       { message: "Error while creating purchase requests with items" }
+  //     );
+  //   }
+  // };
 
   createPurchaseRequestDetail = async (purchaseRequestDetail: dtos.CreatePurchaseRequestDetail): Promise<ResponseEntity> => {
     try {
@@ -320,6 +335,130 @@ export class PurchaseService {
       );
     }
   };
+
+  CreatePurchaseRequestDetailWithItems = async (request: dtos.CreatePurchaseRequestDetailWithItems): Promise<ResponseEntity> => {
+    const transaction = await dbConnection.transaction();
+    try {
+      const createdRequests = [];
+      // const updatedRequests = [];
+      // const updatedInputCosts = [];
+
+      for (const item of request.items) {
+        // Validar que los IDs requeridos existan
+        if (!request.idWarehouse || !request.idSupplier || !item.idInput) {
+          continue; // Saltar items inválidos
+        }
+
+        // Validar si el precio cambió y actualizar costo en TB_Input
+        // if (item.price && item.originalPrice && item.price !== item.originalPrice) {
+        //   try {
+        //     await this.purchaseRepository.updateInputCost(item.idInput, item.price.toString());
+        //     updatedInputCosts.push({
+        //       idInput: item.idInput,
+        //       oldCost: item.originalPrice,
+        //       newCost: item.price
+        //     });
+        //   } catch (costError) {
+        //     console.error(`Error updating cost for idInput ${item.idInput}:`, costError);
+        //     // Continuar aunque falle la actualización de costo
+        //   }
+        // }
+
+        // // Buscar si ya existe un registro con idWarehouse + idSupplier + idInput
+        // const existingRequest = await this.purchaseRepository.findPurchaseRequestByUnique(
+        //   request.idWarehouse,
+        //   request.idSupplier,
+        //   item.idInput
+        // );
+
+        // if (existingRequest) {
+        //   // Si existe, actualizar los campos que cambiaron
+        //   const currentQuantity = parseFloat(existingRequest.quantity || "0");
+        //   const newQuantity = parseFloat(item.quantity.toString());
+        //   const updatedQuantity = (currentQuantity + newQuantity).toString();
+
+        //   await this.purchaseRepository.updatePurchaseRequestById(
+        //     existingRequest.idPurchaseRequest,
+        //     {
+        //       quantity: updatedQuantity,
+        //       price: item.price.toString(),
+        //       purchaseRequest: request.purchaseRequest
+        //     }
+        //   );
+
+        //   // Obtener el registro actualizado
+        //   const updated = await this.purchaseRepository.findByIdPurchaseRequest(
+        //     existingRequest.idPurchaseRequest
+        //   );
+        //   updatedRequests.push(updated);
+        // } else {
+        //   // Si no existe, crear nuevo registro
+        //   const purchaseRequestData: dtos.CreatePurchaseRequestDetail = {
+        //     idPurchaseRequest: request.idPurchaseRequest,
+        //     isActive: request.isActive,
+        //     purchaseRequest: request.purchaseRequest,
+        //     idWarehouse: request.idWarehouse,
+        //     idSupplier: request.idSupplier,
+        //     idInput: item.idInput,
+        //     quantity: item.quantity.toString(),
+        //     price: item.price.toString(),
+        //   };
+
+        //   const newPurchaseRequest = await this.purchaseRepository.createPurchaseRequestDetail(purchaseRequestData);
+        //   newPurchaseRequest.setDataValue("consecutive", `PR-${newPurchaseRequest.idPurchaseRequest}`);
+        //   await newPurchaseRequest.save({ transaction });
+
+        //   createdRequests.push(newPurchaseRequest);
+        // }
+
+        // bloque de copia para solamente guardar
+        // Si no existe, crear nuevo registro
+        const purchaseRequestData: dtos.CreatePurchaseRequestDetail = {
+          idPurchaseRequest: request.idPurchaseRequest,
+          isActive: request.isActive,
+          purchaseRequest: request.purchaseRequest,
+          idWarehouse: request.idWarehouse,
+          idSupplier: request.idSupplier,
+          idInput: item.idInput,
+          quantity: item.quantity.toString(),
+          price: item.price.toString(),
+        };
+
+        const newPurchaseRequest = await this.purchaseRepository.createPurchaseRequestDetail(purchaseRequestData);
+        newPurchaseRequest.setDataValue("consecutive", `PR-${newPurchaseRequest.idPurchaseRequest}`);
+        await newPurchaseRequest.save({ transaction });
+
+        createdRequests.push(newPurchaseRequest);
+
+
+      }
+
+      await transaction.commit();
+
+      const totalOperations = createdRequests.length ;
+      const responseData: any = {
+        message: `${totalOperations} purchase requests processed (${createdRequests.length} created)`,
+        created: createdRequests,
+        // updated: updatedRequests
+      };
+
+      // Agregar información de costos actualizados si hay
+      // if (updatedInputCosts.length > 0) {
+      //   responseData.inputCostsUpdated = updatedInputCosts;
+      //   responseData.message += ` - ${updatedInputCosts.length} input costs updated`;
+      // }
+
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, responseData);
+    } catch (err: any) {
+      await transaction.rollback();
+      console.error(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "Error while creating purchase requests with items" }
+      );
+    }
+  };
+
 
   createPurchaseRequestDetailMachineryUsed = async (purchaseRequestDetailMachineryUsed: dtos.CreatePurchaseRequestDetailMachineryUsed): Promise<ResponseEntity> => {
     try {
@@ -336,28 +475,68 @@ export class PurchaseService {
 
   updatePurchaseRequest = async (request: dtos.UpdatePurchaseRequestIn): Promise<ResponseEntity> => {
     try {
-      const { data, filePath, filePathRequest } = request;
-      
-      // Handle file uploads if provided
-      if (filePath) {
-        // Upload document logic here
-        data.documentUrl = filePath; // Simplified for now
+      const { data, filePath, fileExtension, filePathRequest, fileExtensionRequest } = request;
+
+      // Obtener el registro actual para verificar archivos existentes
+      const purchaseRequestDb = await this.purchaseRepository.findByIdPurchaseRequest(data.idPurchaseRequest);
+      if (!purchaseRequestDb) {
+        return {
+          status: StatusValue.Failed,
+          code: StatusCode.NotFound,
+          data: { message: "Purchase request not found" }
+        };
       }
-      
+
+      // Manejo del documento principal (document)
+      if (filePath && purchaseRequestDb.documentUrl) {
+        // Eliminar el archivo anterior si existe
+        const identifier = new URL(purchaseRequestDb.documentUrl).pathname.split("/").pop();
+        const deleteRequest = await deleteFile(identifier!, "purchase");
+        if (deleteRequest instanceof CustomError) {
+          console.error(deleteRequest);
+          return BuildResponse.buildErrorResponse(
+            StatusCode.InternalErrorServer,
+            { message: "Error while deleting document file" }
+          );
+        }
+      }
+
+      if (filePath) {
+        // Subir el nuevo archivo
+        const identifier = crypto.randomUUID();
+        const contentType = fileExtension === "pdf" ? "application/pdf" : "image/jpeg";
+        await uploadFile(filePath, identifier, contentType, "order");
+        data.documentUrl = `https://sacmaback.blob.core.windows.net/order/${identifier}.${fileExtension === "pdf" ? "pdf" : "png"}`;
+      }
+
+      // Manejo del documento de solicitud (requestDocument)
+      if (filePathRequest && purchaseRequestDb.requestDocumentUrl) {
+        // Eliminar el archivo anterior si existe
+        const identifier = new URL(purchaseRequestDb.requestDocumentUrl).pathname.split("/").pop();
+        const deleteRequest = await deleteFile(identifier!, "purchase");
+        if (deleteRequest instanceof CustomError) {
+          console.error(deleteRequest);
+          return BuildResponse.buildErrorResponse(
+            StatusCode.InternalErrorServer,
+            { message: "Error while deleting request document file" }
+          );
+        }
+      }
+
       if (filePathRequest) {
-        // Upload request document logic here
-        data.requestDocumentUrl = filePathRequest; // Simplified for now
+        // Subir el nuevo archivo
+        const identifier = crypto.randomUUID();
+        const contentType = fileExtensionRequest === "pdf" ? "application/pdf" : "image/jpeg";
+        await uploadFile(filePathRequest, identifier, contentType, "order");
+        data.requestDocumentUrl = `https://sacmaback.blob.core.windows.net/order/${identifier}.${fileExtensionRequest === "pdf" ? "pdf" : "png"}`;
       }
 
       // Validar si viene idInput y price para actualizar el costo en TB_Input
       let costUpdated = false;
       if (data.idInput && data.price) {
         try {
-          // Obtener el registro actual para comparar el precio
-          const currentRequest = await this.purchaseRepository.findByIdPurchaseRequest(data.idPurchaseRequest);
-          
           // Si el precio cambió, actualizar el costo en TB_Input
-          if (currentRequest && currentRequest.price !== data.price) {
+          if (purchaseRequestDb.price !== data.price) {
             await this.purchaseRepository.updateInputCost(data.idInput, data.price);
             costUpdated = true;
           }
@@ -367,8 +546,9 @@ export class PurchaseService {
         }
       }
 
+      // Actualizar el purchase request
       const updatedPurchaseRequest = await this.purchaseRepository.updatePurchaseRequest(data);
-      
+
       const responseData: any = updatedPurchaseRequest;
       if (costUpdated) {
         return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
@@ -377,7 +557,7 @@ export class PurchaseService {
           message: "Purchase request updated and input cost synchronized"
         });
       }
-      
+
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, updatedPurchaseRequest);
     } catch (err: any) {
       console.error(err);
@@ -389,10 +569,42 @@ export class PurchaseService {
   };
 
   updatePurchaseRequestDetail = async (purchaseRequestDetail: dtos.UpdatePurchaseRequestDetail): Promise<ResponseEntity> => {
+    const transaction = await dbConnection.transaction();
     try {
-      const updatedPurchaseRequestDetail = await this.purchaseRepository.updatePurchaseRequestDetail(purchaseRequestDetail);
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, updatedPurchaseRequestDetail);
+      // 1. Obtener el detalle actual para conocer el idPurchaseRequest
+      const currentDetail = await this.purchaseRepository.findByIdPurchaseRequestDetail(purchaseRequestDetail.idPurchaseRequestDetail);
+      
+      if (!currentDetail) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(
+          StatusCode.NotFound,
+          { message: "Purchase request detail not found" }
+        );
+      }
+
+      const idPurchaseRequest = currentDetail.idPurchaseRequest;
+
+      // 2. Actualizar el detalle
+      await this.purchaseRepository.updatePurchaseRequestDetail(purchaseRequestDetail);
+
+      // 3. Recalcular el precio total de TB_PurchaseRequest
+      const totalPrice = await this.purchaseRepository.calculateTotalPriceForPurchaseRequest(idPurchaseRequest);
+
+      // 4. Actualizar el precio en TB_PurchaseRequest
+      await this.purchaseRepository.updatePurchaseRequestPrice(idPurchaseRequest, totalPrice.toString());
+
+      await transaction.commit();
+
+      // 5. Obtener el detalle actualizado para retornarlo
+      const updatedDetail = await this.purchaseRepository.findByIdPurchaseRequestDetail(purchaseRequestDetail.idPurchaseRequestDetail);
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        ...updatedDetail?.toJSON(),
+        message: "Purchase request detail updated successfully",
+        totalPriceRecalculated: totalPrice
+      });
     } catch (err: any) {
+      await transaction.rollback();
       console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
@@ -428,10 +640,43 @@ export class PurchaseService {
   };
 
   deletePurchaseRequestDetail = async (id: number): Promise<ResponseEntity> => {
+    const transaction = await dbConnection.transaction();
     try {
-      const deletedPurchaseRequestDetail = await this.purchaseRepository.deletePurchaseRequestDetail(id);
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Purchase request detail deleted successfully" });
+      // 1. Obtener el detalle antes de eliminarlo para tener la información del cálculo
+      const detail = await this.purchaseRepository.findByIdPurchaseRequestDetail(id);
+      
+      if (!detail) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(
+          StatusCode.NotFound,
+          { message: "Purchase request detail not found" }
+        );
+      }
+
+      const idPurchaseRequest = detail.idPurchaseRequest;
+      const quantityToRemove = parseFloat(detail.quantity?.toString() || "0");
+      const priceToRemove = parseFloat(detail.price?.toString() || "0");
+      const amountToSubtract = quantityToRemove * priceToRemove;
+
+      // 2. Eliminar el detalle
+      await this.purchaseRepository.deletePurchaseRequestDetail(id);
+
+      // 3. Recalcular el precio total de TB_PurchaseRequest
+      // Obtener la suma actual de todos los detalles restantes
+      const totalPrice = await this.purchaseRepository.calculateTotalPriceForPurchaseRequest(idPurchaseRequest);
+
+      // 4. Actualizar el precio en TB_PurchaseRequest
+      await this.purchaseRepository.updatePurchaseRequestPrice(idPurchaseRequest, totalPrice.toString());
+
+      await transaction.commit();
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { 
+        message: "Purchase request detail deleted successfully",
+        amountSubtracted: amountToSubtract,
+        newTotalPrice: totalPrice
+      });
     } catch (err: any) {
+      await transaction.rollback();
       console.error(err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
@@ -455,13 +700,13 @@ export class PurchaseService {
   private getPagination = (request: any) => {
     const page = request.page || 1;
     const pageSize = request.pageSize || 10;
-    
+
     // Si pageSize es -1, significa que quiere todos los registros
     const returnAll = pageSize === -1;
-    
+
     const limit = returnAll ? undefined : pageSize;
     const offset = returnAll ? undefined : (page - 1) * pageSize;
-    
+
     return { page, pageSize, limit, offset, returnAll };
   };
 

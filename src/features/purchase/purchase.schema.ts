@@ -66,12 +66,38 @@ export const createPurchaseRequestWithItemsSchema = z.object({
   })).min(1, "At least one item is required"),
 });
 
+
 export const createPurchaseRequestDetailSchema = z.object({
   idPurchaseRequest: z.coerce.number(),
   idInput: z.coerce.number(),
-  quantity: z.coerce.number(),
+  idWarehouse: z.coerce.number().optional(),
+  idSupplier: z.coerce.number().optional(),
+  purchaseRequest: z.string().optional(),
+  quantity: z.string().optional(),
   createdAt: z.string().optional(),
-  updatedAt: z.string().optional()
+  updatedAt: z.string().optional(),
+  price: z.string().optional(),
+  requestDocumentUrl: z.string().optional(),
+  isActive: z.coerce.boolean().optional(),
+  documentUrl: z.string().optional(),
+});
+
+export const createPurchaseRequestDetailWithItemsSchema = z.object({
+  idPurchaseRequest: z.coerce.number(),
+  isActive: z.coerce.boolean().optional(),
+  purchaseRequest: z.string().optional(),
+  idWarehouse: z.coerce.number().optional(),
+  idSupplier: z.coerce.number().optional(),
+  items: z.array(z.object({
+    idInput: z.coerce.number(),
+    quantity: z.coerce.number(),
+    price: z.coerce.number(),
+    originalPrice: z.union([z.coerce.number(), z.string()]).optional(),
+    name: z.string().optional(),
+    subtotal: z.coerce.number().optional(),
+    unitOfMeasure: z.string().optional(),
+    notes: z.string().optional(),
+  })).min(1, "At least one item is required"),
 });
 
 export const createPurchaseRequestDetailMachineryUsedSchema = z.object({
@@ -104,7 +130,12 @@ export const updatePurchaseRequestDetailSchema = z.object({
   idPurchaseRequestDetail: z.coerce.number(),
   idPurchaseRequest: z.coerce.number().optional(),
   idInput: z.coerce.number().optional(),
-  quantity: z.coerce.number().optional(),
+  idWarehouse: z.coerce.number().optional(),
+  idSupplier: z.coerce.number().optional(),
+  purchaseRequest: z.string().optional(),
+  quantity: z.union([z.coerce.number(), z.string()]).optional(),
+  price: z.union([z.coerce.number(), z.string()]).optional(),
+  isActive: z.coerce.boolean().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional()
 });
