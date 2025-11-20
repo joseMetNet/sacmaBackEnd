@@ -11,6 +11,9 @@ import { Machinery } from "../machinery/machinery.model";
 import { MachineryType } from "../machinery/machinery-type.model";
 import { MachineryModel } from "../machinery/machinery-model.model";
 import { MachineryStatus } from "../machinery/machinery-status.model";
+import { Inventory } from "../inventory/inventory.model";
+import { InventoryMovement } from "../inventory/inventory-movement.model";
+import { Transaction } from "sequelize";
 
 export class PurchaseRepository {
 
@@ -271,8 +274,11 @@ export class PurchaseRepository {
     return PurchaseRequest.update(purchaseRequest, { where: { idPurchaseRequest: purchaseRequest.idPurchaseRequest } });
   };
 
-  updatePurchaseRequestDetail = (purchaseRequestDetail: dtos.UpdatePurchaseRequestDetail) => {
-    return PurchaseRequestDetail.update(purchaseRequestDetail, { where: { idPurchaseRequestDetail: purchaseRequestDetail.idPurchaseRequestDetail } });
+  updatePurchaseRequestDetail = (purchaseRequestDetail: dtos.UpdatePurchaseRequestDetail, transaction?: Transaction) => {
+    return PurchaseRequestDetail.update(purchaseRequestDetail, { 
+      where: { idPurchaseRequestDetail: purchaseRequestDetail.idPurchaseRequestDetail },
+      transaction 
+    });
   };
 
   updatePurchaseRequestDetailMachineryUsed = (purchaseRequestDetailMachineryUsed: dtos.UpdatePurchaseRequestDetailMachineryUsed) => {
@@ -283,8 +289,11 @@ export class PurchaseRepository {
     return PurchaseRequest.destroy({ where: { idPurchaseRequest: id } });
   };
 
-  deletePurchaseRequestDetail = (id: number) => {
-    return PurchaseRequestDetail.destroy({ where: { idPurchaseRequestDetail: id } });
+  deletePurchaseRequestDetail = (id: number, transaction?: Transaction) => {
+    return PurchaseRequestDetail.destroy({ 
+      where: { idPurchaseRequestDetail: id },
+      transaction 
+    });
   };
   
   // Calcular el precio total de todos los detalles de una PurchaseRequest
@@ -304,17 +313,98 @@ export class PurchaseRepository {
   };
 
   // Actualizar el precio en TB_PurchaseRequest
-  updatePurchaseRequestPrice = async (idPurchaseRequest: number, newPrice: string) => {
+  updatePurchaseRequestPrice = async (idPurchaseRequest: number, newPrice: string, transaction?: Transaction) => {
     return PurchaseRequest.update(
       { 
-        price: newPrice,
-        updatedAt: new Date()
+        price: newPrice
       },
-      { where: { idPurchaseRequest } }
+      { 
+        where: { idPurchaseRequest },
+        transaction 
+      }
     );
   };
   
   deletePurchaseRequestDetailMachineryUsed = (id: number) => {
     return PurchaseRequestDetailMachineryUsed.destroy({ where: { idPurchaseRequestDetailMachineryUsed: id } });
+  };
+
+  // ==================== MÉTODOS PARA INVENTARIO ====================
+
+  // Buscar inventario por idInput e idWarehouse
+  findInventoryByInputAndWarehouse = (idInput: number, idWarehouse: number) => {
+    return Inventory.findOne({
+      where: {
+        idInput,
+        idWarehouse
+      }
+    });
+  };
+
+  // Actualizar inventario
+  updateInventory = (data: {
+    idInventory: number;
+    quantityAvailable: string;
+    averageCost: string;
+    lastMovementDate: Date;
+  }, transaction?: Transaction) => {
+    const { Sequelize } = require('sequelize');
+    
+    return Inventory.update(
+      {
+        quantityAvailable: data.quantityAvailable,
+        averageCost: data.averageCost,
+        lastMovementDate: Sequelize.literal('GETDATE()')  // Usar función de SQL Server
+      },
+      { 
+        where: { idInventory: data.idInventory },
+        transaction,
+        silent: true
+      }
+    );
+  };
+
+  // Crear movimiento de inventario
+  createInventoryMovement = (movement: {
+    idInventory: number;
+    idPurchaseRequest?: number;
+    idPurchaseRequestDetail?: number;
+    idInput: number;
+    idWarehouse: number;
+    movementType: string;
+    quantity: string;
+    unitPrice: string;
+    totalPrice: string;
+    stockBefore: string;
+    stockAfter: string;
+    remarks?: string;
+    documentReference?: string;
+    dateMovement: Date;
+    createdBy?: string;
+  }, transaction?: Transaction) => {
+    const { Sequelize } = require('sequelize');
+    
+    return InventoryMovement.create({
+      idInventory: movement.idInventory,
+      idPurchaseRequest: movement.idPurchaseRequest,
+      idPurchaseRequestDetail: movement.idPurchaseRequestDetail,
+      idInput: movement.idInput,
+      idWarehouse: movement.idWarehouse,
+      movementType: movement.movementType,
+      quantity: movement.quantity,
+      unitPrice: movement.unitPrice,
+      totalPrice: movement.totalPrice,
+      stockBefore: movement.stockBefore,
+      stockAfter: movement.stockAfter,
+      remarks: movement.remarks,
+      documentReference: movement.documentReference,
+      dateMovement: Sequelize.literal('GETDATE()'),  // Usar función de SQL Server
+      createdBy: movement.createdBy,
+      createdAt: Sequelize.literal('GETDATE()'),     // También para createdAt
+      isActive: true
+    } as any, { 
+      transaction,
+      silent: true  // Deshabilita timestamps automáticos
+    });
   };
 }

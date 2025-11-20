@@ -149,6 +149,9 @@ export interface UpdatePurchaseRequestDetail {
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  shouldUpdateInventory?: boolean;  // Flag para controlar actualización de inventario
+  remarks?: string;                 // Comentario/razón del ajuste
+  createdBy?: string;               // Usuario que realiza la operación
 }
 
 export interface UpdatePurchaseRequestDetailMachineryUsed {

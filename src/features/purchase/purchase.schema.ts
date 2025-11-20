@@ -137,7 +137,10 @@ export const updatePurchaseRequestDetailSchema = z.object({
   price: z.union([z.coerce.number(), z.string()]).optional(),
   isActive: z.coerce.boolean().optional(),
   createdAt: z.string().optional(),
-  updatedAt: z.string().optional()
+  updatedAt: z.string().optional(),
+  shouldUpdateInventory: z.coerce.boolean().optional(),
+  remarks: z.string().optional(),
+  createdBy: z.string().optional()
 });
 
 export const updatePurchaseRequestDetailMachinerySchema = z.object({

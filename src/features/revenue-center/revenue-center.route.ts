@@ -28,6 +28,7 @@ export function revenueCenterRoutes(app: Application): void {
   routes.get("/v1/revenue-center/quotation/summary", [verifyToken], revenueCenterController.findAllContractedSummary);
   routes.get("/v1/revenue-center/invoice/summary", [verifyToken], revenueCenterController.findAllInvoiceSummary);
   routes.get("/v1/revenue-center/inputs", [verifyToken], revenueCenterController.findAllInputs);
+  routes.get("/v1/revenue-center/distinct-inputs", [verifyToken], revenueCenterController.findDistinctInputsByRevenueCenter);
   routes.get("/v1/revenue-center/epp", [verifyToken], revenueCenterController.findAllEpp);
   // Unified expenditures endpoint
   routes.get("/v1/revenue-center/expenditures", [verifyToken], revenueCenterController.findAllExpenditures);
@@ -393,6 +394,60 @@ export function revenueCenterRoutes(app: Application): void {
    *                   type: integer
    *                 totalPage:
    *                   type: integer
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Not found
+   *       500:
+   *         description: Internal server error
+   */
+
+  /**
+   * @openapi
+   * /v1/revenue-center/distinct-inputs:
+   *   get:
+   *     tags: [Revenue Center]
+   *     summary: Find distinct inputs/materials by project item name
+   *     description: Returns a list of distinct inputs (idInput and name) that are associated with project items matching the filter. Filters by project item name (case-insensitive, partial match).
+   *     parameters:
+   *       - in: query
+   *         name: itemFilter
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Filter to search by project item name (case-insensitive, partial match)
+   *         example: "IMPERMEABILIZ ACION BALCONES"
+   *     responses:
+   *       200:
+   *         description: A list of distinct inputs/materials
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: "success"
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     data:
+   *                       type: array
+   *                       items:
+   *                         type: object
+   *                         properties:
+   *                           idInput:
+   *                             type: integer
+   *                             example: 123
+   *                             description: ID of the input/material
+   *                           name:
+   *                             type: string
+   *                             example: "Cement Portland Type I"
+   *                             description: Name of the input/material
+   *       400:
+   *         description: Bad request - Missing required parameters
    *       401:
    *         description: Unauthorized
    *       403:

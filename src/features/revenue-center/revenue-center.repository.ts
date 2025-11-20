@@ -718,4 +718,35 @@ export class RevenueCenterRepository {
       count: total
     };
   };
+
+  findDistinctInputsByRevenueCenter = async (
+    filter: { itemFilter: string }
+  ) => {
+    const sequelize = RevenueCenter.sequelize!;
+
+    const query = `
+      SELECT DISTINCT 
+        tbi.idInput, 
+        tbi.name
+      FROM [mvp1].[TB_ProjectItem] AS tbpi
+      INNER JOIN [mvp1].[TB_RevenueCenter] AS tbrnc ON tbrnc.idCostCenterProject = tbpi.idCostCenterProject
+      INNER JOIN [mvp1].[TB_Quotation] AS tbq ON tbq.idQuotation = tbrnc.idQuotation
+      INNER JOIN [mvp1].[TB_QuotationItem] AS tbqi ON tbqi.idQuotation = tbq.idQuotation
+      INNER JOIN [mvp1].[TB_QuotationItemDetail] AS tbqid ON tbqid.idQuotationItem = tbqi.idQuotationItem
+      INNER JOIN [mvp1].[TB_Input] AS tbi ON tbi.idInput = tbqid.idInput
+      WHERE tbpi.item COLLATE Latin1_General_CI_AI LIKE :itemFilter
+      ORDER BY tbi.name;
+    `;
+
+    const replacements: Record<string, any> = {
+      itemFilter: `%${filter.itemFilter}%`,
+    };
+
+    const results = await sequelize.query(query, {
+      replacements,
+      type: QueryTypes.SELECT
+    });
+
+    return results;
+  };
 }

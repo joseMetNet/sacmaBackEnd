@@ -14,6 +14,7 @@ import { WareHouse } from "../features/warwHouse/warehouse.model";
 import { OrderItemDetail } from "../features/order/order-item-detail.model";
 import { OrderItem } from "../features/order/order-item.model";
 import { PurchaseRequestDetail } from "../features/purchase/purchase-request-detail.model";
+import { Inventory } from "../features/inventory";
 
 export function setupModelRelations() {
   // Relaciones para IncomeDiscountInvoice
@@ -58,17 +59,23 @@ export function setupModelRelations() {
     sourceKey: "idInput"
   });
 
+  Input.hasMany(Inventory, {
+    foreignKey: "idInput",
+    sourceKey: "idInput",
+    as: "Inventories"
+  });
+
   // Input.hasMany(PurchaseRequest, {
   //   foreignKey: "idInput",
   //   sourceKey: "idInput",
   //   as: "PurchaseRequests"
   // });
 
-  Input.hasMany(PurchaseRequestDetail, {
-    foreignKey: "idInput",
-    sourceKey: "idInput",
-    as: "PurchaseRequestDetails"
-  });
+  // Input.hasMany(PurchaseRequestDetail, {
+  //   foreignKey: "idInput",
+  //   sourceKey: "idInput",
+  //   as: "PurchaseRequestDetails"
+  // });
 
   // Relaciones para PurchaseRequest
   PurchaseRequest.belongsTo(WareHouse, {

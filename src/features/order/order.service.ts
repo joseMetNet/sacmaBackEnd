@@ -358,23 +358,119 @@ export class OrderService {
   };
 
   updateOrderItemDetail = async (orderItemDetail: dtos.UpdateOrderItemDetail): Promise<ResponseEntity> => {
+    const transaction = await dbConnection.transaction();
     try {
+      // 1. Obtener el detalle actual
       const orderItemDetailDb = await this.orderRepository.findByIdOrderItemDetail(orderItemDetail.idOrderItemDetail);
       if (!orderItemDetailDb) {
+        await transaction.rollback();
         return BuildResponse.buildErrorResponse(
           StatusCode.NotFound,
           { message: "Order item detail not found" }
         );
       }
 
-      const updatedOrderItemDetail = await orderItemDetailDb.update(orderItemDetail);
+      const oldQuantity = parseFloat(orderItemDetailDb.quantity?.toString() || "0");
+      const newQuantity = orderItemDetail.quantity !== undefined ? parseFloat(orderItemDetail.quantity.toString()) : oldQuantity;
+      const idInput = orderItemDetail.idInput || orderItemDetailDb.idInput;
+      const idWarehouse = orderItemDetail.idWarehouse;
 
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, updatedOrderItemDetail);
+      console.log("=== UPDATE ORDER ITEM DETAIL DEBUG ===");
+      console.log("shouldUpdateInventory:", orderItemDetail.shouldUpdateInventory);
+      console.log("idWarehouse:", idWarehouse);
+      console.log("idInput:", idInput);
+      console.log("oldQuantity:", oldQuantity, "newQuantity:", newQuantity);
+
+      // 2. Si hay cambios en cantidad Y se debe actualizar inventario
+      let inventoryWasUpdated = false;
+      if (oldQuantity !== newQuantity && orderItemDetail.shouldUpdateInventory && idWarehouse && idInput) {
+        console.log("Attempting to update inventory...");
+        
+        // Buscar inventario existente (SIN transacción, es solo lectura)
+        const inventory = await this.orderRepository.findInventoryByInputAndWarehouse(
+          idInput,
+          idWarehouse
+        );
+
+        console.log("Inventory found:", inventory ? `ID: ${inventory.idInventory}` : "NOT FOUND");
+
+        if (inventory) {
+          const quantityDifference = newQuantity - oldQuantity;
+          const stockBefore = parseFloat(inventory.quantityAvailable?.toString() || "0");
+          // IMPORTANTE: Restar la diferencia porque al asignar a orden, el inventario DISMINUYE
+          const stockAfter = stockBefore - quantityDifference;
+          const currentAverageCost = parseFloat(inventory.averageCost?.toString() || "0");
+
+          console.log("quantityDifference:", quantityDifference);
+          console.log("stockBefore:", stockBefore, "stockAfter:", stockAfter);
+
+          // Actualizar solo la cantidad en inventario, mantener el costo promedio actual
+          await this.orderRepository.updateInventory({
+            idInventory: inventory.idInventory,
+            quantityAvailable: stockAfter.toString(),
+            averageCost: currentAverageCost.toString(),
+            lastMovementDate: new Date()
+          }, transaction);
+
+          console.log("Inventory updated successfully");
+
+          // Registrar movimiento en TB_InventoryMovement (CON transacción)
+          await this.orderRepository.createInventoryMovement({
+            idInventory: inventory.idInventory,
+            idOrderItem: orderItemDetailDb.idOrderItem,
+            idOrderItemDetail: orderItemDetail.idOrderItemDetail,
+            idInput: idInput,
+            idWarehouse: idWarehouse,
+            // Si quantityDifference > 0: aumentó solicitud (más salida) = 'Salida'
+            // Si quantityDifference < 0: disminuyó solicitud (devuelve al inventario) = 'Ajuste'
+            movementType: quantityDifference >= 0 ? 'Salida' : 'Ajuste',
+            quantity: Math.abs(quantityDifference).toString(),
+            unitPrice: "0",
+            totalPrice: "0",
+            stockBefore: stockBefore.toString(),
+            stockAfter: stockAfter.toString(),
+            remarks: orderItemDetail.remarks || `Ajuste por edición de orden. Cantidad anterior: ${oldQuantity}, nueva: ${newQuantity}`,
+            documentReference: `EDIT-OID-${orderItemDetail.idOrderItemDetail}`,
+            dateMovement: new Date(),
+            createdBy: orderItemDetail.createdBy
+          }, transaction);
+
+          console.log("Inventory movement created successfully");
+          inventoryWasUpdated = true;
+        } else {
+          console.log("WARNING: No inventory found for idInput:", idInput, "idWarehouse:", idWarehouse);
+        }
+      } else {
+        console.log("Skipping inventory update. Conditions not met.");
+      }
+
+      // 3. Actualizar el detalle
+      const updatedOrderItemDetail = await orderItemDetailDb.update(orderItemDetail, { transaction });
+
+      await transaction.commit();
+      console.log("Transaction committed successfully");
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        ...updatedOrderItemDetail.toJSON(),
+        message: "Order item detail updated successfully",
+        inventoryUpdated: inventoryWasUpdated
+      });
     } catch (err: any) {
-      console.error(err);
+      // Manejar rollback de forma segura
+      try {
+        await transaction.rollback();
+      } catch (rollbackError: any) {
+        if (rollbackError.message?.includes('no corresponding BEGIN TRANSACTION')) {
+          console.log("Transaction already finished, skipping rollback");
+        } else {
+          console.error("Error during rollback:", rollbackError);
+        }
+      }
+      
+      console.error("ERROR in updateOrderItemDetail:", err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
-        { message: "Error while fetching orders item details" }
+        { message: "Error while updating order item detail", error: err.message }
       );
     }
   };
@@ -423,12 +519,22 @@ export class OrderService {
     }
   };
 
-  deleteOrderItemDetail = async (data: { idOrderItemDetail: number; quantity?: number; idPurchaseRequestDetail?: number }): Promise<ResponseEntity> => {
+  deleteOrderItemDetail = async (data: { 
+    idOrderItemDetail: number; 
+    shouldUpdateInventory?: boolean;
+    idWarehouse?: number;
+    idInput?: number;
+    quantity?: number;
+    remarks?: string;
+    createdBy?: string;
+  }): Promise<ResponseEntity> => {
+    const transaction = await dbConnection.transaction();
     try {
-      const { idOrderItemDetail, quantity, idPurchaseRequestDetail } = data;
+      const { idOrderItemDetail, shouldUpdateInventory, idWarehouse, idInput, quantity, remarks, createdBy } = data;
       
       const orderItemDetail = await this.orderRepository.findByIdOrderItemDetail(idOrderItemDetail);
       if (!orderItemDetail) {
+        await transaction.rollback();
         return {
           status: StatusValue.Failed,
           code: StatusCode.NotFound,
@@ -436,42 +542,102 @@ export class OrderService {
         };
       }
 
-      // Si viene idPurchaseRequest y quantity, devolver stock antes de eliminar
-      if (idPurchaseRequestDetail && quantity) {
-        try {
-          const newQuantity = await this.orderRepository.returnStockToPurchaseRequest(
-            idPurchaseRequestDetail,
-            quantity
-          );
-          
-          // Eliminar el OrderItemDetail
-          await this.orderRepository.deleteOrderItemDetail(idOrderItemDetail);
+      const quantityToReturn = quantity || parseFloat(orderItemDetail.quantity?.toString() || "0");
+      const inputId = idInput || orderItemDetail.idInput;
+      const warehouseId = idWarehouse;
 
-          return BuildResponse.buildSuccessResponse(StatusCode.Ok, { 
-            message: "Order item detail deleted and stock returned successfully",
-            returnedQuantity: quantity,
-            newStockQuantity: newQuantity
-          });
-        } catch (stockError: any) {
-          return BuildResponse.buildErrorResponse(
-            StatusCode.InternalErrorServer,
-            { message: `Error returning stock: ${stockError.message}` }
-          );
+      console.log("=== DELETE ORDER ITEM DETAIL DEBUG ===");
+      console.log("shouldUpdateInventory:", shouldUpdateInventory);
+      console.log("idWarehouse:", warehouseId);
+      console.log("idInput:", inputId);
+      console.log("quantityToReturn:", quantityToReturn);
+
+      let inventoryWasUpdated = false;
+
+      // Si se debe actualizar inventario, devolver la cantidad
+      if (shouldUpdateInventory && warehouseId && inputId && quantityToReturn > 0) {
+        console.log("Attempting to return stock to inventory...");
+
+        // Buscar inventario existente
+        const inventory = await this.orderRepository.findInventoryByInputAndWarehouse(
+          inputId,
+          warehouseId
+        );
+
+        console.log("Inventory found:", inventory ? `ID: ${inventory.idInventory}` : "NOT FOUND");
+
+        if (inventory) {
+          const stockBefore = parseFloat(inventory.quantityAvailable?.toString() || "0");
+          // Devolver la cantidad al inventario (SUMAR porque se está devolviendo)
+          const stockAfter = stockBefore + quantityToReturn;
+          const currentAverageCost = parseFloat(inventory.averageCost?.toString() || "0");
+
+          console.log("stockBefore:", stockBefore, "stockAfter:", stockAfter);
+
+          // Actualizar inventario
+          await this.orderRepository.updateInventory({
+            idInventory: inventory.idInventory,
+            quantityAvailable: stockAfter.toString(),
+            averageCost: currentAverageCost.toString(),
+            lastMovementDate: new Date()
+          }, transaction);
+
+          console.log("Inventory updated successfully");
+
+          // Registrar movimiento en TB_InventoryMovement
+          await this.orderRepository.createInventoryMovement({
+            idInventory: inventory.idInventory,
+            idOrderItem: orderItemDetail.idOrderItem,
+            idOrderItemDetail: idOrderItemDetail,
+            idInput: inputId,
+            idWarehouse: warehouseId,
+            movementType: 'Ajuste',
+            quantity: quantityToReturn.toString(),
+            unitPrice: "0",
+            totalPrice: "0",
+            stockBefore: stockBefore.toString(),
+            stockAfter: stockAfter.toString(),
+            remarks: remarks || `Devolución por eliminación de orden. Cantidad devuelta: ${quantityToReturn}`,
+            documentReference: `DELETE-OID-${idOrderItemDetail}`,
+            dateMovement: new Date(),
+            createdBy: createdBy
+          }, transaction);
+
+          console.log("Inventory movement created successfully");
+          inventoryWasUpdated = true;
+        } else {
+          console.log("WARNING: No inventory found for idInput:", inputId, "idWarehouse:", warehouseId);
         }
-      } else {
-        // Si solo viene idOrderItemDetail, eliminar directamente
-        await this.orderRepository.deleteOrderItemDetail(idOrderItemDetail);
-        
-        return BuildResponse.buildSuccessResponse(StatusCode.Ok, { 
-          message: "Order item detail deleted successfully (no stock returned)" 
-        });
       }
 
+      // Eliminar el OrderItemDetail
+      await this.orderRepository.deleteOrderItemDetail(idOrderItemDetail);
+
+      await transaction.commit();
+      console.log("Transaction committed successfully");
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { 
+        message: "Order item detail deleted successfully",
+        returnedQuantity: quantityToReturn,
+        inventoryUpdated: inventoryWasUpdated
+      });
+
     } catch (err: any) {
-      console.error(err);
+      // Manejar rollback de forma segura
+      try {
+        await transaction.rollback();
+      } catch (rollbackError: any) {
+        if (rollbackError.message?.includes('no corresponding BEGIN TRANSACTION')) {
+          console.log("Transaction already finished, skipping rollback");
+        } else {
+          console.error("Error during rollback:", rollbackError);
+        }
+      }
+
+      console.error("ERROR in deleteOrderItemDetail:", err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
-        { message: "Error deleting order item detail" }
+        { message: "Error deleting order item detail", error: err.message }
       );
     }
   };

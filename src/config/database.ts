@@ -17,6 +17,10 @@ class DatabaseConnection {
         dialectOptions: {
           instanceName: "SQLEXPRESS",
           requestTimeout: 50000,
+          useUTC: false,
+          options: {
+            useUTC: false
+          }
         },
         pool: {
           max: 50,

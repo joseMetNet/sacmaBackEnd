@@ -571,7 +571,7 @@ export class PurchaseService {
   updatePurchaseRequestDetail = async (purchaseRequestDetail: dtos.UpdatePurchaseRequestDetail): Promise<ResponseEntity> => {
     const transaction = await dbConnection.transaction();
     try {
-      // 1. Obtener el detalle actual para conocer el idPurchaseRequest
+      // 1. Obtener el detalle actual para conocer el idPurchaseRequest y valores previos
       const currentDetail = await this.purchaseRepository.findByIdPurchaseRequestDetail(purchaseRequestDetail.idPurchaseRequestDetail);
       
       if (!currentDetail) {
@@ -583,32 +583,132 @@ export class PurchaseService {
       }
 
       const idPurchaseRequest = currentDetail.idPurchaseRequest;
+      const oldQuantity = parseFloat(currentDetail.quantity?.toString() || "0");
+      const oldPrice = parseFloat(currentDetail.price?.toString() || "0");
+      const newQuantity = parseFloat(purchaseRequestDetail.quantity?.toString() || "0");
+      const newPrice = parseFloat(purchaseRequestDetail.price?.toString() || "0");
+      
+      // Obtener idInput del detalle actual o del request
+      const idInput = purchaseRequestDetail.idInput || currentDetail.idInput;
+      const idWarehouse = purchaseRequestDetail.idWarehouse;
 
-      // 2. Actualizar el detalle
-      await this.purchaseRepository.updatePurchaseRequestDetail(purchaseRequestDetail);
+      console.log("=== UPDATE PURCHASE REQUEST DETAIL DEBUG ===");
+      console.log("shouldUpdateInventory:", purchaseRequestDetail.shouldUpdateInventory);
+      console.log("idWarehouse:", idWarehouse);
+      console.log("idInput:", idInput);
+      console.log("oldQuantity:", oldQuantity, "newQuantity:", newQuantity);
+      console.log("oldPrice:", oldPrice, "newPrice:", newPrice);
+      console.log("Has changes?", oldQuantity !== newQuantity || oldPrice !== newPrice);
 
-      // 3. Recalcular el precio total de TB_PurchaseRequest
+      // 2. Si hay cambios en cantidad o precio Y se debe actualizar inventario (ANTES de actualizar el detalle)
+      let inventoryWasUpdated = false;
+      if ((oldQuantity !== newQuantity || oldPrice !== newPrice) && purchaseRequestDetail.shouldUpdateInventory && idWarehouse && idInput) {
+        console.log("Attempting to update inventory...");
+        
+        // Buscar inventario existente (SIN transacción, es solo lectura)
+        const inventory = await this.purchaseRepository.findInventoryByInputAndWarehouse(
+          idInput,
+          idWarehouse
+        );
+
+        console.log("Inventory found:", inventory ? `ID: ${inventory.idInventory}` : "NOT FOUND");
+
+        if (inventory) {
+          const quantityDifference = newQuantity - oldQuantity;
+          const stockBefore = parseFloat(inventory.quantityAvailable?.toString() || "0");
+          const stockAfter = stockBefore + quantityDifference;
+
+          console.log("quantityDifference:", quantityDifference);
+          console.log("stockBefore:", stockBefore, "stockAfter:", stockAfter);
+
+          // Calcular nuevo costo promedio ponderado si cambió el precio o cantidad
+          let newAverageCost = parseFloat(inventory.averageCost?.toString() || "0");
+          if (quantityDifference !== 0 || oldPrice !== newPrice) {
+            const currentStockValue = stockBefore * parseFloat(inventory.averageCost?.toString() || "0");
+            const newStockValue = quantityDifference * newPrice;
+            const totalQuantity = stockBefore + quantityDifference;
+            
+            if (totalQuantity > 0) {
+              newAverageCost = (currentStockValue + newStockValue) / totalQuantity;
+            }
+            
+            console.log("New average cost calculated:", newAverageCost);
+          }
+
+          // Actualizar inventario (CON transacción)
+          await this.purchaseRepository.updateInventory({
+            idInventory: inventory.idInventory,
+            quantityAvailable: stockAfter.toString(),
+            averageCost: newAverageCost.toString(),
+            lastMovementDate: new Date()
+          }, transaction);
+
+          console.log("Inventory updated successfully");
+
+            // Registrar movimiento en TB_InventoryMovement (CON transacción)
+            await this.purchaseRepository.createInventoryMovement({
+              idInventory: inventory.idInventory,
+              idPurchaseRequest: idPurchaseRequest,
+              idPurchaseRequestDetail: purchaseRequestDetail.idPurchaseRequestDetail,
+              idInput: idInput,
+              idWarehouse: idWarehouse,
+              movementType: quantityDifference >= 0 ? 'Entrada' : 'Ajuste',
+              quantity: Math.abs(quantityDifference).toString(),
+              unitPrice: newPrice.toString(),
+              totalPrice: (Math.abs(quantityDifference) * newPrice).toString(),
+              stockBefore: stockBefore.toString(),
+              stockAfter: stockAfter.toString(),
+              remarks: purchaseRequestDetail.remarks || `Ajuste por edición de detalle de compra. Cantidad anterior: ${oldQuantity}, nueva: ${newQuantity}. Precio anterior: ${oldPrice}, nuevo: ${newPrice}`,
+              documentReference: `EDIT-PRD-${purchaseRequestDetail.idPurchaseRequestDetail}`,
+              dateMovement: new Date(),
+              createdBy: purchaseRequestDetail.createdBy
+            }, transaction);          console.log("Inventory movement created successfully");
+          inventoryWasUpdated = true;
+        } else {
+          console.log("WARNING: No inventory found for idInput:", idInput, "idWarehouse:", idWarehouse);
+        }
+      } else {
+        console.log("Skipping inventory update. Conditions not met.");
+      }
+
+      // 3. Actualizar el detalle (CON transacción)
+      await this.purchaseRepository.updatePurchaseRequestDetail(purchaseRequestDetail, transaction);
+
+      // 4. Recalcular el precio total de TB_PurchaseRequest (SIN transacción, es solo lectura)
       const totalPrice = await this.purchaseRepository.calculateTotalPriceForPurchaseRequest(idPurchaseRequest);
 
-      // 4. Actualizar el precio en TB_PurchaseRequest
-      await this.purchaseRepository.updatePurchaseRequestPrice(idPurchaseRequest, totalPrice.toString());
+      // 5. Actualizar el precio en TB_PurchaseRequest (CON transacción)
+      await this.purchaseRepository.updatePurchaseRequestPrice(idPurchaseRequest, totalPrice.toString(), transaction);
 
       await transaction.commit();
+      console.log("Transaction committed successfully");
 
-      // 5. Obtener el detalle actualizado para retornarlo
+      // 6. Obtener el detalle actualizado para retornarlo (SIN transacción, después del commit)
       const updatedDetail = await this.purchaseRepository.findByIdPurchaseRequestDetail(purchaseRequestDetail.idPurchaseRequestDetail);
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         ...updatedDetail?.toJSON(),
         message: "Purchase request detail updated successfully",
-        totalPriceRecalculated: totalPrice
+        totalPriceRecalculated: totalPrice,
+        inventoryUpdated: inventoryWasUpdated
       });
     } catch (err: any) {
-      await transaction.rollback();
-      console.error(err);
+      // Manejar el rollback de forma segura
+      try {
+        await transaction.rollback();
+      } catch (rollbackError: any) {
+        // Si falla el rollback es porque ya se hizo commit o ya se hizo rollback
+        if (rollbackError.message?.includes('no corresponding BEGIN TRANSACTION')) {
+          console.log("Transaction already finished, skipping rollback");
+        } else {
+          console.error("Error during rollback:", rollbackError);
+        }
+      }
+      
+      console.error("ERROR in updatePurchaseRequestDetail:", err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
-        { message: "Error while updating purchase request detail" }
+        { message: "Error while updating purchase request detail", error: err.message }
       );
     }
   };
@@ -639,7 +739,7 @@ export class PurchaseService {
     }
   };
 
-  deletePurchaseRequestDetail = async (id: number): Promise<ResponseEntity> => {
+  deletePurchaseRequestDetail = async (id: number, shouldUpdateInventory?: boolean, idWarehouse?: number, createdBy?: string): Promise<ResponseEntity> => {
     const transaction = await dbConnection.transaction();
     try {
       // 1. Obtener el detalle antes de eliminarlo para tener la información del cálculo
@@ -657,30 +757,121 @@ export class PurchaseService {
       const quantityToRemove = parseFloat(detail.quantity?.toString() || "0");
       const priceToRemove = parseFloat(detail.price?.toString() || "0");
       const amountToSubtract = quantityToRemove * priceToRemove;
+      const idInput = detail.idInput;
 
-      // 2. Eliminar el detalle
-      await this.purchaseRepository.deletePurchaseRequestDetail(id);
+      console.log("=== DELETE PURCHASE REQUEST DETAIL DEBUG ===");
+      console.log("shouldUpdateInventory:", shouldUpdateInventory);
+      console.log("idWarehouse:", idWarehouse);
+      console.log("idInput:", idInput);
+      console.log("quantityToRemove:", quantityToRemove);
+      console.log("priceToRemove:", priceToRemove);
 
-      // 3. Recalcular el precio total de TB_PurchaseRequest
-      // Obtener la suma actual de todos los detalles restantes
+      // 2. Si se debe actualizar inventario, restar la cantidad del inventario ANTES de eliminar
+      let inventoryWasUpdated = false;
+      if (shouldUpdateInventory && idWarehouse && idInput) {
+        console.log("Attempting to update inventory...");
+        
+        // Buscar inventario existente (SIN transacción, es solo lectura)
+        const inventory = await this.purchaseRepository.findInventoryByInputAndWarehouse(
+          idInput,
+          idWarehouse
+        );
+
+        console.log("Inventory found:", inventory ? `ID: ${inventory.idInventory}` : "NOT FOUND");
+
+        if (inventory) {
+          const stockBefore = parseFloat(inventory.quantityAvailable?.toString() || "0");
+          const stockAfter = stockBefore - quantityToRemove; // Restamos porque estamos eliminando
+
+          console.log("stockBefore:", stockBefore, "stockAfter:", stockAfter);
+
+          if (stockAfter < 0) {
+            await transaction.rollback();
+            return BuildResponse.buildErrorResponse(
+              StatusCode.BadRequest,
+              { 
+                message: "Cannot delete: insufficient inventory",
+                currentStock: stockBefore,
+                quantityToRemove: quantityToRemove
+              }
+            );
+          }
+
+          // Calcular nuevo costo promedio (mantiene el mismo costo promedio)
+          const currentAverageCost = parseFloat(inventory.averageCost?.toString() || "0");
+
+          // Actualizar inventario (CON transacción)
+          await this.purchaseRepository.updateInventory({
+            idInventory: inventory.idInventory,
+            quantityAvailable: stockAfter.toString(),
+            averageCost: currentAverageCost.toString(),
+            lastMovementDate: new Date()
+          }, transaction);
+
+          console.log("Inventory updated successfully");
+
+          // Registrar movimiento de salida en TB_InventoryMovement (CON transacción)
+          await this.purchaseRepository.createInventoryMovement({
+            idInventory: inventory.idInventory,
+            idPurchaseRequest: idPurchaseRequest,
+            idPurchaseRequestDetail: id,
+            idInput: idInput,
+            idWarehouse: idWarehouse,
+            movementType: 'Ajuste',
+            quantity: quantityToRemove.toString(),
+            unitPrice: priceToRemove.toString(),
+            totalPrice: amountToSubtract.toString(),
+            stockBefore: stockBefore.toString(),
+            stockAfter: stockAfter.toString(),
+            remarks: `Ajuste por eliminación de detalle de compra. Cantidad eliminada: ${quantityToRemove}, precio: ${priceToRemove}`,
+            documentReference: `DELETE-PRD-${id}`,
+            dateMovement: new Date(),
+            createdBy: createdBy
+          }, transaction);
+
+          console.log("Inventory movement created successfully");
+          inventoryWasUpdated = true;
+        } else {
+          console.log("WARNING: No inventory found for idInput:", idInput, "idWarehouse:", idWarehouse);
+        }
+      } else {
+        console.log("Skipping inventory update. Conditions not met.");
+      }
+
+      // 3. Eliminar el detalle (CON transacción)
+      await this.purchaseRepository.deletePurchaseRequestDetail(id, transaction);
+
+      // 4. Recalcular el precio total de TB_PurchaseRequest (SIN transacción, es solo lectura)
       const totalPrice = await this.purchaseRepository.calculateTotalPriceForPurchaseRequest(idPurchaseRequest);
 
-      // 4. Actualizar el precio en TB_PurchaseRequest
-      await this.purchaseRepository.updatePurchaseRequestPrice(idPurchaseRequest, totalPrice.toString());
+      // 5. Actualizar el precio en TB_PurchaseRequest (CON transacción)
+      await this.purchaseRepository.updatePurchaseRequestPrice(idPurchaseRequest, totalPrice.toString(), transaction);
 
       await transaction.commit();
+      console.log("Transaction committed successfully");
 
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, { 
         message: "Purchase request detail deleted successfully",
         amountSubtracted: amountToSubtract,
-        newTotalPrice: totalPrice
+        newTotalPrice: totalPrice,
+        inventoryUpdated: inventoryWasUpdated
       });
     } catch (err: any) {
-      await transaction.rollback();
-      console.error(err);
+      // Manejar el rollback de forma segura
+      try {
+        await transaction.rollback();
+      } catch (rollbackError: any) {
+        if (rollbackError.message?.includes('no corresponding BEGIN TRANSACTION')) {
+          console.log("Transaction already finished, skipping rollback");
+        } else {
+          console.error("Error during rollback:", rollbackError);
+        }
+      }
+      
+      console.error("ERROR in deletePurchaseRequestDetail:", err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
-        { message: "Error while deleting purchase request detail" }
+        { message: "Error while deleting purchase request detail", error: err.message }
       );
     }
   };

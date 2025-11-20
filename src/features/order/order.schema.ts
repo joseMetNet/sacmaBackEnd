@@ -10,8 +10,12 @@ export const idOrderItemDetailSchema = z.object({
 
 export const deleteOrderItemDetailSchema = z.object({
   idOrderItemDetail: z.coerce.number(),
+  shouldUpdateInventory: z.coerce.boolean().optional(),
+  idWarehouse: z.coerce.number().optional(),
+  idInput: z.coerce.number().optional(),
   quantity: z.coerce.number().optional(),
-  idPurchaseRequestDetail: z.coerce.number().optional()
+  remarks: z.string().optional(),
+  createdBy: z.string().optional()
 });
 
 export const idOrderItemDetailMachineryUsed = z.object({
@@ -85,6 +89,10 @@ export const updateOrderItemDetailSchema = z.object({
   idOrderItem: z.coerce.number().optional(),
   idInput: z.coerce.number().optional(),
   quantity: z.coerce.number().optional(),
+  shouldUpdateInventory: z.coerce.boolean().optional(),
+  idWarehouse: z.coerce.number().optional(),
+  remarks: z.string().optional(),
+  createdBy: z.string().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional()
 });

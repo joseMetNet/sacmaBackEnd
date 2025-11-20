@@ -88,6 +88,10 @@ export interface UpdateOrderItemDetail {
   idOrderItem?: number;
   idInput?: number;
   quantity?: number;
+  shouldUpdateInventory?: boolean;
+  idWarehouse?: number;
+  remarks?: string;
+  createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
 }

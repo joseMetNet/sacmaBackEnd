@@ -1448,6 +1448,23 @@ export class RevenueCenterService {
     }
   };
 
+  findDistinctInputsByRevenueCenter = async (request: schemas.FindDistinctInputsByRevenueCenterSchema): Promise<ResponseEntity> => {
+    try {
+      const filter = {
+        itemFilter: request.itemFilter
+      };
+
+      const inputs = await this.revenueCenterRepository.findDistinctInputsByRevenueCenter(filter);
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        data: inputs,
+      });
+    } catch (error) {
+      console.error("An error occurred while trying to find distinct inputs by revenue center", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find distinct inputs by revenue center" });
+    }
+  };
+
   private buildFilter = (
     request: schemas.FindAllSchema
   ): { [key: string]: any } => {
