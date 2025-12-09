@@ -19,6 +19,7 @@ export class ProjectInventoryAssignment extends Model {
   declare createdBy?: string;
   declare status: string;
   declare isActive?: boolean;
+  declare balance?: number;
 }
 
 ProjectInventoryAssignment.init(
@@ -86,6 +87,10 @@ ProjectInventoryAssignment.init(
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
+    },
+    balance:{
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
   },
   {

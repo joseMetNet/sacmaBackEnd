@@ -345,6 +345,7 @@ export class PurchaseController {
   };
 
   deletePurchaseRequestDetailMachineryUsed = async (req: Request, res: Response): Promise<void> => {
+    // const request = schemas.deletePurchaseRequestDetailMachineryUsedSchema.safeParse(req.params);
     const request = schemas.idPurchaseRequestDetailMachineryUsed.safeParse(req.params);
     if (!request.success) {
       res.status(StatusCode.BadRequest).json({
@@ -355,6 +356,20 @@ export class PurchaseController {
     }
 
     const response = await this.purchaseService.deletePurchaseRequestDetailMachineryUsed(request.data.idPurchaseRequestDetailMachineryUsed);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
+  findAllInventoryPurchase = async (req: Request, res: Response): Promise<void> => {
+    const request = {
+      page: req.query.page ? parseInt(req.query.page as string) : undefined,
+      pageSize: req.query.pageSize ? parseInt(req.query.pageSize as string) : undefined,
+      idWarehouse: req.query.idWarehouse ? parseInt(req.query.idWarehouse as string) : undefined,
+    };
+
+    const response = await this.purchaseService.findAllInventoryPurchase(request);
     res.status(response.code).json({
       status: response.status,
       data: response.data

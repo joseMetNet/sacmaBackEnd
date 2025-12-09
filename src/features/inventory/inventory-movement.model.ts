@@ -3,6 +3,7 @@ import { dbConnection } from "../../config";
 import { Inventory } from "./inventory.model";
 import { Input } from "../input/input.model";
 import { WareHouse } from "../warwHouse/warehouse.model";
+import { ReturnReason } from "./return-reason.model";
 
 export class InventoryMovement extends Model {
   declare idInventoryMovement: number;
@@ -18,6 +19,7 @@ export class InventoryMovement extends Model {
   declare totalPrice?: number;
   declare stockBefore?: number;
   declare stockAfter?: number;
+  declare idReturnReason?: number;
   declare remarks?: string;
   declare documentReference?: string;
   declare dateMovement?: Date;
@@ -84,6 +86,10 @@ InventoryMovement.init(
       type: DataTypes.DECIMAL(18, 2),
       allowNull: true,
     },
+    idReturnReason: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     remarks: {
       type: DataTypes.STRING(500),
       allowNull: true,
@@ -133,4 +139,10 @@ InventoryMovement.belongsTo(WareHouse, {
   foreignKey: "idWarehouse",
   targetKey: "idWarehouse",
   as: "WareHouse",
+});
+
+InventoryMovement.belongsTo(ReturnReason, {
+  foreignKey: "idReturnReason",
+  targetKey: "idReturnReason",
+  as: "ReturnReason",
 });

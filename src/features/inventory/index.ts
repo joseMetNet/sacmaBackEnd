@@ -1,6 +1,7 @@
 export * from "./inventory.model";
 export * from "./inventory-movement.model";
 export * from "./project-inventory-assignment.model";
+export * from "./inventory-balance.model";
 export * from "./inventory.interface";
 export * from "./inventory.schema";
 export * from "./inventory.repository";

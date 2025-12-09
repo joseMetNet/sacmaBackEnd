@@ -11,6 +11,12 @@ import * as crypto from "crypto";
 // import { machineryService } from "../machinery/machinery.service";
 import { machineryService } from "../machinery/machinery.service";
 
+interface FindAllInventoryPurchaseDTO {
+  page?: number;
+  pageSize?: number;
+  idWarehouse?: number;
+}
+
 export class PurchaseService {
   private purchaseRepository: PurchaseRepository;
   constructor(
@@ -211,6 +217,17 @@ export class PurchaseService {
       newPurchaseRequest.setDataValue("consecutive", `PR-${newPurchaseRequest.idPurchaseRequest}`);
       newPurchaseRequest.setDataValue("idPurchaseRequestStatus", 1);
       const response = await newPurchaseRequest.save();
+
+      // Crear registro en TB_InventoryPurchase si hay idWarehouse
+      if (request.idWarehouse) {
+        const averageCost = request.price && request.price.trim() !== "" 
+          ? parseFloat(request.price) 
+          : null;
+        await this.purchaseRepository.createInventoryPurchase(
+          request.idWarehouse,
+          averageCost
+        );
+      }
 
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
     } catch (err: any) {
@@ -949,5 +966,45 @@ export class PurchaseService {
     }
 
     return filter;
+  };
+
+  findAllInventoryPurchase = async (
+    request: FindAllInventoryPurchaseDTO
+  ): Promise<ResponseEntity> => {
+    try {
+      const { page, pageSize, limit, offset, returnAll } = this.getPagination(request);
+      const filter: any = {};
+
+      if (request.idWarehouse) {
+        filter.idWarehouse = request.idWarehouse;
+      }
+
+      if (returnAll) {
+        const inventoryPurchases = await this.purchaseRepository.findAllInventoryPurchase(filter);
+        return BuildResponse.buildSuccessResponse(
+          StatusCode.Ok,
+          inventoryPurchases.rows
+        );
+      } else {
+        const inventoryPurchases = await this.purchaseRepository.findAllInventoryPurchase(filter, limit, offset);
+        const response = {
+          data: inventoryPurchases.rows,
+          totalItems: inventoryPurchases.count,
+          currentPage: page,
+          totalPages: Math.ceil(inventoryPurchases.count / pageSize)
+        };
+
+        return BuildResponse.buildSuccessResponse(
+          StatusCode.Ok,
+          response
+        );
+      }
+    } catch (error: any) {
+      console.error("Error in findAllInventoryPurchase:", error);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "Error al consultar los registros de inventory purchase" }
+      );
+    }
   };
 }

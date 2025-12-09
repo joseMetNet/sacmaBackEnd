@@ -12,6 +12,7 @@ export function purchaseRoute(app: Application) {
   router.get("/v1/purchase/request", purchaseController.findAllPurchaseRequest);
   router.get("/v1/purchase/request/status", purchaseController.findPurchaseRequestStatus);
   router.get("/v1/purchase/request/detail", purchaseController.findAllPurchaseRequestDetail);
+  router.get("/v1/purchase/inventory-purchase", purchaseController.findAllInventoryPurchase);
   router.get("/v1/purchase/request/getDetailMachineryUsed", purchaseController.findAllPurchaseRequestDetailMachineryUsed);
   router.get("/v1/purchase/request/getDetailMachineryUsedPaginatorNot", purchaseController.findAllPurchaseRequestDetailMachineryUsedPaginatorNot);
   router.get("/v1/purchase/request/:idPurchaseRequest", purchaseController.findByIdPurchaseRequest);

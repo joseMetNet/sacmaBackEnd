@@ -14,6 +14,12 @@ export async function uploadFile(
     );
     const containerClient =
       blobServiceClient.getContainerClient(containerClientName);
+    
+    // Crear el contenedor si no existe
+    await containerClient.createIfNotExists({
+      access: 'blob' // 'blob' para acceso público a blobs, 'container' para listar también, o undefined para privado
+    });
+    
     const blobName = contentType === "application/pdf" ?
       `${identifier}.pdf` :
       `${identifier}.png`;

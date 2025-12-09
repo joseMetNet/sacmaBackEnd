@@ -3,6 +3,7 @@ import { PurchaseRequest } from "./purchase-request.model";
 import { PurchaseRequestDetail } from "./purchase-request-detail.model";
 import { PurchaseRequestDetailMachineryUsed } from "./purchase-request-detail-machinery.model"
 import { PurchaseRequestStatus } from "./purchase-request-status.model";
+import { InventoryPurchase } from "./inventory-purchase.model";
 import { CostCenterProject } from "../cost-center";
 import { Input, InputUnitOfMeasure } from "../input";
 import { WareHouse } from "../warwHouse/warehouse.model";
@@ -13,7 +14,8 @@ import { MachineryModel } from "../machinery/machinery-model.model";
 import { MachineryStatus } from "../machinery/machinery-status.model";
 import { Inventory } from "../inventory/inventory.model";
 import { InventoryMovement } from "../inventory/inventory-movement.model";
-import { Transaction } from "sequelize";
+import { Transaction, QueryTypes } from "sequelize";
+import { dbConnection } from "../../config";
 
 export class PurchaseRepository {
 
@@ -261,6 +263,51 @@ export class PurchaseRepository {
 
   createPurchaseRequestDetailMachineryUsed = (purchaseRequestDetailMachineryUsed: dtos.CreatePurchaseRequestDetailMachineryUsed) => {
     return PurchaseRequestDetailMachineryUsed.create(purchaseRequestDetailMachineryUsed as any);
+  };
+
+  createInventoryPurchase = (idWarehouse: number, averageCost?: number | null) => {
+    return InventoryPurchase.create({
+      idWarehouse,
+      averageCost: averageCost !== undefined && averageCost !== null ? averageCost : null,
+    } as any);
+  };
+
+  updateInventoryPurchaseAverageCost = async (idWarehouse: number, averageCost: number) => {
+    // Actualizar directamente por idWarehouse usando query raw para evitar problemas con timestamps
+    const [results] = await dbConnection.query(
+      `UPDATE [mvp1].[TB_InventoryPurchase] 
+       SET [averageCost] = :averageCost, 
+           [updatedAt] = GETDATE() 
+       WHERE [idWarehouse] = :idWarehouse`,
+      {
+        replacements: { averageCost, idWarehouse },
+        type: QueryTypes.UPDATE
+      }
+    );
+    return results;
+  };
+
+  findAllInventoryPurchase = (
+    filter: { [key: string]: any } = {},
+    limit?: number,
+    offset?: number
+  ) => {
+    const queryOptions: any = {
+      include: [
+        {
+          model: WareHouse,
+          as: "WareHouse",
+        },
+      ],
+      where: filter,
+    };
+
+    if (limit !== undefined && offset !== undefined) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+
+    return InventoryPurchase.findAndCountAll(queryOptions);
   };
   // createPurchaseRequestDetailMachineryUsed = (purchaseRequestDetailMachineryUsed: dtos.CreatePurchaseRequestDetailMachineryUsed, transaction?: any) => {
   //   const options: any = {};
