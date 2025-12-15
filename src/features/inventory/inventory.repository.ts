@@ -695,10 +695,22 @@ export class InventoryRepository {
           CAST(pa.quantityReturned * pa.unitPrice AS DECIMAL(18,2)) AS ValorDevuelto,
           pa.assignmentDate AS FechaAsignacion,
           pa.status AS Estado,
-          pa.createdBy AS AsignadoPor
+          pa.createdBy AS AsignadoPor,
+          ultimaDevolucion.FechaDevolucion,
+          ultimaDevolucion.NumDevoluciones
         FROM [mvp1].[TB_ProjectInventoryAssignment] pa
         LEFT JOIN [mvp1].[TB_Input] inp ON pa.idInput = inp.idInput
         LEFT JOIN [mvp1].[TB_WareHouse] w ON pa.idWarehouse = w.idWarehouse
+        OUTER APPLY (
+          SELECT 
+            MAX(im.dateMovement) AS FechaDevolucion,
+            COUNT(*) AS NumDevoluciones
+          FROM [mvp1].[TB_InventoryMovement] im
+          WHERE im.idCostCenterProject = pa.idCostCenterProject
+            AND im.idInput = pa.idInput
+            AND im.idWarehouse = pa.idWarehouse
+            AND im.movementType = 'DevolucionProyecto'
+        ) ultimaDevolucion
         WHERE pa.idCostCenterProject = :idCostCenterProject
           AND pa.quantityReturned > 0
         ORDER BY pa.assignmentDate DESC

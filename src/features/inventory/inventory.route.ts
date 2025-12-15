@@ -1207,6 +1207,8 @@ export function inventoryRoute(app: Application) {
  *                             type: integer
  *                           idCostCenterProject:
  *                             type: integer
+ *                           idInput:
+ *                             type: integer
  *                           Material:
  *                             type: string
  *                           Almacen:
@@ -1230,6 +1232,15 @@ export function inventoryRoute(app: Application) {
  *                             type: string
  *                           AsignadoPor:
  *                             type: string
+ *                           FechaDevolucion:
+ *                             type: string
+ *                             format: date-time
+ *                             nullable: true
+ *                             description: Fecha de la última devolución de material
+ *                           NumDevoluciones:
+ *                             type: integer
+ *                             nullable: true
+ *                             description: Número total de devoluciones realizadas
  *                     totalItems:
  *                       type: integer
  *                     currentPage:

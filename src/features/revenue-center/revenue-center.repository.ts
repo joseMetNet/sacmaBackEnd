@@ -617,38 +617,180 @@ export class RevenueCenterRepository {
   }
 
   findAllMaterialSummaryDetail = async (
-    limit: number,
-    offset: number,
+    // limit: number,
+    // offset: number,
     filter: { idRevenueCenter: number }
   ) => {
     const sequelize = RevenueCenter.sequelize!;
 
+    // // Debug: Print some diagnostic info
+    // console.log(`\n=========== DEBUG INFO FOR idRevenueCenter=${filter.idRevenueCenter} ===========`);
+    
+    // const debugQuery = `
+    //   SELECT DISTINCT
+    //     trc.idQuotation,
+    //     trc.idCostCenterProject,
+    //     (SELECT COUNT(*) FROM [mvp1].[TB_QuotationItem] qi WHERE qi.idQuotation = trc.idQuotation) AS quotationItemCount,
+    //     (SELECT COUNT(*) FROM [mvp1].[TB_ProjectItem] pi WHERE pi.idCostCenterProject = trc.idCostCenterProject) AS projectItemCount,
+    //     (SELECT COUNT(*) 
+    //      FROM [mvp1].[TB_ProjectItem] pi 
+    //      INNER JOIN [mvp1].[TB_InvoiceProjectItem] ipi ON ipi.idProjectItem = pi.idProjectItem
+    //      INNER JOIN [mvp1].[TB_Invoice] inv ON inv.idInvoice = ipi.idInvoice
+    //      WHERE pi.idCostCenterProject = trc.idCostCenterProject 
+    //        AND inv.invoice IS NOT NULL) AS invoicedItemCount
+    //   FROM [mvp1].[TB_RevenueCenter] trc
+    //   WHERE trc.idRevenueCenter = ${filter.idRevenueCenter};
+    // `;
+    
+    // // Query to see actual project item descriptions
+    // const projectItemsQuery = `
+    //   SELECT
+    //     pi.idProjectItem,
+    //     pi.item,
+    //     SUM(ipi.invoicedQuantity) AS totalInvoiced
+    //   FROM [mvp1].[TB_RevenueCenter] trc
+    //   INNER JOIN [mvp1].[TB_ProjectItem] pi ON pi.idCostCenterProject = trc.idCostCenterProject
+    //   LEFT JOIN [mvp1].[TB_InvoiceProjectItem] ipi ON ipi.idProjectItem = pi.idProjectItem
+    //   LEFT JOIN [mvp1].[TB_Invoice] inv ON inv.idInvoice = ipi.idInvoice AND inv.invoice IS NOT NULL
+    //   WHERE trc.idRevenueCenter = ${filter.idRevenueCenter}
+    //   GROUP BY pi.idProjectItem, pi.item
+    //   ORDER BY SUM(ipi.invoicedQuantity) DESC;
+    // `;
+    
+    // // Query to check which materials are quoted vs ordered
+    // const materialPatternsQuery = `
+    //   -- Materials that are QUOTED (in QuotationItemDetail for idQuotationItem=44)
+    //   SELECT
+    //     'QUOTED' AS source,
+    //     ti.idInput,
+    //     ti.name AS materialName,
+    //     qid.quantity AS quotedQuantity,
+    //     (SELECT SUM(oid.quantity) 
+    //      FROM mvp1.TB_OrderItemDetail oid 
+    //      INNER JOIN mvp1.TB_OrderItem oi ON oi.idOrderItem = oid.idOrderItem
+    //      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = oi.idCostCenterProject
+    //      WHERE oid.idInput = ti.idInput AND rc.idRevenueCenter = ${filter.idRevenueCenter}) AS orderedQuantity
+    //   FROM [mvp1].[TB_QuotationItemDetail] qid
+    //   INNER JOIN [mvp1].[TB_QuotationItem] qi ON qi.idQuotationItem = qid.idQuotationItem
+    //   INNER JOIN [mvp1].[TB_Input] ti ON ti.idInput = qid.idInput
+    //   WHERE qi.idQuotationItem = 44
+      
+    //   UNION ALL
+      
+    //   -- Materials that are ORDERED but NOT QUOTED
+    //   SELECT
+    //     'ORDERED_NOT_QUOTED' AS source,
+    //     ti.idInput,
+    //     ti.name AS materialName,
+    //     NULL AS quotedQuantity,
+    //     SUM(toid.quantity) AS orderedQuantity
+    //   FROM mvp1.TB_OrderItemDetail toid
+    //   INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
+    //   INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
+    //   INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idCostCenterProject = toi.idCostCenterProject
+    //   WHERE trc.idRevenueCenter = ${filter.idRevenueCenter} 
+    //     AND ti.idInputType = 1
+    //     AND ti.idInput NOT IN (SELECT idInput FROM [mvp1].[TB_QuotationItemDetail] WHERE idQuotationItem = 44)
+    //   GROUP BY ti.idInput, ti.name
+    //   ORDER BY source DESC, materialName;
+    // `;
+    
+    // try {
+    //   const debugResults = await sequelize.query(debugQuery, { type: QueryTypes.SELECT });
+    //   console.log('Revenue Center Info:', JSON.stringify(debugResults, null, 2));
+      
+    //   const projectItems = await sequelize.query(projectItemsQuery, { type: QueryTypes.SELECT });
+    //   console.log('\nProject Items (All):', JSON.stringify(projectItems, null, 2));
+      
+    //   const materialPatterns = await sequelize.query(materialPatternsQuery, { type: QueryTypes.SELECT });
+    //   console.log('\nMaterials in QuotationItemDetail:', JSON.stringify(materialPatterns, null, 2));
+    // } catch (err) {
+    //   console.error('Debug query error:', err);
+    // }
+    
+    // console.log(`=========================================================================\n`);
+
     const materialSummaryQuery = `
-    SELECT
+    SELECT DISTINCT
       ti.idInput,
       ti.name AS material,
-      --MAX(ti.performance) AS performance,
-	  MAX(CAST(ti.performance AS DECIMAL(10,2))) AS performance,
-      SUM(toid.quantity) AS shipped,
-      --SUM(toid.quantity) * MAX(ti.performance) AS quantityM2,
-	  SUM(toid.quantity) * MAX(CAST(ti.performance AS DECIMAL(10,2))) AS quantityM2,
-    SUM(toid.quantity) * MAX(ti.cost) AS totalCostSend,
+      MAX(CAST(ti.performance AS DECIMAL(10,2))) AS performance,
+      
+      -- Cantidades ordenadas y pendientes
+      SUM(toid.quantity) AS totalOrdenado,
+      COALESCE((
+          SELECT SUM(im.quantityPending)
+          FROM [mvp1].[TB_ProjectInventoryAssignment] im
+          WHERE im.idInput = ti.idInput 
+            AND im.idCostCenterProject = toi.idCostCenterProject
+      ), 0) AS totalPendiente,
+      
+      -- Cantidad enviada (ordenada - pendiente)
+      SUM(toid.quantity) - COALESCE((
+          SELECT SUM(im.quantityPending)
+          FROM [mvp1].[TB_ProjectInventoryAssignment] im
+          WHERE im.idInput = ti.idInput 
+            AND im.idCostCenterProject = toi.idCostCenterProject
+      ), 0) AS shipped,
+      
+      -- Cantidad en M2 (enviada * rendimiento)
+      (SUM(toid.quantity) - COALESCE((
+          SELECT SUM(im.quantityPending)
+          FROM [mvp1].[TB_ProjectInventoryAssignment] im
+          WHERE im.idInput = ti.idInput 
+            AND im.idCostCenterProject = toi.idCostCenterProject
+      ), 0)) * MAX(CAST(ti.performance AS DECIMAL(10,2))) AS quantityM2,
+      
+      -- Costo total enviado
+      (SUM(toid.quantity) - COALESCE((
+          SELECT SUM(im.quantityPending)
+          FROM [mvp1].[TB_ProjectInventoryAssignment] im
+          WHERE im.idInput = ti.idInput 
+            AND im.idCostCenterProject = toi.idCostCenterProject
+      ), 0)) * MAX(ti.cost) AS totalCostSend,
+      
+      -- Valores de proyecto
       0 AS budgeted,
-      MAX(trc.idCostCenterProject) AS idCostCenterProject,
-      MAX(trc.idQuotation) AS idQuotation,
+      toi.idCostCenterProject AS idCostCenterProject,
+      trc.idQuotation AS idQuotation,
       0 AS contracted,
-      0 AS invoiced,
+      
+      --SUM(ipi.invoicedQuantity) AS invoiced,
+
+      COALESCE((
+        SELECT SUM(ipi.invoicedQuantity * ISNULL((qid.quantity / NULLIF(qi.quantity, 0)), 1))
+        FROM [mvp1].[TB_QuotationItemDetail] qid
+        INNER JOIN [mvp1].[TB_QuotationItem] qi 
+            ON qi.idQuotationItem = qid.idQuotationItem
+        INNER JOIN [mvp1].[TB_ProjectItem] pi 
+            ON pi.idCostCenterProject = toi.idCostCenterProject
+        INNER JOIN [mvp1].[TB_InvoiceProjectItem] ipi 
+            ON ipi.idProjectItem = pi.idProjectItem
+        INNER JOIN [mvp1].[TB_Invoice] inv 
+            ON inv.idInvoice = ipi.idInvoice
+        WHERE qid.idInput = ti.idInput
+          AND qi.idQuotation = trc.idQuotation
+          AND inv.invoice IS NOT NULL
+        ), 0) AS invoiced,
+     
       0 AS shippedAndInvoiced,
       0 AS diff
+      
     FROM mvp1.TB_OrderItemDetail toid
     INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
     INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
     INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idCostCenterProject = toi.idCostCenterProject
-    WHERE trc.idRevenueCenter = :idRevenueCenter AND ti.idInputType = 1
-    GROUP BY ti.idInput, ti.name
-    ORDER BY totalCostSend DESC
-    OFFSET :offset ROWS
-    FETCH NEXT :limit ROWS ONLY;
+    /*
+    INNER JOIN [mvp1].[TB_ProjectItem] pi ON pi.idCostCenterProject = trc.idCostCenterProject
+    LEFT JOIN [mvp1].[TB_InvoiceProjectItem] ipi ON ipi.idProjectItem = pi.idProjectItem
+    LEFT JOIN [mvp1].[TB_Invoice] inv ON inv.idInvoice = ipi.idInvoice AND inv.invoice IS NOT NULL
+       */ 
+    WHERE trc.idRevenueCenter = :idRevenueCenter
+      AND ti.idInputType = 1
+      
+    GROUP BY ti.idInput, ti.name, toi.idCostCenterProject, trc.idQuotation
+    --, trc.idRevenueCenter
+    ORDER BY totalCostSend DESC;
   `;
 
     const totalQuery = `
@@ -657,24 +799,74 @@ export class RevenueCenterRepository {
       ti.name AS material,
       --MAX(ti.performance) AS performance,
       MAX(CAST(ti.performance AS DECIMAL(10,2))) AS performance,
-      SUM(toid.quantity) AS shipped,
+      --SUM(toid.quantity) AS shipped,
       --SUM(toid.quantity) * MAX(ti.performance) AS quantityM2,
-      SUM(toid.quantity) * MAX(CAST(ti.performance AS DECIMAL(10,2))) AS quantityM2,
-      SUM(toid.quantity) * MAX(ti.cost) AS totalCostSend,
+      --SUM(toid.quantity) * MAX(CAST(ti.performance AS DECIMAL(10,2))) AS quantityM2,
+      --SUM(toid.quantity) * MAX(ti.cost) AS totalCostSend,
+      SUM(toid.quantity) AS totalOrdenado,
+    COALESCE((
+        SELECT SUM(im.quantityPending)
+        FROM [mvp1].[TB_ProjectInventoryAssignment] im
+        WHERE im.idInput = ti.idInput 
+          AND im.idCostCenterProject = toi.idCostCenterProject
+    ), 0) AS totalPendiente,
+    SUM(toid.quantity) - COALESCE((
+        SELECT SUM(im.quantityPending)
+        FROM [mvp1].[TB_ProjectInventoryAssignment] im
+        WHERE im.idInput = ti.idInput 
+          AND im.idCostCenterProject = toi.idCostCenterProject
+    ), 0) AS shipped,
+    (SUM(toid.quantity) - COALESCE((
+        SELECT SUM(im.quantityPending)
+        FROM [mvp1].[TB_ProjectInventoryAssignment] im
+        WHERE im.idInput = ti.idInput 
+          AND im.idCostCenterProject = toi.idCostCenterProject
+    ), 0)) * MAX(CAST(ti.performance AS DECIMAL(10,2))) AS quantityM2,
+    (SUM(toid.quantity) - COALESCE((
+        SELECT SUM(im.quantityPending)
+        FROM [mvp1].[TB_ProjectInventoryAssignment] im
+        WHERE im.idInput = ti.idInput 
+          AND im.idCostCenterProject = toi.idCostCenterProject
+    ), 0)) * MAX(ti.cost) AS totalCostSend,
       0 AS budgeted,
-      MAX(trc.idCostCenterProject) AS idCostCenterProject,
-      MAX(trc.idQuotation) AS idQuotation,
+      trc.idCostCenterProject AS idCostCenterProject,
+      trc.idQuotation AS idQuotation,
       0 AS contracted,
-      0 AS invoiced,
+      
+      --SUM(ipi.invoicedQuantity) AS invoiced,
+
+      COALESCE((
+        SELECT SUM(ipi.invoicedQuantity * ISNULL((qid.quantity / NULLIF(qi.quantity, 0)), 1))
+        FROM [mvp1].[TB_QuotationItemDetail] qid
+        INNER JOIN [mvp1].[TB_QuotationItem] qi 
+            ON qi.idQuotationItem = qid.idQuotationItem
+        INNER JOIN [mvp1].[TB_ProjectItem] pi 
+            ON pi.idCostCenterProject = toi.idCostCenterProject
+        INNER JOIN [mvp1].[TB_InvoiceProjectItem] ipi 
+            ON ipi.idProjectItem = pi.idProjectItem
+        INNER JOIN [mvp1].[TB_Invoice] inv 
+            ON inv.idInvoice = ipi.idInvoice
+        WHERE qid.idInput = ti.idInput
+          AND qi.idQuotation = trc.idQuotation
+          AND inv.invoice IS NOT NULL
+    ), 0) AS invoiced,
+      
+
       0 AS shippedAndInvoiced,
       0 AS diff
     FROM mvp1.TB_OrderItemDetail toid
     INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
     INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
     INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idCostCenterProject = toi.idCostCenterProject
+    /*
+    INNER JOIN [mvp1].[TB_ProjectItem] pi ON pi.idCostCenterProject = trc.idCostCenterProject
+    LEFT JOIN [mvp1].[TB_InvoiceProjectItem] ipi ON ipi.idProjectItem = pi.idProjectItem
+    LEFT JOIN [mvp1].[TB_Invoice] inv ON inv.idInvoice = ipi.idInvoice AND inv.invoice IS NOT NULL
+    */
     WHERE trc.idRevenueCenter = :idRevenueCenter AND ti.idInputType = 1
-    GROUP BY ti.idInput, ti.name
-    ORDER BY totalCostSend DESC
+    GROUP BY ti.idInput, ti.name, toi.idCostCenterProject, trc.idCostCenterProject, trc.idQuotation
+    --, trc.idRevenueCenter
+    ORDER BY totalCostSend DESC;
   `;
 
     const countQuery = `
@@ -690,8 +882,8 @@ export class RevenueCenterRepository {
       sequelize.query(materialSummaryQuery, {
         replacements: {
           idRevenueCenter: filter.idRevenueCenter,
-          limit,
-          offset,
+          // limit,
+          // offset,
         },
         type: QueryTypes.SELECT
       }),
@@ -720,26 +912,45 @@ export class RevenueCenterRepository {
   };
 
   findDistinctInputsByRevenueCenter = async (
-    filter: { itemFilter: string }
+    filter: { itemFilter: string; idRevenueCenter: number }
   ) => {
     const sequelize = RevenueCenter.sequelize!;
+    // Muestra materiales que YA HAN SIDO ORDENADOS (están en órdenes de compra)
+    // const query = `
+    //   SELECT DISTINCT 
+    //     tbi.idInput, 
+    //     tbi.name
+    //   FROM [mvp1].[TB_OrderItemDetail] AS toid
+    //   INNER JOIN [mvp1].[TB_OrderItem] AS toi ON toi.idOrderItem = toid.idOrderItem
+    //   INNER JOIN [mvp1].[TB_Input] AS tbi ON tbi.idInput = toid.idInput
+    //   INNER JOIN [mvp1].[TB_RevenueCenter] AS tbrnc ON tbrnc.idCostCenterProject = toi.idCostCenterProject
+    //   INNER JOIN [mvp1].[TB_ProjectItem] AS tbpi ON tbpi.idCostCenterProject = tbrnc.idCostCenterProject
+    //   WHERE tbpi.item COLLATE Latin1_General_CI_AI LIKE :itemFilter
+    //     AND tbrnc.idRevenueCenter = :idRevenueCenter
+    //     AND tbi.idInputType = 1
+    //   ORDER BY tbi.name;
+    // `;
 
+    // Muestra materiales que están en la COTIZACIÓN (aunque no se hayan ordenado aún)
     const query = `
       SELECT DISTINCT 
         tbi.idInput, 
         tbi.name
-      FROM [mvp1].[TB_ProjectItem] AS tbpi
-      INNER JOIN [mvp1].[TB_RevenueCenter] AS tbrnc ON tbrnc.idCostCenterProject = tbpi.idCostCenterProject
-      INNER JOIN [mvp1].[TB_Quotation] AS tbq ON tbq.idQuotation = tbrnc.idQuotation
-      INNER JOIN [mvp1].[TB_QuotationItem] AS tbqi ON tbqi.idQuotation = tbq.idQuotation
-      INNER JOIN [mvp1].[TB_QuotationItemDetail] AS tbqid ON tbqid.idQuotationItem = tbqi.idQuotationItem
-      INNER JOIN [mvp1].[TB_Input] AS tbi ON tbi.idInput = tbqid.idInput
-      WHERE tbpi.item COLLATE Latin1_General_CI_AI LIKE :itemFilter
-      ORDER BY tbi.name;
+        FROM [mvp1].[TB_ProjectItem] AS tbpi
+        INNER JOIN [mvp1].[TB_RevenueCenter] AS tbrnc ON tbrnc.idCostCenterProject = tbpi.idCostCenterProject
+        INNER JOIN [mvp1].[TB_Quotation] AS tbq ON tbq.idQuotation = tbrnc.idQuotation
+        INNER JOIN [mvp1].[TB_QuotationItem] AS tbqi ON tbqi.idQuotation = tbq.idQuotation
+        INNER JOIN [mvp1].[TB_QuotationItemDetail] AS tbqid ON tbqid.idQuotationItem = tbqi.idQuotationItem
+        INNER JOIN [mvp1].[TB_Input] AS tbi ON tbi.idInput = tbqid.idInput
+        WHERE tbpi.item COLLATE Latin1_General_CI_AI LIKE :itemFilter
+        AND tbrnc.idRevenueCenter = :idRevenueCenter
+        AND tbi.idInputType = 1
+        ORDER BY tbi.name;    
     `;
 
     const replacements: Record<string, any> = {
       itemFilter: `%${filter.itemFilter}%`,
+      idRevenueCenter: filter.idRevenueCenter,
     };
 
     const results = await sequelize.query(query, {
@@ -749,4 +960,86 @@ export class RevenueCenterRepository {
 
     return results;
   };
+
+  // debugInvoicedData = async (filter: { idRevenueCenter: number }) => {
+  //   const sequelize = RevenueCenter.sequelize!;
+
+  //   // Query 1: Check if materials exist in QuotationItemDetail
+  //   const query1 = `
+  //     SELECT 
+  //       'Query 1: Materials in QuotationItemDetail' AS queryType,
+  //       ti.idInput,
+  //       ti.name,
+  //       qid.idQuotationItem,
+  //       qi.idQuotation,
+  //       qid.quantity AS qidQuantity,
+  //       qi.quantity AS qiQuantity
+  //     FROM [mvp1].[TB_Input] ti
+  //     INNER JOIN [mvp1].[TB_QuotationItemDetail] qid ON qid.idInput = ti.idInput
+  //     INNER JOIN [mvp1].[TB_QuotationItem] qi ON qi.idQuotationItem = qid.idQuotationItem
+  //     WHERE ti.idInput IN (220, 221, 27, 20, 219, 70)
+  //     ORDER BY ti.idInput;
+  //   `;
+
+  //   // Query 2: Check quotation for this revenue center
+  //   const query2 = `
+  //     SELECT 
+  //       'Query 2: RevenueCenter Quotation' AS queryType,
+  //       trc.idRevenueCenter,
+  //       trc.idQuotation,
+  //       trc.idCostCenterProject
+  //     FROM [mvp1].[TB_RevenueCenter] trc
+  //     WHERE trc.idRevenueCenter = :idRevenueCenter;
+  //   `;
+
+  //   // Query 3: Check project items and invoices
+  //   const query3 = `
+  //     SELECT 
+  //       'Query 3: ProjectItems with Invoices' AS queryType,
+  //       pi.idProjectItem,
+  //       pi.item,
+  //       ipi.invoicedQuantity,
+  //       inv.invoice
+  //     FROM [mvp1].[TB_RevenueCenter] trc
+  //     INNER JOIN [mvp1].[TB_ProjectItem] pi ON pi.idCostCenterProject = trc.idCostCenterProject
+  //     INNER JOIN [mvp1].[TB_InvoiceProjectItem] ipi ON ipi.idProjectItem = pi.idProjectItem
+  //     INNER JOIN [mvp1].[TB_Invoice] inv ON inv.idInvoice = ipi.idInvoice
+  //     WHERE trc.idRevenueCenter = :idRevenueCenter 
+  //       AND inv.invoice IS NOT NULL;
+  //   `;
+
+  //   // Query 4: Check LIKE matching
+  //   const query4 = `
+  //     SELECT 
+  //       'Query 4: LIKE Match Test' AS queryType,
+  //       ti.idInput,
+  //       ti.name AS materialName,
+  //       qi.idQuotationItem,
+  //       qi.technicalSpecification,
+  //       CASE 
+  //         WHEN UPPER(qi.technicalSpecification) LIKE '%' + UPPER(REPLACE(TRIM(ti.name), ' ', '%')) + '%' 
+  //         THEN 'MATCH' 
+  //         ELSE 'NO MATCH' 
+  //       END AS likeResult
+  //     FROM [mvp1].[TB_Input] ti
+  //     INNER JOIN [mvp1].[TB_QuotationItemDetail] qid ON qid.idInput = ti.idInput
+  //     INNER JOIN [mvp1].[TB_QuotationItem] qi ON qi.idQuotationItem = qid.idQuotationItem
+  //     WHERE ti.idInput IN (220, 221, 27, 20, 219, 70)
+  //     ORDER BY ti.idInput;
+  //   `;
+
+  //   const [results1, results2, results3, results4] = await Promise.all([
+  //     sequelize.query(query1, { type: QueryTypes.SELECT }),
+  //     sequelize.query(query2, { replacements: { idRevenueCenter: filter.idRevenueCenter }, type: QueryTypes.SELECT }),
+  //     sequelize.query(query3, { replacements: { idRevenueCenter: filter.idRevenueCenter }, type: QueryTypes.SELECT }),
+  //     sequelize.query(query4, { type: QueryTypes.SELECT })
+  //   ]);
+
+  //   return {
+  //     materialsInQuotationItemDetail: results1,
+  //     revenueCenterQuotation: results2,
+  //     projectItemsWithInvoices: results3,
+  //     likeMatchTest: results4
+  //   };
+  // };
 }

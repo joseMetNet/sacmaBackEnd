@@ -1397,7 +1397,9 @@ export class RevenueCenterService {
    */
   findAllMaterialSummaryDetail = async (request: schemas.FindAllMaterialSummaryDetailSchema): Promise<ResponseEntity> => {
     try {
-      const { page, pageSize, limit, offset } = findPagination(request);
+      // const { page, pageSize, limit, offset } = findPagination(request);
+
+      console.log("RESPUESTA DE idRevenueCenter", request);
 
       // Step 1: Find the revenue center to get the idQuotation
       const revenueCenter = await this.revenueCenterRepository.findById(request.idRevenueCenter);
@@ -1406,7 +1408,8 @@ export class RevenueCenterService {
       }
 
       const filter = { idRevenueCenter: request.idRevenueCenter };
-      const materialSummaryData = await this.revenueCenterRepository.findAllMaterialSummaryDetail(limit, offset, filter);
+      // const materialSummaryData = await this.revenueCenterRepository.findAllMaterialSummaryDetail(limit, offset, filter);
+      const materialSummaryData = await this.revenueCenterRepository.findAllMaterialSummaryDetail( filter);
 
       // Step 2: Get quotation item details if idQuotation exists
       let quotationItemDetails: { idInput: number; budgeted: number; contracted: number }[] = [];
@@ -1438,8 +1441,8 @@ export class RevenueCenterService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         data: materialSummaryData.rows,
         totalItems: materialSummaryData.count,
-        currentPage: page,
-        totalPage: Math.ceil(materialSummaryData.count / pageSize),
+        // currentPage: page,
+        // totalPage: Math.ceil(materialSummaryData.count / pageSize),
         total: materialSummaryData.totalRows.reduce((acc: number, curr: any) => acc + (parseFloat(curr.shipped) || 0), 0),
       });
     } catch (error) {
@@ -1451,7 +1454,8 @@ export class RevenueCenterService {
   findDistinctInputsByRevenueCenter = async (request: schemas.FindDistinctInputsByRevenueCenterSchema): Promise<ResponseEntity> => {
     try {
       const filter = {
-        itemFilter: request.itemFilter
+        itemFilter: request.itemFilter,
+        idRevenueCenter: request.idRevenueCenter
       };
 
       const inputs = await this.revenueCenterRepository.findDistinctInputsByRevenueCenter(filter);
@@ -1464,6 +1468,19 @@ export class RevenueCenterService {
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to find distinct inputs by revenue center" });
     }
   };
+
+  // debugInvoicedData = async (request: { idRevenueCenter: number }): Promise<ResponseEntity> => {
+  //   try {
+  //     const results = await this.revenueCenterRepository.debugInvoicedData(request);
+
+  //     return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+  //       data: results,
+  //     });
+  //   } catch (error) {
+  //     console.error("An error occurred while debugging invoiced data", error);
+  //     return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while debugging invoiced data" });
+  //   }
+  // };
 
   private buildFilter = (
     request: schemas.FindAllSchema

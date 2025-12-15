@@ -25,6 +25,7 @@ export function revenueCenterRoutes(app: Application): void {
 
   routes.get("/v1/revenue-center/material", [verifyToken], revenueCenterController.findAllMaterial);
   routes.get("/v1/revenue-center/material/summary", [verifyToken], revenueCenterController.findAllMaterialSummaryDetail);
+  // routes.get("/v1/revenue-center/debug/invoiced", [verifyToken], revenueCenterController.debugInvoicedData);
   routes.get("/v1/revenue-center/quotation/summary", [verifyToken], revenueCenterController.findAllContractedSummary);
   routes.get("/v1/revenue-center/invoice/summary", [verifyToken], revenueCenterController.findAllInvoiceSummary);
   routes.get("/v1/revenue-center/inputs", [verifyToken], revenueCenterController.findAllInputs);

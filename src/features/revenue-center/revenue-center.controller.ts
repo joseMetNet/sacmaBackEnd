@@ -276,4 +276,21 @@ export class RevenueCenterController {
       data: response.data
     });
   };
+
+  // debugInvoicedData = async (req: Request, res: Response): Promise<void> => {
+  //   const idRevenueCenter = parseInt(req.query.idRevenueCenter as string);
+  //   if (!idRevenueCenter) {
+  //     res.status(StatusCode.BadRequest).json({
+  //       status: StatusValue.Failed,
+  //       data: { error: "idRevenueCenter is required" }
+  //     });
+  //     return;
+  //   }
+
+  //   const response = await this.revenueCenterService.debugInvoicedData({ idRevenueCenter });
+  //   res.status(response.code).json({
+  //     status: response.status,
+  //     data: response.data
+  //   });
+  // };
 }

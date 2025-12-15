@@ -105,14 +105,15 @@ export const findAllContractedSummarySchema = z.object({
 
 export const findAllMaterialSummaryDetailSchema = z.object({
   idRevenueCenter: z.coerce.number(),
-  page: z.coerce.number().optional(),
-  pageSize: z.coerce.number().optional(),
-  name: z.string().optional(),
+  // page: z.coerce.number().optional(),
+  // pageSize: z.coerce.number().optional(),
+  // name: z.string().optional(),
   idCostCenterProject: z.coerce.number().optional(),
 });
 
 export const findDistinctInputsByRevenueCenterSchema = z.object({
   itemFilter: z.string(),
+  idRevenueCenter: z.coerce.number(),
 });
 
 export type FindAllSchema = z.infer<typeof findAllSchema>;

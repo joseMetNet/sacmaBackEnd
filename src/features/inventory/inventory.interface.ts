@@ -90,6 +90,7 @@ export interface FindProjectAssignmentsWithReturnsDTO {
 export interface ProjectAssignmentWithReturnResult {
   idProjectAssignment: number;
   idCostCenterProject: number;
+  idInput: number;
   Material: string;
   Almacen: string;
   CantidadAsignada: number;
@@ -101,6 +102,8 @@ export interface ProjectAssignmentWithReturnResult {
   FechaAsignacion: Date;
   Estado: string;
   AsignadoPor: string;
+  FechaDevolucion: Date | null;
+  NumDevoluciones: number | null;
 }
 
 // DTOs para documentos de inventario
