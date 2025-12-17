@@ -277,6 +277,23 @@ export class RevenueCenterController {
     });
   };
 
+  findInvoicedQuantityByProjectItem = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.findInvoicedQuantityByProjectItemSchema.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.revenueCenterService.findInvoicedQuantityByProjectItem(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
   // debugInvoicedData = async (req: Request, res: Response): Promise<void> => {
   //   const idRevenueCenter = parseInt(req.query.idRevenueCenter as string);
   //   if (!idRevenueCenter) {

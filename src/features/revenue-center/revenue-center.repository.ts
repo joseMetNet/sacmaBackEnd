@@ -727,7 +727,7 @@ export class RevenueCenterRepository {
       
       -- Cantidad enviada (ordenada - pendiente)
       SUM(toid.quantity) - COALESCE((
-          SELECT SUM(im.quantityPending)
+          SELECT SUM(im.quantityReturned)
           FROM [mvp1].[TB_ProjectInventoryAssignment] im
           WHERE im.idInput = ti.idInput 
             AND im.idCostCenterProject = toi.idCostCenterProject
@@ -735,7 +735,7 @@ export class RevenueCenterRepository {
       
       -- Cantidad en M2 (enviada * rendimiento)
       (SUM(toid.quantity) - COALESCE((
-          SELECT SUM(im.quantityPending)
+          SELECT SUM(im.quantityReturned)
           FROM [mvp1].[TB_ProjectInventoryAssignment] im
           WHERE im.idInput = ti.idInput 
             AND im.idCostCenterProject = toi.idCostCenterProject
@@ -743,7 +743,7 @@ export class RevenueCenterRepository {
       
       -- Costo total enviado
       (SUM(toid.quantity) - COALESCE((
-          SELECT SUM(im.quantityPending)
+          SELECT SUM(im.quantityReturned)
           FROM [mvp1].[TB_ProjectInventoryAssignment] im
           WHERE im.idInput = ti.idInput 
             AND im.idCostCenterProject = toi.idCostCenterProject
@@ -754,9 +754,9 @@ export class RevenueCenterRepository {
       toi.idCostCenterProject AS idCostCenterProject,
       trc.idQuotation AS idQuotation,
       0 AS contracted,
-      
+      0 AS invoiced,
       --SUM(ipi.invoicedQuantity) AS invoiced,
-
+      /*
       COALESCE((
         SELECT SUM(ipi.invoicedQuantity * ISNULL((qid.quantity / NULLIF(qi.quantity, 0)), 1))
         FROM [mvp1].[TB_QuotationItemDetail] qid
@@ -771,7 +771,7 @@ export class RevenueCenterRepository {
         WHERE qid.idInput = ti.idInput
           AND qi.idQuotation = trc.idQuotation
           AND inv.invoice IS NOT NULL
-        ), 0) AS invoiced,
+        ), 0) AS invoiced, */
      
       0 AS shippedAndInvoiced,
       0 AS diff
@@ -811,19 +811,19 @@ export class RevenueCenterRepository {
           AND im.idCostCenterProject = toi.idCostCenterProject
     ), 0) AS totalPendiente,
     SUM(toid.quantity) - COALESCE((
-        SELECT SUM(im.quantityPending)
+        SELECT SUM(im.quantityReturned)
         FROM [mvp1].[TB_ProjectInventoryAssignment] im
         WHERE im.idInput = ti.idInput 
           AND im.idCostCenterProject = toi.idCostCenterProject
     ), 0) AS shipped,
     (SUM(toid.quantity) - COALESCE((
-        SELECT SUM(im.quantityPending)
+        SELECT SUM(im.quantityReturned)
         FROM [mvp1].[TB_ProjectInventoryAssignment] im
         WHERE im.idInput = ti.idInput 
           AND im.idCostCenterProject = toi.idCostCenterProject
     ), 0)) * MAX(CAST(ti.performance AS DECIMAL(10,2))) AS quantityM2,
     (SUM(toid.quantity) - COALESCE((
-        SELECT SUM(im.quantityPending)
+        SELECT SUM(im.quantityReturned)
         FROM [mvp1].[TB_ProjectInventoryAssignment] im
         WHERE im.idInput = ti.idInput 
           AND im.idCostCenterProject = toi.idCostCenterProject
@@ -832,9 +832,9 @@ export class RevenueCenterRepository {
       trc.idCostCenterProject AS idCostCenterProject,
       trc.idQuotation AS idQuotation,
       0 AS contracted,
-      
+      0 AS invoiced,
       --SUM(ipi.invoicedQuantity) AS invoiced,
-
+      /*
       COALESCE((
         SELECT SUM(ipi.invoicedQuantity * ISNULL((qid.quantity / NULLIF(qi.quantity, 0)), 1))
         FROM [mvp1].[TB_QuotationItemDetail] qid
@@ -849,7 +849,7 @@ export class RevenueCenterRepository {
         WHERE qid.idInput = ti.idInput
           AND qi.idQuotation = trc.idQuotation
           AND inv.invoice IS NOT NULL
-    ), 0) AS invoiced,
+    ), 0) AS invoiced,*/
       
 
       0 AS shippedAndInvoiced,
@@ -934,6 +934,7 @@ export class RevenueCenterRepository {
     // Muestra materiales que están en la COTIZACIÓN (aunque no se hayan ordenado aún)
     const query = `
       SELECT DISTINCT 
+        tbpi.idProjectItem,
         tbi.idInput, 
         tbi.name
         FROM [mvp1].[TB_ProjectItem] AS tbpi
@@ -1042,4 +1043,71 @@ export class RevenueCenterRepository {
   //     likeMatchTest: results4
   //   };
   // };
+
+  findInvoicedQuantityByProjectItem = async (
+    filter: { idRevenueCenter: number; idProjectItem?: number; idInput?: number }
+  ) => {
+    const sequelize = RevenueCenter.sequelize!;
+
+    const query = `
+      WITH RevenueCenterData AS (
+        SELECT 
+          idRevenueCenter,
+          idCostCenterProject,
+          idQuotation
+        FROM [mvp1].[TB_RevenueCenter]
+        WHERE idRevenueCenter = :idRevenueCenter
+      ),
+
+      InvoiceItemDetails AS (
+        SELECT 
+          pi.idProjectItem,
+          pi.item AS projectItem,
+          pi.contract,
+          qid.idInput,
+          ti.name AS inputName,
+          CAST(ipi.invoicedQuantity AS DECIMAL(18,2)) AS invoicedQuantity,
+          ISNULL((qid.quantity / NULLIF(qi.quantity, 0)), 1) AS materialRatio
+        FROM [mvp1].[TB_ProjectItem] pi
+        INNER JOIN RevenueCenterData rc ON pi.idCostCenterProject = rc.idCostCenterProject
+        LEFT JOIN [mvp1].[TB_QuotationItem] qi ON qi.idQuotation = rc.idQuotation
+        LEFT JOIN [mvp1].[TB_QuotationItemDetail] qid ON qid.idQuotationItem = qi.idQuotationItem
+        LEFT JOIN [mvp1].[TB_Input] ti ON ti.idInput = qid.idInput
+        LEFT JOIN [mvp1].[TB_InvoiceProjectItem] ipi ON ipi.idProjectItem = pi.idProjectItem
+        LEFT JOIN [mvp1].[TB_Invoice] inv ON inv.idInvoice = ipi.idInvoice AND inv.invoice IS NOT NULL
+        WHERE (:idProjectItem IS NULL OR pi.idProjectItem = :idProjectItem)
+          AND (:idInput IS NULL OR qid.idInput = :idInput)
+      )
+
+      SELECT 
+        idProjectItem,
+        projectItem,
+        contract,
+        idInput,
+        inputName,
+        SUM(ISNULL(invoicedQuantity * materialRatio, 0)) AS AcumuladoCant
+      FROM InvoiceItemDetails
+      WHERE idInput IS NOT NULL
+      GROUP BY idProjectItem, projectItem, contract, idInput, inputName
+      ORDER BY idProjectItem, idInput;
+    `;
+
+    type result = {
+      idProjectItem: number;
+      projectItem: string;
+      contract: string;
+      idInput: number;
+      inputName: string;
+      AcumuladoCant: number;
+    };
+
+    return dbConnection.query<result>(query, {
+      replacements: {
+        idRevenueCenter: filter.idRevenueCenter,
+        idProjectItem: filter.idProjectItem || null,
+        idInput: filter.idInput || null,
+      },
+      type: QueryTypes.SELECT,
+    });
+  };
 }

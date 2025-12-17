@@ -1482,6 +1482,23 @@ export class RevenueCenterService {
   //   }
   // };
 
+  findInvoicedQuantityByProjectItem = async (request: schemas.FindInvoicedQuantityByProjectItemSchema): Promise<ResponseEntity> => {
+    try {
+      const result = await this.revenueCenterRepository.findInvoicedQuantityByProjectItem({
+        idRevenueCenter: request.idRevenueCenter,
+        idProjectItem: request.idProjectItem,
+        idInput: request.idInput
+      });
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, result);
+    } catch (error) {
+      console.error("An error occurred while trying to find invoiced quantity by project item", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "An error occurred while trying to find invoiced quantity by project item",
+      });
+    }
+  };
+
   private buildFilter = (
     request: schemas.FindAllSchema
   ): { [key: string]: any } => {

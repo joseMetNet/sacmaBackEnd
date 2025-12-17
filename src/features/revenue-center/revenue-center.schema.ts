@@ -116,6 +116,12 @@ export const findDistinctInputsByRevenueCenterSchema = z.object({
   idRevenueCenter: z.coerce.number(),
 });
 
+export const findInvoicedQuantityByProjectItemSchema = z.object({
+  idRevenueCenter: z.coerce.number(),
+  idProjectItem: z.coerce.number().optional(),
+  idInput: z.coerce.number().optional(),
+});
+
 export type FindAllSchema = z.infer<typeof findAllSchema>;
 export type IdRevenueCenterSchema = z.infer<typeof idRevenueCenterSchema>;
 export type CreateRevenueCenterSchema = z.infer<typeof createRevenueCenterSchema>;
@@ -130,4 +136,4 @@ export type FindAllMaterialSummarySchema = z.infer<typeof findAllMaterialSummary
 export type FindAllContractedSummarySchema = z.infer<typeof findAllContractedSummarySchema>;
 export type FindAllMaterialSummaryDetailSchema = z.infer<typeof findAllMaterialSummaryDetailSchema>;
 export type FindAllInvoiceSummarySchema = z.infer<typeof findAllInvoiceSummarySchema>;
-export type FindDistinctInputsByRevenueCenterSchema = z.infer<typeof findDistinctInputsByRevenueCenterSchema>;
+export type FindDistinctInputsByRevenueCenterSchema = z.infer<typeof findDistinctInputsByRevenueCenterSchema>;export type FindInvoicedQuantityByProjectItemSchema = z.infer<typeof findInvoicedQuantityByProjectItemSchema>;

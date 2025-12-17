@@ -30,6 +30,7 @@ export function revenueCenterRoutes(app: Application): void {
   routes.get("/v1/revenue-center/invoice/summary", [verifyToken], revenueCenterController.findAllInvoiceSummary);
   routes.get("/v1/revenue-center/inputs", [verifyToken], revenueCenterController.findAllInputs);
   routes.get("/v1/revenue-center/distinct-inputs", [verifyToken], revenueCenterController.findDistinctInputsByRevenueCenter);
+  routes.get("/v1/revenue-center/invoiced-quantity", [verifyToken], revenueCenterController.findInvoicedQuantityByProjectItem);
   routes.get("/v1/revenue-center/epp", [verifyToken], revenueCenterController.findAllEpp);
   // Unified expenditures endpoint
   routes.get("/v1/revenue-center/expenditures", [verifyToken], revenueCenterController.findAllExpenditures);
