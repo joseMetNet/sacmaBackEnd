@@ -297,6 +297,10 @@ export class PurchaseRepository {
         {
           model: WareHouse,
           as: "WareHouse",
+          required: false, // LEFT JOIN para incluir registros sin bodega o con bodegas inexistentes
+          where: {
+            isActive: true // Solo incluir bodegas activas
+          }
         },
       ],
       where: filter,

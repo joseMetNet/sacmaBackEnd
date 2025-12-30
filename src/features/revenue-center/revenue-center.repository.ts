@@ -912,7 +912,7 @@ export class RevenueCenterRepository {
   };
 
   findDistinctInputsByRevenueCenter = async (
-    filter: { itemFilter: string; idRevenueCenter: number }
+    filter: { itemFilter: string; idRevenueCenter: number ; idProjectItem: any }
   ) => {
     const sequelize = RevenueCenter.sequelize!;
     // Muestra materiales que YA HAN SIDO ORDENADOS (están en órdenes de compra)
@@ -945,6 +945,7 @@ export class RevenueCenterRepository {
         INNER JOIN [mvp1].[TB_Input] AS tbi ON tbi.idInput = tbqid.idInput
         WHERE tbpi.item COLLATE Latin1_General_CI_AI LIKE :itemFilter
         AND tbrnc.idRevenueCenter = :idRevenueCenter
+        AND tbpi.idProjectItem = :idProjectItem
         AND tbi.idInputType = 1
         ORDER BY tbi.name;    
     `;
@@ -952,6 +953,7 @@ export class RevenueCenterRepository {
     const replacements: Record<string, any> = {
       itemFilter: `%${filter.itemFilter}%`,
       idRevenueCenter: filter.idRevenueCenter,
+      idProjectItem: filter.idProjectItem
     };
 
     const results = await sequelize.query(query, {
@@ -1085,7 +1087,8 @@ export class RevenueCenterRepository {
         contract,
         idInput,
         inputName,
-        SUM(ISNULL(invoicedQuantity * materialRatio, 0)) AS AcumuladoCant
+        SUM(ISNULL(invoicedQuantity, 0)) AS AcumuladoCant
+        --SUM(ISNULL(invoicedQuantity * materialRatio, 0)) AS AcumuladoCant
       FROM InvoiceItemDetails
       WHERE idInput IS NOT NULL
       GROUP BY idProjectItem, projectItem, contract, idInput, inputName

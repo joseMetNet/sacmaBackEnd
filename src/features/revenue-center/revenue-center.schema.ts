@@ -114,6 +114,7 @@ export const findAllMaterialSummaryDetailSchema = z.object({
 export const findDistinctInputsByRevenueCenterSchema = z.object({
   itemFilter: z.string(),
   idRevenueCenter: z.coerce.number(),
+  idProjectItem: z.coerce.number().optional(),
 });
 
 export const findInvoicedQuantityByProjectItemSchema = z.object({

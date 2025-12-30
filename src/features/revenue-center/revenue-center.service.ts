@@ -627,6 +627,7 @@ export class RevenueCenterService {
 
       // 3️⃣ Transformar los resultados base
       const rows = data.rows.map((item) => ({
+        idProjectItem: item.idProjectItem,
         contract: item.contract,
         material: item.item,
         quantity: parseFloat(item.quantity),
@@ -1455,7 +1456,8 @@ export class RevenueCenterService {
     try {
       const filter = {
         itemFilter: request.itemFilter,
-        idRevenueCenter: request.idRevenueCenter
+        idRevenueCenter: request.idRevenueCenter,
+        idProjectItem: request.idProjectItem,
       };
 
       const inputs = await this.revenueCenterRepository.findDistinctInputsByRevenueCenter(filter);
