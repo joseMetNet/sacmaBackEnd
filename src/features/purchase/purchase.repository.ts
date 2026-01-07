@@ -265,14 +265,24 @@ export class PurchaseRepository {
     return PurchaseRequestDetailMachineryUsed.create(purchaseRequestDetailMachineryUsed as any);
   };
 
-  createInventoryPurchase = (idWarehouse: number, averageCost?: number | null) => {
-    return InventoryPurchase.create({
-      idWarehouse,
-      averageCost: averageCost !== undefined && averageCost !== null ? averageCost : null,
-    } as any);
+  createInventoryPurchase = async (idWarehouse: number, averageCost?: number | null) => {
+    // Usar raw query para evitar problemas con el formato de fecha en columnas DATETIME
+    const [results] = await dbConnection.query(
+      `INSERT INTO [mvp1].[TB_InventoryPurchase] 
+       ([idWarehouse], [averageCost], [createdAt], [updatedAt]) 
+       VALUES (:idWarehouse, :averageCost, GETDATE(), GETDATE())`,
+      {
+        replacements: {
+          idWarehouse,
+          averageCost: averageCost !== undefined && averageCost !== null ? averageCost : null
+        },
+        type: QueryTypes.INSERT
+      }
+    );
+    return results;
   };
 
-  updateInventoryPurchaseAverageCost = async (idWarehouse: number, averageCost: number) => {
+  updateInventoryPurchaseAverageCost = async (idWarehouse: number, averageCost: number | null) => {
     // Actualizar directamente por idWarehouse usando query raw para evitar problemas con timestamps
     const [results] = await dbConnection.query(
       `UPDATE [mvp1].[TB_InventoryPurchase] 

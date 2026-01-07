@@ -220,21 +220,28 @@ export class PurchaseService {
 
       // Crear registro en TB_InventoryPurchase si hay idWarehouse
       if (request.idWarehouse) {
-        const averageCost = request.price && request.price.trim() !== "" 
-          ? parseFloat(request.price) 
-          : null;
-        await this.purchaseRepository.createInventoryPurchase(
-          request.idWarehouse,
-          averageCost
-        );
+        try {
+          const averageCost = request.price && request.price.trim() !== "" ? parseFloat(request.price) : null;
+          await this.purchaseRepository.createInventoryPurchase(
+            request.idWarehouse,
+            averageCost
+          );
+        } catch (inventoryErr: any) {
+          console.error("Error creating inventory purchase:", inventoryErr);
+          console.error("Parameters:", {
+            idWarehouse: request.idWarehouse,
+            averageCost: request.price
+          });
+          // No lanzar error para permitir que la compra se cree aunque falle el inventario
+        }
       }
 
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
     } catch (err: any) {
-      console.error(err);
+      console.error("Error in createPurchaseRequest:", err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
-        { message: "Error while creating purchase request" }
+        { message: "Error while creating purchase request", error: err.message }
       );
     }
   };
@@ -343,6 +350,25 @@ export class PurchaseService {
   createPurchaseRequestDetail = async (purchaseRequestDetail: dtos.CreatePurchaseRequestDetail): Promise<ResponseEntity> => {
     try {
       const newPurchaseRequestDetail = await this.purchaseRepository.createPurchaseRequestDetail(purchaseRequestDetail);
+
+       // Crear registro en TB_InventoryPurchase si hay idWarehouse
+      // if (purchaseRequestDetail.idWarehouse) {
+      //   try {
+      //     const averageCost = purchaseRequestDetail.price && purchaseRequestDetail.price.trim() !== "" ? parseFloat(purchaseRequestDetail.price) : null;
+      //     await this.purchaseRepository.updateInventoryPurchaseAverageCost(
+      //       purchaseRequestDetail.idWarehouse,
+      //       averageCost
+      //     );
+      //   } catch (inventoryErr: any) {
+      //     console.error("Error creating inventory purchase:", inventoryErr);
+      //     console.error("Parameters:", {
+      //       idWarehouse: request.idWarehouse,
+      //       averageCost: request.price
+      //     });
+      //     // No lanzar error para permitir que la compra se cree aunque falle el inventario
+      //   }
+      // }
+
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, newPurchaseRequestDetail);
     } catch (err: any) {
       console.error(err);

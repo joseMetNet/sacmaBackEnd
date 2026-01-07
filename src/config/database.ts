@@ -14,6 +14,7 @@ class DatabaseConnection {
         host: EnvConfig.DATABASE_SERVER,
         schema: "mvp1",
         port: EnvConfig.DATABASE_PORT,
+        timezone: "-05:00",
         dialectOptions: {
           instanceName: "SQLEXPRESS",
           requestTimeout: 50000,
