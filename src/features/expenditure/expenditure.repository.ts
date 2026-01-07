@@ -16,17 +16,20 @@ export class ExpenditureRepository {
       include: [
         {
           model: ExpenditureType,
-          required: true,
+          required: false,  // Changed from true to false to include all records (LEFT JOIN)
         },
         {
           model: CostCenterProject,
           required: false,
         },
       ],
+      distinct: true,  // Fix count when using LEFT JOIN with includes
       limit,
       offset,
       where: filter,
-      order: [["createdAt", "DESC"]],
+      order: [
+        ["idExpenditure", "DESC"]  // Order by ID to show most recently inserted records first
+      ],
     });
   }
 
@@ -86,7 +89,7 @@ export class ExpenditureRepository {
       include: [
         {
           model: ExpenditureType,
-          required: true,
+          required: false,  // Changed from true to false to include all records (LEFT JOIN)
         },
         {
           model: CostCenterProject,
