@@ -138,3 +138,36 @@ export type FindAllContractedSummarySchema = z.infer<typeof findAllContractedSum
 export type FindAllMaterialSummaryDetailSchema = z.infer<typeof findAllMaterialSummaryDetailSchema>;
 export type FindAllInvoiceSummarySchema = z.infer<typeof findAllInvoiceSummarySchema>;
 export type FindDistinctInputsByRevenueCenterSchema = z.infer<typeof findDistinctInputsByRevenueCenterSchema>;export type FindInvoicedQuantityByProjectItemSchema = z.infer<typeof findInvoicedQuantityByProjectItemSchema>;
+export const findRelationsProjectItemsMaterialInvoiceSchema = z.object({
+  idRevenueCenter: z.coerce.number(),
+  idProjectItem: z.coerce.number(),
+  idCostCenterProject: z.coerce.number(),
+});
+
+export const createRelationsProjectItemsMaterialInvoiceItemSchema = z.object({
+  idCostCenterProject: z.coerce.number().optional().nullable(),
+  idInput: z.coerce.number(),
+  idRevenueCenter: z.coerce.number(),
+  idProjectItem: z.coerce.number(),
+  invoicedQuantity: z.coerce.number().optional().nullable(),
+});
+
+export const createRelationsProjectItemsMaterialInvoiceSchema = z.union([
+  createRelationsProjectItemsMaterialInvoiceItemSchema,
+  z.array(createRelationsProjectItemsMaterialInvoiceItemSchema),
+]);
+
+export const updateRelationsProjectItemsMaterialInvoiceSchema = z.object({
+  idRelationsProjectItemsMaterialInvoice: z.coerce.number(),
+  invoicedQuantity: z.coerce.number().nullable(),
+});
+
+export const deleteRelationsProjectItemsMaterialInvoiceSchema = z.object({
+  idRelationsProjectItemsMaterialInvoice: z.coerce.number(),
+});
+
+export type FindRelationsProjectItemsMaterialInvoiceSchema = z.infer<typeof findRelationsProjectItemsMaterialInvoiceSchema>;
+export type CreateRelationsProjectItemsMaterialInvoiceItemSchema = z.infer<typeof createRelationsProjectItemsMaterialInvoiceItemSchema>;
+export type CreateRelationsProjectItemsMaterialInvoiceSchema = z.infer<typeof createRelationsProjectItemsMaterialInvoiceSchema>;
+export type UpdateRelationsProjectItemsMaterialInvoiceSchema = z.infer<typeof updateRelationsProjectItemsMaterialInvoiceSchema>;
+export type DeleteRelationsProjectItemsMaterialInvoiceSchema = z.infer<typeof deleteRelationsProjectItemsMaterialInvoiceSchema>;

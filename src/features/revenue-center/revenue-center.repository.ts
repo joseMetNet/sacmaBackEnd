@@ -1,9 +1,10 @@
 import { RevenueCenter } from "./revenue-center.model";
-import { IRevenueCenter } from "./revenue-center.interface";
+import { IRevenueCenter, IRelationsProjectItemsMaterialInvoiceCreate, IRelationsProjectItemsMaterialInvoiceUpdate } from "./revenue-center.interface";
 import { CostCenterProject } from "../cost-center";
 import { QueryTypes, WhereOptions } from "sequelize";
 import { dbConnection } from "../../config";
 import { RevenueCenterStatus } from "./revenue-center-status-model";
+import { RelationsProjectItemsMaterialInvoice } from "./relations-project-items-material-invoice.model";
 
 export class RevenueCenterRepository {
   findAll = (
@@ -220,6 +221,12 @@ export class RevenueCenterRepository {
   ) => {
     const sequelize = RevenueCenter.sequelize!;
 
+    // Determinar si se debe usar paginación
+    const usePagination = limit !== -1;
+    const paginationClause = usePagination 
+      ? `OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY` 
+      : '';
+
     const monthlyWorkQuery = `
     WITH MonthlyWork AS (
       SELECT
@@ -274,8 +281,7 @@ export class RevenueCenterRepository {
     FROM MonthlyWork
     GROUP BY WorkYear, Name, Project, Position
     ORDER BY WorkYear DESC, Name
-    OFFSET :offset ROWS
-    FETCH NEXT :limit ROWS ONLY;
+    ${paginationClause};
   `;
 
     const totalQuery = `
@@ -754,7 +760,16 @@ export class RevenueCenterRepository {
       toi.idCostCenterProject AS idCostCenterProject,
       trc.idQuotation AS idQuotation,
       0 AS contracted,
-      0 AS invoiced,
+      COALESCE((
+        SELECT SUM(ripi.invoicedQuantity)
+        FROM [mvp1].[TB_RelationsProjectItemsMaterialInvoice] AS ripi 
+        INNER JOIN [mvp1].[TB_ProjectItem] pi ON pi.idProjectItem = ripi.idProjectItem
+        INNER JOIN [mvp1].[TB_RevenueCenter] ttcr ON ttcr.idCostCenterProject = pi.idCostCenterProject
+        WHERE ripi.idInput = toid.idInput 
+          AND ttcr.idRevenueCenter = :idRevenueCenter
+          AND pi.idCostCenterProject = toi.idCostCenterProject
+    ), 0) AS invoiced,
+      --0 AS invoiced,
       --SUM(ipi.invoicedQuantity) AS invoiced,
       /*
       COALESCE((
@@ -788,9 +803,9 @@ export class RevenueCenterRepository {
     WHERE trc.idRevenueCenter = :idRevenueCenter
       AND ti.idInputType = 1
       
-    GROUP BY ti.idInput, ti.name, toi.idCostCenterProject, trc.idQuotation
+    GROUP BY ti.idInput, ti.name, toi.idCostCenterProject, trc.idCostCenterProject, trc.idQuotation,toid.idInput
     --, trc.idRevenueCenter
-    ORDER BY totalCostSend DESC;
+    ORDER BY invoiced DESC;
   `;
 
     const totalQuery = `
@@ -832,7 +847,16 @@ export class RevenueCenterRepository {
       trc.idCostCenterProject AS idCostCenterProject,
       trc.idQuotation AS idQuotation,
       0 AS contracted,
-      0 AS invoiced,
+    COALESCE((
+        SELECT SUM(ripi.invoicedQuantity)
+        FROM [mvp1].[TB_RelationsProjectItemsMaterialInvoice] AS ripi 
+        INNER JOIN [mvp1].[TB_ProjectItem] pi ON pi.idProjectItem = ripi.idProjectItem
+        INNER JOIN [mvp1].[TB_RevenueCenter] ttcr ON ttcr.idCostCenterProject = pi.idCostCenterProject
+        WHERE ripi.idInput = toid.idInput 
+          AND ttcr.idRevenueCenter = :idRevenueCenter
+          AND pi.idCostCenterProject = toi.idCostCenterProject
+    ), 0) AS invoiced,
+      --0 AS invoiced,
       --SUM(ipi.invoicedQuantity) AS invoiced,
       /*
       COALESCE((
@@ -864,9 +888,9 @@ export class RevenueCenterRepository {
     LEFT JOIN [mvp1].[TB_Invoice] inv ON inv.idInvoice = ipi.idInvoice AND inv.invoice IS NOT NULL
     */
     WHERE trc.idRevenueCenter = :idRevenueCenter AND ti.idInputType = 1
-    GROUP BY ti.idInput, ti.name, toi.idCostCenterProject, trc.idCostCenterProject, trc.idQuotation
+    GROUP BY ti.idInput, ti.name, toi.idCostCenterProject, trc.idCostCenterProject, trc.idQuotation,toid.idInput
     --, trc.idRevenueCenter
-    ORDER BY totalCostSend DESC;
+    ORDER BY invoiced DESC;
   `;
 
     const countQuery = `
@@ -1076,7 +1100,7 @@ export class RevenueCenterRepository {
         LEFT JOIN [mvp1].[TB_QuotationItemDetail] qid ON qid.idQuotationItem = qi.idQuotationItem
         LEFT JOIN [mvp1].[TB_Input] ti ON ti.idInput = qid.idInput
         LEFT JOIN [mvp1].[TB_InvoiceProjectItem] ipi ON ipi.idProjectItem = pi.idProjectItem
-        LEFT JOIN [mvp1].[TB_Invoice] inv ON inv.idInvoice = ipi.idInvoice AND inv.invoice IS NOT NULL
+        INNER JOIN [mvp1].[TB_Invoice] inv ON inv.idInvoice = ipi.idInvoice AND inv.invoice IS NOT NULL
         WHERE (:idProjectItem IS NULL OR pi.idProjectItem = :idProjectItem)
           AND (:idInput IS NULL OR qid.idInput = :idInput)
       )
@@ -1113,4 +1137,58 @@ export class RevenueCenterRepository {
       type: QueryTypes.SELECT,
     });
   };
+
+  async findRelationsProjectItemsMaterialInvoice(
+    filter: {
+      idCostCenterProject?: number | null;
+      idInput: number;
+      idRevenueCenter: number;
+      idProjectItem: number;
+    }
+  ): Promise<RelationsProjectItemsMaterialInvoice | null> {
+    return await RelationsProjectItemsMaterialInvoice.findOne({
+      where: filter as any,
+    });
+  }
+
+  async findAllRelationsProjectItemsMaterialInvoice(filter: {
+    idRevenueCenter: number;
+    idProjectItem: number;
+    idCostCenterProject: number;
+  }): Promise<RelationsProjectItemsMaterialInvoice[]> {
+    return await RelationsProjectItemsMaterialInvoice.findAll({
+      where: filter,
+    });
+  }
+
+  async createRelationsProjectItemsMaterialInvoice( data: IRelationsProjectItemsMaterialInvoiceCreate ): Promise<RelationsProjectItemsMaterialInvoice> {
+    return await RelationsProjectItemsMaterialInvoice.create(data as any);
+  }
+
+  async updateRelationsProjectItemsMaterialInvoice(
+    idRelationsProjectItemsMaterialInvoice: number,
+    data: IRelationsProjectItemsMaterialInvoiceUpdate
+  ): Promise<[number, RelationsProjectItemsMaterialInvoice[]]> {
+    return await RelationsProjectItemsMaterialInvoice.update(
+      { invoicedQuantity: data.invoicedQuantity },
+      {
+        where: { idRelationsProjectItemsMaterialInvoice },
+        returning: true,
+      }
+    );
+  }
+
+  async deleteRelationsProjectItemsMaterialInvoice(
+    idRelationsProjectItemsMaterialInvoice: number
+  ): Promise<number> {
+    return await RelationsProjectItemsMaterialInvoice.destroy({
+      where: { idRelationsProjectItemsMaterialInvoice },
+    });
+  }
+
+  async findRelationsProjectItemsMaterialInvoiceById(
+    idRelationsProjectItemsMaterialInvoice: number
+  ): Promise<RelationsProjectItemsMaterialInvoice | null> {
+    return await RelationsProjectItemsMaterialInvoice.findByPk(idRelationsProjectItemsMaterialInvoice);
+  }
 }

@@ -310,4 +310,72 @@ export class RevenueCenterController {
   //     data: response.data
   //   });
   // };
+
+  findAllRelationsProjectItemsMaterialInvoice = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.findRelationsProjectItemsMaterialInvoiceSchema.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.revenueCenterService.findAllRelationsProjectItemsMaterialInvoice(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
+  updateRelationsProjectItemsMaterialInvoice = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.updateRelationsProjectItemsMaterialInvoiceSchema.safeParse(req.body);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.revenueCenterService.updateRelationsProjectItemsMaterialInvoice(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
+  deleteRelationsProjectItemsMaterialInvoice = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.deleteRelationsProjectItemsMaterialInvoiceSchema.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.revenueCenterService.deleteRelationsProjectItemsMaterialInvoice(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
+  createRelationsProjectItemsMaterialInvoice = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.createRelationsProjectItemsMaterialInvoiceSchema.safeParse(req.body);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.revenueCenterService.createRelationsProjectItemsMaterialInvoice(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
 }

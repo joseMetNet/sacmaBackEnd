@@ -686,11 +686,21 @@ export class RevenueCenterService {
    */
   findAllWorkTracking = async (request: schemas.FindAllWorkTrackingSchema): Promise<ResponseEntity> => {
     try {
-      const { page, pageSize, limit, offset } = findPagination(request);
       const filter = {
         idRevenueCenter: request.idRevenueCenter,
         ...(request.idCostCenterProject && { idCostCenterProject: request.idCostCenterProject }),
       };
+
+      // Si pageSize es -1, retornar todos los registros sin paginación
+      if (request.pageSize === -1) {
+        const workTrackingData = await this.revenueCenterRepository.findAllWorkTracking(-1, 0, filter);
+        return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+          data: workTrackingData.rows,
+          total: workTrackingData.totalRows.reduce((acc: number, curr: any) => acc + (parseFloat(curr.monthlyTotal) || 0), 0),
+        });
+      }
+
+      const { page, pageSize, limit, offset } = findPagination(request);
       const workTrackingData = await this.revenueCenterRepository.findAllWorkTracking(limit, offset, filter);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
         data: workTrackingData.rows,
@@ -1524,4 +1534,160 @@ export class RevenueCenterService {
 
     return filter;
   };
+
+  findAllRelationsProjectItemsMaterialInvoice = async (
+    filter: schemas.FindRelationsProjectItemsMaterialInvoiceSchema
+  ): Promise<ResponseEntity> => {
+    try {
+      const relations = await this.revenueCenterRepository.findAllRelationsProjectItemsMaterialInvoice(filter);
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        data: relations,
+      });
+    } catch (error) {
+      console.error("An error occurred while trying to find relations", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "An error occurred while trying to find relations",
+      });
+    }
+  };
+
+  updateRelationsProjectItemsMaterialInvoice = async (
+    data: schemas.UpdateRelationsProjectItemsMaterialInvoiceSchema
+  ): Promise<ResponseEntity> => {
+    try {
+      // Verificar que el registro existe
+      const existing = await this.revenueCenterRepository.findRelationsProjectItemsMaterialInvoiceById(
+        data.idRelationsProjectItemsMaterialInvoice
+      );
+
+      if (!existing) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
+          message: "Relation not found",
+        });
+      }
+
+      // Actualizar el registro
+      const [affectedRows, updatedRecords] = await this.revenueCenterRepository.updateRelationsProjectItemsMaterialInvoice(
+        data.idRelationsProjectItemsMaterialInvoice,
+        data
+      );
+
+      if (affectedRows === 0) {
+        return BuildResponse.buildErrorResponse(StatusCode.BadRequest, {
+          message: "No records were updated",
+        });
+      }
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        message: "Invoiced quantity updated successfully",
+        data: updatedRecords[0] || existing,
+      });
+    } catch (error) {
+      console.error("An error occurred while trying to update relation", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "An error occurred while trying to update relation",
+      });
+    }
+  };
+
+  deleteRelationsProjectItemsMaterialInvoice = async (
+    data: schemas.DeleteRelationsProjectItemsMaterialInvoiceSchema
+  ): Promise<ResponseEntity> => {
+    try {
+      // Verificar que el registro existe
+      const existing = await this.revenueCenterRepository.findRelationsProjectItemsMaterialInvoiceById(
+        data.idRelationsProjectItemsMaterialInvoice
+      );
+
+      if (!existing) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
+          message: "Relation not found",
+        });
+      }
+
+      // Eliminar el registro
+      const deletedRows = await this.revenueCenterRepository.deleteRelationsProjectItemsMaterialInvoice(
+        data.idRelationsProjectItemsMaterialInvoice
+      );
+
+      if (deletedRows === 0) {
+        return BuildResponse.buildErrorResponse(StatusCode.BadRequest, {
+          message: "No records were deleted",
+        });
+      }
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        message: "Relation deleted successfully",
+      });
+    } catch (error) {
+      console.error("An error occurred while trying to delete relation", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "An error occurred while trying to delete relation",
+      });
+    }
+  };
+
+  createRelationsProjectItemsMaterialInvoice = async (
+    data: schemas.CreateRelationsProjectItemsMaterialInvoiceSchema
+  ): Promise<ResponseEntity> => {
+    try {
+      // Convertir a array si es un objeto individual
+      const items = Array.isArray(data) ? data : [data];
+      
+      const results = {
+        created: [] as any[],
+        duplicates: [] as any[],
+      };
+
+      // Procesar cada item
+      for (const item of items) {
+        // Validar si ya existe
+        const existing = await this.revenueCenterRepository.findRelationsProjectItemsMaterialInvoice({
+          idCostCenterProject: item.idCostCenterProject ?? null,
+          idInput: item.idInput,
+          idRevenueCenter: item.idRevenueCenter,
+          idProjectItem: item.idProjectItem,
+        });
+
+        if (existing) {
+          // Ya existe, agregarlo a duplicados
+          results.duplicates.push({
+            ...item,
+            message: "This relation already exists",
+          });
+        } else {
+          // No existe, crear nuevo
+          const relation = await this.revenueCenterRepository.createRelationsProjectItemsMaterialInvoice(item);
+          results.created.push(relation);
+        }
+      }
+
+      // Determinar el mensaje de respuesta
+      if (results.created.length === 0 && results.duplicates.length > 0) {
+        // Todos eran duplicados
+        return BuildResponse.buildErrorResponse(StatusCode.BadRequest, {
+          message: "All items already exist",
+          duplicates: results.duplicates,
+        });
+      }
+
+      // Al menos uno fue creado
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, {
+        message: `${results.created.length} item(s) created successfully`,
+        created: results.created,
+        ...(results.duplicates.length > 0 && {
+          duplicates: results.duplicates,
+          duplicatesCount: results.duplicates.length,
+        }),
+      });
+    } catch (error) {
+      console.error("An error occurred while trying to create relations", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "An error occurred while trying to create relations",
+      });
+    }
+  };
+
+   
 }
