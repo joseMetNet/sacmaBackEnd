@@ -1,12 +1,13 @@
 import { z } from "zod";
+import { idInput } from "../input/input.schema";
 
 // Schema para registro de entrada de inventario
 export const registerInventoryEntrySchema = z.object({
-  idPurchaseRequest: z.coerce.number().int().positive("idPurchaseRequest debe ser un número positivo"),
-  idPurchaseRequestDetail: z.coerce.number().int().positive("idPurchaseRequestDetail debe ser un número positivo"),
+  idPurchaseRequest: z.coerce.number().int().positive("idPurchaseRequest debe ser un número positivo").optional(),
+  idPurchaseRequestDetail: z.coerce.number().int().positive("idPurchaseRequestDetail debe ser un número positivo").optional(),
   idInput: z.coerce.number().int().positive("idInput debe ser un número positivo"),
   idWarehouse: z.coerce.number().int().positive("idWarehouse debe ser un número positivo"),
-  quantity: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+  quantity: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
     message: "quantity debe ser un número decimal positivo",
   }),
   unitPrice: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
@@ -21,7 +22,7 @@ export const assignMaterialToProjectSchema = z.object({
   idCostCenterProject: z.coerce.number().int().positive("idCostCenterProject debe ser un número positivo"),
   idInput: z.coerce.number().int().positive("idInput debe ser un número positivo"),
   idWarehouse: z.coerce.number().int().positive("idWarehouse debe ser un número positivo"),
-  quantity: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+  quantity: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
     message: "quantity debe ser un número decimal positivo",
   }),
   remarks: z.string().max(500).optional(),
@@ -223,15 +224,22 @@ export const findReturnsDetailByDateQuerySchema = z.object({
 
 // Schemas para TB_InventoryBalance
 export const createInventoryBalanceSchema = z.object({
-  idProjectAssignment: z.number().int().positive("idProjectAssignment debe ser un número positivo"),
-  balance: z.number().int("balance debe ser un número entero"),
+  idProjectAssignment: z.number().int().positive("idProjectAssignment debe ser un número positivo").optional().or(z.literal(0)).transform(val => val === 0 ? undefined : val),
+  idInput: z.number().int().positive("idInput debe ser un número positivo").optional().or(z.literal(0)).transform(val => val === 0 ? undefined : val),
+  idCostCenterProject: z.number().int().positive("idCostCenterProject debe ser un número positivo").optional().or(z.literal(0)).transform(val => val === 0 ? undefined : val),
+  balance: z.number().int("balance debe ser un número entero").optional(),
+  quantity: z.number().int("quantity debe ser un número entero").optional(),
   createdBy: z.string().max(100).optional(),
   remarks: z.string().max(500).optional(),
 });
 
 export const updateInventoryBalanceSchema = z.object({
   idBalance: z.coerce.number().int().positive("idBalance debe ser un número positivo"),
-  balance: z.number().int("balance debe ser un número entero"),
+  idProjectAssignment: z.number().int().positive("idProjectAssignment debe ser un número positivo").optional().or(z.literal(0)).transform(val => val === 0 ? undefined : val),
+  idInput: z.number().int().positive("idInput debe ser un número positivo").optional().or(z.literal(0)).transform(val => val === 0 ? undefined : val),
+  idCostCenterProject: z.number().int().positive("idCostCenterProject debe ser un número positivo").optional().or(z.literal(0)).transform(val => val === 0 ? undefined : val),
+  balance: z.number().int("balance debe ser un número entero").optional(),
+  quantity: z.number().int("quantity debe ser un número entero").optional(),
   createdBy: z.string().max(100).optional(),
   remarks: z.string().max(500).optional(),
 });
@@ -243,6 +251,9 @@ export const findBalanceByAssignmentParamSchema = z.object({
 // Schema para actualización de balance en ProjectInventoryAssignment
 export const updateProjectAssignmentBalanceItemSchema = z.object({
   idProjectAssignment: z.number().int().positive("idProjectAssignment debe ser un número positivo"),
+  idCostCenterProject: z.number().int().positive("idCostCenterProject debe ser un número positivo").optional().or(z.literal(0)).transform(val => val === 0 ? undefined : val), 
+  idInput: z.number().int().positive("idInput debe ser un número positivo").optional().or(z.literal(0)).transform(val => val === 0 ? undefined : val),
+  quantity: z.number().int("quantity debe ser un número entero").optional(),
   balance: z.number().int("balance debe ser un número entero"),
   remarks: z.string().max(500).optional(),
   createdBy: z.string().max(100).optional(),

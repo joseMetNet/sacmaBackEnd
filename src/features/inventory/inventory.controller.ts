@@ -659,7 +659,7 @@ export class InventoryController {
   updateInventoryBalance = async (req: Request, res: Response): Promise<void> => {
     try {
       const paramValidation = schemas.updateInventoryBalanceSchema.pick({ idBalance: true }).safeParse(req.params);
-      const bodyValidation = schemas.updateInventoryBalanceSchema.pick({ balance: true }).safeParse(req.body);
+      const bodyValidation = schemas.updateInventoryBalanceSchema.omit({ idBalance: true }).safeParse(req.body);
 
       if (!paramValidation.success || !bodyValidation.success) {
         res.status(400).json({
@@ -671,7 +671,7 @@ export class InventoryController {
 
       const data = {
         idBalance: paramValidation.data.idBalance,
-        balance: bodyValidation.data.balance,
+        ...bodyValidation.data,
       };
 
       const response = await this.inventoryService.updateInventoryBalance(data);

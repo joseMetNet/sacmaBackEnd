@@ -312,7 +312,14 @@ export class PurchaseController {
       return;
     }
 
-    const response = await this.purchaseService.deletePurchaseRequest(request.data.idPurchaseRequest);
+    // Obtener parámetros opcionales del body
+    const { shouldUpdateInventory, createdBy } = req.body;
+
+    const response = await this.purchaseService.deletePurchaseRequest(
+      request.data.idPurchaseRequest,
+      shouldUpdateInventory,
+      createdBy
+    );
     res.status(response.code).json({
       status: response.status,
       data: response.data

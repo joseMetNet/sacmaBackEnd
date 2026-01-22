@@ -277,7 +277,8 @@ export class RevenueCenterRepository {
       MAX(CASE WHEN WorkMonth = 12 THEN DaysWorked ELSE 0 END) AS 'Diciembre',
       MAX(ValorDia) AS 'dailyWage',
       SUM(DaysWorked) AS 'workedDays',
-      SUM(MonthlyTotal) AS 'monthlyTotal'
+      MAX(ValorDia) * SUM(DaysWorked) AS 'monthlyTotal'
+      --SUM(MonthlyTotal) AS 'monthlyTotal'
     FROM MonthlyWork
     GROUP BY WorkYear, Name, Project, Position
     ORDER BY WorkYear DESC, Name
@@ -334,7 +335,8 @@ export class RevenueCenterRepository {
       MAX(CASE WHEN WorkMonth = 12 THEN DaysWorked ELSE 0 END) AS 'Diciembre',
       MAX(ValorDia) AS 'dailyWage',
       SUM(DaysWorked) AS 'workedDays',
-      SUM(MonthlyTotal) AS 'monthlyTotal'
+      MAX(ValorDia) * SUM(DaysWorked) AS 'monthlyTotal'
+      --SUM(MonthlyTotal) AS 'monthlyTotal'
     FROM MonthlyWork
     GROUP BY WorkYear, Name, Project, Position
     ORDER BY WorkYear DESC, Name

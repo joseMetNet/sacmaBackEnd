@@ -4,11 +4,14 @@ import { ProjectInventoryAssignment } from "./project-inventory-assignment.model
 
 export class InventoryBalance extends Model {
   declare idBalance: number;
-  declare idProjectAssignment: number;
-  declare balance: number;
-  declare createdAt: Date;
+  declare idProjectAssignment?: number;
+  declare idInput?: number;
+  declare idCostCenterProject?: number;
+  declare balance?: number;
+  declare createdAt?: Date;
   declare createdBy?: string;
   declare remarks?: string;
+  declare quantity?: number;
 }
 
 InventoryBalance.init(
@@ -20,7 +23,15 @@ InventoryBalance.init(
     },
     idProjectAssignment: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
+    },
+    idInput: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    idCostCenterProject: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     balance: {
       type: DataTypes.INTEGER,
@@ -29,7 +40,8 @@ InventoryBalance.init(
     },
     createdAt: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
+      defaultValue: DataTypes.NOW,
     },
     createdBy: {
       type: DataTypes.STRING(100),
@@ -37,6 +49,10 @@ InventoryBalance.init(
     },
     remarks: {
       type: DataTypes.STRING(500),
+      allowNull: true,
+    },
+    quantity: {
+      type: DataTypes.SMALLINT,
       allowNull: true,
     },
   },

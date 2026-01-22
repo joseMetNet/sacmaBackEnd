@@ -5,6 +5,7 @@ import { InventoryMovement } from "./inventory-movement.model";
 import { ProjectInventoryAssignment } from "./project-inventory-assignment.model";
 import { InventoryBalance } from "./inventory-balance.model";
 import * as dtos from "./inventory.interface";
+import { idInput } from "../input/input.schema";
 
 interface MaterialSummaryResult {
   idInput: number;
@@ -35,7 +36,7 @@ interface MaterialSummaryResult {
 }
 
 export class InventoryRepository {
-  
+
   // ============================================================================
   // Stored Procedures - Operaciones principales
   // ============================================================================
@@ -57,8 +58,8 @@ export class InventoryRepository {
           @createdBy = :createdBy`,
         {
           replacements: {
-            idPurchaseRequest: data.idPurchaseRequest,
-            idPurchaseRequestDetail: data.idPurchaseRequestDetail,
+            idPurchaseRequest: data.idPurchaseRequest|| null,
+            idPurchaseRequestDetail: data.idPurchaseRequestDetail|| null,
             idInput: data.idInput,
             idWarehouse: data.idWarehouse,
             quantity: parseFloat(data.quantity),
@@ -343,13 +344,13 @@ export class InventoryRepository {
   async findInventoryByWarehouse(idWarehouse: number, filter: any, limit?: number, offset?: number): Promise<{ rows: Inventory[]; count: number }> {
     try {
       const whereClause: any = { idWarehouse };
-      
+
       const result = await Inventory.findAndCountAll({
         where: whereClause,
         limit,
         offset,
         include: [
-          { 
+          {
             association: "Input",
             where: filter.inputName ? filter.inputName : undefined,
             include: [
@@ -375,7 +376,7 @@ export class InventoryRepository {
       const result = await Inventory.findAndCountAll({
         where: { idWarehouse },
         include: [
-          { 
+          {
             association: "Input",
             where: filter.inputName ? filter.inputName : undefined,
             include: [
@@ -544,6 +545,93 @@ export class InventoryRepository {
         ? `OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`
         : '';
 
+      // QUIWEY VIEJA
+      //      WITH MaterialsShipped AS (
+      //           SELECT DISTINCT
+      //             ti.idInput,
+      //             ti.name AS material,
+      //             CAST(ti.performance AS DECIMAL(10,2)) AS performance,
+      //             SUM(toid.quantity) AS shipped,
+      //             SUM(toid.quantity) * MAX(CAST(ti.performance AS DECIMAL(10,2))) AS quantityM2,
+      //             SUM(toid.quantity) * MAX(ti.cost) AS totalCostSend,
+      //             MAX(trc.idCostCenterProject) AS idCostCenterProject,
+      //             MAX(trc.idQuotation) AS idQuotation
+      //           FROM mvp1.TB_OrderItemDetail toid
+      //           INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
+      //           INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
+      //           INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idCostCenterProject = toi.idCostCenterProject
+      //           WHERE trc.idCostCenterProject = 112 AND ti.idInputType = 1
+      //           GROUP BY ti.idInput, ti.name, ti.performance
+      //         ),
+      //         QuotationData AS (
+      //           SELECT DISTINCT
+      //             tqid.idInput,
+      //             SUM(tqid.quantity) AS budgeted,
+      //             SUM(DISTINCT tqi.quantity) AS contracted
+      //           FROM mvp1.TB_Quotation tq
+      //           INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotation = tq.idQuotation
+      //           INNER JOIN mvp1.TB_QuotationItemDetail tqid ON tqid.idQuotationItem = tqi.idQuotationItem
+      //           WHERE tq.idQuotation = 28
+      //           GROUP BY tqid.idInput
+      //         ),
+      //         ProjectAssignments AS (
+      //           SELECT DISTINCT
+      //             pa.idProjectAssignment,
+      //             pa.idCostCenterProject,
+      //             pa.idInput,
+      //             inp.name AS inputName,
+      //             pa.idWarehouse,
+      //             w.name AS warehouseName,
+      //             pa.quantityAssigned,
+      //             pa.quantityUsed,
+      //             pa.quantityReturned,
+      //             pa.quantityPending,
+      //             pa.unitPrice,
+      //             pa.totalCost,
+      //             pa.assignmentDate,
+      //             pa.status,
+      //             pa.createdBy,
+      // 			      pa.balance
+      //           FROM mvp1.TB_ProjectInventoryAssignment pa
+      //           LEFT JOIN mvp1.TB_Input inp ON pa.idInput = inp.idInput
+      //           LEFT JOIN mvp1.TB_WareHouse w ON pa.idWarehouse = w.idWarehouse
+      //           WHERE pa.idCostCenterProject = 112
+      //         )
+      //         SELECT DISTINCT
+      //           ms.idInput,
+      //           ms.material,
+      //           ms.performance,
+      //           ms.shipped,
+      //           ms.quantityM2,
+      //           ms.totalCostSend,
+      //           ISNULL(qd.budgeted, 0) AS budgeted,
+      //           ISNULL(qd.contracted, 0) AS contracted,
+      //           ISNULL(qd.budgeted, 0) - ISNULL(qd.contracted, 0) AS diff,
+      //           ms.idCostCenterProject,
+      //           ms.idQuotation,
+      //           pa.idProjectAssignment,
+      //           pa.inputName,
+      //           pa.idWarehouse,
+      //           pa.warehouseName,
+      //           ISNULL(pa.quantityAssigned, 0) AS quantityAssigned,
+      //           ISNULL(pa.quantityUsed, 0) AS quantityUsed,
+      //           ISNULL(pa.quantityReturned, 0) AS quantityReturned,
+      //           ISNULL(pa.quantityPending, 0) AS quantityPending,
+      //           pa.unitPrice AS assignmentUnitPrice,
+      //           pa.totalCost AS assignmentTotalCost,
+      //           pa.assignmentDate,
+      //           pa.status AS assignmentStatus,
+      //           pa.createdBy,
+      //           ISNULL(pa.balance, 0) AS balance
+      //           ,ISNULL(ib.balance, 0) AS balance2
+      //           ,ib.idBalance
+      //         FROM MaterialsShipped ms
+      //         LEFT JOIN QuotationData qd ON qd.idInput = ms.idInput
+      //         LEFT JOIN ProjectAssignments pa ON pa.idInput = ms.idInput
+      //         LEFT JOIN mvp1.TB_InventoryBalance ib ON ib.idCostCenterProject = ms.idCostCenterProject 
+      //                                                AND ib.idInput = ms.idInput
+      //         ORDER BY ms.totalCostSend DESC, pa.assignmentDate DESC
+
       const query = `
         WITH MaterialsShipped AS (
           SELECT
@@ -590,11 +678,22 @@ export class InventoryRepository {
             pa.assignmentDate,
             pa.status,
             pa.createdBy,
-			      pa.balance
+			      pa.balance,
+            ROW_NUMBER() OVER (PARTITION BY pa.idInput ORDER BY pa.assignmentDate DESC) AS rn
           FROM mvp1.TB_ProjectInventoryAssignment pa
           LEFT JOIN mvp1.TB_Input inp ON pa.idInput = inp.idInput
           LEFT JOIN mvp1.TB_WareHouse w ON pa.idWarehouse = w.idWarehouse
           WHERE pa.idCostCenterProject = :idCostCenterProject
+        ),
+        LatestBalances AS (
+          SELECT 
+            ib.idBalance,
+            ib.idCostCenterProject,
+            ib.idInput,
+            ib.balance,
+            ROW_NUMBER() OVER (PARTITION BY ib.idCostCenterProject, ib.idInput ORDER BY ib.createdAt DESC) AS rn
+          FROM mvp1.TB_InventoryBalance ib
+          WHERE ib.idCostCenterProject = :idCostCenterProject
         )
         SELECT
           ms.idInput,
@@ -622,10 +721,15 @@ export class InventoryRepository {
           pa.status AS assignmentStatus,
           pa.createdBy,
           ISNULL(pa.balance, 0) AS balance
+          ,ISNULL(lb.balance, 0) AS balance2
+          ,lb.idBalance
         FROM MaterialsShipped ms
         LEFT JOIN QuotationData qd ON qd.idInput = ms.idInput
-        LEFT JOIN ProjectAssignments pa ON pa.idInput = ms.idInput
-        ORDER BY ms.totalCostSend DESC, pa.assignmentDate DESC
+        LEFT JOIN ProjectAssignments pa ON pa.idInput = ms.idInput AND pa.rn = 1
+        LEFT JOIN LatestBalances lb ON lb.idCostCenterProject = ms.idCostCenterProject 
+                                    AND lb.idInput = ms.idInput
+                                    AND lb.rn = 1
+        ORDER BY ms.totalCostSend DESC, ms.idInput ASC
         ${paginationClause};
       `;
 
@@ -1152,8 +1256,11 @@ export class InventoryRepository {
   async createInventoryBalance(data: dtos.CreateInventoryBalanceDTO): Promise<dtos.InventoryBalanceResult> {
     try {
       const result = await InventoryBalance.create({
-        idProjectAssignment: data.idProjectAssignment,
-        balance: data.balance,
+        idProjectAssignment: data.idProjectAssignment || null,
+        idInput: data.idInput || null,
+        idCostCenterProject: data.idCostCenterProject || null,
+        balance: data.balance || null,
+        quantity: data.quantity || null,
         createdBy: data.createdBy || null,
         remarks: data.remarks || null,
       });
@@ -1171,13 +1278,17 @@ export class InventoryRepository {
   async updateInventoryBalance(data: dtos.UpdateInventoryBalanceDTO): Promise<dtos.InventoryBalanceResult | null> {
     try {
       const balance = await InventoryBalance.findByPk(data.idBalance);
-      
+
       if (!balance) {
         return null;
       }
 
       await balance.update({
-        balance: data.balance,
+        idProjectAssignment: data.idProjectAssignment !== undefined ? data.idProjectAssignment : balance.idProjectAssignment,
+        idInput: data.idInput !== undefined ? data.idInput : balance.idInput,
+        idCostCenterProject: data.idCostCenterProject !== undefined ? data.idCostCenterProject : balance.idCostCenterProject,
+        balance: data.balance !== undefined ? data.balance : balance.balance,
+        quantity: data.quantity !== undefined ? data.quantity : balance.quantity,
         createdBy: data.createdBy || balance.createdBy,
         remarks: data.remarks || balance.remarks,
       });
@@ -1222,11 +1333,11 @@ export class InventoryRepository {
     items: dtos.UpdateProjectAssignmentBalanceItemDTO[]
   ): Promise<dtos.UpdateProjectAssignmentBalanceResult> {
     let transaction;
-    
+
     try {
       // Crear transacción
       transaction = await dbConnection.transaction();
-      
+
       const results: {
         idProjectAssignment: number;
         previousBalance: number;
@@ -1257,13 +1368,15 @@ export class InventoryRepository {
         const balanceHistory = await InventoryBalance.create(
           {
             idProjectAssignment: item.idProjectAssignment,
+            idCostCenterProject: item.idCostCenterProject,
+            idInput: item.idInput,
+            quantity: item.quantity,  
             balance: item.balance,
             createdBy: item.createdBy || null,
             remarks: item.remarks || null,
           },
-          { 
+          {
             transaction,
-            fields: ['idProjectAssignment', 'balance', 'createdBy', 'remarks']
           }
         );
 

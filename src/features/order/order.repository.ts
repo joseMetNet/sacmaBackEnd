@@ -14,7 +14,9 @@ import { PurchaseRequestDetail } from "../purchase/purchase-request-detail.model
 import { Inventory } from "../inventory/inventory.model";
 import { InventoryMovement } from "../inventory/inventory-movement.model";
 import { WareHouse } from "../warwHouse/warehouse.model";
-import { Transaction } from "sequelize";
+import { ProjectInventoryAssignment } from "../inventory/project-inventory-assignment.model";
+import { Transaction, QueryTypes } from "sequelize";
+import { dbConnection } from "../../config";
 
 export class OrderRepository {
 
@@ -344,6 +346,29 @@ export class OrderRepository {
     } as any, { 
       transaction,
       silent: true
+    });
+  };
+
+  // Buscar ProjectInventoryAssignment por idOrderItemDetail
+  findProjectAssignmentByOrderItemDetail = async (idOrderItemDetail: number) => {
+    const result = await dbConnection.query(
+      `SELECT idProjectAssignment
+       FROM [mvp1].[TB_ProjectInventoryAssignment] AS pa
+       INNER JOIN mvp1.TB_OrderItemDetail AS oid ON oid.idInput = pa.idInput
+       WHERE oid.idOrderItemDetail = :idOrderItemDetail`,
+      {
+        replacements: { idOrderItemDetail },
+        type: QueryTypes.SELECT
+      }
+    );
+    return result && result.length > 0 ? (result[0] as any).idProjectAssignment : null;
+  };
+
+  // Eliminar ProjectInventoryAssignment
+  deleteProjectInventoryAssignment = (idProjectAssignment: number, transaction?: Transaction) => {
+    return ProjectInventoryAssignment.destroy({ 
+      where: { idProjectAssignment },
+      transaction 
     });
   };
 }

@@ -553,6 +553,17 @@ export class OrderService {
       console.log("quantityToReturn:", quantityToReturn);
 
       let inventoryWasUpdated = false;
+      let projectAssignmentDeleted = false;
+
+      // Buscar y eliminar ProjectInventoryAssignment relacionado
+      const idProjectAssignment = await this.orderRepository.findProjectAssignmentByOrderItemDetail(idOrderItemDetail);
+      console.log("idProjectAssignment found:", idProjectAssignment);
+
+      if (idProjectAssignment) {
+        await this.orderRepository.deleteProjectInventoryAssignment(idProjectAssignment, transaction);
+        projectAssignmentDeleted = true;
+        console.log("ProjectInventoryAssignment deleted successfully");
+      }
 
       // Si se debe actualizar inventario, devolver la cantidad
       if (shouldUpdateInventory && warehouseId && inputId && quantityToReturn > 0) {
@@ -619,7 +630,9 @@ export class OrderService {
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, { 
         message: "Order item detail deleted successfully",
         returnedQuantity: quantityToReturn,
-        inventoryUpdated: inventoryWasUpdated
+        inventoryUpdated: inventoryWasUpdated,
+        projectAssignmentDeleted: projectAssignmentDeleted,
+        idProjectAssignment: idProjectAssignment
       });
 
     } catch (err: any) {

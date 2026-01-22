@@ -34,7 +34,7 @@ export class InventoryService {
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, {
         message: "Entrada de inventario registrada correctamente",
         data: {
-          idPurchaseRequest: data.idPurchaseRequest,
+          idPurchaseRequest: data?.idPurchaseRequest,
           idInput: data.idInput,
           idWarehouse: data.idWarehouse,
           quantity: data.quantity,

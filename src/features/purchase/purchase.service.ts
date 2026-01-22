@@ -85,6 +85,25 @@ export class PurchaseService {
         );
       }
 
+      // Obtener idWarehouse del primer detalle para actualizar el averageCost en TB_InventoryPurchase
+      const idWarehouse = purchaseRequests.rows.length > 0 ? purchaseRequests.rows[0].idWarehouse : null;
+      if (idWarehouse) {
+        try {
+          const averageCost = totalGeneral > 0 ? totalGeneral : null;
+          await this.purchaseRepository.updateInventoryPurchaseAverageCost(
+            idWarehouse,
+            averageCost
+          );
+        } catch (inventoryErr: any) {
+          console.error("Error updating inventory purchase average cost:", inventoryErr);
+          console.error("Parameters:", {
+            idWarehouse: idWarehouse,
+            averageCost: totalGeneral
+          });
+          // No lanzar error para permitir que la consulta continúe aunque falle la actualización del inventario
+        }
+      }
+
       const response = {
         data: purchaseRequests.rows,
         totalItems: purchaseRequests.count,
@@ -769,15 +788,142 @@ export class PurchaseService {
     }
   };
 
-  deletePurchaseRequest = async (id: number): Promise<ResponseEntity> => {
+  deletePurchaseRequest = async (id: number, shouldUpdateInventory?: boolean, createdBy?: string): Promise<ResponseEntity> => {
+    const transaction = await dbConnection.transaction();
     try {
-      const deletedPurchaseRequest = await this.purchaseRepository.deletePurchaseRequest(id);
-      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Purchase request deleted successfully" });
+      // 1. Obtener el purchase request para validar que existe
+      const purchaseRequest = await this.purchaseRepository.findByIdPurchaseRequest(id);
+      
+      if (!purchaseRequest) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(
+          StatusCode.NotFound,
+          { message: "Purchase request not found" }
+        );
+      }
+
+      const idWarehouse = purchaseRequest.idWarehouse;
+
+      // 2. Obtener todos los detalles asociados al purchase request
+      const details = await this.purchaseRepository.findAllPurchaseRequestDetail(
+        { idPurchaseRequest: id }
+      );
+
+      console.log("=== DELETE PURCHASE REQUEST DEBUG ===");
+      console.log("idPurchaseRequest:", id);
+      console.log("idWarehouse:", idWarehouse);
+      console.log("Details found:", details.rows.length);
+      console.log("shouldUpdateInventory:", shouldUpdateInventory);
+
+      let totalInventoryMovements = 0;
+      let totalInventoryDeleted = 0;
+      let inventoryErrors = [];
+
+      // 3. Si se debe actualizar inventario, procesar cada detalle
+      if (shouldUpdateInventory && idWarehouse) {
+        for (const detail of details.rows) {
+          const idInput = detail.idInput;
+          const quantityToRemove = parseFloat(detail.quantity?.toString() || "0");
+          const priceToRemove = parseFloat(detail.price?.toString() || "0");
+          const amountToSubtract = quantityToRemove * priceToRemove;
+
+          console.log(`Processing detail ${detail.idPurchaseRequestDetail}: idInput=${idInput}, quantity=${quantityToRemove}`);
+
+          if (idInput && quantityToRemove > 0) {
+            try {
+              // Buscar inventario existente
+              const inventory = await this.purchaseRepository.findInventoryByInputAndWarehouse(
+                idInput,
+                idWarehouse
+              );
+
+              if (inventory) {
+                const stockBefore = parseFloat(inventory.quantityAvailable?.toString() || "0");
+                const currentAverageCost = parseFloat(inventory.averageCost?.toString() || "0");
+
+                console.log(`Inventory found: idInventory=${inventory.idInventory}, stockBefore=${stockBefore}`);
+
+                // Registrar movimiento de ajuste ANTES de eliminar
+                await this.purchaseRepository.createInventoryMovement({
+                  idInventory: inventory.idInventory,
+                  idPurchaseRequest: id,
+                  idPurchaseRequestDetail: detail.idPurchaseRequestDetail,
+                  idInput: idInput,
+                  idWarehouse: idWarehouse,
+                  movementType: 'Ajuste',
+                  quantity: stockBefore.toString(), // Se registra toda la cantidad que había
+                  unitPrice: priceToRemove.toString(),
+                  totalPrice: (stockBefore * currentAverageCost).toString(),
+                  stockBefore: stockBefore.toString(),
+                  stockAfter: '0',
+                  remarks: `Ajuste por eliminación de solicitud de compra #${id}. Registro de inventario eliminado completamente.`,
+                  documentReference: `DELETE-PR-${id}-DET-${detail.idPurchaseRequestDetail}`,
+                  dateMovement: new Date(),
+                  createdBy: createdBy
+                }, transaction);
+
+                totalInventoryMovements++;
+                console.log(`Inventory movement created successfully for detail ${detail.idPurchaseRequestDetail}`);
+
+                // Eliminar todos los movimientos de inventario asociados a este idInventory
+                await this.purchaseRepository.deleteInventoryMovementsByInventoryId(inventory.idInventory, transaction);
+                console.log(`Deleted all inventory movements for idInventory=${inventory.idInventory}`);
+
+                // Eliminar el registro de inventario
+                await this.purchaseRepository.deleteInventory(inventory.idInventory, transaction);
+                totalInventoryDeleted++;
+                console.log(`Inventory deleted successfully: idInventory=${inventory.idInventory}`);
+              } else {
+                console.log(`WARNING: No inventory found for idInput: ${idInput}`);
+              }
+            } catch (inventoryErr: any) {
+              console.error(`Error processing inventory for detail ${detail.idPurchaseRequestDetail}:`, inventoryErr);
+              inventoryErrors.push({
+                idInput,
+                error: inventoryErr.message
+              });
+            }
+          }
+        }
+      } else {
+        console.log("Skipping inventory update. Conditions not met.");
+      }
+
+      // 4. Eliminar todos los detalles
+      for (const detail of details.rows) {
+        await this.purchaseRepository.deletePurchaseRequestDetail(detail.idPurchaseRequestDetail, transaction);
+      }
+      console.log(`Deleted ${details.rows.length} purchase request details`);
+
+      // 5. Eliminar el purchase request
+      await this.purchaseRepository.deletePurchaseRequest(id, transaction);
+
+      await transaction.commit();
+      console.log("Transaction committed successfully");
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { 
+        message: "Purchase request and all details deleted successfully",
+        deletedDetails: details.rows.length,
+        inventoryMovements: totalInventoryMovements,
+        inventoryDeleted: totalInventoryDeleted,
+        inventoryUpdated: shouldUpdateInventory && idWarehouse ? true : false
+      });
     } catch (err: any) {
-      console.error(err);
+      // Manejar el rollback de forma segura
+      try {
+        await transaction.rollback();
+      } catch (rollbackError: any) {
+        if (rollbackError.message?.includes('no corresponding BEGIN TRANSACTION')) {
+          console.log("Transaction already finished, skipping rollback");
+        } else {
+          console.error("Error during rollback:", rollbackError);
+        }
+      }
+      
+      console.error("ERROR in deletePurchaseRequest:", err);
       return BuildResponse.buildErrorResponse(
         StatusCode.InternalErrorServer,
-        { message: "Error while deleting purchase request" }
+        { message: "Error while deleting purchase request", error: err.message }
       );
     }
   };
@@ -828,17 +974,17 @@ export class PurchaseService {
 
           console.log("stockBefore:", stockBefore, "stockAfter:", stockAfter);
 
-          if (stockAfter < 0) {
-            await transaction.rollback();
-            return BuildResponse.buildErrorResponse(
-              StatusCode.BadRequest,
-              { 
-                message: "Cannot delete: insufficient inventory",
-                currentStock: stockBefore,
-                quantityToRemove: quantityToRemove
-              }
-            );
-          }
+          // if (stockAfter < 0) {
+          //   await transaction.rollback();
+          //   return BuildResponse.buildErrorResponse(
+          //     StatusCode.BadRequest,
+          //     { 
+          //       message: "Cannot delete: insufficient inventory",
+          //       currentStock: stockBefore,
+          //       quantityToRemove: quantityToRemove
+          //     }
+          //   );
+          // }
 
           // Calcular nuevo costo promedio (mantiene el mismo costo promedio)
           const currentAverageCost = parseFloat(inventory.averageCost?.toString() || "0");

@@ -35,8 +35,8 @@ export interface FindAllProjectAssignmentDTO {
 
 // DTOs para Entrada de Inventario (SP_RegisterInventoryEntry)
 export interface RegisterInventoryEntryDTO {
-  idPurchaseRequest: number;
-  idPurchaseRequestDetail: number;
+  idPurchaseRequest?: number;
+  idPurchaseRequestDetail?: number;
   idInput: number;
   idWarehouse: number;
   quantity: string;
@@ -294,15 +294,22 @@ export interface ReturnsDetailByDateResult {
 
 // DTOs para TB_InventoryBalance
 export interface CreateInventoryBalanceDTO {
-  idProjectAssignment: number;
-  balance: number;
+  idProjectAssignment?: number;
+  idInput?: number;
+  idCostCenterProject?: number;
+  balance?: number;
+  quantity?: number;
   createdBy?: string;
   remarks?: string;
 }
 
 export interface UpdateInventoryBalanceDTO {
   idBalance: number;
-  balance: number;
+  idProjectAssignment?: number;
+  idInput?: number;
+  idCostCenterProject?: number;
+  balance?: number;
+  quantity?: number;
   createdBy?: string;
   remarks?: string;
 }
@@ -313,16 +320,22 @@ export interface FindBalanceByAssignmentDTO {
 
 export interface InventoryBalanceResult {
   idBalance: number;
-  idProjectAssignment: number;
-  balance: number;
-  createdAt: Date;
+  idProjectAssignment?: number;
+  idInput?: number;
+  idCostCenterProject?: number;
+  balance?: number;
+  createdAt?: Date;
   createdBy?: string;
   remarks?: string;
+  quantity?: number;
 }
 
 // DTOs para actualización de balance en ProjectInventoryAssignment
 export interface UpdateProjectAssignmentBalanceItemDTO {
   idProjectAssignment: number;
+  idCostCenterProject?: number;
+  idInput?: number;
+  quantity?: number;
   balance: number;
   remarks?: string;
   createdBy?: string;

@@ -346,8 +346,11 @@ export class PurchaseRepository {
     return PurchaseRequestDetailMachineryUsed.update(purchaseRequestDetailMachineryUsed, { where: { idPurchaseRequestDetailMachineryUsed: purchaseRequestDetailMachineryUsed.idPurchaseRequestDetailMachineryUsed } });
   };
 
-  deletePurchaseRequest = (id: number) => {
-    return PurchaseRequest.destroy({ where: { idPurchaseRequest: id } });
+  deletePurchaseRequest = (id: number, transaction?: Transaction) => {
+    return PurchaseRequest.destroy({ 
+      where: { idPurchaseRequest: id },
+      transaction 
+    });
   };
 
   deletePurchaseRequestDetail = (id: number, transaction?: Transaction) => {
@@ -423,6 +426,22 @@ export class PurchaseRepository {
         silent: true
       }
     );
+  };
+
+  // Eliminar inventario
+  deleteInventory = (idInventory: number, transaction?: Transaction) => {
+    return Inventory.destroy({ 
+      where: { idInventory },
+      transaction 
+    });
+  };
+
+  // Eliminar movimientos de inventario por idInventory
+  deleteInventoryMovementsByInventoryId = (idInventory: number, transaction?: Transaction) => {
+    return InventoryMovement.destroy({ 
+      where: { idInventory },
+      transaction 
+    });
   };
 
   // Crear movimiento de inventario
