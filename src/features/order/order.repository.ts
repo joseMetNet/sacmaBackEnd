@@ -351,11 +351,16 @@ export class OrderRepository {
 
   // Buscar ProjectInventoryAssignment por idOrderItemDetail
   findProjectAssignmentByOrderItemDetail = async (idOrderItemDetail: number) => {
-    const result = await dbConnection.query(
-      `SELECT idProjectAssignment
-       FROM [mvp1].[TB_ProjectInventoryAssignment] AS pa
-       INNER JOIN mvp1.TB_OrderItemDetail AS oid ON oid.idInput = pa.idInput
-       WHERE oid.idOrderItemDetail = :idOrderItemDetail`,
+    const result = await dbConnection.query(      
+       `SELECT DISTINCT 
+            COALESCE(pa.idProjectAssignment, 0) AS idProjectAssignment
+        FROM mvp1.TB_OrderItemDetail AS oid
+        LEFT JOIN (
+            SELECT idInput, MAX(idProjectAssignment) AS idProjectAssignment
+            FROM [mvp1].[TB_ProjectInventoryAssignment]
+            GROUP BY idInput
+        ) AS pa ON pa.idInput = oid.idInput
+        WHERE oid.idOrderItemDetail = :idOrderItemDetail`,
       {
         replacements: { idOrderItemDetail },
         type: QueryTypes.SELECT
