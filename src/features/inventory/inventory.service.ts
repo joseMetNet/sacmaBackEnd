@@ -350,6 +350,7 @@ export class InventoryService {
       
       // Calcular priceAvailable para cada item y totalAvailable
       const dataWithPrices = inventories.rows.map((item: any) => {
+        // const cost = parseFloat(item.averageCost || "0");
         const cost = parseFloat(item.Input?.cost || "0");
         const quantityAvailable = parseFloat(item.quantityAvailable?.toString() || "0");
         const priceAvailable = cost * quantityAvailable;

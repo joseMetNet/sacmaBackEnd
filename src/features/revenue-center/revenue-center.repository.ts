@@ -26,6 +26,7 @@ export class RevenueCenterRepository {
           required: true,
         }
       ],
+      order: [[CostCenterProject, 'name', 'ASC']],
     });
   };
 
@@ -388,17 +389,40 @@ export class RevenueCenterRepository {
     const sequelize = RevenueCenter.sequelize!;
 
     const query = `
+    /*
+          WITH MonthlyWork AS (
+                SELECT
+                  rc.idRevenueCenter,
+                  COUNT(wt.createdAt) AS DaysWorked,
+                  e.baseSalary / 24 * 1.35 AS ValorDia
+                  --COUNT(wt.createdAt) * (e.baseSalary / DAY(EOMONTH(wt.createdAt))) AS MonthlyTotal
+                
+                FROM mvp1.TB_WorkTracking wt
+                INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
+                INNER JOIN mvp1.TB_CostCenterProject ccp ON wt.idCostCenterProject = ccp.idCostCenterProject
+                INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = ccp.idCostCenterProject
+                GROUP BY rc.idRevenueCenter, wt.createdAt, e.baseSalary
+              )
+              SELECT idRevenueCenter, MAX(ValorDia) * SUM(DaysWorked) AS 'totalWorkTracking'
+              --SUM(MonthlyTotal) as totalWorkTracking
+              FROM MonthlyWork
+              GROUP BY idRevenueCenter;*/
     WITH MonthlyWork AS (
       SELECT
         rc.idRevenueCenter,
-        COUNT(wt.createdAt) * (e.baseSalary / DAY(EOMONTH(wt.createdAt))) AS MonthlyTotal
+        e.idEmployee,
+        COUNT(wt.createdAt) AS DaysWorked,
+        MAX(TRY_CONVERT(FLOAT, REPLACE(REPLACE(LTRIM(RTRIM(e.baseSalary)), '.', ''), ',', '.')) / 24 * 1.35) AS ValorDia
       FROM mvp1.TB_WorkTracking wt
       INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
       INNER JOIN mvp1.TB_CostCenterProject ccp ON wt.idCostCenterProject = ccp.idCostCenterProject
       INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = ccp.idCostCenterProject
-      GROUP BY rc.idRevenueCenter, wt.createdAt, e.baseSalary
+      WHERE TRY_CONVERT(FLOAT, REPLACE(REPLACE(LTRIM(RTRIM(e.baseSalary)), '.', ''), ',', '.')) IS NOT NULL
+      GROUP BY rc.idRevenueCenter, e.idEmployee
     )
-    SELECT idRevenueCenter, SUM(MonthlyTotal) as totalWorkTracking
+    SELECT 
+        idRevenueCenter, 
+        SUM(ValorDia * DaysWorked) AS 'totalWorkTracking'
     FROM MonthlyWork
     GROUP BY idRevenueCenter;
   `;
@@ -410,23 +434,40 @@ export class RevenueCenterRepository {
   findInputValues = async (
   ) => {
     const query = `
-    SELECT
+    /*SELECT
     	oi.idCostCenterProject,
     	SUM(oid.quantity * CONVERT(FLOAT, i.cost)) AS totalValue
-    FROM
-    	mvp1.TB_OrderItemDetail oid
-    INNER JOIN mvp1.TB_OrderItem oi on
-    	oi.idOrderItem = oid.idOrderItem
-    INNER JOIN mvp1.TB_Input i ON
-    	i.idInput = oid.idInput
-    INNER JOIN mvp1.TB_RevenueCenter rc ON
-    	rc.idCostCenterProject = oi.idCostCenterProject
-    INNER JOIN mvp1.TB_InputUnitOfMeasure iu ON
-    	iu.idInputUnitOfMeasure = i.idInputUnitOfMeasure
-    WHERE
-    	i.idInputType IN (1, 2, 3)
-    GROUP BY
-    	oi.idCostCenterProject
+    FROM    	mvp1.TB_OrderItemDetail oid
+    INNER JOIN mvp1.TB_OrderItem oi on	oi.idOrderItem = oid.idOrderItem
+    INNER JOIN mvp1.TB_Input i ON	i.idInput = oid.idInput
+    INNER JOIN mvp1.TB_RevenueCenter rc ON	rc.idCostCenterProject = oi.idCostCenterProject
+    INNER JOIN mvp1.TB_InputUnitOfMeasure iu ON	iu.idInputUnitOfMeasure = i.idInputUnitOfMeasure
+    WHERE	i.idInputType IN (1, 2, 3)
+    GROUP BY	oi.idCostCenterProject*/
+
+    WITH ReturnedQuantities AS (
+          SELECT 
+              im.idInput,
+              im.idCostCenterProject,
+              SUM(im.quantityReturned) AS totalReturned,
+              SUM(im.quantityReturned * CONVERT(FLOAT, i.cost)) AS totalReturnedValue
+          FROM [mvp1].[TB_ProjectInventoryAssignment] im
+          INNER JOIN mvp1.TB_Input i ON i.idInput = im.idInput 
+        WHERE i.idInputType IN (1, 2, 3)
+          GROUP BY im.idInput, im.idCostCenterProject
+      )
+      SELECT
+          oi.idCostCenterProject,
+          SUM(oid.quantity * CONVERT(FLOAT, i.cost)) - COALESCE(SUM(DISTINCT rq.totalReturnedValue), 0) AS totalValue,
+          COALESCE(SUM(DISTINCT rq.totalReturnedValue), 0) AS totalValueReturned
+      FROM   mvp1.TB_OrderItemDetail oid
+      INNER JOIN mvp1.TB_OrderItem oi on oi.idOrderItem = oid.idOrderItem
+      INNER JOIN mvp1.TB_Input i ON  i.idInput = oid.idInput
+      INNER JOIN mvp1.TB_RevenueCenter rc ON  rc.idCostCenterProject = oi.idCostCenterProject
+      INNER JOIN mvp1.TB_InputUnitOfMeasure iu ON  iu.idInputUnitOfMeasure = i.idInputUnitOfMeasure
+      LEFT JOIN ReturnedQuantities rq ON rq.idInput = i.idInput AND rq.idCostCenterProject = oi.idCostCenterProject
+      WHERE  i.idInputType IN (1, 2, 3)
+      GROUP BY oi.idCostCenterProject
     `;
 
     type result = {
@@ -1078,13 +1119,26 @@ export class RevenueCenterRepository {
     const sequelize = RevenueCenter.sequelize!;
 
     const query = `
-      WITH RevenueCenterData AS (
+WITH RevenueCenterData AS (
         SELECT 
           idRevenueCenter,
           idCostCenterProject,
           idQuotation
         FROM [mvp1].[TB_RevenueCenter]
         WHERE idRevenueCenter = :idRevenueCenter
+      ),
+      
+      -- Primero agregamos las cantidades facturadas por ProjectItem
+      InvoicedData AS (
+        SELECT 
+          pi.idProjectItem,
+          SUM(CAST(ipi.invoicedQuantity AS DECIMAL(18,2))) AS totalInvoiced
+        FROM [mvp1].[TB_ProjectItem] pi
+        INNER JOIN RevenueCenterData rc ON pi.idCostCenterProject = rc.idCostCenterProject
+        INNER JOIN [mvp1].[TB_InvoiceProjectItem] ipi ON ipi.idProjectItem = pi.idProjectItem
+        INNER JOIN [mvp1].[TB_Invoice] inv ON inv.idInvoice = ipi.idInvoice AND inv.invoice IS NOT NULL
+        WHERE (:idProjectItem IS NULL OR pi.idProjectItem = :idProjectItem)
+        GROUP BY pi.idProjectItem
       ),
 
       InvoiceItemDetails AS (
@@ -1094,15 +1148,14 @@ export class RevenueCenterRepository {
           pi.contract,
           qid.idInput,
           ti.name AS inputName,
-          CAST(ipi.invoicedQuantity AS DECIMAL(18,2)) AS invoicedQuantity,
+          inv_data.totalInvoiced AS invoicedQuantity,
           ISNULL((qid.quantity / NULLIF(qi.quantity, 0)), 1) AS materialRatio
         FROM [mvp1].[TB_ProjectItem] pi
         INNER JOIN RevenueCenterData rc ON pi.idCostCenterProject = rc.idCostCenterProject
+        LEFT JOIN InvoicedData inv_data ON inv_data.idProjectItem = pi.idProjectItem
         LEFT JOIN [mvp1].[TB_QuotationItem] qi ON qi.idQuotation = rc.idQuotation
         LEFT JOIN [mvp1].[TB_QuotationItemDetail] qid ON qid.idQuotationItem = qi.idQuotationItem
         LEFT JOIN [mvp1].[TB_Input] ti ON ti.idInput = qid.idInput
-        LEFT JOIN [mvp1].[TB_InvoiceProjectItem] ipi ON ipi.idProjectItem = pi.idProjectItem
-        INNER JOIN [mvp1].[TB_Invoice] inv ON inv.idInvoice = ipi.idInvoice AND inv.invoice IS NOT NULL
         WHERE (:idProjectItem IS NULL OR pi.idProjectItem = :idProjectItem)
           AND (:idInput IS NULL OR qid.idInput = :idInput)
       )
@@ -1113,8 +1166,9 @@ export class RevenueCenterRepository {
         contract,
         idInput,
         inputName,
-        SUM(ISNULL(invoicedQuantity, 0)) AS AcumuladoCant
-        --SUM(ISNULL(invoicedQuantity * materialRatio, 0)) AS AcumuladoCant
+        MAX(ISNULL(invoicedQuantity, 0)) AS invoicedQuantity,  -- MAX porque es el mismo valor para todas las filas
+        MAX(ISNULL(invoicedQuantity, 0)) AS AcumuladoCant
+        --MAX(ISNULL(invoicedQuantity * materialRatio, 0)) AS AcumuladoCant  -- Usa MAX si quieres aplicar el ratio
       FROM InvoiceItemDetails
       WHERE idInput IS NOT NULL
       GROUP BY idProjectItem, projectItem, contract, idInput, inputName

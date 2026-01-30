@@ -69,8 +69,12 @@ export class RevenueCenterService {
       // Construir respuesta fila por fila
       const rows = revenueCenters.rows.map((revenueCenter: any) => {
         const spendInputs = groupedSpend[revenueCenter.idCostCenterProject] || 0;
+        console.log("TOTAL DEL  MANO DE OBRA MATERIALES:", spendInputs);
         const workTracking = groupedWorkTracking[revenueCenter.idRevenueCenter] || 0;
+        console.log("TOTAL DEL  MANO DE OBRA :", workTracking);
+        
         const spend = spendInputs + workTracking; // 👈 inputs + expenditures + workTracking
+        console.log("TOTAL GENERAL DE LA MANO DE OBRA:", spend);
         // const spend = groupedSpend[revenueCenter.idCostCenterProject] || 0;
         const invoice = groupedInvoice[revenueCenter.idRevenueCenter] || 0;
 
