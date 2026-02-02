@@ -816,7 +816,6 @@ export class PurchaseService {
       console.log("shouldUpdateInventory:", shouldUpdateInventory);
 
       let totalInventoryMovements = 0;
-      let totalInventoryDeleted = 0;
       let inventoryErrors = [];
 
       // 3. Si se debe actualizar inventario, procesar cada detalle
@@ -840,10 +839,21 @@ export class PurchaseService {
               if (inventory) {
                 const stockBefore = parseFloat(inventory.quantityAvailable?.toString() || "0");
                 const currentAverageCost = parseFloat(inventory.averageCost?.toString() || "0");
+                const stockAfter = Math.max(0, stockBefore - quantityToRemove);
 
-                console.log(`Inventory found: idInventory=${inventory.idInventory}, stockBefore=${stockBefore}`);
+                console.log(`Inventory found: idInventory=${inventory.idInventory}, stockBefore=${stockBefore}, stockAfter=${stockAfter}`);
 
-                // Registrar movimiento de ajuste ANTES de eliminar
+                // Actualizar inventario restando la cantidad
+                await this.purchaseRepository.updateInventory({
+                  idInventory: inventory.idInventory,
+                  quantityAvailable: stockAfter.toString(),
+                  averageCost: currentAverageCost.toString(),
+                  lastMovementDate: new Date()
+                }, transaction);
+
+                console.log(`Inventory updated: quantity reduced from ${stockBefore} to ${stockAfter}`);
+
+                // Registrar movimiento de ajuste (salida)
                 await this.purchaseRepository.createInventoryMovement({
                   idInventory: inventory.idInventory,
                   idPurchaseRequest: id,
@@ -851,12 +861,12 @@ export class PurchaseService {
                   idInput: idInput,
                   idWarehouse: idWarehouse,
                   movementType: 'Ajuste',
-                  quantity: stockBefore.toString(), // Se registra toda la cantidad que había
+                  quantity: quantityToRemove.toString(),
                   unitPrice: priceToRemove.toString(),
-                  totalPrice: (stockBefore * currentAverageCost).toString(),
+                  totalPrice: (quantityToRemove * priceToRemove).toString(),
                   stockBefore: stockBefore.toString(),
-                  stockAfter: '0',
-                  remarks: `Ajuste por eliminación de solicitud de compra #${id}. Registro de inventario eliminado completamente.`,
+                  stockAfter: stockAfter.toString(),
+                  remarks: `Ajuste por eliminación de solicitud de compra #${id}. Cantidad restada: ${quantityToRemove}`,
                   documentReference: `DELETE-PR-${id}-DET-${detail.idPurchaseRequestDetail}`,
                   dateMovement: new Date(),
                   createdBy: createdBy
@@ -864,15 +874,6 @@ export class PurchaseService {
 
                 totalInventoryMovements++;
                 console.log(`Inventory movement created successfully for detail ${detail.idPurchaseRequestDetail}`);
-
-                // Eliminar todos los movimientos de inventario asociados a este idInventory
-                await this.purchaseRepository.deleteInventoryMovementsByInventoryId(inventory.idInventory, transaction);
-                console.log(`Deleted all inventory movements for idInventory=${inventory.idInventory}`);
-
-                // Eliminar el registro de inventario
-                await this.purchaseRepository.deleteInventory(inventory.idInventory, transaction);
-                totalInventoryDeleted++;
-                console.log(`Inventory deleted successfully: idInventory=${inventory.idInventory}`);
               } else {
                 console.log(`WARNING: No inventory found for idInput: ${idInput}`);
               }
@@ -905,7 +906,7 @@ export class PurchaseService {
         message: "Purchase request and all details deleted successfully",
         deletedDetails: details.rows.length,
         inventoryMovements: totalInventoryMovements,
-        inventoryDeleted: totalInventoryDeleted,
+        inventoryQuantityReduced: totalInventoryMovements > 0,
         inventoryUpdated: shouldUpdateInventory && idWarehouse ? true : false
       });
     } catch (err: any) {
