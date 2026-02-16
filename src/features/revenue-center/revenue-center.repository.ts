@@ -5,6 +5,7 @@ import { QueryTypes, WhereOptions } from "sequelize";
 import { dbConnection } from "../../config";
 import { RevenueCenterStatus } from "./revenue-center-status-model";
 import { RelationsProjectItemsMaterialInvoice } from "./relations-project-items-material-invoice.model";
+import { DetailPriceInventoryCostCenter } from "../inventory/detail-price-inventory-cost-center.model";
 
 export class RevenueCenterRepository {
   findAll = (
@@ -24,9 +25,14 @@ export class RevenueCenterRepository {
         {
           model: RevenueCenterStatus,
           required: true,
+        },
+        {
+          model: DetailPriceInventoryCostCenter,
+          required: false,
         }
       ],
       order: [[CostCenterProject, 'name', 'ASC']],
+      subQuery: false,
     });
   };
 

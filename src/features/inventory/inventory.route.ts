@@ -49,6 +49,14 @@ export function inventoryRoute(app: Application) {
   // Ruta para actualizar balance en ProjectInventoryAssignment
   router.put("/v1/inventory/project-assignment/balance", inventoryController.updateProjectAssignmentBalance);
 
+  // Rutas para DetailPriceInventoryCostCenter
+  router.post("/v1/inventory/detail-price-cost-center", inventoryController.createDetailPriceInventoryCostCenter);
+  router.get("/v1/inventory/detail-price-cost-center", inventoryController.findAllDetailPriceInventoryCostCenter);
+  router.get("/v1/inventory/detail-price-cost-center/:idDetailPriceInventoryCostCenter", inventoryController.findDetailPriceInventoryCostCenterById);
+  router.put("/v1/inventory/detail-price-cost-center/:idDetailPriceInventoryCostCenter", inventoryController.updateDetailPriceInventoryCostCenter);
+  router.delete("/v1/inventory/detail-price-cost-center/:idDetailPriceInventoryCostCenter", inventoryController.deleteDetailPriceInventoryCostCenter);
+  router.patch("/v1/inventory/detail-price-cost-center/upsert", inventoryController.upsertDetailPriceInventoryCostCenter);
+
   app.use("/api/", router);
 }
 
@@ -2336,6 +2344,297 @@ export function inventoryRoute(app: Application) {
  *                   type: array
  *                   items:
  *                     type: object
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @openapi
+ * /v1/inventory/detail-price-cost-center:
+ *   post:
+ *     tags: [Inventory - Detail Price Cost Center]
+ *     summary: Create new DetailPriceInventoryCostCenter
+ *     description: Creates a new price detail for inventory cost center
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               idRevenueCenter:
+ *                 type: integer
+ *                 description: Revenue Center ID
+ *                 example: 1
+ *               idCostCenterProject:
+ *                 type: integer
+ *                 description: Cost Center Project ID
+ *                 example: 10
+ *               price:
+ *                 type: string
+ *                 description: Price
+ *                 example: "150.50"
+ *     responses:
+ *       201:
+ *         description: DetailPriceInventoryCostCenter created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: DetailPriceInventoryCostCenter creado correctamente
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid input data
+ *       500:
+ *         description: Internal server error
+ *   get:
+ *     tags: [Inventory - Detail Price Cost Center]
+ *     summary: Get all DetailPriceInventoryCostCenter
+ *     description: Get all price details for inventory cost center with optional filters
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Page number
+ *         example: 1
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Items per page
+ *         example: 10
+ *       - in: query
+ *         name: idRevenueCenter
+ *         schema:
+ *           type: integer
+ *         description: Filter by Revenue Center ID
+ *         example: 1
+ *       - in: query
+ *         name: idCostCenterProject
+ *         schema:
+ *           type: integer
+ *         description: Filter by Cost Center Project ID
+ *         example: 10
+ *     responses:
+ *       200:
+ *         description: List of DetailPriceInventoryCostCenter retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: DetailPriceInventoryCostCenter obtenidos correctamente
+ *                 total:
+ *                   type: integer
+ *                   example: 100
+ *                 page:
+ *                   type: integer
+ *                   example: 1
+ *                 pageSize:
+ *                   type: integer
+ *                   example: 10
+ *                 totalPages:
+ *                   type: integer
+ *                   example: 10
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       400:
+ *         description: Invalid query parameters
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @openapi
+ * /v1/inventory/detail-price-cost-center/{idDetailPriceInventoryCostCenter}:
+ *   get:
+ *     tags: [Inventory - Detail Price Cost Center]
+ *     summary: Get DetailPriceInventoryCostCenter by ID
+ *     description: Get a specific price detail by its ID
+ *     parameters:
+ *       - in: path
+ *         name: idDetailPriceInventoryCostCenter
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: DetailPriceInventoryCostCenter ID
+ *         example: 1
+ *     responses:
+ *       200:
+ *         description: DetailPriceInventoryCostCenter retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: DetailPriceInventoryCostCenter obtenido correctamente
+ *                 data:
+ *                   type: object
+ *       404:
+ *         description: DetailPriceInventoryCostCenter not found
+ *       500:
+ *         description: Internal server error
+ *   put:
+ *     tags: [Inventory - Detail Price Cost Center]
+ *     summary: Update DetailPriceInventoryCostCenter
+ *     description: Update an existing price detail for inventory cost center
+ *     parameters:
+ *       - in: path
+ *         name: idDetailPriceInventoryCostCenter
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: DetailPriceInventoryCostCenter ID
+ *         example: 1
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               idRevenueCenter:
+ *                 type: integer
+ *                 description: Revenue Center ID
+ *                 example: 1
+ *               idCostCenterProject:
+ *                 type: integer
+ *                 description: Cost Center Project ID
+ *                 example: 10
+ *               price:
+ *                 type: string
+ *                 description: Price
+ *                 example: "150.50"
+ *     responses:
+ *       200:
+ *         description: DetailPriceInventoryCostCenter updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: DetailPriceInventoryCostCenter actualizado correctamente
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid input data
+ *       404:
+ *         description: DetailPriceInventoryCostCenter not found
+ *       500:
+ *         description: Internal server error
+ *   delete:
+ *     tags: [Inventory - Detail Price Cost Center]
+ *     summary: Delete DetailPriceInventoryCostCenter
+ *     description: Delete a price detail for inventory cost center
+ *     parameters:
+ *       - in: path
+ *         name: idDetailPriceInventoryCostCenter
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: DetailPriceInventoryCostCenter ID
+ *         example: 1
+ *     responses:
+ *       200:
+ *         description: DetailPriceInventoryCostCenter deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: DetailPriceInventoryCostCenter eliminado correctamente
+ *       404:
+ *         description: DetailPriceInventoryCostCenter not found
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @openapi
+ * /v1/inventory/detail-price-cost-center/upsert:
+ *   patch:
+ *     tags: [Inventory - Detail Price Cost Center]
+ *     summary: Upsert DetailPriceInventoryCostCenter (Create or Update)
+ *     description: Validates if a price detail exists based on idRevenueCenter and idCostCenterProject. If it exists and the price is different, updates it. If it doesn't exist, creates a new record. If the price is the same, no changes are made.
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               idRevenueCenter:
+ *                 type: integer
+ *                 description: Revenue Center ID (used for validation)
+ *                 example: 1
+ *               idCostCenterProject:
+ *                 type: integer
+ *                 description: Cost Center Project ID (used for validation)
+ *                 example: 10
+ *               price:
+ *                 type: string
+ *                 description: New price to set
+ *                 example: "150.50"
+ *     responses:
+ *       200:
+ *         description: Price updated successfully or no changes made
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Precio actualizado correctamente
+ *                 action:
+ *                   type: string
+ *                   enum: [created, updated, unchanged]
+ *                   example: updated
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     idDetailPriceInventoryCostCenter:
+ *                       type: integer
+ *                     idRevenueCenter:
+ *                       type: integer
+ *                     idCostCenterProject:
+ *                       type: integer
+ *                     price:
+ *                       type: number
+ *       201:
+ *         description: New price detail created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Precio creado correctamente
+ *                 action:
+ *                   type: string
+ *                   example: created
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid input data
  *       500:
  *         description: Internal server error
  */
