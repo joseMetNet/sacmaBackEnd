@@ -40,6 +40,109 @@ export class RevenueCenterRepository {
     return await RevenueCenter.findByPk(idRevenueCenter);
   }
 
+  async findByIdFromAnyTable(idRevenueCenter: number): Promise<(IRevenueCenter & { sourceTable: string }) | null> {
+    const query = `
+      SELECT TOP 1 *
+      FROM (
+        SELECT
+          rc.idRevenueCenter,
+          rc.name,
+          rc.idCostCenterProject,
+          rc.idRevenueCenterStatus,
+          rc.idQuotation,
+          rc.fromDate,
+          rc.toDate,
+          rc.createdAt,
+          rc.updatedAt,
+          rc.invoice,
+          rc.spend,
+          rc.utility,
+          CAST('Active' AS VARCHAR(50)) AS sourceTable
+        FROM mvp1.TB_RevenueCenter rc
+        WHERE rc.idRevenueCenter = :idRevenueCenter
+
+        UNION ALL
+
+        SELECT
+          rc.idRevenueCenter,
+          rc.name,
+          rc.idCostCenterProject,
+          rc.idRevenueCenterStatus,
+          rc.idQuotation,
+          rc.fromDate,
+          rc.toDate,
+          rc.createdAt,
+          rc.updatedAt,
+          rc.invoice,
+          rc.spend,
+          rc.utility,
+          CAST('Inactive' AS VARCHAR(50)) AS sourceTable
+        FROM mvp1.TB_RevenueCenter_Inactive rc
+        WHERE rc.idRevenueCenter = :idRevenueCenter
+
+        UNION ALL
+
+        SELECT
+          rc.idRevenueCenter,
+          rc.name,
+          rc.idCostCenterProject,
+          rc.idRevenueCenterStatus,
+          rc.idQuotation,
+          rc.fromDate,
+          rc.toDate,
+          rc.createdAt,
+          rc.updatedAt,
+          rc.invoice,
+          rc.spend,
+          rc.utility,
+          CAST('Liquidation' AS VARCHAR(50)) AS sourceTable
+        FROM mvp1.TB_RevenueCenter_Liquidation rc
+        WHERE rc.idRevenueCenter = :idRevenueCenter
+
+        UNION ALL
+
+        SELECT
+          rc.idRevenueCenter,
+          rc.name,
+          rc.idCostCenterProject,
+          rc.idRevenueCenterStatus,
+          rc.idQuotation,
+          rc.fromDate,
+          rc.toDate,
+          rc.createdAt,
+          rc.updatedAt,
+          rc.invoice,
+          rc.spend,
+          rc.utility,
+          CAST('RetentionGuarantee' AS VARCHAR(50)) AS sourceTable
+        FROM mvp1.TB_RevenueCenter_RetentionGuarantee rc
+        WHERE rc.idRevenueCenter = :idRevenueCenter
+      ) t
+    `;
+
+    const result = await dbConnection.query<(IRevenueCenter & { sourceTable: string })>(query, {
+      type: QueryTypes.SELECT,
+      replacements: { idRevenueCenter },
+    });
+
+    return result[0] ?? null;
+  }
+
+  async changeRevenueCenterStatus(idRevenueCenter: number, newIdRevenueCenterStatus: number): Promise<void> {
+    const query = `
+      EXEC [mvp1].[SP_ChangeRevenueCenterStatus]
+        @idRevenueCenter = :idRevenueCenter,
+        @newIdRevenueCenterStatus = :newIdRevenueCenterStatus
+    `;
+
+    await dbConnection.query(query, {
+      replacements: {
+        idRevenueCenter,
+        newIdRevenueCenterStatus,
+      },
+    });
+  }
+
   async create(data: Partial<IRevenueCenter>): Promise<IRevenueCenter> {
     console.log("Creating revenue center with data:", data);
     return await RevenueCenter.create(data as Partial<IRevenueCenter>);
@@ -1253,4 +1356,104 @@ WITH RevenueCenterData AS (
   ): Promise<RelationsProjectItemsMaterialInvoice | null> {
     return await RelationsProjectItemsMaterialInvoice.findByPk(idRelationsProjectItemsMaterialInvoice);
   }
+
+
+  findAllInactiveHistory = async (
+    limit: number,
+    offset: number,
+    filter?: { name?: string; idCostCenterProject?: number }
+  ) => {
+    return this.findAllRevenueCenterHistoryByTable("mvp1.TB_RevenueCenter_Inactive", limit, offset, filter);
+  };
+
+  findAllLiquidationHistory = async (
+    limit: number,
+    offset: number,
+    filter?: { name?: string; idCostCenterProject?: number }
+  ) => {
+    return this.findAllRevenueCenterHistoryByTable("mvp1.TB_RevenueCenter_Liquidation", limit, offset, filter);
+  };
+
+  findAllRetentionGuaranteeHistory = async (
+    limit: number,
+    offset: number,
+    filter?: { name?: string; idCostCenterProject?: number }
+  ) => {
+    return this.findAllRevenueCenterHistoryByTable("mvp1.TB_RevenueCenter_RetentionGuarantee", limit, offset, filter);
+  };
+
+  private findAllRevenueCenterHistoryByTable = async (
+    tableName: "mvp1.TB_RevenueCenter_Inactive" | "mvp1.TB_RevenueCenter_Liquidation" | "mvp1.TB_RevenueCenter_RetentionGuarantee",
+    limit: number,
+    offset: number,
+    filter?: { name?: string; idCostCenterProject?: number }
+  ) => {
+    const replacements: Record<string, unknown> = {};
+    const whereClauses: string[] = ["1 = 1"];
+
+    if (filter?.name) {
+      whereClauses.push("rc.name LIKE :name");
+      replacements.name = `%${filter.name}%`;
+    }
+
+    if (filter?.idCostCenterProject) {
+      whereClauses.push("rc.idCostCenterProject = :idCostCenterProject");
+      replacements.idCostCenterProject = filter.idCostCenterProject;
+    }
+
+    const usePagination = limit !== -1;
+    const paginationClause = usePagination ? "OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY" : "";
+    if (usePagination) {
+      replacements.limit = limit;
+      replacements.offset = offset;
+    }
+
+    const whereSql = whereClauses.join(" AND ");
+
+    const dataQuery = `
+      SELECT
+        rc.idRevenueCenter,
+        rc.name,
+        rc.idCostCenterProject,
+        rc.fromDate,
+        rc.toDate,
+        rc.createdAt,
+        rc.updatedAt,
+        rc.idRevenueCenterStatus,
+        rc.idQuotation,
+        rc.invoice,
+        rc.spend,
+        rc.utility,
+        rc.movedAt,
+        ccp.name AS costCenterProjectName,
+        ccp.idCostCenterProject AS costCenterProjectId
+      FROM ${tableName} rc
+      INNER JOIN mvp1.TB_CostCenterProject ccp ON ccp.idCostCenterProject = rc.idCostCenterProject
+      WHERE ${whereSql}
+      ORDER BY ccp.name ASC
+      ${paginationClause}
+    `;
+
+    const countQuery = `
+      SELECT COUNT(1) AS total
+      FROM ${tableName} rc
+      WHERE ${whereSql}
+    `;
+
+    const [rows, totalResult] = await Promise.all([
+      dbConnection.query<Record<string, unknown>>(dataQuery, {
+        replacements,
+        type: QueryTypes.SELECT,
+      }),
+      dbConnection.query<{ total: number }>(countQuery, {
+        replacements,
+        type: QueryTypes.SELECT,
+      }),
+    ]);
+
+    return {
+      rows,
+      count: totalResult[0]?.total ?? 0,
+    };
+  };
 }

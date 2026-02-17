@@ -224,6 +224,143 @@ export class QuotationService {
     }
   };
 
+  generateQuotationSupplyLaborDocx = async (id: number): Promise<ResponseEntity | Buffer> => {
+    try {
+      const quotationResponse = await this.findQuotationById(id);
+      if (quotationResponse.code !== StatusCode.Ok) {
+        return quotationResponse;
+      }
+
+      const quotationItemsResponse = await this.findAllQuotationItems({ idQuotation: id, page: 1, pageSize: 100 });
+      if (quotationItemsResponse.code !== StatusCode.Ok) {
+        return quotationItemsResponse;
+      }
+
+      const templatePath = "template/cotizacionSuminstroManoObra.docx";
+      const content = readFileSync(templatePath, "binary");
+
+      const zip = new PizZip(content);
+      const documentXmlFile = zip.file("word/document.xml");
+      if (documentXmlFile) {
+        const updatedDocumentXml = this.replaceSecondTablePlaceholders(documentXmlFile.asText());
+        zip.file("word/document.xml", updatedDocumentXml);
+      }
+
+      const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        delimiters: { start: "{{", end: "}}" },
+      });
+
+      const quotation = quotationResponse as ResponseEntity;
+      const quotationItems = quotationItemsResponse as ResponseEntity;
+
+      const rawItems = ((quotationItems.data as any)?.data ?? []) as QuotationItem[];
+      const currencyFormatter = new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+      });
+
+      const supplyItemsCalculated = rawItems.map((item: QuotationItem) => {
+        const quantity = this.toNumber(item.quantity);
+        const unitPriceBase = this.toNumber(item.unitPrice);
+
+        const x = unitPriceBase * 1.1557;
+        const y = x * 0.70;
+        const z = y / 1.1557;
+        const total = z * quantity;
+
+        return {
+          item: item.item,
+          technicalSpecification: item.technicalSpecification,
+          unitMeasure: item.unitMeasure,
+          quantity: String(parseInt(String(quantity))),
+          unitPrice: currencyFormatter.format(z),
+          total: currencyFormatter.format(total),
+          rawTotal: total,
+        };
+      });
+
+      const laborItemsCalculated = rawItems.map((item: QuotationItem) => {
+        const quantity = this.toNumber(item.quantity);
+        const unitPriceBase = this.toNumber(item.unitPrice);
+
+        const x = unitPriceBase * 1.1557;
+        const y = x * 0.30;
+        const z = y / 1.19;
+        const total = z * quantity;
+
+        return {
+          item: item.item,
+          technicalSpecification: item.technicalSpecification,
+          unitMeasure: item.unitMeasure,
+          quantity: String(parseInt(String(quantity))),
+          unitPrice: currencyFormatter.format(z),
+          total: currencyFormatter.format(total),
+          rawTotal: total,
+        };
+      });
+
+      const supplyUnitValueAIU = supplyItemsCalculated.reduce((acc, item) => acc + item.rawTotal, 0);
+      const supplyAdministration = supplyUnitValueAIU * 0.10;
+      const supplyUnforeseen = supplyUnitValueAIU * 0.02;
+      const supplyUtility = supplyUnitValueAIU * 0.03;
+      const supplyVat = supplyUtility * 0.19;
+      const supplyUnitValueAIUIncluded = supplyUnitValueAIU + supplyAdministration + supplyUnforeseen + supplyUtility + supplyVat;
+
+      const laborUnitValueAIU = laborItemsCalculated.reduce((acc, item) => acc + item.rawTotal, 0);
+      const laborVat = laborUnitValueAIU * 0.19;
+      const laborUnitValueAIUIncluded = laborUnitValueAIU + laborVat;
+
+      const itemNames = rawItems.map((item: QuotationItem) => item.item).join(", ");
+      const technicalSpecifications = rawItems.map((item: QuotationItem) => item.technicalSpecification).join(", ");
+
+      const employeeDb = await this.employeeRepository.findById((quotation.data as any).idResponsable);
+      if (employeeDb instanceof CustomError) {
+        console.error(employeeDb);
+        return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get employee" });
+      }
+
+      const employee = employeeDb.toJSON();
+
+      const response = {
+        items: supplyItemsCalculated.map(({ rawTotal, ...item }) => item),
+        itemsLabor: laborItemsCalculated.map(({ rawTotal, ...item }) => item),
+        client: (quotation.data as any)?.client ?? "",
+        itemNames,
+        policy: (quotation.data as any)?.policy ?? "",
+        quotationName: (quotation.data as any)?.name ?? "",
+        executionTime: (quotation.data as any)?.executionTime ?? "",
+        advance: (quotation.data as any)?.advance ?? "",
+        cuts: (quotation.data as any)?.advance ? 100 - parseInt((quotation.data as any)?.advance) : "",
+        technicalSpecifications,
+        employeeName: employee.User.firstName + " " + employee.User.lastName,
+        employeeEmail: employee.User.email,
+        technicalCondition: (quotation.data as any)?.technicalCondition ?? "",
+        employeePosition: employee.Position.position,
+        date: formatDate(new Date().toISOString().split("T")[0]),
+        dateUntil: formatDate(getNextMonth(new Date().toISOString().split("T")[0])),
+        consecutive: (quotation.data as any)?.consecutive ?? "",
+        project: (quotation.data as any)?.projectName ?? "",
+        unitValueAIU: currencyFormatter.format(supplyUnitValueAIU),
+        administration: currencyFormatter.format(supplyAdministration),
+        unforeseen: currencyFormatter.format(supplyUnforeseen),
+        utility: currencyFormatter.format(supplyUtility),
+        vat: currencyFormatter.format(supplyVat),
+        unitValueAIUIncluded: currencyFormatter.format(supplyUnitValueAIUIncluded),
+        unitValueAIULabor: currencyFormatter.format(laborUnitValueAIU),
+        vatLabor: currencyFormatter.format(laborVat),
+        unitValueAIUIncludedLabor: currencyFormatter.format(laborUnitValueAIUIncluded),
+      };
+
+      doc.render(response);
+      return doc.getZip().generate({ type: "nodebuffer" });
+    } catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get supply and labor quotation report" });
+    }
+  };
+
   findAllQuotations = async (request: dtos.findAllQuotationDTO): Promise<ResponseEntity> => {
     try {
       let page = 1;
@@ -873,6 +1010,38 @@ export class QuotationService {
     quotationComment.comment = quotationCommentData.comment ?? quotationComment.comment;
     quotationComment.createdAt = quotationCommentData.createdAt ?? quotationComment.createdAt;
     return quotationComment;
+  };
+
+  private replaceSecondTablePlaceholders = (documentXml: string): string => {
+    let updatedXml = documentXml;
+
+    updatedXml = this.replaceNthOccurrence(updatedXml, "{{#items}}{{item}}", "{{#itemsLabor}}{{item}}", 2);
+    updatedXml = this.replaceNthOccurrence(updatedXml, "{{total}}{{/items}}", "{{total}}{{/itemsLabor}}", 2);
+    updatedXml = this.replaceNthOccurrence(updatedXml, "{{unitValueAIU}}", "{{unitValueAIULabor}}", 2);
+    updatedXml = this.replaceNthOccurrence(updatedXml, "{{vat}}", "{{vatLabor}}", 2);
+    updatedXml = this.replaceNthOccurrence(updatedXml, "{{unitValueAIUIncluded}}", "{{unitValueAIUIncludedLabor}}", 2);
+
+    return updatedXml;
+  };
+
+  private replaceNthOccurrence = (source: string, search: string, replacement: string, occurrence: number): string => {
+    let fromIndex = 0;
+    let foundAt = -1;
+
+    for (let count = 0; count < occurrence; count++) {
+      foundAt = source.indexOf(search, fromIndex);
+      if (foundAt === -1) {
+        return source;
+      }
+      fromIndex = foundAt + search.length;
+    }
+
+    return source.slice(0, foundAt) + replacement + source.slice(foundAt + search.length);
+  };
+
+  private toNumber = (value: unknown): number => {
+    const parsed = parseFloat(String(value ?? 0));
+    return Number.isFinite(parsed) ? parsed : 0;
   };
 
   private buildQuotation = (quotation: Quotation, quotationData: dtos.UpdateQuotationDTO) => {

@@ -19,8 +19,11 @@ export function revenueCenterRoutes(app: Application): void {
   const revenueCenterController = new RevenueCenterController(revenueCenterService);
 
   routes.get("/v1/revenue-center", [verifyToken], revenueCenterController.findAll);
-  routes.get("/v1/revenue-center-withStatus", [verifyToken], revenueCenterController.findAllWith);
-  routes.get("/v1/revenue-center-inactives", [verifyToken], revenueCenterController.findAllInactives);
+  // routes.get("/v1/revenue-center-withStatus", [verifyToken], revenueCenterController.findAllWith);
+  // routes.get("/v1/revenue-center-inactives", [verifyToken], revenueCenterController.findAllInactives);
+  routes.get("/v1/revenue-center-inactive-history", [verifyToken], revenueCenterController.findAllInactiveHistory);
+  routes.get("/v1/revenue-center-liquidation-history", [verifyToken], revenueCenterController.findAllLiquidationHistory);
+  routes.get("/v1/revenue-center-retention-guarantee-history", [verifyToken], revenueCenterController.findAllRetentionGuaranteeHistory);
   routes.get("/v1/revenue-center/status", [verifyToken], revenueCenterController.findAllRevenueCenterStatus);
   routes.post("/v1/revenue-center", [verifyToken], revenueCenterController.create);
   routes.patch("/v1/revenue-center", [verifyToken], revenueCenterController.update);
