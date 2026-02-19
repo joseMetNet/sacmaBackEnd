@@ -32,6 +32,7 @@ export function quotationRoute(app: Application): void {
   router.post("/v1/quotation-additional-cost", quotationController.createQuotationAdditionalCost);
   router.post("/v1/quotation/generate-docx/:idQuotation", quotationController.generateQuotationDocx);
   router.post("/v1/quotation/generate-docx-suministro-mano-obra/:idQuotation", quotationController.generateQuotationSupplyLaborDocx);
+  router.post("/v1/quotation/generate-docx-suministro-mano-obra-v2/:idQuotation", quotationController.generateQuotationSupplyLaborDocxV2);
 
   // PATCH routes
   router.patch("/v1/quotation", quotationController.updateQuotation);
@@ -654,6 +655,64 @@ export function quotationRoute(app: Application): void {
   *           schema:
   *             $ref: "#/components/schemas/failedResponse"
   */
+
+/**
+ * @openapi
+ * /v1/quotation/generate-docx-suministro-mano-obra/{idQuotation}:
+ *   post:
+ *     tags: [Quotation]
+ *     summary: Generate a Supply and Labor Quotation in DOCX format
+ *     parameters:
+ *       - in: path
+ *         name: idQuotation
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the Quotation to generate
+ *     responses:
+ *       '200':
+ *         description: Successful response
+ *         content:
+ *           application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       '500':
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/failedResponse"
+ */
+
+/**
+ * @openapi
+ * /v1/quotation/generate-docx-suministro-mano-obra-v2/{idQuotation}:
+ *   post:
+ *     tags: [Quotation]
+ *     summary: Generate a Supply and Labor Quotation DOCX (V2 detailed calculation)
+ *     parameters:
+ *       - in: path
+ *         name: idQuotation
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the Quotation to generate
+ *     responses:
+ *       '200':
+ *         description: Successful response
+ *         content:
+ *           application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       '500':
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/failedResponse"
+ */
 
 /**
  * @openapi
