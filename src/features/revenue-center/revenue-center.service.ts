@@ -9,6 +9,7 @@ import { CostCenterRepository } from "../cost-center/cost-center.repository";
 import { QuotationRepository } from "../quotation/quotation.repository";
 import { InvoiceRepository } from "../invoice/invoice.repository";
 import { InvoiceProjectItem } from "../invoice";
+import { findRevenueCenterInAnyTable } from "../../utils/helper";
 
 export class RevenueCenterService {
   private readonly revenueCenterRepository: RevenueCenterRepository;
@@ -29,99 +30,6 @@ export class RevenueCenterService {
     this.quotationRepository = quotationRepository;
     this.invoiceRepository = invoiceRepository;
   }
-
-  // //esta es una funcion alterna la cual en el front tienes que enviar los estados ya sea 2,4 o 5 en la 
-  // // ruta  http://localhost:8080/api/v1/revenue-center?page=1&pageSize=10&idRevenueCenterStatus=1,2,3
-  // // ademas el estado 1 ya esta configurado en la validacion pero se demora mas en cargar
-  // findAllWith = async (request: schemas.FindAllSchema): Promise<ResponseEntity> => {
-  //   try {
-  //     const { page, pageSize, limit, offset } = findPagination(request);
-  //     const filter = this.buildFilter(request);
-  //     if (!request.idRevenueCenterStatus) {
-  //       filter.idRevenueCenterStatus = 4;
-  //     }
-
-  //     // Fetch data concurrently
-  //     const [revenueCenters, inputs, expenditures, invoiceTotals, workTrackingTotals] = await Promise.all([
-  //       this.revenueCenterRepository.findAll(limit, offset, filter),
-  //       this.revenueCenterRepository.findInputValues(),
-  //       this.expenditureRepository.findAllValues(),
-  //       this.invoiceRepository.findAllTotalsByRevenueCenter(), //  nuevo método
-  //       this.revenueCenterRepository.findAllWorkTrackingTotals(), //  nuevo método
-  //     ]);
-
-  //     // Agrupar inputs + expenditures por proyecto
-  //     const groupedSpend = [...inputs, ...expenditures].reduce<Record<number, number>>(
-  //       (acc, curr) => {
-  //         const key = curr.idCostCenterProject;
-  //         acc[key] = (acc[key] || 0) + curr.totalValue;
-  //         return acc;
-  //       },
-  //       {}
-  //     );
-
-  //     // Agrupar invoices (totalAcumulado) por revenueCenter
-  //     const groupedInvoice = invoiceTotals.reduce<Record<number, number>>((acc, curr) => {
-  //       acc[curr.idRevenueCenter] = curr.totalAcumulado;
-  //       return acc;
-  //     }, {});
-
-  //     // Agrupar workTrackingTotals por revenueCenter
-  //     const groupedWorkTracking = workTrackingTotals.reduce<Record<number, number>>((acc, curr) => {
-  //       acc[curr.idRevenueCenter] = curr.totalWorkTracking;
-  //       return acc;
-  //     }, {});
-
-  //     // Construir respuesta fila por fila
-  //     const rows = revenueCenters.rows.map((revenueCenter: any) => {
-  //       const spendInputs = groupedSpend[revenueCenter.idCostCenterProject] || 0;
-  //       console.log("TOTAL DEL  MANO DE OBRA MATERIALES:", spendInputs);
-  //       const workTracking = groupedWorkTracking[revenueCenter.idRevenueCenter] || 0;
-  //       console.log("TOTAL DEL  MANO DE OBRA :", workTracking);
-
-  //       const spend = spendInputs + workTracking; //  inputs + expenditures + workTracking
-  //       console.log("TOTAL GENERAL DE LA MANO DE OBRA:", spend);
-  //       // const spend = groupedSpend[revenueCenter.idCostCenterProject] || 0;
-  //       const invoice = groupedInvoice[revenueCenter.idRevenueCenter] || 0;
-
-  //       // const utility = invoice - spend;
-  //       // const utility = (invoice - spend) / (invoice === 0 ? 1 : invoice) * 100; // Evitar división por cero
-  //       // const utility = ((invoice - spend) / invoice )* 100;
-  //       const utility = invoice - spend / invoice * 100;
-
-  //       return {
-  //         idRevenueCenter: revenueCenter.idRevenueCenter,
-  //         name: revenueCenter.name,
-  //         idCostCenterProject: revenueCenter.idCostCenterProject,
-  //         idRevenueCenterStatus: revenueCenter.idRevenueCenterStatus,
-  //         idQuotation: revenueCenter.idQuotation,
-  //         fromDate: revenueCenter.fromDate,
-  //         toDate: revenueCenter.toDate,
-  //         createdAt: revenueCenter.createdAt,
-  //         updatedAt: revenueCenter.updatedAt,
-  //         invoice: invoice.toString(),
-  //         spend: spend.toString(),
-  //         utility: utility.toString(),
-  //         CostCenterProject: revenueCenter.toJSON().CostCenterProject,
-  //       };
-  //     });
-
-  //     // Respuesta final
-  //     const response = {
-  //       data: rows,
-  //       totalItems: revenueCenters.count,
-  //       currentPage: page,
-  //       totalPage: Math.ceil(revenueCenters.count / pageSize),
-  //     };
-
-  //     return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
-  //   } catch (error) {
-  //     console.error("An error occurred while trying to find all revenue centers", error);
-  //     return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-  //       message: "An error occurred while trying to find all revenue centers",
-  //     });
-  //   }
-  // };
 
   findAll = async (request: schemas.FindAllSchema): Promise<ResponseEntity> => {
     try {
@@ -160,22 +68,51 @@ export class RevenueCenterService {
         return acc;
       }, {});
 
+      // Construir respuesta fila por fila y persistir cálculos y actualizar la BD invoice, spend y utility
+      // const rows = await Promise.all(revenueCenters.rows.map(async (revenueCenter: any) => {
+      //   const spendInputs = groupedSpend[revenueCenter.idCostCenterProject] || 0;
+      //   const workTracking = groupedWorkTracking[revenueCenter.idRevenueCenter] || 0;
+      //   const spend = spendInputs + workTracking; //  inputs + expenditures + workTracking
+      //   const invoice = groupedInvoice[revenueCenter.idRevenueCenter] || 0;
+
+      //   const utility = invoice === 0 ? 0 : ((invoice - spend) / invoice) * 100; // Manejar caso de invoice = 0
+      //   // const utilityPercentage = invoice === 0 ? 0 : invoice - spend / invoice * 100;
+      //   // const utility = Number.isFinite(utilityPercentage) ? Number(utilityPercentage.toFixed(4)) : 0;
+
+      //   await this.revenueCenterRepository.update(revenueCenter.idRevenueCenter, {
+      //     invoice: invoice.toString(),
+      //     spend: spend.toString(),
+      //     utility: utility.toString(),
+      //   });
+
+      //   return {
+      //     idRevenueCenter: revenueCenter.idRevenueCenter,
+      //     name: revenueCenter.name,
+      //     idCostCenterProject: revenueCenter.idCostCenterProject,
+      //     idRevenueCenterStatus: revenueCenter.idRevenueCenterStatus,
+      //     idQuotation: revenueCenter.idQuotation,
+      //     fromDate: revenueCenter.fromDate,
+      //     toDate: revenueCenter.toDate,
+      //     createdAt: revenueCenter.createdAt,
+      //     updatedAt: revenueCenter.updatedAt,
+      //     invoice: invoice.toString(),
+      //     spend: spend.toString(),
+      //     utility: utility.toString(),
+      //     CostCenterProject: revenueCenter.toJSON().CostCenterProject,
+      //   };
+      // }));
+
       // Construir respuesta fila por fila
       const rows = revenueCenters.rows.map((revenueCenter: any) => {
         const spendInputs = groupedSpend[revenueCenter.idCostCenterProject] || 0;
-        // console.log("TOTAL DEL  MANO DE OBRA MATERIALES:", spendInputs);
         const workTracking = groupedWorkTracking[revenueCenter.idRevenueCenter] || 0;
-        // console.log("TOTAL DEL  MANO DE OBRA :", workTracking);
-
         const spend = spendInputs + workTracking; //  inputs + expenditures + workTracking
-        // console.log("TOTAL GENERAL DE LA MANO DE OBRA:", spend);
         // const spend = groupedSpend[revenueCenter.idCostCenterProject] || 0;
         const invoice = groupedInvoice[revenueCenter.idRevenueCenter] || 0;
-
         // const utility = invoice - spend;
         // const utility = (invoice - spend) / (invoice === 0 ? 1 : invoice) * 100; // Evitar división por cero
-
         const utility = invoice - spend / invoice * 100;
+        // const utility = ((invoice - spend) / invoice) * 100;
 
         return {
           idRevenueCenter: revenueCenter.idRevenueCenter,
@@ -193,7 +130,7 @@ export class RevenueCenterService {
           CostCenterProject: revenueCenter.toJSON().CostCenterProject,
         };
       });
-
+      
       // Respuesta final
       const response = {
         data: rows,
@@ -249,190 +186,6 @@ export class RevenueCenterService {
       });
     }
   };
-
-  // findAllAndSaveInvoiceSpendUtility = async (request: schemas.FindAllSchema): Promise<ResponseEntity> => {
-  //   try {
-  //     const { page, pageSize, limit, offset } = findPagination(request);
-  //     const filter = this.buildFilter(request);
-  //     // filter.idRevenueCenterStatus = 1;
-
-  //     // Fetch data concurrently
-  //     const [revenueCenters, inputs, expenditures, invoiceTotals, workTrackingTotals] = await Promise.all([
-  //       this.revenueCenterRepository.findAll(limit, offset, filter),
-  //       this.revenueCenterRepository.findInputValues(),
-  //       this.expenditureRepository.findAllValues(),
-  //       this.invoiceRepository.findAllTotalsByRevenueCenter(), //  nuevo método
-  //       this.revenueCenterRepository.findAllWorkTrackingTotals(), //  nuevo método
-  //     ]);
-
-  //     // Agrupar inputs + expenditures por proyecto
-  //     const groupedSpend = [...inputs, ...expenditures].reduce<Record<number, number>>(
-  //       (acc, curr) => {
-  //         const key = curr.idCostCenterProject;
-  //         acc[key] = (acc[key] || 0) + curr.totalValue;
-  //         return acc;
-  //       },
-  //       {}
-  //     );
-
-  //     // Agrupar invoices (totalAcumulado) por revenueCenter
-  //     const groupedInvoice = invoiceTotals.reduce<Record<number, number>>((acc, curr) => {
-  //       acc[curr.idRevenueCenter] = curr.totalAcumulado;
-  //       return acc;
-  //     }, {});
-
-  //     // Agrupar workTrackingTotals por revenueCenter
-  //     const groupedWorkTracking = workTrackingTotals.reduce<Record<number, number>>((acc, curr) => {
-  //       acc[curr.idRevenueCenter] = curr.totalWorkTracking;
-  //       return acc;
-  //     }, {});
-
-  //     // Construir respuesta fila por fila y persistir cálculos
-  //     const rows = await Promise.all(revenueCenters.rows.map(async (revenueCenter: any) => {
-  //       const spendInputs = groupedSpend[revenueCenter.idCostCenterProject] || 0;
-  //       // console.log("TOTAL DEL  MANO DE OBRA MATERIALES:", spendInputs);
-  //       const workTracking = groupedWorkTracking[revenueCenter.idRevenueCenter] || 0;
-  //       // console.log("TOTAL DEL  MANO DE OBRA :", workTracking);
-
-  //       const spend = spendInputs + workTracking; //  inputs + expenditures + workTracking
-  //       // console.log("TOTAL GENERAL DE LA MANO DE OBRA:", spend);
-  //       // const spend = groupedSpend[revenueCenter.idCostCenterProject] || 0;
-  //       const invoice = groupedInvoice[revenueCenter.idRevenueCenter] || 0;
-
-  //       // const utility = invoice - spend;
-  //       // const utility = (invoice - spend) / (invoice === 0 ? 1 : invoice) * 100; // Evitar división por cero
-
-  //       // const utility = invoice - spend / invoice * 100;
-  //       const utility = ((invoice - spend) / invoice) * 100; // en porcentaje
-
-  //       await this.revenueCenterRepository.update(revenueCenter.idRevenueCenter, {
-  //         invoice: invoice.toString(),
-  //         spend: spend.toString(),
-  //         utility: utility.toString(),
-  //       });
-
-  //       return {
-  //         idRevenueCenter: revenueCenter.idRevenueCenter,
-  //         name: revenueCenter.name,
-  //         idCostCenterProject: revenueCenter.idCostCenterProject,
-  //         idRevenueCenterStatus: revenueCenter.idRevenueCenterStatus,
-  //         idQuotation: revenueCenter.idQuotation,
-  //         fromDate: revenueCenter.fromDate,
-  //         toDate: revenueCenter.toDate,
-  //         createdAt: revenueCenter.createdAt,
-  //         updatedAt: revenueCenter.updatedAt,
-  //         invoice: invoice.toString(),
-  //         spend: spend.toString(),
-  //         utility: utility.toString(),
-  //         CostCenterProject: revenueCenter.toJSON().CostCenterProject,
-  //       };
-  //     }));
-
-  //     // Respuesta final
-  //     const response = {
-  //       data: rows,
-  //       totalItems: revenueCenters.count,
-  //       currentPage: page,
-  //       totalPage: Math.ceil(revenueCenters.count / pageSize),
-  //     };
-
-  //     return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
-  //   } catch (error) {
-  //     console.error("An error occurred while trying to find all revenue centers", error);
-  //     return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-  //       message: "An error occurred while trying to find all revenue centers",
-  //     });
-  //   }
-  // };
-
-
-  // findAllInactives = async (request: schemas.FindAllSchema): Promise<ResponseEntity> => {
-  //   try {
-  //     const { page, pageSize, limit, offset } = findPagination(request);
-  //     const filter = this.buildFilter(request);
-  //     filter.idRevenueCenterStatus = 2;
-
-  //     // Fetch data concurrently
-  //     const [revenueCenters, inputs, expenditures, invoiceTotals, workTrackingTotals] = await Promise.all([
-  //       this.revenueCenterRepository.findAll(limit, offset, filter),
-  //       this.revenueCenterRepository.findInputValues(),
-  //       this.expenditureRepository.findAllValues(),
-  //       this.invoiceRepository.findAllTotalsByRevenueCenter(), //  nuevo método
-  //       this.revenueCenterRepository.findAllWorkTrackingTotals(), //  nuevo método
-  //     ]);
-
-  //     // Agrupar inputs + expenditures por proyecto
-  //     const groupedSpend = [...inputs, ...expenditures].reduce<Record<number, number>>(
-  //       (acc, curr) => {
-  //         const key = curr.idCostCenterProject;
-  //         acc[key] = (acc[key] || 0) + curr.totalValue;
-  //         return acc;
-  //       },
-  //       {}
-  //     );
-
-  //     // Agrupar invoices (totalAcumulado) por revenueCenter
-  //     const groupedInvoice = invoiceTotals.reduce<Record<number, number>>((acc, curr) => {
-  //       acc[curr.idRevenueCenter] = curr.totalAcumulado;
-  //       return acc;
-  //     }, {});
-
-  //     // Agrupar workTrackingTotals por revenueCenter
-  //     const groupedWorkTracking = workTrackingTotals.reduce<Record<number, number>>((acc, curr) => {
-  //       acc[curr.idRevenueCenter] = curr.totalWorkTracking;
-  //       return acc;
-  //     }, {});
-
-  //     // Construir respuesta fila por fila
-  //     const rows = revenueCenters.rows.map((revenueCenter: any) => {
-  //       const spendInputs = groupedSpend[revenueCenter.idCostCenterProject] || 0;
-  //       console.log("TOTAL DEL  MANO DE OBRA MATERIALES:", spendInputs);
-  //       const workTracking = groupedWorkTracking[revenueCenter.idRevenueCenter] || 0;
-  //       console.log("TOTAL DEL  MANO DE OBRA :", workTracking);
-
-  //       const spend = spendInputs + workTracking; //  inputs + expenditures + workTracking
-  //       console.log("TOTAL GENERAL DE LA MANO DE OBRA:", spend);
-  //       // const spend = groupedSpend[revenueCenter.idCostCenterProject] || 0;
-  //       const invoice = groupedInvoice[revenueCenter.idRevenueCenter] || 0;
-
-  //       // const utility = invoice - spend;
-  //       // const utility = (invoice - spend) / (invoice === 0 ? 1 : invoice) * 100; // Evitar división por cero
-
-  //       const utility = invoice - spend / invoice * 100;
-
-  //       return {
-  //         idRevenueCenter: revenueCenter.idRevenueCenter,
-  //         name: revenueCenter.name,
-  //         idCostCenterProject: revenueCenter.idCostCenterProject,
-  //         idRevenueCenterStatus: revenueCenter.idRevenueCenterStatus,
-  //         idQuotation: revenueCenter.idQuotation,
-  //         fromDate: revenueCenter.fromDate,
-  //         toDate: revenueCenter.toDate,
-  //         createdAt: revenueCenter.createdAt,
-  //         updatedAt: revenueCenter.updatedAt,
-  //         invoice: invoice.toString(),
-  //         spend: spend.toString(),
-  //         utility: utility.toString(),
-  //         CostCenterProject: revenueCenter.toJSON().CostCenterProject,
-  //       };
-  //     });
-
-  //     // Respuesta final
-  //     const response = {
-  //       data: rows,
-  //       totalItems: revenueCenters.count,
-  //       currentPage: page,
-  //       totalPage: Math.ceil(revenueCenters.count / pageSize),
-  //     };
-
-  //     return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
-  //   } catch (error) {
-  //     console.error("An error occurred while trying to find all revenue centers", error);
-  //     return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
-  //       message: "An error occurred while trying to find all revenue centers",
-  //     });
-  //   }
-  // };
 
   findAllInactiveHistory = async (request: schemas.FindAllSchema): Promise<ResponseEntity> => {
     try {
@@ -549,9 +302,9 @@ export class RevenueCenterService {
         toDate: revenueCenter.toDate,
         createdAt: revenueCenter.createdAt,
         updatedAt: revenueCenter.updatedAt,
-        invoice: revenueCenter.invoice,   // ✅ directo de la BD
-        spend: revenueCenter.spend,       // ✅ directo de la BD
-        utility: revenueCenter.utility,   // ✅ directo de la BD
+        invoice: revenueCenter.invoice,
+        spend: revenueCenter.spend,
+        utility: revenueCenter.utility,
         CostCenterProject: revenueCenter.toJSON().CostCenterProject,
       }));
 
@@ -627,7 +380,13 @@ export class RevenueCenterService {
 
   findById = async (idRevenueCenter: number): Promise<ResponseEntity> => {
     try {
-      const revenueCenter = await this.revenueCenterRepository.findById(idRevenueCenter);
+      const revenueCenter = await findRevenueCenterInAnyTable(
+        idRevenueCenter,
+        this.revenueCenterRepository.findById.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdInacitve.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdGuarantees.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdLiquidates.bind(this.revenueCenterRepository),
+      );
       if (!revenueCenter) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Revenue center not found" });
       }
@@ -694,7 +453,12 @@ export class RevenueCenterService {
       const workTracking = groupedWorkTracking[revenueCenter.idRevenueCenter] || 0;
       const spend = spendInputs + workTracking;
       const invoice = groupedInvoice[revenueCenter.idRevenueCenter] || 0;
-      const utility = invoice === 0 ? 0 : invoice - (spend / invoice) * 100;
+
+      // const utility = invoice === 0 ? 0 : invoice - (spend / invoice) * 100; // Manejar caso de invoice = 0
+
+      const utility = invoice === 0 ? 0 : ((invoice - spend) / invoice) * 100;
+      // const utilityPercentage = invoice === 0 ? 0 : ((invoice - spend) / invoice) * 100;
+      // const utility = Number.isFinite(utilityPercentage) ? Number(utilityPercentage.toFixed(4)) : 0;
 
       // Opcional: persistir el valor calculado en la BD
       await this.revenueCenterRepository.update(revenueCenter.idRevenueCenter, {
@@ -718,14 +482,6 @@ export class RevenueCenterService {
         spend: spend.toString(),       //  ya viene del cálculo
         utility: utility.toString(),
       };
-
-      // console.log("🔍 groupedSpend:", groupedSpend);
-      // console.log("🔍 groupedWorkTracking:", groupedWorkTracking);
-      // console.log("🔍 groupedInvoice:", groupedInvoice);
-      // console.log("🔍 Buscando id:", revenueCenter.idCostCenterProject);
-      // console.log("🔍 Valor encontrado:", groupedSpend[revenueCenter.idCostCenterProject]);
-      // console.log("🔍 workTracking encontrado:", groupedWorkTracking[revenueCenter.idRevenueCenter]);
-      // console.log("🔍 invoice encontrado:", groupedInvoice[revenueCenter.idRevenueCenter]);
 
       return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, response);
     } catch (error) {
@@ -906,6 +662,51 @@ export class RevenueCenterService {
     }
   };
 
+  deleteInactive = async (idRevenueCenter: number): Promise<ResponseEntity> => {
+    try {
+      const revenueCenter = await this.revenueCenterRepository.findByIdInacitve(idRevenueCenter);
+      if (!revenueCenter) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Revenue center not found" });
+      }
+
+      await this.revenueCenterRepository.deleteInactives(idRevenueCenter);
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Revenue center deleted successfully" });
+    } catch (error) {
+      console.error("An error occurred while trying to delete revenue center", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to delete revenue center" });
+    }
+  };
+
+  deleteGuarantees = async (idRevenueCenter: number): Promise<ResponseEntity> => {
+    try {
+      const revenueCenter = await this.revenueCenterRepository.findByIdGuarantees(idRevenueCenter);
+      if (!revenueCenter) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Revenue center not found" });
+      }
+
+      await this.revenueCenterRepository.deleteGuarantees(idRevenueCenter);
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Revenue center deleted successfully" });
+    } catch (error) {
+      console.error("An error occurred while trying to delete revenue center", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to delete revenue center" });
+    }
+  };
+
+  deleteliquidates = async (idRevenueCenter: number): Promise<ResponseEntity> => {
+    try {
+      const revenueCenter = await this.revenueCenterRepository.findByIdLiquidates(idRevenueCenter);
+      if (!revenueCenter) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Revenue center not found" });
+      }
+
+      await this.revenueCenterRepository.deleteliquidates(idRevenueCenter);
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, { message: "Revenue center deleted successfully" });
+    } catch (error) {
+      console.error("An error occurred while trying to delete revenue center", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "An error occurred while trying to delete revenue center" });
+    }
+  };
+
   findAllMaterial = async (request: schemas.FindAllMaterialSchema): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);
@@ -977,7 +778,13 @@ export class RevenueCenterService {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);
       // Get the revenue center to obtain cost center project
-      const revenueCenter = await this.revenueCenterRepository.findById(request.idRevenueCenter);
+      const revenueCenter = await findRevenueCenterInAnyTable(
+        request.idRevenueCenter,
+        this.revenueCenterRepository.findById.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdInacitve.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdGuarantees.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdLiquidates.bind(this.revenueCenterRepository),
+      );
       if (!revenueCenter) {
         return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
           data: [],
@@ -1030,7 +837,13 @@ export class RevenueCenterService {
       const { page, pageSize, limit, offset } = findPagination(request);
       const allowedExpenditureTypeIds = [2, 24, 26, 29, 30, 53];
 
-      const revenueCenter = await this.revenueCenterRepository.findById(request.idRevenueCenter);
+      const revenueCenter = await findRevenueCenterInAnyTable(
+        request.idRevenueCenter,
+        this.revenueCenterRepository.findById.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdInacitve.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdGuarantees.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdLiquidates.bind(this.revenueCenterRepository),
+      );
       if (!revenueCenter) {
         return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
           data: [],
@@ -1043,7 +856,6 @@ export class RevenueCenterService {
 
       const filter = {
         idCostCenterProject: revenueCenter.idCostCenterProject,
-        idExpenditureType: allowedExpenditureTypeIds,
       };
 
       const allExpenditures = await this.expenditureRepository.findAll(999999, 0, filter);
@@ -1054,6 +866,10 @@ export class RevenueCenterService {
         const currentValue = parseFloat(item.value || "0");
         const expenditureTypeName = jsonItem.ExpenditureType?.expenditureType || "Sin tipo";
         const projectName = jsonItem.CostCenterProject?.name || "";
+
+        if (!allowedExpenditureTypeIds.includes(typeId)) {
+          return acc;
+        }
 
         if (!acc[typeId]) {
           acc[typeId] = {
@@ -1073,7 +889,36 @@ export class RevenueCenterService {
         return acc;
       }, {});
 
+      const others = allExpenditures.rows.reduce(
+        (acc: { expenditureType: string; value: number; totalValue: number; projectName: string }, item: any) => {
+          if (allowedExpenditureTypeIds.includes(item.idExpenditureType)) {
+            return acc;
+          }
+
+          const jsonItem = item.toJSON();
+          const currentValue = parseFloat(item.value || "0");
+          const projectName = jsonItem.CostCenterProject?.name || "";
+
+          acc.value += currentValue;
+          acc.totalValue += currentValue;
+          if (!acc.projectName && projectName) {
+            acc.projectName = projectName;
+          }
+
+          return acc;
+        },
+        {
+          expenditureType: "others",
+          value: 0,
+          totalValue: 0,
+          projectName: "",
+        }
+      );
+
       const groupedRows = Object.values(groupedByType);
+      if (others.totalValue > 0) {
+        groupedRows.push(others);
+      }
       const paginatedRows = limit === -1 ? groupedRows : groupedRows.slice(offset, offset + limit);
       const total = groupedRows.reduce((acc, curr) => acc + curr.totalValue, 0);
 
@@ -1127,7 +972,13 @@ export class RevenueCenterService {
       const { page, pageSize, limit, offset } = findPagination(request);
 
       // First, find the revenue center to get the idCostCenterProject
-      const revenueCenter = await this.revenueCenterRepository.findById(request.idRevenueCenter);
+      const revenueCenter = await findRevenueCenterInAnyTable(
+        request.idRevenueCenter,
+        this.revenueCenterRepository.findById.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdInacitve.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdGuarantees.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdLiquidates.bind(this.revenueCenterRepository),
+      );
       if (!revenueCenter) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
           message: "Revenue center not found"
@@ -1170,19 +1021,26 @@ export class RevenueCenterService {
     try {
       const { page, pageSize, limit, offset } = findPagination(request);
 
-      // 1️⃣ Buscar el revenue center
-      const revenueCenter = await this.revenueCenterRepository.findById(request.idRevenueCenter);
+      //  Buscar el revenue center
+      const revenueCenter = await findRevenueCenterInAnyTable(
+        request.idRevenueCenter,
+        this.revenueCenterRepository.findById.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdInacitve.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdGuarantees.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdLiquidates.bind(this.revenueCenterRepository),
+      );
+
       if (!revenueCenter) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
           message: "Revenue center not found"
         });
       }
 
-      // 2️⃣ Buscar los items por idCostCenterProject
+      //  Buscar los items por idCostCenterProject
       const filter = { idCostCenterProject: revenueCenter.idCostCenterProject };
       const data = await this.costCenterRepository.findAllProjectItem(filter, limit, offset);
 
-      // 3️⃣ Transformar los resultados base
+      //  Transformar los resultados base
       const rows = data.rows.map((item) => ({
         idProjectItem: item.idProjectItem,
         contract: item.contract,
@@ -1193,7 +1051,7 @@ export class RevenueCenterService {
         total: (parseFloat(item.quantity) * (parseFloat(item.quantity) * parseFloat(item.unitPrice)) * 1.1557).toFixed(2),
       }));
 
-      // 4️⃣ Agrupar por contrato
+      //  Agrupar por contrato
       const groupedByContract = rows.reduce((acc: any, curr: any) => {
         const contract = curr.contract;
         if (!acc[contract]) {
@@ -1209,16 +1067,16 @@ export class RevenueCenterService {
         return acc;
       }, {});
 
-      // 5️⃣ Convertir el objeto en un array
+      //  Convertir el objeto en un array
       const contracts = Object.values(groupedByContract);
 
-      // 6️⃣ Calcular totales generales
+      // Calcular totales generales
       const totalGeneral = contracts.reduce(
         (acc: number, curr: any) => acc + curr.totalValueContract,
         0
       );
 
-      // 7️⃣ Construir la respuesta final
+      //  Construir la respuesta final
       const response = {
         contracts,
         totalContracts: contracts.length,
@@ -1275,7 +1133,13 @@ export class RevenueCenterService {
   findAllInvoiceSummaryEfrain = async (request: schemas.FindAllInvoiceSummarySchema): Promise<ResponseEntity> => {
     try {
       // First, find the revenue center to get the idCostCenterProject
-      const revenueCenter = await this.revenueCenterRepository.findById(request.idRevenueCenter);
+      const revenueCenter = await findRevenueCenterInAnyTable(
+        request.idRevenueCenter,
+        this.revenueCenterRepository.findById.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdInacitve.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdGuarantees.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdLiquidates.bind(this.revenueCenterRepository),
+      );
       if (!revenueCenter) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
           message: "Revenue center not found"
@@ -1351,8 +1215,12 @@ export class RevenueCenterService {
   ): Promise<ResponseEntity> => {
     try {
       // Buscar revenue center
-      const revenueCenter = await this.revenueCenterRepository.findById(
-        request.idRevenueCenter
+      const revenueCenter = await findRevenueCenterInAnyTable(
+        request.idRevenueCenter,
+        this.revenueCenterRepository.findById.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdInacitve.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdGuarantees.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdLiquidates.bind(this.revenueCenterRepository),
       );
       if (!revenueCenter) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
@@ -1488,8 +1356,12 @@ export class RevenueCenterService {
   ): Promise<ResponseEntity> => {
     try {
       // Buscar revenue center
-      const revenueCenter = await this.revenueCenterRepository.findById(
-        request.idRevenueCenter
+      const revenueCenter = await findRevenueCenterInAnyTable(
+        request.idRevenueCenter,
+        this.revenueCenterRepository.findById.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdInacitve.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdGuarantees.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdLiquidates.bind(this.revenueCenterRepository),
       );
       if (!revenueCenter) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
@@ -1639,8 +1511,12 @@ export class RevenueCenterService {
   ): Promise<ResponseEntity> => {
     try {
       // Buscar revenue center
-      const revenueCenter = await this.revenueCenterRepository.findById(
-        request.idRevenueCenter
+      const revenueCenter = await findRevenueCenterInAnyTable(
+        request.idRevenueCenter,
+        this.revenueCenterRepository.findById.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdInacitve.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdGuarantees.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdLiquidates.bind(this.revenueCenterRepository),
       );
       if (!revenueCenter) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
@@ -1791,9 +1667,14 @@ export class RevenueCenterService {
   ): Promise<ResponseEntity> => {
     try {
       // Buscar revenue center
-      const revenueCenter = await this.revenueCenterRepository.findById(
-        request.idRevenueCenter
+      const revenueCenter = await findRevenueCenterInAnyTable(
+        request.idRevenueCenter,
+        this.revenueCenterRepository.findById.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdInacitve.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdGuarantees.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdLiquidates.bind(this.revenueCenterRepository),
       );
+
       if (!revenueCenter) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, {
           message: "Revenue center not found",
@@ -1970,7 +1851,13 @@ export class RevenueCenterService {
       console.log("RESPUESTA DE idRevenueCenter", request);
 
       // Step 1: Find the revenue center to get the idQuotation
-      const revenueCenter = await this.revenueCenterRepository.findById(request.idRevenueCenter);
+      const revenueCenter = await findRevenueCenterInAnyTable(
+        request.idRevenueCenter,
+        this.revenueCenterRepository.findById.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdInacitve.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdGuarantees.bind(this.revenueCenterRepository),
+        this.revenueCenterRepository.findByIdLiquidates.bind(this.revenueCenterRepository),
+      );
       if (!revenueCenter) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Revenue center not found" });
       }

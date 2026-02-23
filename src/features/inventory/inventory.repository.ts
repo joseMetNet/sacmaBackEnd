@@ -37,6 +37,21 @@ interface MaterialSummaryResult {
 }
 
 export class InventoryRepository {
+  private buildRevenueCenterAnyTableSql = (alias: string): string => `
+    (
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter
+      UNION ALL
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter_Inactive
+      UNION ALL
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter_RetentionGuarantee
+      UNION ALL
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter_Liquidation
+    ) ${alias}
+  `;
 
   // ============================================================================
   // Stored Procedures - Operaciones principales
@@ -505,10 +520,12 @@ export class InventoryRepository {
     offset?: number
   ): Promise<{ rows: MaterialSummaryResult[]; count: number }> {
     try {
+      const revenueCenterSource = this.buildRevenueCenterAnyTableSql("trc");
+
       // Primero obtenemos el idQuotation desde TB_RevenueCenter
       const revenueCenterQuery = `
         SELECT TOP 1 idQuotation 
-        FROM mvp1.TB_RevenueCenter 
+        FROM ${revenueCenterSource}
         WHERE idCostCenterProject = :idCostCenterProject
       `;
 
@@ -527,7 +544,7 @@ export class InventoryRepository {
           FROM mvp1.TB_OrderItemDetail toid
           INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
           INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
-          INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idCostCenterProject = toi.idCostCenterProject
+          INNER JOIN ${revenueCenterSource} ON trc.idCostCenterProject = toi.idCostCenterProject
           WHERE trc.idCostCenterProject = :idCostCenterProject AND ti.idInputType = 1
           GROUP BY ti.idInput, ti.name, ti.performance
         )
@@ -647,7 +664,7 @@ export class InventoryRepository {
           FROM mvp1.TB_OrderItemDetail toid
           INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
           INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
-          INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idCostCenterProject = toi.idCostCenterProject
+          INNER JOIN ${revenueCenterSource} ON trc.idCostCenterProject = toi.idCostCenterProject
           WHERE trc.idCostCenterProject = :idCostCenterProject AND ti.idInputType = 1
           GROUP BY ti.idInput, ti.name, ti.performance
         ),

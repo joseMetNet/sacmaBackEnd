@@ -6,8 +6,27 @@ import { dbConnection } from "../../config";
 import { RevenueCenterStatus } from "./revenue-center-status-model";
 import { RelationsProjectItemsMaterialInvoice } from "./relations-project-items-material-invoice.model";
 import { DetailPriceInventoryCostCenter } from "../inventory/detail-price-inventory-cost-center.model";
+import { RevenueCenterInactive } from "./revenue-center-inactive.model";
+import { RevenueCenterRetentionGuarantee } from "./revenue-center-guarantess.model";
+import { RevenueCenterLiquidation } from "./revenue-center-liquidates.model";
 
 export class RevenueCenterRepository {
+  private buildRevenueCenterAnyTableSql = (alias: string): string => `
+    (
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter
+      UNION ALL
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter_Inactive
+      UNION ALL
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter_RetentionGuarantee
+      UNION ALL
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter_Liquidation
+    ) ${alias}
+  `;
+
   findAll = (
     limit: number,
     offset: number,
@@ -38,6 +57,15 @@ export class RevenueCenterRepository {
 
   async findById(idRevenueCenter: number): Promise<IRevenueCenter | null> {
     return await RevenueCenter.findByPk(idRevenueCenter);
+  }
+  async findByIdInacitve(idRevenueCenter: number): Promise<IRevenueCenter | null> {
+    return await RevenueCenterInactive.findByPk(idRevenueCenter);
+  }
+  async findByIdGuarantees(idRevenueCenter: number): Promise<IRevenueCenter | null> {
+    return await RevenueCenterRetentionGuarantee.findByPk(idRevenueCenter);
+  }
+  async findByIdLiquidates(idRevenueCenter: number): Promise<IRevenueCenter | null> {
+    return await RevenueCenterLiquidation.findByPk(idRevenueCenter);
   }
 
   async findByIdFromAnyTable(idRevenueCenter: number): Promise<(IRevenueCenter & { sourceTable: string }) | null> {
@@ -159,6 +187,21 @@ export class RevenueCenterRepository {
       where: { idRevenueCenter },
     });
   }
+  async deleteInactives(idRevenueCenter: number): Promise<number> {
+    return await RevenueCenterInactive.destroy({
+      where: { idRevenueCenter },
+    });
+  }
+  async deleteGuarantees(idRevenueCenter: number): Promise<number> {
+    return await RevenueCenterRetentionGuarantee.destroy({
+      where: { idRevenueCenter },
+    });
+  }
+  async deleteliquidates(idRevenueCenter: number): Promise<number> {
+    return await RevenueCenterLiquidation.destroy({
+      where: { idRevenueCenter },
+    });
+  }
 
   findAllWorkTrackingEfrain = async (
     limit: number,
@@ -167,6 +210,7 @@ export class RevenueCenterRepository {
   ) => {
     const currentYear = new Date().getFullYear();
     const sequelize = RevenueCenter.sequelize!;
+    const revenueCenterSource = this.buildRevenueCenterAnyTableSql("rc");
 
     const monthlyWorkQuery = `
       WITH MonthlyWork AS (
@@ -184,7 +228,7 @@ export class RevenueCenterRepository {
         INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
         INNER JOIN mvp1.TB_Position tp ON tp.idPosition = e.idPosition
         INNER JOIN mvp1.TB_CostCenterProject ccp ON wt.idCostCenterProject = ccp.idCostCenterProject
-        INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = ccp.idCostCenterProject
+        INNER JOIN ${revenueCenterSource} ON rc.idCostCenterProject = ccp.idCostCenterProject
         WHERE YEAR(wt.createdAt) = :currentYear
         ${filter?.idRevenueCenter ? "AND rc.idRevenueCenter = :idRevenueCenter" : ""}
         ${filter?.idCostCenterProject ? "AND wt.idCostCenterProject = :idCostCenterProject" : ""}
@@ -240,7 +284,7 @@ export class RevenueCenterRepository {
         INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
         INNER JOIN mvp1.TB_Position tp ON tp.idPosition = e.idPosition
         INNER JOIN mvp1.TB_CostCenterProject ccp ON wt.idCostCenterProject = ccp.idCostCenterProject
-        INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = ccp.idCostCenterProject
+        INNER JOIN ${revenueCenterSource} ON rc.idCostCenterProject = ccp.idCostCenterProject
         WHERE YEAR(wt.createdAt) = :currentYear
         ${filter?.idRevenueCenter ? "AND rc.idRevenueCenter = :idRevenueCenter" : ""}
         ${filter?.idCostCenterProject ? "AND wt.idCostCenterProject = :idCostCenterProject" : ""}
@@ -285,7 +329,7 @@ export class RevenueCenterRepository {
       INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
       INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
       INNER JOIN mvp1.TB_CostCenterProject ccp ON wt.idCostCenterProject = ccp.idCostCenterProject
-      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = ccp.idCostCenterProject
+      INNER JOIN ${revenueCenterSource} ON rc.idCostCenterProject = ccp.idCostCenterProject
       WHERE YEAR(wt.createdAt) = :currentYear
       ${filter?.idRevenueCenter ? "AND rc.idRevenueCenter = :idRevenueCenter" : ""}
       ${filter?.idCostCenterProject ? "AND wt.idCostCenterProject = :idCostCenterProject" : ""}
@@ -330,11 +374,12 @@ export class RevenueCenterRepository {
     filter?: { idRevenueCenter?: number; idCostCenterProject?: number }
   ) => {
     const sequelize = RevenueCenter.sequelize!;
+    const revenueCenterSource = this.buildRevenueCenterAnyTableSql("rc");
 
     // Determinar si se debe usar paginación
     const usePagination = limit !== -1;
-    const paginationClause = usePagination 
-      ? `OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY` 
+    const paginationClause = usePagination
+      ? `OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`
       : '';
 
     const monthlyWorkQuery = `
@@ -354,7 +399,7 @@ export class RevenueCenterRepository {
       INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
       INNER JOIN mvp1.TB_Position tp ON tp.idPosition = e.idPosition
       INNER JOIN mvp1.TB_CostCenterProject ccp ON wt.idCostCenterProject = ccp.idCostCenterProject
-      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = ccp.idCostCenterProject
+      INNER JOIN ${revenueCenterSource} ON rc.idCostCenterProject = ccp.idCostCenterProject
       WHERE 1=1
       ${filter?.idRevenueCenter ? "AND rc.idRevenueCenter = :idRevenueCenter" : ""}
       ${filter?.idCostCenterProject ? "AND wt.idCostCenterProject = :idCostCenterProject" : ""}
@@ -412,7 +457,7 @@ export class RevenueCenterRepository {
       INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
       INNER JOIN mvp1.TB_Position tp ON tp.idPosition = e.idPosition
       INNER JOIN mvp1.TB_CostCenterProject ccp ON wt.idCostCenterProject = ccp.idCostCenterProject
-      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = ccp.idCostCenterProject
+      INNER JOIN ${revenueCenterSource} ON rc.idCostCenterProject = ccp.idCostCenterProject
       WHERE 1=1
       ${filter?.idRevenueCenter ? "AND rc.idRevenueCenter = :idRevenueCenter" : ""}
       ${filter?.idCostCenterProject ? "AND wt.idCostCenterProject = :idCostCenterProject" : ""}
@@ -458,7 +503,7 @@ export class RevenueCenterRepository {
     INNER JOIN mvp1.TB_Employee e ON wt.idEmployee = e.idEmployee
     INNER JOIN mvp1.TB_User u ON e.idUser = u.idUser
     INNER JOIN mvp1.TB_CostCenterProject ccp ON wt.idCostCenterProject = ccp.idCostCenterProject
-    INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject = ccp.idCostCenterProject
+    INNER JOIN ${revenueCenterSource} ON rc.idCostCenterProject = ccp.idCostCenterProject
     WHERE 1=1
     ${filter?.idRevenueCenter ? "AND rc.idRevenueCenter = :idRevenueCenter" : ""}
     ${filter?.idCostCenterProject ? "AND wt.idCostCenterProject = :idCostCenterProject" : ""}
@@ -595,6 +640,7 @@ export class RevenueCenterRepository {
     filter?: { idRevenueCenter?: number, idInputType?: number }
   ) => {
     const sequelize = RevenueCenter.sequelize!;
+    const revenueCenterSource = this.buildRevenueCenterAnyTableSql("rc");
 
     const materialQuery = `
       SELECT
@@ -609,7 +655,7 @@ export class RevenueCenterRepository {
       FROM mvp1.TB_OrderItemDetail oid
       INNER JOIN mvp1.TB_OrderItem oi on oi.idOrderItem = oid.idOrderItem
       INNER JOIN mvp1.TB_Input i ON i.idInput=oid.idInput
-      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject=oi.idCostCenterProject
+      INNER JOIN ${revenueCenterSource} ON rc.idCostCenterProject=oi.idCostCenterProject
       INNER JOIN mvp1.TB_InputUnitOfMeasure iu ON iu.idInputUnitOfMeasure=i.idInputUnitOfMeasure
       WHERE rc.idRevenueCenter = :idRevenueCenter AND i.idInputType = :idInputType
       ORDER BY oid.createdAt DESC
@@ -629,7 +675,7 @@ export class RevenueCenterRepository {
       FROM mvp1.TB_OrderItemDetail oid
       INNER JOIN mvp1.TB_OrderItem oi on oi.idOrderItem = oid.idOrderItem
       INNER JOIN mvp1.TB_Input i ON i.idInput=oid.idInput
-      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject=oi.idCostCenterProject
+      INNER JOIN ${revenueCenterSource} ON rc.idCostCenterProject=oi.idCostCenterProject
       INNER JOIN mvp1.TB_InputUnitOfMeasure iu ON iu.idInputUnitOfMeasure=i.idInputUnitOfMeasure
       WHERE rc.idRevenueCenter = :idRevenueCenter AND i.idInputType = :idInputType
       ORDER BY oid.createdAt DESC
@@ -640,7 +686,7 @@ export class RevenueCenterRepository {
       FROM mvp1.TB_OrderItemDetail oid
       INNER JOIN mvp1.TB_OrderItem oi on oi.idOrderItem = oid.idOrderItem
       INNER JOIN mvp1.TB_Input i ON i.idInput=oid.idInput
-      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idCostCenterProject=oi.idCostCenterProject
+      INNER JOIN ${revenueCenterSource} ON rc.idCostCenterProject=oi.idCostCenterProject
       INNER JOIN mvp1.TB_InputUnitOfMeasure iu ON iu.idInputUnitOfMeasure=i.idInputUnitOfMeasure
       WHERE rc.idRevenueCenter = :idRevenueCenter AND i.idInputType = :idInputType;
     `;
@@ -684,6 +730,7 @@ export class RevenueCenterRepository {
     filter?: { idRevenueCenter?: number }
   ) => {
     const sequelize = RevenueCenter.sequelize!;
+    const revenueCenterSource = this.buildRevenueCenterAnyTableSql("rc");
 
     const quotationQuery = `
       SELECT
@@ -697,7 +744,7 @@ export class RevenueCenterRepository {
       FROM mvp1.TB_QuotationItemDetail tqid
       INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotationItem = tqid.idQuotationItem
       INNER JOIN mvp1.TB_Quotation tq ON tq.idQuotation = tqi.idQuotation
-      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idQuotation = tq.idQuotation
+      INNER JOIN ${revenueCenterSource} ON rc.idQuotation = tq.idQuotation
       INNER JOIN mvp1.TB_CostCenterProject tccp ON tccp.idCostCenterProject = rc.idCostCenterProject
       INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
       INNER JOIN mvp1.TB_InputUnitOfMeasure tiu ON tiu.idInputUnitOfMeasure = ti.idInputUnitOfMeasure
@@ -720,7 +767,7 @@ export class RevenueCenterRepository {
       FROM mvp1.TB_QuotationItemDetail tqid
       INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotationItem = tqid.idQuotationItem
       INNER JOIN mvp1.TB_Quotation tq ON tq.idQuotation = tqi.idQuotation
-      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idQuotation = tq.idQuotation
+      INNER JOIN ${revenueCenterSource} ON rc.idQuotation = tq.idQuotation
       INNER JOIN mvp1.TB_CostCenterProject tccp ON tccp.idCostCenterProject = rc.idCostCenterProject
       INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
       INNER JOIN mvp1.TB_InputUnitOfMeasure tiu ON tiu.idInputUnitOfMeasure = ti.idInputUnitOfMeasure
@@ -734,7 +781,7 @@ export class RevenueCenterRepository {
       FROM mvp1.TB_QuotationItemDetail tqid
       INNER JOIN mvp1.TB_QuotationItem tqi ON tqi.idQuotationItem = tqid.idQuotationItem
       INNER JOIN mvp1.TB_Quotation tq ON tq.idQuotation = tqi.idQuotation
-      INNER JOIN mvp1.TB_RevenueCenter rc ON rc.idQuotation = tq.idQuotation
+      INNER JOIN ${revenueCenterSource} ON rc.idQuotation = tq.idQuotation
       INNER JOIN mvp1.TB_CostCenterProject tccp ON tccp.idCostCenterProject = rc.idCostCenterProject
       INNER JOIN mvp1.TB_Input ti ON ti.idInput = tqid.idInput
       ${filter?.idRevenueCenter ? "WHERE rc.idRevenueCenter = :idRevenueCenter" : ""};
@@ -780,10 +827,12 @@ export class RevenueCenterRepository {
     filter: { idRevenueCenter: number }
   ) => {
     const sequelize = RevenueCenter.sequelize!;
+    const revenueCenterSource = this.buildRevenueCenterAnyTableSql("trc");
+    const revenueCenterSourceSubquery = this.buildRevenueCenterAnyTableSql("ttcr");
 
     // // Debug: Print some diagnostic info
     // console.log(`\n=========== DEBUG INFO FOR idRevenueCenter=${filter.idRevenueCenter} ===========`);
-    
+
     // const debugQuery = `
     //   SELECT DISTINCT
     //     trc.idQuotation,
@@ -799,7 +848,7 @@ export class RevenueCenterRepository {
     //   FROM [mvp1].[TB_RevenueCenter] trc
     //   WHERE trc.idRevenueCenter = ${filter.idRevenueCenter};
     // `;
-    
+
     // // Query to see actual project item descriptions
     // const projectItemsQuery = `
     //   SELECT
@@ -814,7 +863,7 @@ export class RevenueCenterRepository {
     //   GROUP BY pi.idProjectItem, pi.item
     //   ORDER BY SUM(ipi.invoicedQuantity) DESC;
     // `;
-    
+
     // // Query to check which materials are quoted vs ordered
     // const materialPatternsQuery = `
     //   -- Materials that are QUOTED (in QuotationItemDetail for idQuotationItem=44)
@@ -832,9 +881,9 @@ export class RevenueCenterRepository {
     //   INNER JOIN [mvp1].[TB_QuotationItem] qi ON qi.idQuotationItem = qid.idQuotationItem
     //   INNER JOIN [mvp1].[TB_Input] ti ON ti.idInput = qid.idInput
     //   WHERE qi.idQuotationItem = 44
-      
+
     //   UNION ALL
-      
+
     //   -- Materials that are ORDERED but NOT QUOTED
     //   SELECT
     //     'ORDERED_NOT_QUOTED' AS source,
@@ -852,20 +901,20 @@ export class RevenueCenterRepository {
     //   GROUP BY ti.idInput, ti.name
     //   ORDER BY source DESC, materialName;
     // `;
-    
+
     // try {
     //   const debugResults = await sequelize.query(debugQuery, { type: QueryTypes.SELECT });
     //   console.log('Revenue Center Info:', JSON.stringify(debugResults, null, 2));
-      
+
     //   const projectItems = await sequelize.query(projectItemsQuery, { type: QueryTypes.SELECT });
     //   console.log('\nProject Items (All):', JSON.stringify(projectItems, null, 2));
-      
+
     //   const materialPatterns = await sequelize.query(materialPatternsQuery, { type: QueryTypes.SELECT });
     //   console.log('\nMaterials in QuotationItemDetail:', JSON.stringify(materialPatterns, null, 2));
     // } catch (err) {
     //   console.error('Debug query error:', err);
     // }
-    
+
     // console.log(`=========================================================================\n`);
 
     const materialSummaryQuery = `
@@ -916,7 +965,7 @@ export class RevenueCenterRepository {
         SELECT SUM(ripi.invoicedQuantity)
         FROM [mvp1].[TB_RelationsProjectItemsMaterialInvoice] AS ripi 
         INNER JOIN [mvp1].[TB_ProjectItem] pi ON pi.idProjectItem = ripi.idProjectItem
-        INNER JOIN [mvp1].[TB_RevenueCenter] ttcr ON ttcr.idCostCenterProject = pi.idCostCenterProject
+        INNER JOIN ${revenueCenterSourceSubquery} ON ttcr.idCostCenterProject = pi.idCostCenterProject
         WHERE ripi.idInput = toid.idInput 
           AND ttcr.idRevenueCenter = :idRevenueCenter
           AND pi.idCostCenterProject = toi.idCostCenterProject
@@ -946,7 +995,7 @@ export class RevenueCenterRepository {
     FROM mvp1.TB_OrderItemDetail toid
     INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
     INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
-    INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idCostCenterProject = toi.idCostCenterProject
+    INNER JOIN ${revenueCenterSource} ON trc.idCostCenterProject = toi.idCostCenterProject
     /*
     INNER JOIN [mvp1].[TB_ProjectItem] pi ON pi.idCostCenterProject = trc.idCostCenterProject
     LEFT JOIN [mvp1].[TB_InvoiceProjectItem] ipi ON ipi.idProjectItem = pi.idProjectItem
@@ -1003,7 +1052,7 @@ export class RevenueCenterRepository {
         SELECT SUM(ripi.invoicedQuantity)
         FROM [mvp1].[TB_RelationsProjectItemsMaterialInvoice] AS ripi 
         INNER JOIN [mvp1].[TB_ProjectItem] pi ON pi.idProjectItem = ripi.idProjectItem
-        INNER JOIN [mvp1].[TB_RevenueCenter] ttcr ON ttcr.idCostCenterProject = pi.idCostCenterProject
+        INNER JOIN ${revenueCenterSourceSubquery} ON ttcr.idCostCenterProject = pi.idCostCenterProject
         WHERE ripi.idInput = toid.idInput 
           AND ttcr.idRevenueCenter = :idRevenueCenter
           AND pi.idCostCenterProject = toi.idCostCenterProject
@@ -1033,7 +1082,7 @@ export class RevenueCenterRepository {
     FROM mvp1.TB_OrderItemDetail toid
     INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
     INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
-    INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idCostCenterProject = toi.idCostCenterProject
+    INNER JOIN ${revenueCenterSource} ON trc.idCostCenterProject = toi.idCostCenterProject
     /*
     INNER JOIN [mvp1].[TB_ProjectItem] pi ON pi.idCostCenterProject = trc.idCostCenterProject
     LEFT JOIN [mvp1].[TB_InvoiceProjectItem] ipi ON ipi.idProjectItem = pi.idProjectItem
@@ -1050,7 +1099,7 @@ export class RevenueCenterRepository {
     FROM mvp1.TB_OrderItemDetail toid
     INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
     INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
-    INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idCostCenterProject = toi.idCostCenterProject
+    INNER JOIN ${revenueCenterSource} ON trc.idCostCenterProject = toi.idCostCenterProject
     WHERE trc.idRevenueCenter = :idRevenueCenter AND ti.idInputType = 1;
   `;
 
@@ -1088,9 +1137,10 @@ export class RevenueCenterRepository {
   };
 
   findDistinctInputsByRevenueCenter = async (
-    filter: { itemFilter: string; idRevenueCenter: number ; idProjectItem: any }
+    filter: { itemFilter: string; idRevenueCenter: number; idProjectItem: any }
   ) => {
     const sequelize = RevenueCenter.sequelize!;
+    const revenueCenterSource = this.buildRevenueCenterAnyTableSql("tbrnc");
     // Muestra materiales que YA HAN SIDO ORDENADOS (están en órdenes de compra)
     // const query = `
     //   SELECT DISTINCT 
@@ -1114,7 +1164,7 @@ export class RevenueCenterRepository {
         tbi.idInput, 
         tbi.name
         FROM [mvp1].[TB_ProjectItem] AS tbpi
-        INNER JOIN [mvp1].[TB_RevenueCenter] AS tbrnc ON tbrnc.idCostCenterProject = tbpi.idCostCenterProject
+        INNER JOIN ${revenueCenterSource} ON tbrnc.idCostCenterProject = tbpi.idCostCenterProject
         INNER JOIN [mvp1].[TB_Quotation] AS tbq ON tbq.idQuotation = tbrnc.idQuotation
         INNER JOIN [mvp1].[TB_QuotationItem] AS tbqi ON tbqi.idQuotation = tbq.idQuotation
         INNER JOIN [mvp1].[TB_QuotationItemDetail] AS tbqid ON tbqid.idQuotationItem = tbqi.idQuotationItem
@@ -1226,14 +1276,15 @@ export class RevenueCenterRepository {
     filter: { idRevenueCenter: number; idProjectItem?: number; idInput?: number }
   ) => {
     const sequelize = RevenueCenter.sequelize!;
+    const revenueCenterSource = this.buildRevenueCenterAnyTableSql("rc");
 
     const query = `
 WITH RevenueCenterData AS (
-        SELECT 
+        SELECT TOP 1
           idRevenueCenter,
           idCostCenterProject,
           idQuotation
-        FROM [mvp1].[TB_RevenueCenter]
+        FROM ${revenueCenterSource}
         WHERE idRevenueCenter = :idRevenueCenter
       ),
       
@@ -1326,7 +1377,7 @@ WITH RevenueCenterData AS (
     });
   }
 
-  async createRelationsProjectItemsMaterialInvoice( data: IRelationsProjectItemsMaterialInvoiceCreate ): Promise<RelationsProjectItemsMaterialInvoice> {
+  async createRelationsProjectItemsMaterialInvoice(data: IRelationsProjectItemsMaterialInvoiceCreate): Promise<RelationsProjectItemsMaterialInvoice> {
     return await RelationsProjectItemsMaterialInvoice.create(data as any);
   }
 

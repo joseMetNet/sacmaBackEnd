@@ -21,7 +21,6 @@ export class RevenueCenterController {
       return;
     }
 
-    // const response = (await this.revenueCenterService.findAll(request.data),await this.revenueCenterService.findAll(request.data));
     // const response = await this.revenueCenterService.findAll(request.data);
     const response = await this.revenueCenterService.findAllWithoutCalculations(request.data);
     res.status(response.code).json({
@@ -180,6 +179,57 @@ export class RevenueCenterController {
     }
 
     const response = await this.revenueCenterService.delete(request.data.idRevenueCenter);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
+  deleteInactive = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.idRevenueCenterSchema.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.revenueCenterService.deleteInactive(request.data.idRevenueCenter);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
+  deleteguarantees = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.idRevenueCenterSchema.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.revenueCenterService.deleteGuarantees(request.data.idRevenueCenter);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+  
+  deleteliquidates = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.idRevenueCenterSchema.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.revenueCenterService.deleteliquidates(request.data.idRevenueCenter);
     res.status(response.code).json({
       status: response.status,
       data: response.data

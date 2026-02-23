@@ -51,6 +51,9 @@ export function revenueCenterRoutes(app: Application): void {
   routes.get("/v1/revenue-center/:idRevenueCenter", [verifyToken], revenueCenterController.findById);
 
   routes.delete("/v1/revenue-center/:idRevenueCenter", [verifyToken], revenueCenterController.delete);
+  routes.delete("/v1/revenue-center-inactives/:idRevenueCenter", [verifyToken], revenueCenterController.deleteInactive);
+  routes.delete("/v1/revenue-center-liquidates/:idRevenueCenter", [verifyToken], revenueCenterController.deleteliquidates);
+  routes.delete("/v1/revenue-center-guarantees/:idRevenueCenter", [verifyToken], revenueCenterController.deleteguarantees);
 
   /**
    * @openapi
