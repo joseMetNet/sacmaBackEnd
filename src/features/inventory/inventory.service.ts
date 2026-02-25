@@ -315,8 +315,13 @@ export class InventoryService {
       if (pageSize === -1) {
         const inventories = await this.inventoryRepository.findAllInventoryByWarehouse(idWarehouse, filter);
 
+        // Validar y filtrar solo materiales de tipo 1
+        const filteredInventories = inventories.rows.filter(
+          (item: any) => Number(item?.Input?.idInputType) === 1
+        );
+
         // Calcular priceAvailable para cada item y totalAvailable
-        const dataWithPrices = inventories.rows.map((item: any) => {
+        const dataWithPrices = filteredInventories.map((item: any) => {
           const cost = parseFloat(item.Input?.cost || "0");
           const quantityAvailable = parseFloat(item.quantityAvailable?.toString() || "0");
           const priceAvailable = cost * quantityAvailable;
@@ -348,8 +353,13 @@ export class InventoryService {
 
       const inventories = await this.inventoryRepository.findInventoryByWarehouse(idWarehouse, filter, limit, offset);
 
+      // Validar y filtrar solo materiales de tipo 1
+      const filteredInventories = inventories.rows.filter(
+        (item: any) => Number(item?.Input?.idInputType) === 1
+      );
+
       // Calcular priceAvailable para cada item y totalAvailable
-      const dataWithPrices = inventories.rows.map((item: any) => {
+      const dataWithPrices = filteredInventories.map((item: any) => {
         // const cost = parseFloat(item.averageCost || "0");
         const cost = parseFloat(item.Input?.cost || "0");
         const quantityAvailable = parseFloat(item.quantityAvailable?.toString() || "0");

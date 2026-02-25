@@ -365,10 +365,14 @@ export class InventoryRepository {
         where: whereClause,
         limit,
         offset,
+        distinct: true,
         include: [
           {
             association: "Input",
-            where: filter.inputName ? filter.inputName : undefined,
+            where: {
+              ...(filter.inputName ? filter.inputName : {}),
+              idInputType: 1,
+            },
             include: [
               { association: "Supplier" }
             ]
@@ -391,10 +395,14 @@ export class InventoryRepository {
     try {
       const result = await Inventory.findAndCountAll({
         where: { idWarehouse },
+        distinct: true,
         include: [
           {
             association: "Input",
-            where: filter.inputName ? filter.inputName : undefined,
+            where: {
+              ...(filter.inputName ? filter.inputName : {}),
+              idInputType: 1,
+            },
             include: [
               { association: "Supplier" }
             ]
