@@ -36,6 +36,22 @@ export class PurchaseService {
       if (returnAll) {
         // Si pageSize es -1, retornar todos los registros sin paginación
         const purchaseRequests = await this.purchaseRepository.findAllPurchaseRequest(filter);
+        
+        // Actualizar TB_InventoryPurchase con el total de precios por warehouse
+        if (purchaseRequests.rows.length > 0) {
+          const warehouseIds = [...new Set(purchaseRequests.rows.map(pr => pr.idWarehouse).filter((id): id is number => id !== null && id !== undefined))];
+          for (const idWarehouse of warehouseIds) {
+            try {
+              const totalPrice = await this.purchaseRepository.calculateTotalPriceByWarehouse(idWarehouse);
+              await this.purchaseRepository.updateInventoryPurchaseAverageCost(idWarehouse, totalPrice);
+              console.log(`Updated TB_InventoryPurchase for warehouse ${idWarehouse} with total price: ${totalPrice}`);
+            } catch (inventoryErr: any) {
+              console.error(`Error updating inventory purchase cost for warehouse ${idWarehouse}:`, inventoryErr);
+              // No lanzar error para permitir que la consulta continúe aunque falle la actualización
+            }
+          }
+        }
+        
         return BuildResponse.buildSuccessResponse(
           StatusCode.Ok,
           purchaseRequests.rows
@@ -43,6 +59,22 @@ export class PurchaseService {
       } else {
         // Paginación normal
         const purchaseRequests = await this.purchaseRepository.findAllPurchaseRequest(filter, limit, offset);
+        
+        // Actualizar TB_InventoryPurchase con el total de precios por warehouse
+        if (purchaseRequests.rows.length > 0) {
+          const warehouseIds = [...new Set(purchaseRequests.rows.map(pr => pr.idWarehouse).filter((id): id is number => id !== null && id !== undefined))];
+          for (const idWarehouse of warehouseIds) {
+            try {
+              const totalPrice = await this.purchaseRepository.calculateTotalPriceByWarehouse(idWarehouse);
+              await this.purchaseRepository.updateInventoryPurchaseAverageCost(idWarehouse, totalPrice);
+              console.log(`Updated TB_InventoryPurchase for warehouse ${idWarehouse} with total price: ${totalPrice}`);
+            } catch (inventoryErr: any) {
+              console.error(`Error updating inventory purchase cost for warehouse ${idWarehouse}:`, inventoryErr);
+              // No lanzar error para permitir que la consulta continúe aunque falle la actualización
+            }
+          }
+        }
+        
         const response = {
           data: purchaseRequests.rows,
           totalItems: purchaseRequests.count,
@@ -86,23 +118,23 @@ export class PurchaseService {
       }
 
       // Obtener idWarehouse del primer detalle para actualizar el averageCost en TB_InventoryPurchase
-      const idWarehouse = purchaseRequests.rows.length > 0 ? purchaseRequests.rows[0].idWarehouse : null;
-      if (idWarehouse) {
-        try {
-          const averageCost = totalGeneral > 0 ? totalGeneral : null;
-          await this.purchaseRepository.updateInventoryPurchaseAverageCost(
-            idWarehouse,
-            averageCost
-          );
-        } catch (inventoryErr: any) {
-          console.error("Error updating inventory purchase average cost:", inventoryErr);
-          console.error("Parameters:", {
-            idWarehouse: idWarehouse,
-            averageCost: totalGeneral
-          });
-          // No lanzar error para permitir que la consulta continúe aunque falle la actualización del inventario
-        }
-      }
+      // const idWarehouse = purchaseRequests.rows.length > 0 ? purchaseRequests.rows[0].idWarehouse : null;
+      // if (idWarehouse) {
+      //   try {
+      //     const averageCost = totalGeneral > 0 ? totalGeneral : null;
+      //     await this.purchaseRepository.updateInventoryPurchaseAverageCost(
+      //       idWarehouse,
+      //       averageCost
+      //     );
+      //   } catch (inventoryErr: any) {
+      //     console.error("Error updating inventory purchase average cost:", inventoryErr);
+      //     console.error("Parameters:", {
+      //       idWarehouse: idWarehouse,
+      //       averageCost: totalGeneral
+      //     });
+      //     // No lanzar error para permitir que la consulta continúe aunque falle la actualización del inventario
+      //   }
+      // }
 
       const response = {
         data: purchaseRequests.rows,
@@ -240,11 +272,22 @@ export class PurchaseService {
       // Crear registro en TB_InventoryPurchase si hay idWarehouse
       if (request.idWarehouse) {
         try {
-          const averageCost = request.price && request.price.trim() !== "" ? parseFloat(request.price) : null;
-          await this.purchaseRepository.createInventoryPurchase(
-            request.idWarehouse,
-            averageCost
-          );
+          const existingInventoryPurchase = await this.purchaseRepository.findInventoryPurchaseByWarehouse(request.idWarehouse);
+          const existingInventoryPriceTotal = await this.purchaseRepository.findInventoryPriceTotalByWarehouse(request.idWarehouse);
+
+          if (!existingInventoryPurchase && !existingInventoryPriceTotal) {
+            const averageCost = request.price && request.price.trim() !== "" ? parseFloat(request.price) : null;
+            await this.purchaseRepository.createInventoryPurchase(
+              request.idWarehouse,
+              averageCost
+            );
+            await this.purchaseRepository.createInventoryPriceTotal(
+              request.idWarehouse,
+              averageCost
+            );
+          } else {
+            console.log("Inventory purchase already exists for warehouse:", request.idWarehouse);
+          }
         } catch (inventoryErr: any) {
           console.error("Error creating inventory purchase:", inventoryErr);
           console.error("Parameters:", {

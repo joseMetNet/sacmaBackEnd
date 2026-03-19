@@ -69,50 +69,21 @@ export class RevenueCenterService {
       }, {});
 
       // Construir respuesta fila por fila y persistir cálculos y actualizar la BD invoice, spend y utility
-      // const rows = await Promise.all(revenueCenters.rows.map(async (revenueCenter: any) => {
-      //   const spendInputs = groupedSpend[revenueCenter.idCostCenterProject] || 0;
-      //   const workTracking = groupedWorkTracking[revenueCenter.idRevenueCenter] || 0;
-      //   const spend = spendInputs + workTracking; //  inputs + expenditures + workTracking
-      //   const invoice = groupedInvoice[revenueCenter.idRevenueCenter] || 0;
-
-      //   const utility = invoice === 0 ? 0 : ((invoice - spend) / invoice) * 100; // Manejar caso de invoice = 0
-      //   // const utilityPercentage = invoice === 0 ? 0 : invoice - spend / invoice * 100;
-      //   // const utility = Number.isFinite(utilityPercentage) ? Number(utilityPercentage.toFixed(4)) : 0;
-
-      //   await this.revenueCenterRepository.update(revenueCenter.idRevenueCenter, {
-      //     invoice: invoice.toString(),
-      //     spend: spend.toString(),
-      //     utility: utility.toString(),
-      //   });
-
-      //   return {
-      //     idRevenueCenter: revenueCenter.idRevenueCenter,
-      //     name: revenueCenter.name,
-      //     idCostCenterProject: revenueCenter.idCostCenterProject,
-      //     idRevenueCenterStatus: revenueCenter.idRevenueCenterStatus,
-      //     idQuotation: revenueCenter.idQuotation,
-      //     fromDate: revenueCenter.fromDate,
-      //     toDate: revenueCenter.toDate,
-      //     createdAt: revenueCenter.createdAt,
-      //     updatedAt: revenueCenter.updatedAt,
-      //     invoice: invoice.toString(),
-      //     spend: spend.toString(),
-      //     utility: utility.toString(),
-      //     CostCenterProject: revenueCenter.toJSON().CostCenterProject,
-      //   };
-      // }));
-
-      // Construir respuesta fila por fila
-      const rows = revenueCenters.rows.map((revenueCenter: any) => {
+      const rows = await Promise.all(revenueCenters.rows.map(async (revenueCenter: any) => {
         const spendInputs = groupedSpend[revenueCenter.idCostCenterProject] || 0;
         const workTracking = groupedWorkTracking[revenueCenter.idRevenueCenter] || 0;
         const spend = spendInputs + workTracking; //  inputs + expenditures + workTracking
-        // const spend = groupedSpend[revenueCenter.idCostCenterProject] || 0;
         const invoice = groupedInvoice[revenueCenter.idRevenueCenter] || 0;
-        // const utility = invoice - spend;
-        // const utility = (invoice - spend) / (invoice === 0 ? 1 : invoice) * 100; // Evitar división por cero
-        const utility = invoice - spend / invoice * 100;
-        // const utility = ((invoice - spend) / invoice) * 100;
+
+        const utility = invoice === 0 ? 0 : ((invoice - spend) / invoice) * 100; // Manejar caso de invoice = 0
+        // const utilityPercentage = invoice === 0 ? 0 : invoice - spend / invoice * 100;
+        // const utility = Number.isFinite(utilityPercentage) ? Number(utilityPercentage.toFixed(4)) : 0;
+
+        await this.revenueCenterRepository.update(revenueCenter.idRevenueCenter, {
+          invoice: invoice.toString(),
+          spend: spend.toString(),
+          utility: utility.toString(),
+        });
 
         return {
           idRevenueCenter: revenueCenter.idRevenueCenter,
@@ -129,7 +100,36 @@ export class RevenueCenterService {
           utility: utility.toString(),
           CostCenterProject: revenueCenter.toJSON().CostCenterProject,
         };
-      });
+      }));
+
+      // Construir respuesta fila por fila
+      // const rows = revenueCenters.rows.map((revenueCenter: any) => {
+      //   const spendInputs = groupedSpend[revenueCenter.idCostCenterProject] || 0;
+      //   const workTracking = groupedWorkTracking[revenueCenter.idRevenueCenter] || 0;
+      //   const spend = spendInputs + workTracking; //  inputs + expenditures + workTracking
+      //   // const spend = groupedSpend[revenueCenter.idCostCenterProject] || 0;
+      //   const invoice = groupedInvoice[revenueCenter.idRevenueCenter] || 0;
+      //   // const utility = invoice - spend;
+      //   // const utility = (invoice - spend) / (invoice === 0 ? 1 : invoice) * 100; // Evitar división por cero
+      //   const utility = invoice - spend / invoice * 100;
+      //   // const utility = ((invoice - spend) / invoice) * 100;
+
+      //   return {
+      //     idRevenueCenter: revenueCenter.idRevenueCenter,
+      //     name: revenueCenter.name,
+      //     idCostCenterProject: revenueCenter.idCostCenterProject,
+      //     idRevenueCenterStatus: revenueCenter.idRevenueCenterStatus,
+      //     idQuotation: revenueCenter.idQuotation,
+      //     fromDate: revenueCenter.fromDate,
+      //     toDate: revenueCenter.toDate,
+      //     createdAt: revenueCenter.createdAt,
+      //     updatedAt: revenueCenter.updatedAt,
+      //     invoice: invoice.toString(),
+      //     spend: spend.toString(),
+      //     utility: utility.toString(),
+      //     CostCenterProject: revenueCenter.toJSON().CostCenterProject,
+      //   };
+      // });
       
       // Respuesta final
       const response = {

@@ -1,19 +1,18 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../../config";
 import { WareHouse } from "../warwHouse/warehouse.model";
-import { InventoryPriceTotal } from "./inventory-pricetotal.model";
 
-export class InventoryPurchase extends Model {
-  declare idInventoryPurchase: number;
+export class InventoryPriceTotal extends Model {
+  declare idInventoryPriceTotal: number;
   declare idWarehouse: number;
   declare averageCost: number;
   declare createdAt: Date;
   declare updatedAt: Date;
 }
 
-InventoryPurchase.init(
+InventoryPriceTotal.init(
   {
-    idInventoryPurchase: {
+    idInventoryPriceTotal: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
@@ -39,19 +38,13 @@ InventoryPurchase.init(
   },
   {
     sequelize: dbConnection,
-    tableName: "TB_InventoryPurchase",
+    tableName: "TB_InventoryPriceTotal",
     schema: "mvp1",
     timestamps: true,
   }
 );
-InventoryPurchase.belongsTo(WareHouse, {
+InventoryPriceTotal.belongsTo(WareHouse, {
   foreignKey: "idWarehouse",
   targetKey: "idWarehouse",
   as: "WareHouse"
-});
-
-InventoryPurchase.hasOne(InventoryPriceTotal, {
-  foreignKey: "idWarehouse",
-  sourceKey: "idWarehouse",
-  as: "InventoryPriceTotal"
 });

@@ -322,7 +322,8 @@ export class InventoryService {
 
         // Calcular priceAvailable para cada item y totalAvailable
         const dataWithPrices = filteredInventories.map((item: any) => {
-          const cost = parseFloat(item.Input?.cost || "0");
+          // const cost = parseFloat(item.Input?.cost || "0");
+          const cost = parseFloat(item.averageCost || "0");
           const quantityAvailable = parseFloat(item.quantityAvailable?.toString() || "0");
           const priceAvailable = cost * quantityAvailable;
 
@@ -339,7 +340,8 @@ export class InventoryService {
 
         // Actualizar averageCost en TB_InventoryPurchase
         try {
-          await this.purchaseRepository.updateInventoryPurchaseAverageCost(idWarehouse, totalAvailable);
+          // await this.purchaseRepository.updateInventoryPurchaseAverageCost(idWarehouse, totalAvailable);
+          await this.purchaseRepository.updateInventoryPriceTotalAverageCost(idWarehouse, totalAvailable);
         } catch (updateError) {
           console.error("Error updating averageCost in TB_InventoryPurchase:", updateError);
           // No fallar la petición si la actualización falla
@@ -378,7 +380,8 @@ export class InventoryService {
 
       // Actualizar averageCost en TB_InventoryPurchase
       try {
-        await this.purchaseRepository.updateInventoryPurchaseAverageCost(idWarehouse, totalAvailable);
+        // await this.purchaseRepository.updateInventoryPurchaseAverageCost(idWarehouse, totalAvailable);
+        await this.purchaseRepository.updateInventoryPriceTotalAverageCost(idWarehouse, totalAvailable);
       } catch (updateError) {
         console.error("Error updating averageCost in TB_InventoryPurchase:", updateError);
         // No fallar la petición si la actualización falla

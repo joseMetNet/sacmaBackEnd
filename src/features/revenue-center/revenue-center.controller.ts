@@ -21,8 +21,8 @@ export class RevenueCenterController {
       return;
     }
 
-    // const response = await this.revenueCenterService.findAll(request.data);
-    const response = await this.revenueCenterService.findAllWithoutCalculations(request.data);
+    const response = await this.revenueCenterService.findAll(request.data);
+    // const response = await this.revenueCenterService.findAllWithoutCalculations(request.data);
     res.status(response.code).json({
       status: response.status,
       data: response.data
