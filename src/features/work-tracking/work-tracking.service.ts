@@ -294,37 +294,45 @@ export class WorkTrackingService {
     }
   };
 
+
+
   createAll = async (request: types.CreateWorkTrackingDTO[]): Promise<ResponseEntity> => {
     try {
 
-      const workTracking = await WorkTracking.findAll({
-        include: [
-          {
-            model: Employee,
-            attributes: ["idEmployee"],
-            include: [
-              {
-                model: User,
-                attributes: ["idUser", "firstName", "lastName"]
-              }
-            ]
-          }
-        ],
-        where: {
-          createdAt: sequelize.where(sequelize.literal("CONVERT(DATE, WorkTracking.createdAt)"), "=", request[0].createdAt)
-        }
-      });
+      // Extraer todas las fechas únicas del request
+      const uniqueDates = [...new Set(request.map(item => item.createdAt))];
 
-      // If there is any work tracking with the same date, return an error, add the name of the employee and the date
-      if (workTracking.length > 0) {
-        const namesAndDate = workTracking.map((item) => {
-          const data = item.toJSON();
-          return `${data.Employee.User.firstName} ${data.Employee.User.lastName}`;
+      // Validar cada fecha individualmente
+      for (const date of uniqueDates) {
+        const workTracking = await WorkTracking.findAll({
+          include: [
+            {
+              model: Employee,
+              attributes: ["idEmployee"],
+              include: [
+                {
+                  model: User,
+                  attributes: ["idUser", "firstName", "lastName"]
+                }
+              ]
+            }
+          ],
+          where: {
+            createdAt: sequelize.where(sequelize.literal("CONVERT(DATE, WorkTracking.createdAt)"), "=", date)
+          }
         });
-        return BuildResponse.buildErrorResponse(
-          StatusCode.BadRequest,
-          { message: `Work Tracking already exists for the following employees: ${namesAndDate.join(", ")} on ${request[0].createdAt}` }
-        );
+
+        // Si hay registros para esta fecha, retornar error con los detalles
+        if (workTracking.length > 0) {
+          const namesAndDate = workTracking.map((item) => {
+            const data = item.toJSON();
+            return `${data.Employee.User.firstName} ${data.Employee.User.lastName}`;
+          });
+          return BuildResponse.buildErrorResponse(
+            StatusCode.BadRequest,
+            { message: `Work Tracking already exists for the following employees: ${namesAndDate.join(", ")} on ${date}` }
+          );
+        }
       }
 
       // check is there is a novelty with id distinct of 1
@@ -333,10 +341,14 @@ export class WorkTrackingService {
       if (noveltiesRequest.length > 0) {
         // create novelties
         const createNoveltiesPromises = noveltiesRequest.map((item) => {
+          // Crear fecha con hora específica para evitar desfase de zona horaria
+          // Se agrega las 12:00:00 para asegurar que se mantenga el día correcto
+          const dateString = item.createdAt ? `${item.createdAt}T12:00:00.000Z` : new Date().toISOString();
+          
           const newNovelty = {
             idNovelty: item.idNovelty!,
             idEmployee: item.idEmployee,
-            createdAt: item.createdAt!,
+            createdAt: item.createdAt!, // Mantener el string original
             endAt: item.createdAt!
           };
           return this.novelityRepository.createNovelty(newNovelty);
@@ -346,7 +358,14 @@ export class WorkTrackingService {
       }
 
       const createAllPromises = request.map((item) => {
-        return this.workTrackingRepository.create(item);
+        // Crear fecha con hora del mediodía para evitar problemas de zona horaria
+        // Esto asegura que independientemente de la zona horaria, la fecha se mantenga correcta
+        const dateWithTime = item.createdAt ? `${item.createdAt} 12:00:00` : new Date().toISOString();
+        
+        return this.workTrackingRepository.create({
+          ...item,
+          createdAt: dateWithTime
+        });
       });
 
       await Promise.all(createAllPromises);

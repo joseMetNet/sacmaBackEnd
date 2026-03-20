@@ -264,6 +264,29 @@ class MachineryService {
     }
   }
 
+  // async createMachineryLocation(request: dtos.MachineryLocationDTO, transaction?: any): Promise<ResponseEntity> {
+  //   try {
+  //     const options: any = {};
+  //     if (transaction) options.transaction = transaction;
+  //     const machineryLocation = await MachineryLocation.create(
+  //       {
+  //         idMachinery: request.idMachinery,
+  //         idCostCenterProject: request.idCostCenterProject,
+  //         idEmployee: request.idEmployee,
+  //         assignmentDate: request.assignmentDate
+  //       },
+  //       options
+  //     );
+  //     return BuildResponse.buildSuccessResponse(StatusCode.Ok, machineryLocation ? machineryLocation.toJSON() : {});
+  //   }
+  //   catch (err: any) {
+  //     return BuildResponse.buildErrorResponse(
+  //       StatusCode.InternalErrorServer,
+  //       { message: err.message }
+  //     );
+  //   }
+  // }
+
   async createMachineryBrand(request: dtos.CreateMachineryBrandDTO): Promise<ResponseEntity> {
 
     try {

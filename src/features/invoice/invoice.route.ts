@@ -12,6 +12,7 @@ export function invoiceRoutes(app: Application): void {
   const controller = new InvoiceController(service);
 
   // GET routes
+  router.get("/v1/list-invoice-by-idCostcenterProject/:idCostCenterProject", controller.listInvoicesContracts.bind(controller));
   router.get("/v1/invoice", controller.findAll);
   router.get("/v1/invoice/status", controller.findAllInvoiceStatus);
   router.get("/v1/invoice/:idInvoice", controller.findById);
@@ -159,6 +160,51 @@ export function invoiceRoutes(app: Application): void {
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/InvoiceStatus'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
+
+/**
+ * @openapi
+ * /v1/list-invoice-by-idCostcenterProject/{idCostCenterProject}:
+ *   get:
+ *     tags: [Invoice]
+ *     summary: Find project items by contract
+ *     description: Find project items filtered by contract
+ *     parameters:
+ *       - in: path
+ *         name: idCostCenterProject
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID of the cost center project
+ *     responses:
+ *       200:
+ *         description: A list of project items filtered by contract
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/InvoiceStatus'
+ *       400:
+ *         description: Bad request
  *       401:
  *         description: Unauthorized
  *       403:

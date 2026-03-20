@@ -40,7 +40,7 @@ OrderItemDetail.init({
   }
 }, {
   sequelize: dbConnection,
-  tableName: "TB_OrderItemDetail"
+  tableName: "TB_OrderItemDetail",
 });
 
 OrderItemDetail.hasOne(Input, {

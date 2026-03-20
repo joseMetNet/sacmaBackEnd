@@ -22,11 +22,11 @@ export const calculateBusinessDaysForCurrentMonth = (): number => {
 
 export const getNextMonth = (date: string): string => {
   const [year, month, day] = date.split("-");
-  const nextMonthDate = new Date(parseInt(year), parseInt(month), parseInt(day));
+  const nextMonthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
   nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
 
   const nextYear = nextMonthDate.getFullYear();
-  const nextMonth = String(nextMonthDate.getMonth()).padStart(2, "0");
+  const nextMonth = String(nextMonthDate.getMonth() + 1).padStart(2, "0");
   const nextDay = String(nextMonthDate.getDate()).padStart(2, "0");
 
   return `${nextYear}-${nextMonth}-${nextDay}`;

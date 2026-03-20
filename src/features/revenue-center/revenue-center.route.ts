@@ -19,24 +19,41 @@ export function revenueCenterRoutes(app: Application): void {
   const revenueCenterController = new RevenueCenterController(revenueCenterService);
 
   routes.get("/v1/revenue-center", [verifyToken], revenueCenterController.findAll);
+  // routes.get("/v1/revenue-center-withStatus", [verifyToken], revenueCenterController.findAllWith);
+  // routes.get("/v1/revenue-center-inactives", [verifyToken], revenueCenterController.findAllInactives);
+  routes.get("/v1/revenue-center-inactive-history", [verifyToken], revenueCenterController.findAllInactiveHistory);
+  routes.get("/v1/revenue-center-liquidation-history", [verifyToken], revenueCenterController.findAllLiquidationHistory);
+  routes.get("/v1/revenue-center-retention-guarantee-history", [verifyToken], revenueCenterController.findAllRetentionGuaranteeHistory);
   routes.get("/v1/revenue-center/status", [verifyToken], revenueCenterController.findAllRevenueCenterStatus);
   routes.post("/v1/revenue-center", [verifyToken], revenueCenterController.create);
   routes.patch("/v1/revenue-center", [verifyToken], revenueCenterController.update);
 
   routes.get("/v1/revenue-center/material", [verifyToken], revenueCenterController.findAllMaterial);
   routes.get("/v1/revenue-center/material/summary", [verifyToken], revenueCenterController.findAllMaterialSummaryDetail);
+  // routes.get("/v1/revenue-center/debug/invoiced", [verifyToken], revenueCenterController.debugInvoicedData);
   routes.get("/v1/revenue-center/quotation/summary", [verifyToken], revenueCenterController.findAllContractedSummary);
   routes.get("/v1/revenue-center/invoice/summary", [verifyToken], revenueCenterController.findAllInvoiceSummary);
   routes.get("/v1/revenue-center/inputs", [verifyToken], revenueCenterController.findAllInputs);
+  routes.get("/v1/revenue-center/distinct-inputs", [verifyToken], revenueCenterController.findDistinctInputsByRevenueCenter);
+  routes.get("/v1/revenue-center/invoiced-quantity", [verifyToken], revenueCenterController.findInvoicedQuantityByProjectItem);
   routes.get("/v1/revenue-center/epp", [verifyToken], revenueCenterController.findAllEpp);
   // Unified expenditures endpoint
   routes.get("/v1/revenue-center/expenditures", [verifyToken], revenueCenterController.findAllExpenditures);
+  routes.get("/v1/revenue-center/expenditures-summary-detail", [verifyToken], revenueCenterController.findAllExpendituresSummaryDetail);
   routes.get("/v1/revenue/center/work-tracking", [verifyToken], revenueCenterController.findAllWorkTracking);
   routes.get("/v1/revenue-center/quotation", [verifyToken], revenueCenterController.findAllQuotation);
+
+  routes.get("/v1/revenue-center/relations-project-items-material-invoice", [verifyToken], revenueCenterController.findAllRelationsProjectItemsMaterialInvoice);
+  routes.post("/v1/revenue-center/relations-project-items-material-invoice", [verifyToken], revenueCenterController.createRelationsProjectItemsMaterialInvoice);
+  routes.patch("/v1/revenue-center/relations-project-items-material-invoice", [verifyToken], revenueCenterController.updateRelationsProjectItemsMaterialInvoice);
+  routes.delete("/v1/revenue-center/relations-project-items-material-invoice/:idRelationsProjectItemsMaterialInvoice", [verifyToken], revenueCenterController.deleteRelationsProjectItemsMaterialInvoice);
 
   routes.get("/v1/revenue-center/:idRevenueCenter", [verifyToken], revenueCenterController.findById);
 
   routes.delete("/v1/revenue-center/:idRevenueCenter", [verifyToken], revenueCenterController.delete);
+  routes.delete("/v1/revenue-center-inactives/:idRevenueCenter", [verifyToken], revenueCenterController.deleteInactive);
+  routes.delete("/v1/revenue-center-liquidates/:idRevenueCenter", [verifyToken], revenueCenterController.deleteliquidates);
+  routes.delete("/v1/revenue-center-guarantees/:idRevenueCenter", [verifyToken], revenueCenterController.deleteguarantees);
 
   /**
    * @openapi
@@ -405,6 +422,60 @@ export function revenueCenterRoutes(app: Application): void {
 
   /**
    * @openapi
+   * /v1/revenue-center/distinct-inputs:
+   *   get:
+   *     tags: [Revenue Center]
+   *     summary: Find distinct inputs/materials by project item name
+   *     description: Returns a list of distinct inputs (idInput and name) that are associated with project items matching the filter. Filters by project item name (case-insensitive, partial match).
+   *     parameters:
+   *       - in: query
+   *         name: itemFilter
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Filter to search by project item name (case-insensitive, partial match)
+   *         example: "IMPERMEABILIZ ACION BALCONES"
+   *     responses:
+   *       200:
+   *         description: A list of distinct inputs/materials
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: "success"
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     data:
+   *                       type: array
+   *                       items:
+   *                         type: object
+   *                         properties:
+   *                           idInput:
+   *                             type: integer
+   *                             example: 123
+   *                             description: ID of the input/material
+   *                           name:
+   *                             type: string
+   *                             example: "Cement Portland Type I"
+   *                             description: Name of the input/material
+   *       400:
+   *         description: Bad request - Missing required parameters
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Not found
+   *       500:
+   *         description: Internal server error
+   */
+
+  /**
+   * @openapi
    * /v1/revenue-center/epp:
    *   get:
    *     tags: [Revenue Center]
@@ -492,6 +563,58 @@ export function revenueCenterRoutes(app: Application): void {
 
   /**
    * @openapi
+   * /v1/revenue-center/expenditures-summary-detail:
+   *   get:
+   *     tags: [Revenue Center]
+   *     summary: Retrieve grouped expenditures summary detail by expenditure type
+   *     parameters:
+   *       - in: query
+   *         name: idRevenueCenter
+   *         schema:
+   *           type: integer
+   *         required: true
+   *         description: ID of the revenue center
+   *       - $ref: '#/components/parameters/page'
+   *       - $ref: '#/components/parameters/pageSize'
+   *     responses:
+   *       200:
+   *         description: Grouped expenditures by expenditure type for allowed types (2,24,26,29,30,53)
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       projectName:
+   *                         type: string
+   *                       expenditureType:
+   *                         type: string
+   *                       value:
+   *                         type: number
+   *                       totalValue:
+   *                         type: number
+   *                 totalItems:
+   *                   type: integer
+   *                 currentPage:
+   *                   type: integer
+   *                 totalPage:
+   *                   type: integer
+   *                 total:
+   *                   type: number
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       500:
+   *         description: Internal server error
+   */
+
+  /**
+   * @openapi
    * /v1/revenue/center/work-tracking:
    *   get:
    *     tags: [Revenue Center]
@@ -509,83 +632,100 @@ export function revenueCenterRoutes(app: Application): void {
    *           type: integer
    *         description: Optional ID of the cost center project
    *       - $ref: '#/components/parameters/page'
-   *       - $ref: '#/components/parameters/pageSize'
+   *       - in: query
+   *         name: pageSize
+   *         schema:
+   *           type: integer
+   *         description: Number of items per page. Use -1 to return all records without pagination
+   *         example: 10
    *     responses:
    *       200:
    *         description: Monthly work tracking summary by employee
    *         content:
    *           application/json:
    *             schema:
-   *               type: object
-   *               properties:
-   *                 data:
-   *                   type: array
-   *                   items:
-   *                     type: object
-   *                     properties:
-   *                       Name:
-   *                         type: string
-   *                         example: "John Doe"
-   *                       Position:
-   *                         type: string
-   *                         example: "Engineer"
-   *                       Enero:
-   *                         type: integer
-   *                         example: 20
-   *                       Febrero:
-   *                         type: integer
-   *                         example: 18
-   *                       Marzo:
-   *                         type: integer
-   *                         example: 22
-   *                       Abril:
-   *                         type: integer
-   *                         example: 21
-   *                       Mayo:
-   *                         type: integer
-   *                         example: 20
-   *                       Junio:
-   *                         type: integer
-   *                         example: 22
-   *                       Julio:
-   *                         type: integer
-   *                         example: 21
-   *                       Agosto:
-   *                         type: integer
-   *                         example: 23
-   *                       Septiembre:
-   *                         type: integer
-   *                         example: 20
-   *                       Octubre:
-   *                         type: integer
-   *                         example: 22
-   *                       Noviembre:
-   *                         type: integer
-   *                         example: 21
-   *                       Diciembre:
-   *                         type: integer
-   *                         example: 20
-   *                       ValorDia:
-   *                         type: number
-   *                         example: 100000
-   *                       DiasTrabajados:
-   *                         type: integer
-   *                         example: 250
-   *                       ValorTotal:
-   *                         type: number
-   *                         example: 25000000
-   *                 totalItems:
-   *                   type: integer
-   *                   example: 50
-   *                 currentPage:
-   *                   type: integer
-   *                   example: 1
-   *                 totalPage:
-   *                   type: integer
-   *                   example: 5
-   *                 total:
-   *                   type: number
-   *                   description: Sum of all ValorTotal values for work tracking
+   *               oneOf:
+   *                 - type: object
+   *                   description: Paginated response (when pageSize is not -1)
+   *                   properties:
+   *                     data:
+   *                       type: array
+   *                       items:
+   *                         type: object
+   *                         properties:
+   *                           Name:
+   *                             type: string
+   *                             example: "John Doe"
+   *                           Position:
+   *                             type: string
+   *                             example: "Engineer"
+   *                           Enero:
+   *                             type: integer
+   *                             example: 20
+   *                           Febrero:
+   *                             type: integer
+   *                             example: 18
+   *                           Marzo:
+   *                             type: integer
+   *                             example: 22
+   *                           Abril:
+   *                             type: integer
+   *                             example: 21
+   *                           Mayo:
+   *                             type: integer
+   *                             example: 20
+   *                           Junio:
+   *                             type: integer
+   *                             example: 22
+   *                           Julio:
+   *                             type: integer
+   *                             example: 21
+   *                           Agosto:
+   *                             type: integer
+   *                             example: 23
+   *                           Septiembre:
+   *                             type: integer
+   *                             example: 20
+   *                           Octubre:
+   *                             type: integer
+   *                             example: 22
+   *                           Noviembre:
+   *                             type: integer
+   *                             example: 21
+   *                           Diciembre:
+   *                             type: integer
+   *                             example: 20
+   *                           ValorDia:
+   *                             type: number
+   *                             example: 100000
+   *                           DiasTrabajados:
+   *                             type: integer
+   *                             example: 250
+   *                           ValorTotal:
+   *                             type: number
+   *                             example: 25000000
+   *                     totalItems:
+   *                       type: integer
+   *                       example: 50
+   *                     currentPage:
+   *                       type: integer
+   *                       example: 1
+   *                     totalPage:
+   *                       type: integer
+   *                       example: 5
+   *                     total:
+   *                       type: number
+   *                       description: Sum of all ValorTotal values for work tracking
+   *                 - type: object
+   *                   description: All records response (when pageSize=-1)
+   *                   properties:
+   *                     data:
+   *                       type: array
+   *                       items:
+   *                         type: object
+   *                     total:
+   *                       type: number
+   *                       description: Sum of all ValorTotal values for work tracking
    *       401:
    *         description: Unauthorized
    *       403:
@@ -959,6 +1099,310 @@ export function revenueCenterRoutes(app: Application): void {
    *       schema:
    *         type: integer
    *       description: ID of the order item
+   */
+
+  /**
+   * @openapi
+   * /v1/revenue-center/relations-project-items-material-invoice:
+   *   get:
+   *     tags: [Revenue Center]
+   *     summary: Find relations between project items, materials and invoices
+   *     description: Retrieves all relations matching the specified filters without pagination
+   *     parameters:
+   *       - in: query
+   *         name: idRevenueCenter
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID of the revenue center
+   *         example: 25
+   *       - in: query
+   *         name: idProjectItem
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID of the project item
+   *         example: 151
+   *       - in: query
+   *         name: idCostCenterProject
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID of the cost center project
+   *         example: 60
+   *     responses:
+   *       200:
+   *         description: List of relations found
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: success
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     data:
+   *                       type: array
+   *                       items:
+   *                         $ref: '#/components/schemas/RelationsProjectItemsMaterialInvoice'
+   *       400:
+   *         description: Bad request - Missing required parameters
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       500:
+   *         description: Internal server error
+   *   post:
+   *     tags: [Revenue Center]
+   *     summary: Create relations between project items, materials and invoices
+   *     description: Creates one or more relations between project items, materials and invoices. Validates if the relation already exists before creating. Accepts a single object or an array of objects.
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             oneOf:
+   *               - $ref: '#/components/schemas/RelationsProjectItemsMaterialInvoiceCreate'
+   *               - type: array
+   *                 items:
+   *                   $ref: '#/components/schemas/RelationsProjectItemsMaterialInvoiceCreate'
+   *           examples:
+   *             singleObject:
+   *               summary: Single relation
+   *               value:
+   *                 idCostCenterProject: 1
+   *                 idInput: 5
+   *                 idRevenueCenter: 10
+   *                 idProjectItem: 15
+   *                 invoicedQuantity: 100.5
+   *             multipleObjects:
+   *               summary: Multiple relations
+   *               value:
+   *                 - idCostCenterProject: 1
+   *                   idInput: 5
+   *                   idRevenueCenter: 10
+   *                   idProjectItem: 15
+   *                   invoicedQuantity: 100.5
+   *                 - idCostCenterProject: 1
+   *                   idInput: 6
+   *                   idRevenueCenter: 10
+   *                   idProjectItem: 16
+   *                   invoicedQuantity: 200.75
+   *     responses:
+   *       201:
+   *         description: Relations created successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: success
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     message:
+   *                       type: string
+   *                       example: "2 item(s) created successfully"
+   *                     created:
+   *                       type: array
+   *                       items:
+   *                         $ref: '#/components/schemas/RelationsProjectItemsMaterialInvoice'
+   *                     duplicates:
+   *                       type: array
+   *                       items:
+   *                         type: object
+   *                       description: List of items that already existed and were not created
+   *                     duplicatesCount:
+   *                       type: integer
+   *                       description: Number of duplicate items
+   *       400:
+   *         description: All items already exist or validation error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: failed
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     message:
+   *                       type: string
+   *                       example: "All items already exist"
+   *                     duplicates:
+   *                       type: array
+   *                       items:
+   *                         type: object
+   *       500:
+   *         description: Internal server error
+   *   patch:
+   *     tags: [Revenue Center]
+   *     summary: Update invoiced quantity for a relation
+   *     description: Updates the invoicedQuantity field for an existing relation between project item, material and invoice
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/RelationsProjectItemsMaterialInvoiceUpdate'
+   *           example:
+   *             idRelationsProjectItemsMaterialInvoice: 1
+   *             invoicedQuantity: 150.75
+   *     responses:
+   *       200:
+   *         description: Invoiced quantity updated successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: success
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     message:
+   *                       type: string
+   *                       example: "Invoiced quantity updated successfully"
+   *                     data:
+   *                       $ref: '#/components/schemas/RelationsProjectItemsMaterialInvoice'
+   *       400:
+   *         description: Bad request - Validation error
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Relation not found
+   *       500:
+   *         description: Internal server error
+   *   delete:
+   *     tags: [Revenue Center]
+   *     summary: Delete a relation between project item, material and invoice
+   *     description: Deletes an existing relation by its ID
+   *     parameters:
+   *       - in: path
+   *         name: idRelationsProjectItemsMaterialInvoice
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID of the relation to delete
+   *         example: 1
+   *     responses:
+   *       200:
+   *         description: Relation deleted successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: success
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     message:
+   *                       type: string
+   *                       example: "Relation deleted successfully"
+   *       400:
+   *         description: Bad request - Validation error
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       404:
+   *         description: Relation not found
+   *       500:
+   *         description: Internal server error
+   *
+   * components:
+   *   schemas:
+   *     RelationsProjectItemsMaterialInvoiceCreate:
+   *       type: object
+   *       required:
+   *         - idInput
+   *         - idRevenueCenter
+   *         - idProjectItem
+   *       properties:
+   *         idCostCenterProject:
+   *           type: integer
+   *           nullable: true
+   *           description: ID of the cost center project
+   *           example: 1
+   *         idInput:
+   *           type: integer
+   *           description: ID of the input/material (required)
+   *           example: 5
+   *         idRevenueCenter:
+   *           type: integer
+   *           description: ID of the revenue center (required)
+   *           example: 10
+   *         idProjectItem:
+   *           type: integer
+   *           description: ID of the project item (required)
+   *           example: 15
+   *         invoicedQuantity:
+   *           type: number
+   *           format: float
+   *           nullable: true
+   *           description: Quantity invoiced
+   *           example: 100.5
+   *     RelationsProjectItemsMaterialInvoice:
+   *       type: object
+   *       properties:
+   *         idRelationsProjectItemsMaterialInvoice:
+   *           type: integer
+   *           description: Auto-generated ID
+   *           example: 1
+   *         idCostCenterProject:
+   *           type: integer
+   *           nullable: true
+   *           description: ID of the cost center project
+   *           example: 1
+   *         idInput:
+   *           type: integer
+   *           description: ID of the input/material
+   *           example: 5
+   *         idRevenueCenter:
+   *           type: integer
+   *           description: ID of the revenue center
+   *           example: 10
+   *         idProjectItem:
+   *           type: integer
+   *           description: ID of the project item
+   *           example: 15
+   *         invoicedQuantity:
+   *           type: number
+   *           format: float
+   *           nullable: true
+   *           description: Quantity invoiced
+   *           example: 100.5
+   *     RelationsProjectItemsMaterialInvoiceUpdate:
+   *       type: object
+   *       required:
+   *         - idRelationsProjectItemsMaterialInvoice
+   *         - invoicedQuantity
+   *       properties:
+   *         idRelationsProjectItemsMaterialInvoice:
+   *           type: integer
+   *           description: ID of the relation to update (required)
+   *           example: 1
+   *         invoicedQuantity:
+   *           type: number
+   *           format: float
+   *           nullable: true
+   *           description: New invoiced quantity value (required)
+   *           example: 150.75
    */
 
   app.use("/api", routes);

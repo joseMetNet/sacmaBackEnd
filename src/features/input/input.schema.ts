@@ -38,3 +38,7 @@ export const updateInput = z.object({
   performance: z.string().optional(),
   price: z.string().optional(),
 });
+
+export const idSupplier = z.object({
+  idSupplier: z.coerce.number(),
+});

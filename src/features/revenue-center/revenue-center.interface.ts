@@ -32,4 +32,26 @@ export interface IRevenueCenterUpdate {
   invoice?: string;   // nuevo
   spend?: string;     // nuevo
   utility?: string;   // nuevo
+}
+
+export interface IRelationsProjectItemsMaterialInvoice {
+  idRelationsProjectItemsMaterialInvoice: number;
+  idCostCenterProject: number | null;
+  idInput: number;
+  idRevenueCenter: number;
+  idProjectItem: number;
+  invoicedQuantity: number | null;
+}
+
+export interface IRelationsProjectItemsMaterialInvoiceCreate {
+  idCostCenterProject?: number | null;
+  idInput: number;
+  idRevenueCenter: number;
+  idProjectItem: number;
+  invoicedQuantity?: number | null;
+}
+
+export interface IRelationsProjectItemsMaterialInvoiceUpdate {
+  idRelationsProjectItemsMaterialInvoice: number;
+  invoicedQuantity: number | null;
 } 

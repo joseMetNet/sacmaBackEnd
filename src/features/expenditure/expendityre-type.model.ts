@@ -24,3 +24,5 @@ ExpenditureType.init(
     timestamps: false,
   }
 );
+
+// Relaciones - se configuran en el archivo de inicialización para evitar dependencias circulares

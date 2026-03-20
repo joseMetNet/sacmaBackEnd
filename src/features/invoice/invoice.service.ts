@@ -8,6 +8,7 @@ import crypto from "crypto";
 import { CostCenterRepository } from "../cost-center/cost-center.repository";
 import { Op } from "sequelize";
 import { dbConnection } from "../../config/database";
+import * as types from "./invoice.interface";
 
 export class InvoiceService {
   private readonly invoiceRepository: InvoiceRepository;
@@ -48,7 +49,7 @@ export class InvoiceService {
       const invoicePayload = {
         ...invoiceData,
         documentUrl,
-        idInvoiceStatus: 1  // Default value for new invoices
+        idInvoiceStatus: 2  // Default value for new invoices
       };
 
       // Create invoice within transaction
@@ -137,7 +138,7 @@ export class InvoiceService {
     }
   };
 
-  findAll = async (request: FindAllDTO): Promise<ResponseEntity> => {
+  findAllOrigineFfrain = async (request: FindAllDTO): Promise<ResponseEntity> => {
     try {
       const filter = this.buildFindAllFilter(request);
       const { limit, offset, page, pageSize } = this.getPagination(request);
@@ -233,6 +234,110 @@ export class InvoiceService {
       );
     }
   };
+
+  findAll = async (request: FindAllDTO): Promise<ResponseEntity> => {
+    try {
+      const filter = this.buildFindAllFilter(request);
+      const { limit, offset, page, pageSize } = this.getPagination(request);
+
+      const data = await this.invoiceRepository.findAll(
+        filter,
+        limit,
+        offset
+      );
+
+      if (data.rows.length === 0) {
+        return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+          data: [],
+          totalItems: data.count,
+          currentPage: page,
+          totalPages: Math.ceil(data.count / pageSize)
+        });
+      }
+
+      const uniqueContracts = [...new Set(data.rows.map(invoice => invoice.contract).filter(Boolean))];
+
+      const [invoiceProjectItems, costCenters, projectItems] = await Promise.all([
+        this.invoiceRepository.findAllInvoiceProjectItems(),
+        this.costCenterRepository.findClients(),
+        uniqueContracts.length > 0
+          ? this.costCenterRepository.findAllProjectItem(
+            { contract: { [Op.in]: uniqueContracts } },
+            -1,
+            0
+          )
+          : Promise.resolve({ rows: [], count: 0 })
+      ]);
+
+      // Map con clave única por factura + contrato + ítem
+      const invoiceProjectItemsMap = new Map<string, typeof invoiceProjectItems[0]>();
+      invoiceProjectItems.forEach(item => {
+        const key = `${item.idInvoice}-${item.contract}-${item.idProjectItem}`;
+        invoiceProjectItemsMap.set(key, item);
+      });
+
+      // Agrupar project items por contrato
+      const projectItemsByContract = new Map<string, typeof projectItems.rows>();
+      projectItems.rows.forEach(item => {
+        if (!projectItemsByContract.has(item.contract)) {
+          projectItemsByContract.set(item.contract, []);
+        }
+        projectItemsByContract.get(item.contract)!.push(item);
+      });
+
+      // Crear mapa de clientes
+      const costCenterMap = new Map<number, string>();
+      costCenters.forEach(cc => {
+        if (cc.CostCenterProjects && Array.isArray(cc.CostCenterProjects)) {
+          cc.CostCenterProjects.forEach((ccp: { idCostCenterProject: number }) => {
+            costCenterMap.set(ccp.idCostCenterProject, cc.name);
+          });
+        }
+      });
+
+      // Construir respuesta
+      const responseData = data.rows.map(invoice => {
+        let totalValue = 0;
+
+        // Project items de este contrato
+        const contractItems = projectItemsByContract.get(invoice.contract) || [];
+
+        for (const item of contractItems) {
+          // Clave incluye idInvoice
+          const invoiceItemKey = `${invoice.idInvoice}-${item.contract}-${item.idProjectItem}`;
+          const invoiceProjectItem = invoiceProjectItemsMap.get(invoiceItemKey);
+
+          if (invoiceProjectItem) {
+            const invoicedQuantity = parseFloat(invoiceProjectItem.invoicedQuantity) || 0;
+            const unitPrice = parseFloat(item.unitPrice) || 0;
+            totalValue += invoicedQuantity * unitPrice; // 👈 Aquí ocurre el cálculo
+          }
+        }
+
+        const client = costCenterMap.get(invoice.idCostCenterProject) || null;
+
+        return {
+          ...invoice.toJSON(),
+          totalValue,
+          client
+        };
+      });
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        data: responseData,
+        totalItems: data.count,
+        currentPage: page,
+        totalPages: Math.ceil(data.count / pageSize)
+      });
+    } catch (err: unknown) {
+      console.error(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err instanceof Error ? err.message : "Unknown error" }
+      );
+    }
+  };
+
 
   update = async (invoiceData: UpdateInvoiceDTO, filePath?: string): Promise<ResponseEntity> => {
     try {
@@ -369,6 +474,19 @@ export class InvoiceService {
 
     return filter;
   }
+
+  listProjectInvoices = async (request: types.ListInvoiceContractsDTO): Promise<ResponseEntity> => {
+    try {
+      const invoices = await this.invoiceRepository.findProjectInvioices(request.idCostCenterProject);
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, invoices);
+    } catch (err: any) {
+      console.error(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: err.message }
+      );
+    }
+  };
 
   private getPagination = (request: { page?: number, pageSize?: number }) => {
     const page = request.page || 1;

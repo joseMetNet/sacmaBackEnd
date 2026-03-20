@@ -31,9 +31,6 @@ export const updateRevenueCenterSchema = z.object({
   idQuotation: z.coerce.number().optional(),
   fromDate: z.string().optional(),
   toDate: z.string().optional(),
-  invoice: z.string().optional(),   // nuevo
-  spend: z.string().optional(),     // nuevo
-  utility: z.string().optional(),   // nuevo
 });
 
 export const findAllMaterialSchema = z.object({
@@ -66,6 +63,12 @@ export const findAllExpendituresSchema = z.object({
   pageSize: z.coerce.number().optional(),
   name: z.string().optional(),
   idCostCenterProject: z.coerce.number().optional(),
+});
+
+export const findAllExpendituresSummaryDetailSchema = z.object({
+  idRevenueCenter: z.coerce.number(),
+  page: z.coerce.number().optional(),
+  pageSize: z.coerce.number().optional(),
 });
 
 export const findAllWorkTrackingSchema = z.object({
@@ -105,10 +108,22 @@ export const findAllContractedSummarySchema = z.object({
 
 export const findAllMaterialSummaryDetailSchema = z.object({
   idRevenueCenter: z.coerce.number(),
-  page: z.coerce.number().optional(),
-  pageSize: z.coerce.number().optional(),
-  name: z.string().optional(),
+  // page: z.coerce.number().optional(),
+  // pageSize: z.coerce.number().optional(),
+  // name: z.string().optional(),
   idCostCenterProject: z.coerce.number().optional(),
+});
+
+export const findDistinctInputsByRevenueCenterSchema = z.object({
+  itemFilter: z.string(),
+  idRevenueCenter: z.coerce.number(),
+  idProjectItem: z.coerce.number().optional(),
+});
+
+export const findInvoicedQuantityByProjectItemSchema = z.object({
+  idRevenueCenter: z.coerce.number(),
+  idProjectItem: z.coerce.number().optional(),
+  idInput: z.coerce.number().optional(),
 });
 
 export type FindAllSchema = z.infer<typeof findAllSchema>;
@@ -119,9 +134,44 @@ export type FindAllMaterialSchema = z.infer<typeof findAllMaterialSchema>;
 export type FindAllInputsSchema = z.infer<typeof findAllInputsSchema>;
 export type FindAllEppSchema = z.infer<typeof findAllEppSchema>;
 export type FindAllExpendituresSchema = z.infer<typeof findAllExpendituresSchema>;
+export type FindAllExpendituresSummaryDetailSchema = z.infer<typeof findAllExpendituresSummaryDetailSchema>;
 export type FindAllWorkTrackingSchema = z.infer<typeof findAllWorkTrackingSchema>;
 export type FindAllQuotationSchema = z.infer<typeof findAllQuotationSchema>;
 export type FindAllMaterialSummarySchema = z.infer<typeof findAllMaterialSummarySchema>;
 export type FindAllContractedSummarySchema = z.infer<typeof findAllContractedSummarySchema>;
 export type FindAllMaterialSummaryDetailSchema = z.infer<typeof findAllMaterialSummaryDetailSchema>;
 export type FindAllInvoiceSummarySchema = z.infer<typeof findAllInvoiceSummarySchema>;
+export type FindDistinctInputsByRevenueCenterSchema = z.infer<typeof findDistinctInputsByRevenueCenterSchema>;export type FindInvoicedQuantityByProjectItemSchema = z.infer<typeof findInvoicedQuantityByProjectItemSchema>;
+export const findRelationsProjectItemsMaterialInvoiceSchema = z.object({
+  idRevenueCenter: z.coerce.number(),
+  idProjectItem: z.coerce.number(),
+  idCostCenterProject: z.coerce.number(),
+});
+
+export const createRelationsProjectItemsMaterialInvoiceItemSchema = z.object({
+  idCostCenterProject: z.coerce.number().optional().nullable(),
+  idInput: z.coerce.number(),
+  idRevenueCenter: z.coerce.number(),
+  idProjectItem: z.coerce.number(),
+  invoicedQuantity: z.coerce.number().optional().nullable(),
+});
+
+export const createRelationsProjectItemsMaterialInvoiceSchema = z.union([
+  createRelationsProjectItemsMaterialInvoiceItemSchema,
+  z.array(createRelationsProjectItemsMaterialInvoiceItemSchema),
+]);
+
+export const updateRelationsProjectItemsMaterialInvoiceSchema = z.object({
+  idRelationsProjectItemsMaterialInvoice: z.coerce.number(),
+  invoicedQuantity: z.coerce.number().nullable(),
+});
+
+export const deleteRelationsProjectItemsMaterialInvoiceSchema = z.object({
+  idRelationsProjectItemsMaterialInvoice: z.coerce.number(),
+});
+
+export type FindRelationsProjectItemsMaterialInvoiceSchema = z.infer<typeof findRelationsProjectItemsMaterialInvoiceSchema>;
+export type CreateRelationsProjectItemsMaterialInvoiceItemSchema = z.infer<typeof createRelationsProjectItemsMaterialInvoiceItemSchema>;
+export type CreateRelationsProjectItemsMaterialInvoiceSchema = z.infer<typeof createRelationsProjectItemsMaterialInvoiceSchema>;
+export type UpdateRelationsProjectItemsMaterialInvoiceSchema = z.infer<typeof updateRelationsProjectItemsMaterialInvoiceSchema>;
+export type DeleteRelationsProjectItemsMaterialInvoiceSchema = z.infer<typeof deleteRelationsProjectItemsMaterialInvoiceSchema>;

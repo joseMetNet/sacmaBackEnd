@@ -10,37 +10,49 @@ export class ExpenditureRepository {
   async findAll(
     limit: number,
     offset: number,
-    filter: {[key: string]: any}
+    filter: { [key: string]: any }
   ) {
     return Expenditure.findAndCountAll({
       include: [
         {
           model: ExpenditureType,
-          required: true,
+          required: false,  // Changed from true to false to include all records (LEFT JOIN)
         },
         {
           model: CostCenterProject,
           required: false,
         },
       ],
+      distinct: true,  // Fix count when using LEFT JOIN with includes
       limit,
       offset,
       where: filter,
-      order: [["createdAt", "DESC"]],
+      order: [
+        ["idExpenditure", "DESC"]  // Order by ID to show most recently inserted records first
+      ],
     });
   }
 
+  // de dentro de este metodo se debe hacer la consulta SQL que me traiga el total de gastos por proyecto findAllValues()
+  //  SELECT
+  //     	te.idCostCenterProject, 
+  //     	SUM(te.value) as totalValue
+  //     FROM mvp1.TB_Expenditure te
+  //     WHERE
+  //        te.idExpenditureType IN (2, 26)
+  //     GROUP BY
+  // 	  te.idCostCenterProject;
   findAllValues(
   ) {
     const query = `
-    SELECT
-    	te.idCostCenterProject, 
-    	SUM(te.value) as totalValue
-    FROM mvp1.TB_Expenditure te
-    WHERE
-       te.idExpenditureType IN (2, 26)
+     SELECT distinct
+    idCostCenterProject, 
+    SUM(value) as totalValue
+    FROM mvp1.TB_Expenditure    
     GROUP BY
-	  te.idCostCenterProject;`;
+    idCostCenterProject
+
+   `;
     type result = {
       idCostCenterProject: number;
       totalValue: number;
@@ -53,7 +65,7 @@ export class ExpenditureRepository {
   async findAllExpenditureItem(
     limit: number,
     offset: number,
-    filter: {[key: string]: any}
+    filter: { [key: string]: any }
   ) {
     return ExpenditureItem.findAndCountAll({
       include: [
@@ -77,7 +89,7 @@ export class ExpenditureRepository {
       include: [
         {
           model: ExpenditureType,
-          required: true,
+          required: false,  // Changed from true to false to include all records (LEFT JOIN)
         },
         {
           model: CostCenterProject,

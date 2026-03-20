@@ -3,9 +3,27 @@ import { InvoiceStatus } from "./invoice-status.model";
 import { CostCenterProject } from "../cost-center/cost-center-project.model";
 import { InvoiceProjectItem } from "./invoice-project-item.model";
 import { isPipelineLike } from "@azure/storage-blob";
+import { dbConnection } from "../../config";
+import { literal, Op, QueryTypes } from "sequelize";
 
 export class InvoiceRepository {
   constructor() { }
+
+  private buildRevenueCenterAnyTableSql = (alias: string): string => `
+    (
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter
+      UNION ALL
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter_Inactive
+      UNION ALL
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter_RetentionGuarantee
+      UNION ALL
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter_Liquidation
+    ) ${alias}
+  `;
 
   async findById(id: number): Promise<Invoice | null> {
     return await Invoice.findByPk(id, {
@@ -35,7 +53,7 @@ export class InvoiceRepository {
       order: [["idInvoice", "DESC"]]
     };
 
-    if(limit > 0) {
+    if (limit > 0) {
       queryOptions.limit = limit;
       queryOptions.offset = offset;
     }
@@ -56,7 +74,7 @@ export class InvoiceRepository {
       order: [["idInvoice", "ASC"]]
     };
 
-    if(limit > 0) {
+    if (limit > 0) {
       queryOptions.limit = limit;
       queryOptions.offset = offset;
     }
@@ -123,4 +141,73 @@ export class InvoiceRepository {
   async bulkCreate(invoiceProjectItems: Partial<InvoiceProjectItem>[]): Promise<InvoiceProjectItem[]> {
     return await InvoiceProjectItem.bulkCreate(invoiceProjectItems);
   }
+
+
+  findAllTotalsByRevenueCenters = async () => {
+    const revenueCenterSource = this.buildRevenueCenterAnyTableSql("rc");
+
+    const query = `
+    SELECT
+       rc.idRevenueCenter,
+       SUM(ISNULL(invItem.invoicedQuantity, 0) * CAST(pi.unitPrice AS FLOAT)) AS totalAcumulado
+    FROM ${revenueCenterSource}
+    JOIN mvp1.TB_ProjectItem pi ON rc.idCostCenterProject = pi.idCostCenterProject
+    LEFT JOIN mvp1.TB_InvoiceProjectItem invItem ON pi.idProjectItem = invItem.idProjectItem
+    LEFT JOIN mvp1.TB_Invoice i ON invItem.idInvoice = i.idInvoice
+    GROUP BY rc.idRevenueCenter;
+  `;
+
+    type result = {
+      idRevenueCenter: number;
+      totalAcumulado: number;
+    };
+
+    return dbConnection.query<result>(query, { type: QueryTypes.SELECT });
+  };
+
+  findAllTotalsByRevenueCenter() {
+    const revenueCenterSource = this.buildRevenueCenterAnyTableSql("rc");
+
+    const query = `
+    SELECT
+       rc.idRevenueCenter,
+       SUM(ISNULL(invItem.invoicedQuantity, 0) * CAST(pi.unitPrice AS FLOAT)) AS totalAcumulado
+    FROM ${revenueCenterSource}
+    INNER JOIN mvp1.TB_ProjectItem pi ON rc.idCostCenterProject = pi.idCostCenterProject
+    INNER JOIN mvp1.TB_InvoiceProjectItem invItem ON pi.idProjectItem = invItem.idProjectItem
+    INNER JOIN mvp1.TB_Invoice i ON invItem.idInvoice = i.idInvoice
+    GROUP BY rc.idRevenueCenter;`;
+
+    type result = {
+      idRevenueCenter: number;
+      totalAcumulado: number;
+    };
+
+    return dbConnection.query<result>(query, { type: QueryTypes.SELECT });
+  };
+
+  async findProjectInvioices(idCostCenterProject: number): Promise<Invoice[]> {
+    const invoicesItems = await Invoice.findAll({
+      where: {
+        idCostCenterProject: idCostCenterProject,
+        // idInvoiceStatus: {
+        //   [Op.ne]: 1, // ✅ excluir facturas con estado 1
+        // },
+        // invoice: {
+        //   [Op.ne]: null
+        // }
+      },
+      // attributes: [[literal("TRIM(invoice)"), "invoice"]],
+      // group: ["invoice"],
+      // raw: true
+    });
+    return invoicesItems;
+  }
+
+  // async deleteCostCenterProject(id: number): Promise<number> {
+  //   return await CostCenterProject.destroy({
+  //     where: { idCostCenterProject: id }
+  //   });
+  // }
+
 }

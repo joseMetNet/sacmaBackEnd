@@ -35,6 +35,17 @@ export class InputRepository {
     });
     return input;
   }
+
+  async findAllByIdSupplier(idSupplier: number): Promise<{ rows: Input[], count: number }> {
+    const inputs = await Input.findAndCountAll({
+      include: [{ all: true }],
+      nest: true,
+      where: { idSupplier },
+      distinct: true,
+      order: [["idInput", "DESC"]]
+    });
+    return inputs;
+  }
 }
 
 const inputRepository = new InputRepository();

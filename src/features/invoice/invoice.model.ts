@@ -40,13 +40,23 @@ Invoice.init({
     type: DataTypes.INTEGER,
     allowNull: false
   },
+  // createdAt: {
+  //   type: DataTypes.STRING,
+  //   allowNull: true
+  // },
+  // updatedAt: {
+  //   type: DataTypes.STRING,
+  //   allowNull: true
+  // }
   createdAt: {
-    type: DataTypes.STRING,
-    allowNull: true
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
   },
   updatedAt: {
-    type: DataTypes.STRING,
-    allowNull: true
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
   }
 }, {
   sequelize: dbConnection,

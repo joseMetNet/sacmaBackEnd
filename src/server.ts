@@ -19,6 +19,17 @@ import { employeeRoutes } from "./features/employee/employee.route";
 import { expenditureRoute } from "./features/expenditure";
 import { revenueCenterRoutes } from "./features/revenue-center/revenue-center.route";
 import { invoiceRoutes } from "./features/invoice";
+// import { incominRoute } from "./features/incomin/incomin.route";
+import { incominRoute } from "./features/incomin";
+import { incomeDiscountInvoiceRoute } from "./features/incomeDiscountsInvoice";
+import { setupModelRelations } from "./config/model-relations";
+import { purchaseRoute } from "./features/purchase";
+import { wareHouseRoute } from "./features/warwHouse";
+import { inputMovementRoute } from "./features/inputMovement";
+import { inventoryRoute } from "./features/inventory";
+import { reportsRoutes } from "./features/reports";
+
+import "./jobs/invoice.job";
 
 class Server {
   private app: Application;
@@ -30,6 +41,8 @@ class Server {
     this.initializeSwagger();
     this.middlewares();
     this.routes();
+    // Configurar relaciones de modelos después de que todos los modelos estén inicializados
+    setupModelRelations();
   }
 
   private middlewares(): void {
@@ -71,6 +84,13 @@ class Server {
     expenditureRoute(this.app);
     revenueCenterRoutes(this.app);
     invoiceRoutes(this.app);
+    incominRoute(this.app);
+    incomeDiscountInvoiceRoute(this.app);
+    purchaseRoute(this.app);
+    wareHouseRoute(this.app);
+    inputMovementRoute(this.app);
+    inventoryRoute(this.app);
+    reportsRoutes(this.app);
   }
 
   public listen(): void {

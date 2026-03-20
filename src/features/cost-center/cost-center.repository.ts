@@ -1,4 +1,5 @@
 import { InvoiceProjectItem } from "../invoice/invoice-project-item.model";
+import { Quotation } from "../quotation/quotation.model";
 import { CostCenterContact } from "./cost-center-contact.model";
 import { CostCenterProject } from "./cost-center-project.model";
 import { CostCenter } from "./cost-center.model";
@@ -80,13 +81,20 @@ export class CostCenterRepository {
   ): Promise<{ rows: ProjectItem[], count: number }> {
     const queryOptions: any = {
       include: [{ all: true }],
+      // include: [
+      //   {
+      //     model: Quotation,
+      //     required: false,
+      //   }
+
+      // ],
       where: filter,
       nest: true,
       distinct: true,
       order: [["idProjectItem", "ASC"]],
     };
 
-    // Only apply pagination if limit is greater than 0
+    // Only apply pagination if limit is greater than 0Quotation
     if (limit > 0) {
       queryOptions.limit = limit;
       queryOptions.offset = offset;
@@ -245,7 +253,43 @@ export class CostCenterRepository {
     return updatedItems;
   }
 
-  async setInvoicedQuantityToNull(data: {projectItemId: number, contract: string}[]): Promise<ProjectItem[]> {
+  async upsertInvoiceProjectItemsTESTS(invoiceProjectItems: Partial<InvoiceProjectItem>[]): Promise<InvoiceProjectItem[]> {
+    const updatedItems: InvoiceProjectItem[] = [];
+
+    for (const item of invoiceProjectItems) {
+      // Sequelize upsert: crea si no existe, actualiza si ya existe
+      const [record] = await InvoiceProjectItem.upsert(
+        {
+          idInvoice: item.idInvoice,
+          idProjectItem: item.idProjectItem,
+          contract: item.contract,
+          invoicedQuantity: item.invoicedQuantity
+        },
+        {
+          returning: true // ⚠️ PostgreSQL/SQLite: devuelve el registro, MySQL: no siempre lo devuelve
+        }
+      );
+
+      // Para motores que no soportan "returning" (ej: MySQL), record puede venir vacío
+      if (!record) {
+        const fetched = await InvoiceProjectItem.findOne({
+          where: {
+            idInvoice: item.idInvoice,
+            idProjectItem: item.idProjectItem,
+            contract: item.contract
+          }
+        });
+        if (fetched) updatedItems.push(fetched);
+      } else {
+        updatedItems.push(record);
+      }
+    }
+
+    return updatedItems;
+  }
+
+
+  async setInvoicedQuantityToNull(data: { projectItemId: number, contract: string }[]): Promise<ProjectItem[]> {
     const updatedItems: ProjectItem[] = [];
 
     for (const item of data) {

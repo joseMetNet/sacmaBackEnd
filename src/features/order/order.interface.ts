@@ -13,6 +13,21 @@ export interface FindAllOrderItemDetailDTO {
   idOrderItem?: number;
 }
 
+export interface FindAllOrderItemDetailMachineryUsedDTO {
+  page?: number;
+  pageSize?: number;
+  idOrderItem?: number;
+  // idOrderItemDetailMachineryUsed?: number;
+  // idMachineryType?: number;
+  // machineryBrand?: string;
+  // serial?: string;
+  // idMachineryStatus?: number;
+}
+
+export interface FindAllOrderItemDetailMachineryUsedDTOPs {
+  idOrderItem?: number;
+}
+
 export interface CreateOrderItem {
   idOrderItemStatus: number;
   idEmployee: number;
@@ -42,6 +57,18 @@ export interface CreateOrderItemDetail {
   updatedAt?: string;
 }
 
+export interface CreateOrderItemDetailMachineryUsed {
+  // idOrderItemDetailMachineryUsed: number;
+  idOrderItem: number;
+  idMachinery: number;
+  idMachineryModel: number;
+  idMachineryType: number;
+  idMachineryStatus: number;
+  idCostCenterProject: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface UpdateOrderItem {
   idOrderItem: number;
   idEmployee?: number;
@@ -61,6 +88,21 @@ export interface UpdateOrderItemDetail {
   idOrderItem?: number;
   idInput?: number;
   quantity?: number;
+  shouldUpdateInventory?: boolean;
+  idWarehouse?: number;
+  remarks?: string;
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface UpdateOrderItemDetailMachineryUsed {
+  idOrderItemDetailMachineryUsed: number;
+  idOrderItem?: number;
+  idMachinery?: number;
+  idMachineryModel?: number;
+  idMachineryType?: number;
+  idMachineryStatus?: number;
   createdAt?: string;
   updatedAt?: string;
 }
