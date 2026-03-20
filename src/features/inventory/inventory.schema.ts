@@ -271,3 +271,40 @@ export const updateInventoryDocumentParamSchema = z.object({
 export const deleteInventoryDocumentParamSchema = z.object({
   idInventoryDocument: z.coerce.number().int().positive("idInventoryDocument debe ser un número positivo"),
 });
+
+// Schemas para DetailPriceInventoryCostCenter
+export const createDetailPriceInventoryCostCenterSchema = z.object({
+  idRevenueCenter: z.coerce.number().int().positive("idRevenueCenter debe ser un número positivo").optional(),
+  idCostCenterProject: z.coerce.number().int().positive("idCostCenterProject debe ser un número positivo").optional(),
+  price: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
+    message: "price debe ser un número decimal positivo",
+  }).optional(),
+});
+
+export const updateDetailPriceInventoryCostCenterSchema = z.object({
+  idRevenueCenter: z.coerce.number().int().positive("idRevenueCenter debe ser un número positivo").optional(),
+  idCostCenterProject: z.coerce.number().int().positive("idCostCenterProject debe ser un número positivo").optional(),
+  price: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
+    message: "price debe ser un número decimal positivo",
+  }).optional(),
+});
+
+export const findAllDetailPriceInventoryCostCenterSchema = z.object({
+  page: z.coerce.number().int().positive().optional(),
+  pageSize: z.coerce.number().int().positive().optional(),
+  idRevenueCenter: z.coerce.number().int().positive().optional(),
+  idCostCenterProject: z.coerce.number().int().positive().optional(),
+});
+
+export const detailPriceInventoryCostCenterParamSchema = z.object({
+  idDetailPriceInventoryCostCenter: z.coerce.number().int().positive("idDetailPriceInventoryCostCenter debe ser un número positivo"),
+});
+
+export const upsertDetailPriceInventoryCostCenterSchema = z.object({
+  idRevenueCenter: z.coerce.number().int().positive("idRevenueCenter debe ser un número positivo").optional(),
+  idCostCenterProject: z.coerce.number().int().positive("idCostCenterProject debe ser un número positivo").optional(),
+  price: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
+    message: "price debe ser un número decimal positivo",
+  }).optional(),
+});
+

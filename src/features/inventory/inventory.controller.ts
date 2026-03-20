@@ -799,4 +799,162 @@ export class InventoryController {
       res.status(500).json({ message: "Error interno del servidor" });
     }
   };
+
+  // ============================================================================
+  // DetailPriceInventoryCostCenter CRUD Operations
+  // ============================================================================
+
+  /**
+   * POST /api/v1/inventory/detail-price-cost-center
+   * Crear nuevo DetailPriceInventoryCostCenter
+   */
+  createDetailPriceInventoryCostCenter = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const validation = schemas.createDetailPriceInventoryCostCenterSchema.safeParse(req.body);
+      if (!validation.success) {
+        res.status(400).json({
+          message: "Datos de entrada inválidos",
+          errors: validation.error.errors,
+        });
+        return;
+      }
+
+      const response = await this.inventoryService.createDetailPriceInventoryCostCenter(validation.data);
+      res.status(response.code).json(response);
+    } catch (error) {
+      console.error("Error in createDetailPriceInventoryCostCenter controller:", error);
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  };
+
+  /**
+   * GET /api/v1/inventory/detail-price-cost-center
+   * Obtener todos los DetailPriceInventoryCostCenter con filtros
+   */
+  findAllDetailPriceInventoryCostCenter = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const validation = schemas.findAllDetailPriceInventoryCostCenterSchema.safeParse(req.query);
+      if (!validation.success) {
+        res.status(400).json({
+          message: "Parámetros de consulta inválidos",
+          errors: validation.error.errors,
+        });
+        return;
+      }
+
+      const response = await this.inventoryService.findAllDetailPriceInventoryCostCenter(validation.data);
+      res.status(response.code).json(response);
+    } catch (error) {
+      console.error("Error in findAllDetailPriceInventoryCostCenter controller:", error);
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  };
+
+  /**
+   * GET /api/v1/inventory/detail-price-cost-center/:idDetailPriceInventoryCostCenter
+   * Obtener DetailPriceInventoryCostCenter por ID
+   */
+  findDetailPriceInventoryCostCenterById = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const paramValidation = schemas.detailPriceInventoryCostCenterParamSchema.safeParse(req.params);
+      if (!paramValidation.success) {
+        res.status(400).json({
+          message: "Parámetros inválidos",
+          errors: paramValidation.error.errors,
+        });
+        return;
+      }
+
+      const response = await this.inventoryService.findDetailPriceInventoryCostCenterById(
+        paramValidation.data.idDetailPriceInventoryCostCenter
+      );
+      res.status(response.code).json(response);
+    } catch (error) {
+      console.error("Error in findDetailPriceInventoryCostCenterById controller:", error);
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  };
+
+  /**
+   * PUT /api/v1/inventory/detail-price-cost-center/:idDetailPriceInventoryCostCenter
+   * Actualizar DetailPriceInventoryCostCenter
+   */
+  updateDetailPriceInventoryCostCenter = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const paramValidation = schemas.detailPriceInventoryCostCenterParamSchema.safeParse(req.params);
+      if (!paramValidation.success) {
+        res.status(400).json({
+          message: "Parámetros inválidos",
+          errors: paramValidation.error.errors,
+        });
+        return;
+      }
+
+      const bodyValidation = schemas.updateDetailPriceInventoryCostCenterSchema.safeParse(req.body);
+      if (!bodyValidation.success) {
+        res.status(400).json({
+          message: "Datos de entrada inválidos",
+          errors: bodyValidation.error.errors,
+        });
+        return;
+      }
+
+      const response = await this.inventoryService.updateDetailPriceInventoryCostCenter(
+        paramValidation.data.idDetailPriceInventoryCostCenter,
+        bodyValidation.data
+      );
+      res.status(response.code).json(response);
+    } catch (error) {
+      console.error("Error in updateDetailPriceInventoryCostCenter controller:", error);
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  };
+
+  /**
+   * DELETE /api/v1/inventory/detail-price-cost-center/:idDetailPriceInventoryCostCenter
+   * Eliminar DetailPriceInventoryCostCenter
+   */
+  deleteDetailPriceInventoryCostCenter = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const paramValidation = schemas.detailPriceInventoryCostCenterParamSchema.safeParse(req.params);
+      if (!paramValidation.success) {
+        res.status(400).json({
+          message: "Parámetros inválidos",
+          errors: paramValidation.error.errors,
+        });
+        return;
+      }
+
+      const response = await this.inventoryService.deleteDetailPriceInventoryCostCenter(
+        paramValidation.data.idDetailPriceInventoryCostCenter
+      );
+      res.status(response.code).json(response);
+    } catch (error) {
+      console.error("Error in deleteDetailPriceInventoryCostCenter controller:", error);
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  };
+
+  /**
+   * PATCH /api/v1/inventory/detail-price-cost-center/upsert
+   * Upsert DetailPriceInventoryCostCenter (Crear o actualizar según existencia)
+   */
+  upsertDetailPriceInventoryCostCenter = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const validation = schemas.upsertDetailPriceInventoryCostCenterSchema.safeParse(req.body);
+      if (!validation.success) {
+        res.status(400).json({
+          message: "Datos de entrada inválidos",
+          errors: validation.error.errors,
+        });
+        return;
+      }
+
+      const response = await this.inventoryService.upsertDetailPriceInventoryCostCenter(validation.data);
+      res.status(response.code).json(response);
+    } catch (error) {
+      console.error("Error in upsertDetailPriceInventoryCostCenter controller:", error);
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  };
 }

@@ -57,5 +57,6 @@ export const swaggerOptions: SwaggerOptions = {
     "./src/features/incomeDiscountsInvoice/*route.ts",
     "./src/features/purchase/*route.ts",
     "./src/features/warwHouse/*route.ts",
+    "./src/features/reports/*route.ts",
   ],
 };

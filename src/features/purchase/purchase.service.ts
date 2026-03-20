@@ -36,6 +36,22 @@ export class PurchaseService {
       if (returnAll) {
         // Si pageSize es -1, retornar todos los registros sin paginación
         const purchaseRequests = await this.purchaseRepository.findAllPurchaseRequest(filter);
+        
+        // Actualizar TB_InventoryPurchase con el total de precios por warehouse
+        if (purchaseRequests.rows.length > 0) {
+          const warehouseIds = [...new Set(purchaseRequests.rows.map(pr => pr.idWarehouse).filter((id): id is number => id !== null && id !== undefined))];
+          for (const idWarehouse of warehouseIds) {
+            try {
+              const totalPrice = await this.purchaseRepository.calculateTotalPriceByWarehouse(idWarehouse);
+              await this.purchaseRepository.updateInventoryPurchaseAverageCost(idWarehouse, totalPrice);
+              console.log(`Updated TB_InventoryPurchase for warehouse ${idWarehouse} with total price: ${totalPrice}`);
+            } catch (inventoryErr: any) {
+              console.error(`Error updating inventory purchase cost for warehouse ${idWarehouse}:`, inventoryErr);
+              // No lanzar error para permitir que la consulta continúe aunque falle la actualización
+            }
+          }
+        }
+        
         return BuildResponse.buildSuccessResponse(
           StatusCode.Ok,
           purchaseRequests.rows
@@ -43,6 +59,22 @@ export class PurchaseService {
       } else {
         // Paginación normal
         const purchaseRequests = await this.purchaseRepository.findAllPurchaseRequest(filter, limit, offset);
+        
+        // Actualizar TB_InventoryPurchase con el total de precios por warehouse
+        if (purchaseRequests.rows.length > 0) {
+          const warehouseIds = [...new Set(purchaseRequests.rows.map(pr => pr.idWarehouse).filter((id): id is number => id !== null && id !== undefined))];
+          for (const idWarehouse of warehouseIds) {
+            try {
+              const totalPrice = await this.purchaseRepository.calculateTotalPriceByWarehouse(idWarehouse);
+              await this.purchaseRepository.updateInventoryPurchaseAverageCost(idWarehouse, totalPrice);
+              console.log(`Updated TB_InventoryPurchase for warehouse ${idWarehouse} with total price: ${totalPrice}`);
+            } catch (inventoryErr: any) {
+              console.error(`Error updating inventory purchase cost for warehouse ${idWarehouse}:`, inventoryErr);
+              // No lanzar error para permitir que la consulta continúe aunque falle la actualización
+            }
+          }
+        }
+        
         const response = {
           data: purchaseRequests.rows,
           totalItems: purchaseRequests.count,
@@ -86,23 +118,23 @@ export class PurchaseService {
       }
 
       // Obtener idWarehouse del primer detalle para actualizar el averageCost en TB_InventoryPurchase
-      const idWarehouse = purchaseRequests.rows.length > 0 ? purchaseRequests.rows[0].idWarehouse : null;
-      if (idWarehouse) {
-        try {
-          const averageCost = totalGeneral > 0 ? totalGeneral : null;
-          await this.purchaseRepository.updateInventoryPurchaseAverageCost(
-            idWarehouse,
-            averageCost
-          );
-        } catch (inventoryErr: any) {
-          console.error("Error updating inventory purchase average cost:", inventoryErr);
-          console.error("Parameters:", {
-            idWarehouse: idWarehouse,
-            averageCost: totalGeneral
-          });
-          // No lanzar error para permitir que la consulta continúe aunque falle la actualización del inventario
-        }
-      }
+      // const idWarehouse = purchaseRequests.rows.length > 0 ? purchaseRequests.rows[0].idWarehouse : null;
+      // if (idWarehouse) {
+      //   try {
+      //     const averageCost = totalGeneral > 0 ? totalGeneral : null;
+      //     await this.purchaseRepository.updateInventoryPurchaseAverageCost(
+      //       idWarehouse,
+      //       averageCost
+      //     );
+      //   } catch (inventoryErr: any) {
+      //     console.error("Error updating inventory purchase average cost:", inventoryErr);
+      //     console.error("Parameters:", {
+      //       idWarehouse: idWarehouse,
+      //       averageCost: totalGeneral
+      //     });
+      //     // No lanzar error para permitir que la consulta continúe aunque falle la actualización del inventario
+      //   }
+      // }
 
       const response = {
         data: purchaseRequests.rows,
@@ -240,11 +272,22 @@ export class PurchaseService {
       // Crear registro en TB_InventoryPurchase si hay idWarehouse
       if (request.idWarehouse) {
         try {
-          const averageCost = request.price && request.price.trim() !== "" ? parseFloat(request.price) : null;
-          await this.purchaseRepository.createInventoryPurchase(
-            request.idWarehouse,
-            averageCost
-          );
+          const existingInventoryPurchase = await this.purchaseRepository.findInventoryPurchaseByWarehouse(request.idWarehouse);
+          const existingInventoryPriceTotal = await this.purchaseRepository.findInventoryPriceTotalByWarehouse(request.idWarehouse);
+
+          if (!existingInventoryPurchase && !existingInventoryPriceTotal) {
+            const averageCost = request.price && request.price.trim() !== "" ? parseFloat(request.price) : null;
+            await this.purchaseRepository.createInventoryPurchase(
+              request.idWarehouse,
+              averageCost
+            );
+            await this.purchaseRepository.createInventoryPriceTotal(
+              request.idWarehouse,
+              averageCost
+            );
+          } else {
+            console.log("Inventory purchase already exists for warehouse:", request.idWarehouse);
+          }
         } catch (inventoryErr: any) {
           console.error("Error creating inventory purchase:", inventoryErr);
           console.error("Parameters:", {
@@ -816,7 +859,6 @@ export class PurchaseService {
       console.log("shouldUpdateInventory:", shouldUpdateInventory);
 
       let totalInventoryMovements = 0;
-      let totalInventoryDeleted = 0;
       let inventoryErrors = [];
 
       // 3. Si se debe actualizar inventario, procesar cada detalle
@@ -840,10 +882,21 @@ export class PurchaseService {
               if (inventory) {
                 const stockBefore = parseFloat(inventory.quantityAvailable?.toString() || "0");
                 const currentAverageCost = parseFloat(inventory.averageCost?.toString() || "0");
+                const stockAfter = Math.max(0, stockBefore - quantityToRemove);
 
-                console.log(`Inventory found: idInventory=${inventory.idInventory}, stockBefore=${stockBefore}`);
+                console.log(`Inventory found: idInventory=${inventory.idInventory}, stockBefore=${stockBefore}, stockAfter=${stockAfter}`);
 
-                // Registrar movimiento de ajuste ANTES de eliminar
+                // Actualizar inventario restando la cantidad
+                await this.purchaseRepository.updateInventory({
+                  idInventory: inventory.idInventory,
+                  quantityAvailable: stockAfter.toString(),
+                  averageCost: currentAverageCost.toString(),
+                  lastMovementDate: new Date()
+                }, transaction);
+
+                console.log(`Inventory updated: quantity reduced from ${stockBefore} to ${stockAfter}`);
+
+                // Registrar movimiento de ajuste (salida)
                 await this.purchaseRepository.createInventoryMovement({
                   idInventory: inventory.idInventory,
                   idPurchaseRequest: id,
@@ -851,12 +904,12 @@ export class PurchaseService {
                   idInput: idInput,
                   idWarehouse: idWarehouse,
                   movementType: 'Ajuste',
-                  quantity: stockBefore.toString(), // Se registra toda la cantidad que había
+                  quantity: quantityToRemove.toString(),
                   unitPrice: priceToRemove.toString(),
-                  totalPrice: (stockBefore * currentAverageCost).toString(),
+                  totalPrice: (quantityToRemove * priceToRemove).toString(),
                   stockBefore: stockBefore.toString(),
-                  stockAfter: '0',
-                  remarks: `Ajuste por eliminación de solicitud de compra #${id}. Registro de inventario eliminado completamente.`,
+                  stockAfter: stockAfter.toString(),
+                  remarks: `Ajuste por eliminación de solicitud de compra #${id}. Cantidad restada: ${quantityToRemove}`,
                   documentReference: `DELETE-PR-${id}-DET-${detail.idPurchaseRequestDetail}`,
                   dateMovement: new Date(),
                   createdBy: createdBy
@@ -864,15 +917,6 @@ export class PurchaseService {
 
                 totalInventoryMovements++;
                 console.log(`Inventory movement created successfully for detail ${detail.idPurchaseRequestDetail}`);
-
-                // Eliminar todos los movimientos de inventario asociados a este idInventory
-                await this.purchaseRepository.deleteInventoryMovementsByInventoryId(inventory.idInventory, transaction);
-                console.log(`Deleted all inventory movements for idInventory=${inventory.idInventory}`);
-
-                // Eliminar el registro de inventario
-                await this.purchaseRepository.deleteInventory(inventory.idInventory, transaction);
-                totalInventoryDeleted++;
-                console.log(`Inventory deleted successfully: idInventory=${inventory.idInventory}`);
               } else {
                 console.log(`WARNING: No inventory found for idInput: ${idInput}`);
               }
@@ -905,7 +949,7 @@ export class PurchaseService {
         message: "Purchase request and all details deleted successfully",
         deletedDetails: details.rows.length,
         inventoryMovements: totalInventoryMovements,
-        inventoryDeleted: totalInventoryDeleted,
+        inventoryQuantityReduced: totalInventoryMovements > 0,
         inventoryUpdated: shouldUpdateInventory && idWarehouse ? true : false
       });
     } catch (err: any) {

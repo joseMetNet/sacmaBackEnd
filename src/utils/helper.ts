@@ -8,6 +8,32 @@ import {
 } from "@azure/storage-blob";
 import * as jwt from "jsonwebtoken";
 
+export async function findRevenueCenterInAnyTable<T>(
+  idRevenueCenter: number,
+  findById: (idRevenueCenter: number) => Promise<T | null>,
+  findByIdInacitve: (idRevenueCenter: number) => Promise<T | null>,
+  findByIdGuarantees: (idRevenueCenter: number) => Promise<T | null>,
+  findByIdLiquidates: (idRevenueCenter: number) => Promise<T | null>,
+): Promise<T | null> {
+  let revenueCenter = await findById(idRevenueCenter);
+
+  if (!revenueCenter) {
+    const [revenueCenterInactive, revenueCenterGuarantees, revenueCenterLiquidates] =
+      await Promise.all([
+        findByIdInacitve(idRevenueCenter),
+        findByIdGuarantees(idRevenueCenter),
+        findByIdLiquidates(idRevenueCenter),
+      ]);
+
+    revenueCenter =
+      revenueCenterInactive ||
+      revenueCenterGuarantees ||
+      revenueCenterLiquidates;
+  }
+
+  return revenueCenter;
+}
+
 export function signAuthToken(payload: AuthTokenPayload): string {
   return jwt.sign(payload, EnvConfig.AUTH_TOKEN_SECRET, {
     algorithm: "HS256",

@@ -9,6 +9,22 @@ import { literal, Op, QueryTypes } from "sequelize";
 export class InvoiceRepository {
   constructor() { }
 
+  private buildRevenueCenterAnyTableSql = (alias: string): string => `
+    (
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter
+      UNION ALL
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter_Inactive
+      UNION ALL
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter_RetentionGuarantee
+      UNION ALL
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter_Liquidation
+    ) ${alias}
+  `;
+
   async findById(id: number): Promise<Invoice | null> {
     return await Invoice.findByPk(id, {
       include: [
@@ -128,11 +144,13 @@ export class InvoiceRepository {
 
 
   findAllTotalsByRevenueCenters = async () => {
+    const revenueCenterSource = this.buildRevenueCenterAnyTableSql("rc");
+
     const query = `
     SELECT
        rc.idRevenueCenter,
        SUM(ISNULL(invItem.invoicedQuantity, 0) * CAST(pi.unitPrice AS FLOAT)) AS totalAcumulado
-    FROM mvp1.TB_RevenueCenter rc
+    FROM ${revenueCenterSource}
     JOIN mvp1.TB_ProjectItem pi ON rc.idCostCenterProject = pi.idCostCenterProject
     LEFT JOIN mvp1.TB_InvoiceProjectItem invItem ON pi.idProjectItem = invItem.idProjectItem
     LEFT JOIN mvp1.TB_Invoice i ON invItem.idInvoice = i.idInvoice
@@ -148,11 +166,13 @@ export class InvoiceRepository {
   };
 
   findAllTotalsByRevenueCenter() {
+    const revenueCenterSource = this.buildRevenueCenterAnyTableSql("rc");
+
     const query = `
     SELECT
        rc.idRevenueCenter,
        SUM(ISNULL(invItem.invoicedQuantity, 0) * CAST(pi.unitPrice AS FLOAT)) AS totalAcumulado
-    FROM mvp1.TB_RevenueCenter rc
+    FROM ${revenueCenterSource}
     INNER JOIN mvp1.TB_ProjectItem pi ON rc.idCostCenterProject = pi.idCostCenterProject
     INNER JOIN mvp1.TB_InvoiceProjectItem invItem ON pi.idProjectItem = invItem.idProjectItem
     INNER JOIN mvp1.TB_Invoice i ON invItem.idInvoice = i.idInvoice

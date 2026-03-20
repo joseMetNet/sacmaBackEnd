@@ -19,6 +19,11 @@ export function revenueCenterRoutes(app: Application): void {
   const revenueCenterController = new RevenueCenterController(revenueCenterService);
 
   routes.get("/v1/revenue-center", [verifyToken], revenueCenterController.findAll);
+  // routes.get("/v1/revenue-center-withStatus", [verifyToken], revenueCenterController.findAllWith);
+  // routes.get("/v1/revenue-center-inactives", [verifyToken], revenueCenterController.findAllInactives);
+  routes.get("/v1/revenue-center-inactive-history", [verifyToken], revenueCenterController.findAllInactiveHistory);
+  routes.get("/v1/revenue-center-liquidation-history", [verifyToken], revenueCenterController.findAllLiquidationHistory);
+  routes.get("/v1/revenue-center-retention-guarantee-history", [verifyToken], revenueCenterController.findAllRetentionGuaranteeHistory);
   routes.get("/v1/revenue-center/status", [verifyToken], revenueCenterController.findAllRevenueCenterStatus);
   routes.post("/v1/revenue-center", [verifyToken], revenueCenterController.create);
   routes.patch("/v1/revenue-center", [verifyToken], revenueCenterController.update);
@@ -34,6 +39,7 @@ export function revenueCenterRoutes(app: Application): void {
   routes.get("/v1/revenue-center/epp", [verifyToken], revenueCenterController.findAllEpp);
   // Unified expenditures endpoint
   routes.get("/v1/revenue-center/expenditures", [verifyToken], revenueCenterController.findAllExpenditures);
+  routes.get("/v1/revenue-center/expenditures-summary-detail", [verifyToken], revenueCenterController.findAllExpendituresSummaryDetail);
   routes.get("/v1/revenue/center/work-tracking", [verifyToken], revenueCenterController.findAllWorkTracking);
   routes.get("/v1/revenue-center/quotation", [verifyToken], revenueCenterController.findAllQuotation);
 
@@ -45,6 +51,9 @@ export function revenueCenterRoutes(app: Application): void {
   routes.get("/v1/revenue-center/:idRevenueCenter", [verifyToken], revenueCenterController.findById);
 
   routes.delete("/v1/revenue-center/:idRevenueCenter", [verifyToken], revenueCenterController.delete);
+  routes.delete("/v1/revenue-center-inactives/:idRevenueCenter", [verifyToken], revenueCenterController.deleteInactive);
+  routes.delete("/v1/revenue-center-liquidates/:idRevenueCenter", [verifyToken], revenueCenterController.deleteliquidates);
+  routes.delete("/v1/revenue-center-guarantees/:idRevenueCenter", [verifyToken], revenueCenterController.deleteguarantees);
 
   /**
    * @openapi
@@ -544,6 +553,58 @@ export function revenueCenterRoutes(app: Application): void {
    *                 total:
    *                   type: number
    *                   description: Sum of all expenditure values
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden
+   *       500:
+   *         description: Internal server error
+   */
+
+  /**
+   * @openapi
+   * /v1/revenue-center/expenditures-summary-detail:
+   *   get:
+   *     tags: [Revenue Center]
+   *     summary: Retrieve grouped expenditures summary detail by expenditure type
+   *     parameters:
+   *       - in: query
+   *         name: idRevenueCenter
+   *         schema:
+   *           type: integer
+   *         required: true
+   *         description: ID of the revenue center
+   *       - $ref: '#/components/parameters/page'
+   *       - $ref: '#/components/parameters/pageSize'
+   *     responses:
+   *       200:
+   *         description: Grouped expenditures by expenditure type for allowed types (2,24,26,29,30,53)
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 data:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       projectName:
+   *                         type: string
+   *                       expenditureType:
+   *                         type: string
+   *                       value:
+   *                         type: number
+   *                       totalValue:
+   *                         type: number
+   *                 totalItems:
+   *                   type: integer
+   *                 currentPage:
+   *                   type: integer
+   *                 totalPage:
+   *                   type: integer
+   *                 total:
+   *                   type: number
    *       401:
    *         description: Unauthorized
    *       403:

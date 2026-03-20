@@ -368,3 +368,29 @@ export interface UpdateInventoryDocumentDTO {
 export interface DeleteInventoryDocumentDTO {
   idInventoryDocument: number;
 }
+
+// DTOs para DetailPriceInventoryCostCenter
+export interface CreateDetailPriceInventoryCostCenterDTO {
+  idRevenueCenter?: number;
+  idCostCenterProject?: number;
+  price?: string;
+}
+
+export interface UpdateDetailPriceInventoryCostCenterDTO {
+  idRevenueCenter?: number;
+  idCostCenterProject?: number;
+  price?: string;
+}
+
+export interface FindAllDetailPriceInventoryCostCenterDTO {
+  page?: number;
+  pageSize?: number;
+  idRevenueCenter?: number;
+  idCostCenterProject?: number;
+}
+
+export interface UpsertDetailPriceInventoryCostCenterDTO {
+  idRevenueCenter?: number;
+  idCostCenterProject?: number;
+  price?: string;
+}

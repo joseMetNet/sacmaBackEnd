@@ -22,6 +22,92 @@ export class RevenueCenterController {
     }
 
     const response = await this.revenueCenterService.findAll(request.data);
+    // const response = await this.revenueCenterService.findAllWithoutCalculations(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+  // findAllWith = async (req: Request, res: Response): Promise<void> => {
+  //   const request = schemas.findAllSchema.safeParse(req.query);
+  //   if (!request.success) {
+  //     res.status(StatusCode.BadRequest).json({
+  //       status: StatusValue.Failed,
+  //       data: { error: formatZodError(request.error) }
+  //     });
+  //     return;
+  //   }
+
+  //   // const response = (await this.revenueCenterService.findAll(request.data),await this.revenueCenterService.findAll(request.data));
+  //   const response = await this.revenueCenterService.findAllWith(request.data);
+  //   res.status(response.code).json({
+  //     status: response.status,
+  //     data: response.data
+  //   });
+  // };
+  // findAllInactives = async (req: Request, res: Response): Promise<void> => {
+  //   const request = schemas.findAllSchema.safeParse(req.query);
+  //   if (!request.success) {
+  //     res.status(StatusCode.BadRequest).json({
+  //       status: StatusValue.Failed,
+  //       data: { error: formatZodError(request.error) }
+  //     });
+  //     return;
+  //   }
+
+  //   // const response = (await this.revenueCenterService.findAll(request.data),await this.revenueCenterService.findAll(request.data));
+  //   const response = await this.revenueCenterService.findAllInactives(request.data);
+  //   res.status(response.code).json({
+  //     status: response.status,
+  //     data: response.data
+  //   });
+  // };
+
+  findAllInactiveHistory = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.findAllSchema.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.revenueCenterService.findAllInactiveHistory(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
+  findAllLiquidationHistory = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.findAllSchema.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.revenueCenterService.findAllLiquidationHistory(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
+  findAllRetentionGuaranteeHistory = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.findAllSchema.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.revenueCenterService.findAllRetentionGuaranteeHistory(request.data);
     res.status(response.code).json({
       status: response.status,
       data: response.data
@@ -99,6 +185,57 @@ export class RevenueCenterController {
     });
   };
 
+  deleteInactive = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.idRevenueCenterSchema.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.revenueCenterService.deleteInactive(request.data.idRevenueCenter);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
+  deleteguarantees = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.idRevenueCenterSchema.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.revenueCenterService.deleteGuarantees(request.data.idRevenueCenter);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+  
+  deleteliquidates = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.idRevenueCenterSchema.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.revenueCenterService.deleteliquidates(request.data.idRevenueCenter);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
   findAllMaterial = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.findAllMaterialSchema.safeParse(req.query);
     if (!request.success) {
@@ -161,6 +298,23 @@ export class RevenueCenterController {
     }
 
     const response = await this.revenueCenterService.findAllExpenditures(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
+  findAllExpendituresSummaryDetail = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.findAllExpendituresSummaryDetailSchema.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.revenueCenterService.findAllExpendituresSummaryDetail(request.data);
     res.status(response.code).json({
       status: response.status,
       data: response.data

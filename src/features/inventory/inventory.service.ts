@@ -56,7 +56,7 @@ export class InventoryService {
   assignMaterialToProject = async (data: dtos.AssignMaterialToProjectDTO): Promise<ResponseEntity> => {
     try {
       const result = await this.inventoryRepository.assignMaterialToProject(data);
-      
+
       // Verificar si el resultado indica éxito (tiene idProjectAssignment)
       if (result && result.idProjectAssignment) {
         return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, {
@@ -64,7 +64,7 @@ export class InventoryService {
           data: result,
         });
       }
-      
+
       // Si no hay idProjectAssignment, algo falló
       return BuildResponse.buildErrorResponse(StatusCode.BadRequest, {
         message: "Error al asignar material al proyecto",
@@ -73,14 +73,14 @@ export class InventoryService {
     } catch (error: any) {
       console.error("Error in assignMaterialToProject service:", error);
       const errorMessage = this.extractSqlErrorMessage(error);
-      
+
       // Log adicional para debugging
       console.log("Error details:", {
         message: error.message,
         parent: error.parent?.message,
         original: error.original?.message
       });
-      
+
       return BuildResponse.buildErrorResponse(StatusCode.BadRequest, {
         message: "Error al asignar material al proyecto",
         details: errorMessage,
@@ -314,13 +314,19 @@ export class InventoryService {
       // Si pageSize es -1, retornar todos los registros sin paginación
       if (pageSize === -1) {
         const inventories = await this.inventoryRepository.findAllInventoryByWarehouse(idWarehouse, filter);
-        
+
+        // Validar y filtrar solo materiales de tipo 1
+        const filteredInventories = inventories.rows.filter(
+          (item: any) => Number(item?.Input?.idInputType) === 1
+        );
+
         // Calcular priceAvailable para cada item y totalAvailable
-        const dataWithPrices = inventories.rows.map((item: any) => {
-          const cost = parseFloat(item.Input?.cost || "0");
+        const dataWithPrices = filteredInventories.map((item: any) => {
+          // const cost = parseFloat(item.Input?.cost || "0");
+          const cost = parseFloat(item.averageCost || "0");
           const quantityAvailable = parseFloat(item.quantityAvailable?.toString() || "0");
           const priceAvailable = cost * quantityAvailable;
-          
+
           return {
             ...item.toJSON(),
             priceAvailable: priceAvailable.toFixed(2)
@@ -334,27 +340,33 @@ export class InventoryService {
 
         // Actualizar averageCost en TB_InventoryPurchase
         try {
-          await this.purchaseRepository.updateInventoryPurchaseAverageCost(idWarehouse, totalAvailable);
+          // await this.purchaseRepository.updateInventoryPurchaseAverageCost(idWarehouse, totalAvailable);
+          await this.purchaseRepository.updateInventoryPriceTotalAverageCost(idWarehouse, totalAvailable);
         } catch (updateError) {
           console.error("Error updating averageCost in TB_InventoryPurchase:", updateError);
           // No fallar la petición si la actualización falla
         }
 
-        return BuildResponse.buildSuccessResponse(StatusCode.Ok, { 
+        return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
           data: dataWithPrices,
           totalAvailable: totalAvailable.toFixed(2)
         });
       }
 
       const inventories = await this.inventoryRepository.findInventoryByWarehouse(idWarehouse, filter, limit, offset);
-      
+
+      // Validar y filtrar solo materiales de tipo 1
+      const filteredInventories = inventories.rows.filter(
+        (item: any) => Number(item?.Input?.idInputType) === 1
+      );
+
       // Calcular priceAvailable para cada item y totalAvailable
-      const dataWithPrices = inventories.rows.map((item: any) => {
+      const dataWithPrices = filteredInventories.map((item: any) => {
         // const cost = parseFloat(item.averageCost || "0");
         const cost = parseFloat(item.Input?.cost || "0");
         const quantityAvailable = parseFloat(item.quantityAvailable?.toString() || "0");
         const priceAvailable = cost * quantityAvailable;
-        
+
         return {
           ...item.toJSON(),
           priceAvailable: priceAvailable.toFixed(2)
@@ -368,7 +380,8 @@ export class InventoryService {
 
       // Actualizar averageCost en TB_InventoryPurchase
       try {
-        await this.purchaseRepository.updateInventoryPurchaseAverageCost(idWarehouse, totalAvailable);
+        // await this.purchaseRepository.updateInventoryPurchaseAverageCost(idWarehouse, totalAvailable);
+        await this.purchaseRepository.updateInventoryPriceTotalAverageCost(idWarehouse, totalAvailable);
       } catch (updateError) {
         console.error("Error updating averageCost in TB_InventoryPurchase:", updateError);
         // No fallar la petición si la actualización falla
@@ -455,21 +468,21 @@ export class InventoryService {
 
   private buildInventoryFilter = (filter: dtos.FindAllInventoryDTO): { [key: string]: any } => {
     let where: { [key: string]: any } = {};
-    
+
     if (filter.idWarehouse) {
       where.idWarehouse = filter.idWarehouse;
     }
-    
+
     if (filter.idInput) {
       where.idInput = filter.idInput;
     }
-    
+
     if (filter.minStock !== undefined) {
       where.quantityAvailable = {
         [sequelize.Op.gte]: filter.minStock,
       };
     }
-    
+
     return where;
   };
 
@@ -485,23 +498,23 @@ export class InventoryService {
 
   private buildInventoryMovementFilter = (filter: dtos.FindAllInventoryMovementDTO): { [key: string]: any } => {
     let where: { [key: string]: any } = {};
-    
+
     if (filter.idInventory) {
       where.idInventory = filter.idInventory;
     }
-    
+
     if (filter.idWarehouse) {
       where.idWarehouse = filter.idWarehouse;
     }
-    
+
     if (filter.idInput) {
       where.idInput = filter.idInput;
     }
-    
+
     if (filter.movementType) {
       where.movementType = filter.movementType;
     }
-    
+
     if (filter.dateFrom || filter.dateTo) {
       where.dateMovement = {};
       if (filter.dateFrom) {
@@ -511,25 +524,25 @@ export class InventoryService {
         where.dateMovement[sequelize.Op.lte] = new Date(filter.dateTo);
       }
     }
-    
+
     return where;
   };
 
   private buildProjectAssignmentFilter = (filter: dtos.FindAllProjectAssignmentDTO): { [key: string]: any } => {
     let where: { [key: string]: any } = {};
-    
+
     if (filter.idCostCenterProject) {
       where.idCostCenterProject = filter.idCostCenterProject;
     }
-    
+
     if (filter.idInput) {
       where.idInput = filter.idInput;
     }
-    
+
     if (filter.status) {
       where.status = filter.status;
     }
-    
+
     return where;
   };
 
@@ -551,7 +564,10 @@ export class InventoryService {
    */
   findAllRevenueCenters = async (): Promise<ResponseEntity> => {
     try {
-      const revenueCenters = await this.revenueCenterRepository.findAll(999999, 0);
+      // const { page, pageSize, limit, offset } = findPagination(request);
+      const filter = { idRevenueCenterStatus: 1 };
+      // 
+      const revenueCenters = await this.revenueCenterRepository.findAll(999999, 0,filter);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, revenueCenters.rows);
     } catch (error: any) {
       console.error("Error in findAllRevenueCenters:", error);
@@ -634,7 +650,7 @@ export class InventoryService {
       }
 
       // Calcular total del valor devuelto
-      const totalValorDevuelto = result.rows.reduce((sum: number, item: any) => 
+      const totalValorDevuelto = result.rows.reduce((sum: number, item: any) =>
         sum + (parseFloat(item.ValorDevuelto) || 0), 0
       );
 
@@ -679,7 +695,7 @@ export class InventoryService {
       // Generar identificador único para el archivo
       const identifier = crypto.randomUUID();
       const contentType = request.fileExtension === "pdf" ? "application/pdf" : "image/jpeg";
-      
+
       // Subir archivo a Azure Blob Storage (contenedor "inventory")
       const uploadResponse = await uploadFile(
         request.filePath,
@@ -815,7 +831,7 @@ export class InventoryService {
       // Generar identificador único para el nuevo archivo
       const identifier = crypto.randomUUID();
       const contentType = request.fileExtension === "pdf" ? "application/pdf" : "image/jpeg";
-      
+
       // Subir nuevo archivo a Azure Blob Storage
       const uploadResponse = await uploadFile(
         request.filePath,
@@ -1035,6 +1051,141 @@ export class InventoryService {
       console.error("Error in updateProjectAssignmentBalance:", error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
         message: "Error al actualizar balance de asignación",
+        details: error.message,
+      });
+    }
+  };
+
+  // ============================================================================
+  // DetailPriceInventoryCostCenter CRUD Operations
+  // ============================================================================
+
+  /**
+   * Crear nuevo DetailPriceInventoryCostCenter
+   */
+  createDetailPriceInventoryCostCenter = async (data: dtos.CreateDetailPriceInventoryCostCenterDTO): Promise<ResponseEntity> => {
+    try {
+      const result = await this.inventoryRepository.createDetailPriceInventoryCostCenter(data);
+
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, {
+        message: "DetailPriceInventoryCostCenter creado correctamente",
+        data: result,
+      });
+    } catch (error: any) {
+      console.error("Error in createDetailPriceInventoryCostCenter service:", error);
+      return BuildResponse.buildErrorResponse(StatusCode.BadRequest, {
+        message: "Error al crear DetailPriceInventoryCostCenter",
+        details: error.message,
+      });
+    }
+  };
+
+  /**
+   * Buscar todos los DetailPriceInventoryCostCenter con filtros
+   */
+  findAllDetailPriceInventoryCostCenter = async (filters: dtos.FindAllDetailPriceInventoryCostCenterDTO): Promise<ResponseEntity> => {
+    try {
+      const result = await this.inventoryRepository.findAllDetailPriceInventoryCostCenter(filters);
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        message: "DetailPriceInventoryCostCenter obtenidos correctamente",
+        ...result,
+      });
+    } catch (error: any) {
+      console.error("Error in findAllDetailPriceInventoryCostCenter service:", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+        message: "Error al obtener DetailPriceInventoryCostCenter",
+        details: error.message,
+      });
+    }
+  };
+
+  /**
+   * Buscar DetailPriceInventoryCostCenter por ID
+   */
+  findDetailPriceInventoryCostCenterById = async (idDetailPriceInventoryCostCenter: number): Promise<ResponseEntity> => {
+    try {
+      const result = await this.inventoryRepository.findDetailPriceInventoryCostCenterById(idDetailPriceInventoryCostCenter);
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        message: "DetailPriceInventoryCostCenter obtenido correctamente",
+        data: result,
+      });
+    } catch (error: any) {
+      console.error("Error in findDetailPriceInventoryCostCenterById service:", error);
+      const statusCode = error.message.includes("no encontrado") ? StatusCode.NotFound : StatusCode.InternalErrorServer;
+      return BuildResponse.buildErrorResponse(statusCode, {
+        message: "Error al obtener DetailPriceInventoryCostCenter",
+        details: error.message,
+      });
+    }
+  };
+
+  /**
+   * Actualizar DetailPriceInventoryCostCenter
+   */
+  updateDetailPriceInventoryCostCenter = async (
+    idDetailPriceInventoryCostCenter: number,
+    data: dtos.UpdateDetailPriceInventoryCostCenterDTO
+  ): Promise<ResponseEntity> => {
+    try {
+      const result = await this.inventoryRepository.updateDetailPriceInventoryCostCenter(
+        idDetailPriceInventoryCostCenter,
+        data
+      );
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        message: "DetailPriceInventoryCostCenter actualizado correctamente",
+        data: result,
+      });
+    } catch (error: any) {
+      console.error("Error in updateDetailPriceInventoryCostCenter service:", error);
+      const statusCode = error.message.includes("no encontrado") ? StatusCode.NotFound : StatusCode.BadRequest;
+      return BuildResponse.buildErrorResponse(statusCode, {
+        message: "Error al actualizar DetailPriceInventoryCostCenter",
+        details: error.message,
+      });
+    }
+  };
+
+  /**
+   * Eliminar DetailPriceInventoryCostCenter
+   */
+  deleteDetailPriceInventoryCostCenter = async (idDetailPriceInventoryCostCenter: number): Promise<ResponseEntity> => {
+    try {
+      const result = await this.inventoryRepository.deleteDetailPriceInventoryCostCenter(idDetailPriceInventoryCostCenter);
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        message: result.message,
+      });
+    } catch (error: any) {
+      console.error("Error in deleteDetailPriceInventoryCostCenter service:", error);
+      const statusCode = error.message.includes("no encontrado") ? StatusCode.NotFound : StatusCode.InternalErrorServer;
+      return BuildResponse.buildErrorResponse(statusCode, {
+        message: "Error al eliminar DetailPriceInventoryCostCenter",
+        details: error.message,
+      });
+    }
+  };
+
+  /**
+   * Upsert DetailPriceInventoryCostCenter (Crear o actualizar según existencia)
+   */
+  upsertDetailPriceInventoryCostCenter = async (data: dtos.UpsertDetailPriceInventoryCostCenterDTO): Promise<ResponseEntity> => {
+    try {
+      const result = await this.inventoryRepository.upsertDetailPriceInventoryCostCenter(data);
+
+      const statusCode = result.action === "created" ? StatusCode.ResourceCreated : StatusCode.Ok;
+
+      return BuildResponse.buildSuccessResponse(statusCode, {
+        message: result.message,
+        action: result.action,
+        data: result.data,
+      });
+    } catch (error: any) {
+      console.error("Error in upsertDetailPriceInventoryCostCenter service:", error);
+      return BuildResponse.buildErrorResponse(StatusCode.BadRequest, {
+        message: "Error al procesar DetailPriceInventoryCostCenter",
         details: error.message,
       });
     }

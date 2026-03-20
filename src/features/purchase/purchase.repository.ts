@@ -16,6 +16,7 @@ import { Inventory } from "../inventory/inventory.model";
 import { InventoryMovement } from "../inventory/inventory-movement.model";
 import { Transaction, QueryTypes } from "sequelize";
 import { dbConnection } from "../../config";
+import { InventoryPriceTotal } from "./inventory-pricetotal.model";
 
 export class PurchaseRepository {
 
@@ -265,10 +266,37 @@ export class PurchaseRepository {
     return PurchaseRequestDetailMachineryUsed.create(purchaseRequestDetailMachineryUsed as any);
   };
 
+  findInventoryPurchaseByWarehouse = (idWarehouse: number) => {
+    return InventoryPurchase.findOne({
+      where: { idWarehouse }
+    });
+  };
+  findInventoryPriceTotalByWarehouse = (idWarehouse: number) => {
+    return InventoryPriceTotal.findOne({
+      where: { idWarehouse }
+    });
+  };
+
   createInventoryPurchase = async (idWarehouse: number, averageCost?: number | null) => {
     // Usar raw query para evitar problemas con el formato de fecha en columnas DATETIME
     const [results] = await dbConnection.query(
       `INSERT INTO [mvp1].[TB_InventoryPurchase] 
+       ([idWarehouse], [averageCost], [createdAt], [updatedAt]) 
+       VALUES (:idWarehouse, :averageCost, GETDATE(), GETDATE())`,
+      {
+        replacements: {
+          idWarehouse,
+          averageCost: averageCost !== undefined && averageCost !== null ? averageCost : null
+        },
+        type: QueryTypes.INSERT
+      }
+    );
+    return results;
+  };
+  createInventoryPriceTotal = async (idWarehouse: number, averageCost?: number | null) => {
+    // Usar raw query para evitar problemas con el formato de fecha en columnas DATETIME
+    const [results] = await dbConnection.query(
+      `INSERT INTO [mvp1].[TB_InventoryPriceTotal] 
        ([idWarehouse], [averageCost], [createdAt], [updatedAt]) 
        VALUES (:idWarehouse, :averageCost, GETDATE(), GETDATE())`,
       {
@@ -296,6 +324,35 @@ export class PurchaseRepository {
     );
     return results;
   };
+  
+  updateInventoryPriceTotalAverageCost = async (idWarehouse: number, averageCost: number | null) => {
+    // Actualizar directamente por idWarehouse usando query raw para evitar problemas con timestamps
+    const [results] = await dbConnection.query(
+      `UPDATE [mvp1].[TB_InventoryPriceTotal] 
+       SET [averageCost] = :averageCost, 
+           [updatedAt] = GETDATE() 
+       WHERE [idWarehouse] = :idWarehouse`,
+      {
+        replacements: { averageCost, idWarehouse },
+        type: QueryTypes.UPDATE
+      }
+    );
+    return results;
+  };
+
+  calculateTotalPriceByWarehouse = async (idWarehouse: number) => {
+    // Calcular suma de precios de TB_PurchaseRequest por warehouse
+    const results = await dbConnection.query(
+      `SELECT SUM(CAST(price AS DECIMAL(15, 2))) AS TOTAL
+       FROM [mvp1].[TB_PurchaseRequest]
+       WHERE [idWarehouse] = :idWarehouse`,
+      {
+        replacements: { idWarehouse },
+        type: QueryTypes.SELECT
+      }
+    ) as any;
+    return (results && results[0] && results[0].TOTAL) ? parseFloat(results[0].TOTAL) : null;
+  };
 
   findAllInventoryPurchase = (
     filter: { [key: string]: any } = {},
@@ -311,6 +368,11 @@ export class PurchaseRepository {
           where: {
             isActive: true // Solo incluir bodegas activas
           }
+        },
+        {
+          model: InventoryPriceTotal,
+          as: "InventoryPriceTotal",
+          required: false,
         },
       ],
       where: filter,

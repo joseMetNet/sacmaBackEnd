@@ -4,6 +4,7 @@ import { Inventory } from "./inventory.model";
 import { InventoryMovement } from "./inventory-movement.model";
 import { ProjectInventoryAssignment } from "./project-inventory-assignment.model";
 import { InventoryBalance } from "./inventory-balance.model";
+import { DetailPriceInventoryCostCenter } from "./detail-price-inventory-cost-center.model";
 import * as dtos from "./inventory.interface";
 import { idInput } from "../input/input.schema";
 
@@ -36,6 +37,21 @@ interface MaterialSummaryResult {
 }
 
 export class InventoryRepository {
+  private buildRevenueCenterAnyTableSql = (alias: string): string => `
+    (
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter
+      UNION ALL
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter_Inactive
+      UNION ALL
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter_RetentionGuarantee
+      UNION ALL
+      SELECT idRevenueCenter, idCostCenterProject, idQuotation, name
+      FROM mvp1.TB_RevenueCenter_Liquidation
+    ) ${alias}
+  `;
 
   // ============================================================================
   // Stored Procedures - Operaciones principales
@@ -349,10 +365,14 @@ export class InventoryRepository {
         where: whereClause,
         limit,
         offset,
+        distinct: true,
         include: [
           {
             association: "Input",
-            where: filter.inputName ? filter.inputName : undefined,
+            where: {
+              ...(filter.inputName ? filter.inputName : {}),
+              idInputType: 1,
+            },
             include: [
               { association: "Supplier" }
             ]
@@ -375,10 +395,14 @@ export class InventoryRepository {
     try {
       const result = await Inventory.findAndCountAll({
         where: { idWarehouse },
+        distinct: true,
         include: [
           {
             association: "Input",
-            where: filter.inputName ? filter.inputName : undefined,
+            where: {
+              ...(filter.inputName ? filter.inputName : {}),
+              idInputType: 1,
+            },
             include: [
               { association: "Supplier" }
             ]
@@ -504,10 +528,12 @@ export class InventoryRepository {
     offset?: number
   ): Promise<{ rows: MaterialSummaryResult[]; count: number }> {
     try {
+      const revenueCenterSource = this.buildRevenueCenterAnyTableSql("trc");
+
       // Primero obtenemos el idQuotation desde TB_RevenueCenter
       const revenueCenterQuery = `
         SELECT TOP 1 idQuotation 
-        FROM mvp1.TB_RevenueCenter 
+        FROM ${revenueCenterSource}
         WHERE idCostCenterProject = :idCostCenterProject
       `;
 
@@ -526,7 +552,7 @@ export class InventoryRepository {
           FROM mvp1.TB_OrderItemDetail toid
           INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
           INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
-          INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idCostCenterProject = toi.idCostCenterProject
+          INNER JOIN ${revenueCenterSource} ON trc.idCostCenterProject = toi.idCostCenterProject
           WHERE trc.idCostCenterProject = :idCostCenterProject AND ti.idInputType = 1
           GROUP BY ti.idInput, ti.name, ti.performance
         )
@@ -646,7 +672,7 @@ export class InventoryRepository {
           FROM mvp1.TB_OrderItemDetail toid
           INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
           INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
-          INNER JOIN mvp1.TB_RevenueCenter trc ON trc.idCostCenterProject = toi.idCostCenterProject
+          INNER JOIN ${revenueCenterSource} ON trc.idCostCenterProject = toi.idCostCenterProject
           WHERE trc.idCostCenterProject = :idCostCenterProject AND ti.idInputType = 1
           GROUP BY ti.idInput, ti.name, ti.performance
         ),
@@ -1405,6 +1431,206 @@ export class InventoryRepository {
         }
       }
       console.error("Error in updateProjectAssignmentBalance:", error);
+      throw error;
+    }
+  }
+
+  // ============================================================================
+  // DetailPriceInventoryCostCenter CRUD Operations
+  // ============================================================================
+
+  /**
+   * Crear nuevo DetailPriceInventoryCostCenter
+   */
+  async createDetailPriceInventoryCostCenter(data: dtos.CreateDetailPriceInventoryCostCenterDTO): Promise<any> {
+    try {
+      const newRecord = await DetailPriceInventoryCostCenter.create({
+        idRevenueCenter: data.idRevenueCenter || null,
+        idCostCenterProject: data.idCostCenterProject || null,
+        price: data.price ? parseFloat(data.price) : null,
+      });
+
+      return newRecord;
+    } catch (error: any) {
+      console.error("Error in createDetailPriceInventoryCostCenter:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Buscar todos los DetailPriceInventoryCostCenter con filtros
+   */
+  async findAllDetailPriceInventoryCostCenter(filters: dtos.FindAllDetailPriceInventoryCostCenterDTO): Promise<any> {
+    try {
+      const page = filters.page || 1;
+      const pageSize = filters.pageSize || 10;
+      const offset = (page - 1) * pageSize;
+
+      const whereClause: any = {};
+      
+      if (filters.idRevenueCenter) {
+        whereClause.idRevenueCenter = filters.idRevenueCenter;
+      }
+      
+      if (filters.idCostCenterProject) {
+        whereClause.idCostCenterProject = filters.idCostCenterProject;
+      }
+
+      const { count, rows } = await DetailPriceInventoryCostCenter.findAndCountAll({
+        where: whereClause,
+        limit: pageSize,
+        offset,
+        order: [["idDetailPriceInventoryCostCenter", "DESC"]],
+      });
+
+      return {
+        total: count,
+        page,
+        pageSize,
+        totalPages: Math.ceil(count / pageSize),
+        data: rows,
+      };
+    } catch (error: any) {
+      console.error("Error in findAllDetailPriceInventoryCostCenter:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Buscar DetailPriceInventoryCostCenter por ID
+   */
+  async findDetailPriceInventoryCostCenterById(idDetailPriceInventoryCostCenter: number): Promise<any> {
+    try {
+      const record = await DetailPriceInventoryCostCenter.findByPk(idDetailPriceInventoryCostCenter);
+      
+      if (!record) {
+        throw new Error("DetailPriceInventoryCostCenter no encontrado");
+      }
+
+      return record;
+    } catch (error: any) {
+      console.error("Error in findDetailPriceInventoryCostCenterById:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Actualizar DetailPriceInventoryCostCenter
+   */
+  async updateDetailPriceInventoryCostCenter(
+    idDetailPriceInventoryCostCenter: number,
+    data: dtos.UpdateDetailPriceInventoryCostCenterDTO
+  ): Promise<any> {
+    try {
+      const record = await DetailPriceInventoryCostCenter.findByPk(idDetailPriceInventoryCostCenter);
+      
+      if (!record) {
+        throw new Error("DetailPriceInventoryCostCenter no encontrado");
+      }
+
+      const updateData: any = {};
+      
+      if (data.idRevenueCenter !== undefined) {
+        updateData.idRevenueCenter = data.idRevenueCenter;
+      }
+      
+      if (data.idCostCenterProject !== undefined) {
+        updateData.idCostCenterProject = data.idCostCenterProject;
+      }
+      
+      if (data.price !== undefined) {
+        updateData.price = data.price ? parseFloat(data.price) : null;
+      }
+
+      await record.update(updateData);
+
+      return record;
+    } catch (error: any) {
+      console.error("Error in updateDetailPriceInventoryCostCenter:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Eliminar DetailPriceInventoryCostCenter
+   */
+  async deleteDetailPriceInventoryCostCenter(idDetailPriceInventoryCostCenter: number): Promise<any> {
+    try {
+      const record = await DetailPriceInventoryCostCenter.findByPk(idDetailPriceInventoryCostCenter);
+      
+      if (!record) {
+        throw new Error("DetailPriceInventoryCostCenter no encontrado");
+      }
+
+      await record.destroy();
+
+      return { message: "DetailPriceInventoryCostCenter eliminado correctamente" };
+    } catch (error: any) {
+      console.error("Error in deleteDetailPriceInventoryCostCenter:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Upsert DetailPriceInventoryCostCenter (Create o Update basado en idRevenueCenter e idCostCenterProject)
+   */
+  async upsertDetailPriceInventoryCostCenter(data: dtos.UpsertDetailPriceInventoryCostCenterDTO): Promise<any> {
+    try {
+      const whereClause: any = {};
+      
+      if (data.idRevenueCenter !== undefined) {
+        whereClause.idRevenueCenter = data.idRevenueCenter;
+      }
+      
+      if (data.idCostCenterProject !== undefined) {
+        whereClause.idCostCenterProject = data.idCostCenterProject;
+      }
+
+      // Buscar registro existente
+      const existingRecord = await DetailPriceInventoryCostCenter.findOne({
+        where: whereClause,
+      });
+
+      if (existingRecord) {
+        // Si existe, verificar si el precio es diferente
+        const currentPrice = existingRecord.price ? parseFloat(existingRecord.price.toString()) : null;
+        const newPrice = data.price ? parseFloat(data.price) : null;
+
+        if (currentPrice !== newPrice) {
+          // Actualizar solo si el precio es diferente
+          await existingRecord.update({
+            price: newPrice,
+          });
+
+          return {
+            action: "updated",
+            message: "Precio actualizado correctamente",
+            data: existingRecord,
+          };
+        } else {
+          // El precio es el mismo, no hacer nada
+          return {
+            action: "unchanged",
+            message: "El precio ya existe y es el mismo, no se realizaron cambios",
+            data: existingRecord,
+          };
+        }
+      } else {
+        // No existe, crear nuevo registro
+        const newRecord = await DetailPriceInventoryCostCenter.create({
+          idRevenueCenter: data.idRevenueCenter || null,
+          idCostCenterProject: data.idCostCenterProject || null,
+          price: data.price ? parseFloat(data.price) : null,
+        });
+
+        return {
+          action: "created",
+          message: "Precio creado correctamente",
+          data: newRecord,
+        };
+      }
+    } catch (error: any) {
+      console.error("Error in upsertDetailPriceInventoryCostCenter:", error);
       throw error;
     }
   }

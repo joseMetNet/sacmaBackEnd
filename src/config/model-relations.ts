@@ -15,6 +15,8 @@ import { OrderItemDetail } from "../features/order/order-item-detail.model";
 import { OrderItem } from "../features/order/order-item.model";
 import { PurchaseRequestDetail } from "../features/purchase/purchase-request-detail.model";
 import { Inventory } from "../features/inventory";
+import { RevenueCenter } from "../features/revenue-center/revenue-center.model";
+import { DetailPriceInventoryCostCenter } from "../features/inventory/detail-price-inventory-cost-center.model";
 
 export function setupModelRelations() {
   // Relaciones para IncomeDiscountInvoice
@@ -94,6 +96,17 @@ export function setupModelRelations() {
     foreignKey: "idSupplier",
     targetKey: "idSupplier",
     as: "Supplier"
+  });
+
+  // Relaciones para RevenueCenter
+  RevenueCenter.hasMany(DetailPriceInventoryCostCenter, {
+    foreignKey: "idRevenueCenter",
+    sourceKey: "idRevenueCenter"
+  });
+
+  DetailPriceInventoryCostCenter.belongsTo(RevenueCenter, {
+    foreignKey: "idRevenueCenter",
+    targetKey: "idRevenueCenter"
   });
 
   console.log("Model relations configured successfully");

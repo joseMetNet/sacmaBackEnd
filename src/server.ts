@@ -27,6 +27,7 @@ import { purchaseRoute } from "./features/purchase";
 import { wareHouseRoute } from "./features/warwHouse";
 import { inputMovementRoute } from "./features/inputMovement";
 import { inventoryRoute } from "./features/inventory";
+import { reportsRoutes } from "./features/reports";
 
 import "./jobs/invoice.job";
 
@@ -89,6 +90,7 @@ class Server {
     wareHouseRoute(this.app);
     inputMovementRoute(this.app);
     inventoryRoute(this.app);
+    reportsRoutes(this.app);
   }
 
   public listen(): void {
