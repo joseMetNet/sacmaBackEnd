@@ -10,7 +10,7 @@ export const getReportEmployees = z.object({
   idEmployee: z.coerce.number().int().optional(),
   employeeStatus: z.coerce.number().int().min(0).max(1).optional(),
   idContractType: z.coerce.number().int().optional(),
-  idCostCenterProject: z.coerce.number().int().optional(),
+  idNovelty: z.coerce.number().int().optional(),
   salaryMin: z.coerce.number().min(0).optional(),
   salaryMax: z.coerce.number().min(0).optional(),
   idPosition: z.coerce.number().int().optional(),

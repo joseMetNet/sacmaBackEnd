@@ -24,8 +24,9 @@ export function reportsRoutes(app: Application): void {
  *     description: >
  *       Ejecuta el SP `SP_ReportEmployees` y devuelve 6 datasets: detalle de empleados,
  *       KPIs de resumen, novedades por tipo, empleados por tipo de contrato,
- *       horas trabajadas por proyecto y tendencia mensual.
+ *       tendencia mensual de novedades y detalle de novedades por empleado.
  *       Solo se puede usar **un** tipo de periodo a la vez (month, bimester, semester o dateFrom/dateTo).
+ *       Excepción: si solo se envía idNovelty (sin year ni periodo), consulta todos los años.
  *     parameters:
  *       - in: query
  *         name: year
@@ -82,10 +83,10 @@ export function reportsRoutes(app: Application): void {
  *           type: integer
  *         description: "ID del tipo de contrato."
  *       - in: query
- *         name: idCostCenterProject
+ *         name: idNovelty
  *         schema:
  *           type: integer
- *         description: "ID del centro de costo / proyecto."
+ *         description: "ID del tipo de novedad (TB_Novelty). Sin year ni periodo filtra todos los años."
  *       - in: query
  *         name: salaryMin
  *         schema:
@@ -143,12 +144,8 @@ export function reportsRoutes(app: Application): void {
  *                           totalCompensation: { type: number }
  *                           contractType: { type: string, nullable: true }
  *                           position: { type: string, nullable: true }
- *                           totalHoursWorked: { type: number }
- *                           totalOvertimeHours: { type: number }
  *                           noveltyCount: { type: integer }
  *                           noveltyLoanValue: { type: number }
- *                           projectCount: { type: integer }
- *                           projectList: { type: string }
  *                     kpis:
  *                       type: object
  *                       nullable: true
@@ -160,11 +157,8 @@ export function reportsRoutes(app: Application): void {
  *                         totalBaseSalary: { type: number }
  *                         totalCompensation: { type: number }
  *                         averageBaseSalary: { type: number }
- *                         totalHoursWorked: { type: number }
- *                         totalOvertimeHours: { type: number }
  *                         totalNovelties: { type: integer }
  *                         totalNoveltyLoanValue: { type: number }
- *                         totalProjectsAssignments: { type: integer }
  *                     noveltiesByType:
  *                       type: array
  *                       description: "Dataset 3: novedades por tipo (para gráfica)"
@@ -184,20 +178,9 @@ export function reportsRoutes(app: Application): void {
  *                           idContractType: { type: integer }
  *                           contractType: { type: string }
  *                           totalEmployees: { type: integer }
- *                     hoursPerProject:
- *                       type: array
- *                       description: "Dataset 5: horas trabajadas por proyecto (para gráfica)"
- *                       items:
- *                         type: object
- *                         properties:
- *                           idCostCenterProject: { type: integer }
- *                           projectName: { type: string }
- *                           totalHoursWorked: { type: number }
- *                           totalOvertimeHours: { type: number }
- *                           totalEmployees: { type: integer }
  *                     monthlyTrend:
  *                       type: array
- *                       description: "Dataset 6: tendencia mensual en el rango (para gráfica)"
+ *                       description: "Dataset 5: tendencia mensual de novedades en el rango (para gráfica)"
  *                       items:
  *                         type: object
  *                         properties:
@@ -205,10 +188,26 @@ export function reportsRoutes(app: Application): void {
  *                           year: { type: integer }
  *                           month: { type: integer }
  *                           monthName: { type: string }
- *                           totalHoursWorked: { type: number }
- *                           totalOvertimeHours: { type: number }
  *                           totalNovelties: { type: integer }
  *                           totalNoveltyLoanValue: { type: number }
+ *                     noveltyDetails:
+ *                       type: array
+ *                       description: "Dataset 6: detalle de novedades por empleado"
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           idEmployeeNovelty: { type: integer }
+ *                           idEmployee: { type: integer }
+ *                           fullName: { type: string }
+ *                           idNovelty: { type: integer }
+ *                           novelty: { type: string, nullable: true }
+ *                           noveltyDate: { type: string, format: date }
+ *                           endAt: { type: string, format: date, nullable: true }
+ *                           installment: { type: string, nullable: true }
+ *                           loanValue: { type: string, nullable: true }
+ *                           observation: { type: string, nullable: true }
+ *                           documentUrl: { type: string, nullable: true }
+ *                           idPeriodicity: { type: integer, nullable: true }
  *       400:
  *         description: Parámetros inválidos
  *         content:

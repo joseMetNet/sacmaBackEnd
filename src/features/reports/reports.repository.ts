@@ -10,8 +10,8 @@ export class ReportsRepository {
       kpis: null,
       noveltiesByType: [],
       employeesByContractType: [],
-      hoursPerProject: [],
       monthlyTrend: [],
+      noveltyDetails: [],
     };
   }
 
@@ -23,7 +23,12 @@ export class ReportsRepository {
         continue;
       }
 
-      if ("idEmployee" in row && "fullName" in row) {
+      if ("idEmployeeNovelty" in row && "noveltyDate" in row) {
+        result.noveltyDetails.push(row);
+        continue;
+      }
+
+      if ("reportStartDate" in row && "reportEndDate" in row && "idEmployee" in row && "fullName" in row) {
         result.employees.push(row);
         continue;
       }
@@ -33,13 +38,8 @@ export class ReportsRepository {
         continue;
       }
 
-      if ("idNovelty" in row && "novelty" in row) {
+      if ("idNovelty" in row && "novelty" in row && !Object.prototype.hasOwnProperty.call(row, "idEmployee")) {
         result.noveltiesByType.push(row);
-        continue;
-      }
-
-      if ("projectName" in row && "idCostCenterProject" in row) {
-        result.hoursPerProject.push(row);
         continue;
       }
 
@@ -83,8 +83,8 @@ export class ReportsRepository {
         kpis: sets[1]?.[0] ?? null,
         noveltiesByType: sets[2] ?? [],
         employeesByContractType: sets[3] ?? [],
-        hoursPerProject: sets[4] ?? [],
-        monthlyTrend: sets[5] ?? [],
+        monthlyTrend: sets[4] ?? [],
+        noveltyDetails: sets[5] ?? [],
       };
     }
 
@@ -108,7 +108,7 @@ export class ReportsRepository {
       IdEmployee: filters.idEmployee ?? null,
       EmployeeStatus: filters.employeeStatus ?? null,
       IdContractType: filters.idContractType ?? null,
-      IdCostCenterProject: filters.idCostCenterProject ?? null,
+      IdNovelty: filters.idNovelty ?? null,
       SalaryMin: filters.salaryMin ?? null,
       SalaryMax: filters.salaryMax ?? null,
       IdPosition: filters.idPosition ?? null,

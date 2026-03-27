@@ -36,13 +36,8 @@ export interface EmployeeReportRow {
   severancePay: string | null;
   idCompensationFund: number | null;
   compensationFund: string | null;
-  totalHoursWorked: number;
-  totalOvertimeHours: number;
-  workTrackingCount: number;
   noveltyCount: number;
   noveltyLoanValue: number;
-  projectCount: number;
-  projectList: string;
 }
 
 export interface EmployeeReportKpis {
@@ -54,11 +49,8 @@ export interface EmployeeReportKpis {
   totalBaseSalary: number;
   totalCompensation: number;
   averageBaseSalary: number;
-  totalHoursWorked: number;
-  totalOvertimeHours: number;
   totalNovelties: number;
   totalNoveltyLoanValue: number;
-  totalProjectsAssignments: number;
 }
 
 export interface NoveltyByTypeRow {
@@ -74,23 +66,28 @@ export interface ContractTypeRow {
   totalEmployees: number;
 }
 
-export interface HoursPerProjectRow {
-  idCostCenterProject: number;
-  projectName: string;
-  totalHoursWorked: number;
-  totalOvertimeHours: number;
-  totalEmployees: number;
-}
-
 export interface MonthlyTrendRow {
   monthStart: string;
   year: number;
   month: number;
   monthName: string;
-  totalHoursWorked: number;
-  totalOvertimeHours: number;
   totalNovelties: number;
   totalNoveltyLoanValue: number;
+}
+
+export interface NoveltyDetailRow {
+  idEmployeeNovelty: number;
+  idEmployee: number;
+  fullName: string;
+  idNovelty: number;
+  novelty: string | null;
+  noveltyDate: string;
+  endAt: string | null;
+  installment: string | null;
+  loanValue: string | null;
+  observation: string | null;
+  documentUrl: string | null;
+  idPeriodicity: number | null;
 }
 
 export interface EmployeeReportResult {
@@ -98,6 +95,6 @@ export interface EmployeeReportResult {
   kpis: EmployeeReportKpis | null;
   noveltiesByType: NoveltyByTypeRow[];
   employeesByContractType: ContractTypeRow[];
-  hoursPerProject: HoursPerProjectRow[];
   monthlyTrend: MonthlyTrendRow[];
+  noveltyDetails: NoveltyDetailRow[];
 }
