@@ -18,3 +18,23 @@ export const getReportEmployees = z.object({
 });
 
 export type GetReportEmployeesDTO = z.infer<typeof getReportEmployees>;
+
+export const getReportExpenditureIncomeInvoice = z.object({
+  year: z.coerce.number().int().optional(),
+  month: z.coerce.number().int().min(1).max(12).optional(),
+  bimester: z.coerce.number().int().min(1).max(6).optional(),
+  semester: z.coerce.number().int().min(1).max(2).optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+  idCostCenterProject: z.coerce.number().int().optional(),
+  idExpenditureType: z.coerce.number().int().optional(),
+  idInvoiceStatus: z.coerce.number().int().optional(),
+  movementType: z.enum(["ALL", "EXPENDITURE", "INCOME"]).optional(),
+  amountMin: z.coerce.number().min(0).optional(),
+  amountMax: z.coerce.number().min(0).optional(),
+  orderNumber: z.string().optional(),
+  invoiceNumber: z.string().optional(),
+  client: z.string().optional(),
+});
+
+export type GetReportExpenditureIncomeInvoiceDTO = z.infer<typeof getReportExpenditureIncomeInvoice>;

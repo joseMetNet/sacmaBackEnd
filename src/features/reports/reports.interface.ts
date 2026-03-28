@@ -98,3 +98,141 @@ export interface EmployeeReportResult {
   monthlyTrend: MonthlyTrendRow[];
   noveltyDetails: NoveltyDetailRow[];
 }
+
+// ─── ExpenditureIncomeInvoice Report ─────────────────────────────────────────
+
+export interface MovementRow {
+  reportStartDate: string;
+  reportEndDate: string;
+  movementType: "EXPENDITURE" | "INCOME";
+  movementId: number;
+  movementDate: string;
+  createdAt: string;
+  idCostCenterProject: number | null;
+  projectName: string;
+  idExpenditureType: number | null;
+  expenditureType: string | null;
+  idInvoice: number | null;
+  invoiceNumber: string | null;
+  idInvoiceStatus: number | null;
+  invoiceStatus: string | null;
+  client: string | null;
+  orderNumber: string | null;
+  description: string | null;
+  amount: number | null;
+  incomeAmount: number;
+  expenditureAmount: number;
+  fromDate: string | null;
+  toDate: string | null;
+  timeDays: number | null;
+}
+
+export interface ExpenditureIncomeKpis {
+  reportStartDate: string;
+  reportEndDate: string;
+  totalMovements: number;
+  totalExpenditures: number;
+  totalIncomes: number;
+  totalIncomeAmount: number;
+  totalExpenditureAmount: number;
+  netBalance: number;
+  avgExpenditure: number | null;
+  avgIncome: number | null;
+  avgTimeDays: number | null;
+}
+
+export interface ExpenditureByTypeRow {
+  idExpenditureType: number;
+  expenditureType: string;
+  totalRecords: number;
+  totalExpenditure: number;
+}
+
+export interface IncomeByInvoiceStatusRow {
+  idInvoiceStatus: number;
+  invoiceStatus: string;
+  totalRecords: number;
+  totalIncome: number;
+}
+
+export interface ProjectBalanceRow {
+  idCostCenterProject: number | null;
+  projectName: string;
+  totalIncome: number;
+  totalExpenditure: number;
+  projectBalance: number;
+  hasOvercost: number;
+  overcostAmount: number;
+  plannedBudget: number;
+  expenditureVsPlannedPct: number | null;
+  incomeExpenseEquivalence: number | null;
+  avgTimeDays: number | null;
+}
+
+export interface ExpenditureIncomeMonthlyTrendRow {
+  monthStart: string;
+  year: number;
+  month: number;
+  monthName: string;
+  totalIncome: number;
+  totalExpenditure: number;
+  netBalance: number;
+}
+
+export interface TopProjectExpenditureRow {
+  idCostCenterProject: number | null;
+  projectName: string;
+  totalExpenditure: number;
+}
+
+export interface InvoiceDeductionRow {
+  idInvoice: number;
+  invoiceNumber: string;
+  contract: string | null;
+  client: string | null;
+  invoiceValue: number | null;
+  idCostCenterProject: number | null;
+  projectName: string;
+  invoiceStatus: string;
+  invoiceCreatedAt: string;
+  totalIncomeRecords: number;
+  totalRegisteredAmount: number;
+  totalAdvance: number;
+  totalReteguarantee: number;
+  totalRetesource: number;
+  totalReteica: number;
+  totalFic: number;
+  totalOther: number;
+  totalDeductions: number;
+  netAmount: number;
+  deductionsPct: number | null;
+}
+
+export interface RetentionKpisRow {
+  reportStartDate: string;
+  reportEndDate: string;
+  totalInvoicesWithIncome: number;
+  totalGrossIncome: number;
+  totalAdvance: number;
+  totalReteguarantee: number;
+  totalRetesource: number;
+  totalReteica: number;
+  totalFic: number;
+  totalOther: number;
+  totalDeductions: number;
+  totalNetIncome: number;
+  deductionsPct: number | null;
+}
+
+export interface ExpenditureIncomeInvoiceReportResult {
+  movements: MovementRow[];
+  kpis: ExpenditureIncomeKpis | null;
+  expendituresByType: ExpenditureByTypeRow[];
+  incomesByInvoiceStatus: IncomeByInvoiceStatusRow[];
+  balanceByProject: ProjectBalanceRow[];
+  monthlyTrend: ExpenditureIncomeMonthlyTrendRow[];
+  topProjectsMostExpenditure: TopProjectExpenditureRow[];
+  topProjectsLeastExpenditure: TopProjectExpenditureRow[];
+  invoiceDeductions: InvoiceDeductionRow[];
+  retentionKpis: RetentionKpisRow | null;
+}
