@@ -36,4 +36,22 @@ export class ReportsController {
     const response = await this.reportsService.getReportExpenditureIncomeInvoice(request.data);
     res.status(response.code).json({ status: response.status, data: response.data });
   };
+
+  getReportCostCenterAnalytics = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.getReportCostCenterAnalytics.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+    const response = await this.reportsService.getReportCostCenterAnalytics(request.data);
+    res.status(response.code).json({ status: response.status, data: response.data });
+  };
+
+  getRevenueCentersCatalog = async (_req: Request, res: Response): Promise<void> => {
+    const response = await this.reportsService.getRevenueCentersCatalog();
+    res.status(response.code).json({ status: response.status, data: response.data });
+  };
 }

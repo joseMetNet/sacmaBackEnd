@@ -12,6 +12,8 @@ export function reportsRoutes(app: Application): void {
   // GET routes
   router.get("/v1/reports/employees", controller.getReportEmployees.bind(controller));
   router.get("/v1/reports/expenditure-income-invoice", controller.getReportExpenditureIncomeInvoice.bind(controller));
+  router.get("/v1/reports/cost-center-analytics", controller.getReportCostCenterAnalytics.bind(controller));
+  router.get("/v1/reports/revenue-centers", controller.getRevenueCentersCatalog.bind(controller));
 
   app.use("/api/", router);
 }
@@ -215,6 +217,215 @@ export function reportsRoutes(app: Application): void {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/failedResponse'
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: Prohibido
+ *       500:
+ *         description: Error interno del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
+
+/**
+ * @openapi
+ * /v1/reports/cost-center-analytics:
+ *   get:
+ *     tags: [Reports]
+ *     summary: Reporte analitico de centros de costo
+ *     description: >
+ *       Ejecuta el SP `SP_Report_CostCenter_Analytics` y devuelve 11 datasets:
+ *       resumen general, rentabilidad por proyecto, costo por etapa,
+ *       tendencia mensual, facturas por estado, detalle por empleado/proyecto,
+ *       detalle transaccional, analisis de contratos, resumen de empleados por proyecto,
+ *       productividad por empleado y consolidados de contratos pagados/cancelados.
+ *       Solo se puede usar **un** tipo de periodo a la vez (month, bimester, semester o dateFrom/dateTo).
+ *     parameters:
+ *       - in: query
+ *         name: year
+ *         schema:
+ *           type: integer
+ *         description: "Año del reporte. Requerido cuando se filtra por month, bimester o semester."
+ *       - in: query
+ *         name: month
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 12
+ *         description: "Mes (1-12). Exclusivo con bimester, semester y dateFrom/dateTo."
+ *       - in: query
+ *         name: bimester
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 6
+ *         description: "Bimestre (1-6). Exclusivo con month, semester y dateFrom/dateTo."
+ *       - in: query
+ *         name: semester
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 2
+ *         description: "Semestre (1-2). Exclusivo con month, bimester y dateFrom/dateTo."
+ *       - in: query
+ *         name: dateFrom
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: "Fecha inicial del rango (YYYY-MM-DD). Debe enviarse junto con dateTo."
+ *       - in: query
+ *         name: dateTo
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: "Fecha final del rango (YYYY-MM-DD). Debe enviarse junto con dateFrom."
+ *       - in: query
+ *         name: idRevenueCenter
+ *         schema:
+ *           type: integer
+ *         description: "ID del centro de utilidad."
+ *       - in: query
+ *         name: idCostCenterProject
+ *         schema:
+ *           type: integer
+ *         description: "ID del proyecto / centro de costo."
+ *       - in: query
+ *         name: idRevenueCenterStatus
+ *         schema:
+ *           type: integer
+ *         description: "ID del estado del centro de utilidad."
+ *       - in: query
+ *         name: idInvoiceStatus
+ *         schema:
+ *           type: integer
+ *         description: "ID del estado de factura."
+ *       - in: query
+ *         name: idExpenditureType
+ *         schema:
+ *           type: integer
+ *         description: "ID del tipo de egreso (TB_ExpenditureType)."
+ *     responses:
+ *       200:
+ *         description: Resultado del reporte con 11 datasets
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: SUCCESS
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     summary:
+ *                       type: object
+ *                       nullable: true
+ *                       description: "Dataset 1: resumen general de KPIs"
+ *                     profitabilityByProject:
+ *                       type: array
+ *                       description: "Dataset 2: rentabilidad por proyecto"
+ *                       items:
+ *                         type: object
+ *                     stageCostByProject:
+ *                       type: array
+ *                       description: "Dataset 3: costo por etapa / tipo de egreso"
+ *                       items:
+ *                         type: object
+ *                     monthlyTrend:
+ *                       type: array
+ *                       description: "Dataset 4: tendencia mensual"
+ *                       items:
+ *                         type: object
+ *                     invoicesByStatus:
+ *                       type: array
+ *                       description: "Dataset 5: facturas por estado"
+ *                       items:
+ *                         type: object
+ *                     employeeProjectDetail:
+ *                       type: array
+ *                       description: "Dataset 6: detalle por empleado y proyecto"
+ *                       items:
+ *                         type: object
+ *                     transactionalDetail:
+ *                       type: array
+ *                       description: "Dataset 7: detalle transaccional ingresos/egresos"
+ *                       items:
+ *                         type: object
+ *                     contractAnalysis:
+ *                       type: array
+ *                       description: "Dataset 8: analisis de contratos de factura"
+ *                       items:
+ *                         type: object
+ *                     employeesByProject:
+ *                       type: array
+ *                       description: "Dataset 9: resumen de empleados por proyecto"
+ *                       items:
+ *                         type: object
+ *                     employeeProductivity:
+ *                       type: array
+ *                       description: "Dataset 10: productividad por empleado/proyecto"
+ *                       items:
+ *                         type: object
+ *                     contractConsolidated:
+ *                       type: array
+ *                       description: "Dataset 11: consolidados de contratos pagados/cancelados"
+ *                       items:
+ *                         type: object
+ *       400:
+ *         description: Parámetros inválidos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: Prohibido
+ *       500:
+ *         description: Error interno del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+ */
+
+/**
+ * @openapi
+ * /v1/reports/revenue-centers:
+ *   get:
+ *     tags: [Reports]
+ *     summary: Catalogo de centros de utilidad
+ *     description: >
+ *       Consulta el catalogo unificado de centros de utilidad desde
+ *       `TB_RevenueCenter`, `TB_RevenueCenter_Liquidation`,
+ *       `TB_RevenueCenter_Inactive` y `TB_RevenueCenter_RetentionGuarantee`.
+ *       Retorna registros unicos por `idRevenueCenter` y `name`.
+ *     responses:
+ *       200:
+ *         description: Catalogo de centros de utilidad
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: SUCCESS
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       idRevenueCenter:
+ *                         type: integer
+ *                         example: 22
+ *                       name:
+ *                         type: string
+ *                         maxLength: 64
+ *                         example: FONTANAR
  *       401:
  *         description: No autorizado
  *       403:

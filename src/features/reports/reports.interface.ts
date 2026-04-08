@@ -236,3 +236,195 @@ export interface ExpenditureIncomeInvoiceReportResult {
   invoiceDeductions: InvoiceDeductionRow[];
   retentionKpis: RetentionKpisRow | null;
 }
+
+// ─── CostCenterAnalytics Report ──────────────────────────────────────────────
+
+export interface CostCenterAnalyticsSummaryRow {
+  totalIncome: number;
+  totalExpenditure: number;
+  totalDirectExpenditure: number;
+  totalIndirectExpenditure: number;
+  totalLaborCost: number;
+  totalHoursWorked: number;
+  totalOvertimeHours: number;
+  totalWorkedDays: number;
+  grossMargin: number;
+  netMargin: number;
+  grossMarginPct: number;
+  netMarginPct: number;
+}
+
+export interface CostCenterAnalyticsProjectProfitabilityRow {
+  idRevenueCenter: number;
+  RevenueCenterName: string;
+  idCostCenterProject: number;
+  ProjectName: string;
+  TotalIncome: number;
+  TotalExpenditure: number;
+  DirectExpenditure: number;
+  IndirectExpenditure: number;
+  LaborCost: number;
+  HoursWorked: number;
+  OvertimeHours: number;
+  WorkedDays: number;
+  GrossMargin: number;
+  NetMargin: number;
+  Profitability: "GANA" | "PIERDE";
+  Why: string;
+}
+
+export interface CostCenterAnalyticsStageCostRow {
+  idRevenueCenter: number;
+  RevenueCenterName: string;
+  idCostCenterProject: number;
+  ProjectName: string;
+  idExpenditureType: number;
+  StageOrExpenseType: string;
+  ExpenditureClass: "DIRECTO" | "INDIRECTO";
+  StageCost: number;
+}
+
+export interface CostCenterAnalyticsMonthlyTrendRow {
+  year: number;
+  month: number;
+  income: number;
+  expenditure: number;
+  hoursWorked: number;
+  overtimeHours: number;
+}
+
+export interface CostCenterAnalyticsInvoicesByStatusRow {
+  idRevenueCenter: number;
+  RevenueCenterName: string;
+  idCostCenterProject: number;
+  ProjectName: string;
+  idInvoiceStatus: number;
+  InvoiceStatus: string;
+  InvoiceCount: number;
+  InvoiceAmount: number;
+}
+
+export interface CostCenterAnalyticsEmployeeProjectDetailRow {
+  idRevenueCenter: number;
+  RevenueCenterName: string;
+  idCostCenterProject: number;
+  ProjectName: string;
+  idEmployee: number;
+  idUser: number | null;
+  firstName: string | null;
+  lastName: string | null;
+  position: string | null;
+  baseSalary: number;
+  workedDays: number;
+  hoursWorked: number;
+  overtimeHours: number;
+  laborCost: number;
+  Enero: number;
+  Febrero: number;
+  Marzo: number;
+  Abril: number;
+  Mayo: number;
+  Junio: number;
+  Julio: number;
+  Agosto: number;
+  Septiembre: number;
+  Octubre: number;
+  Noviembre: number;
+  Diciembre: number;
+}
+
+export interface CostCenterAnalyticsTransactionalRow {
+  SourceType: "INCOME" | "EXPENDITURE";
+  idRevenueCenter: number;
+  RevenueCenterName: string;
+  idCostCenterProject: number;
+  ProjectName: string;
+  SourceId: number;
+  idInvoice: number | null;
+  idExpenditureType: number | null;
+  EventDate: string;
+  Amount: number;
+  ExpenseClass: string | null;
+}
+
+export interface CostCenterAnalyticsContractAnalysisRow {
+  idRevenueCenter: number;
+  RevenueCenterName: string;
+  idCostCenterProject: number;
+  ProjectName: string;
+  Contract: string;
+  idInvoiceStatus: number;
+  InvoiceStatus: string;
+  InvoiceCount: number;
+  InvoiceTotal: number;
+  FirstInvoiceDate: string;
+  LastInvoiceDate: string;
+  AvgInvoiceValue: number;
+}
+
+export interface CostCenterAnalyticsEmployeesByProjectRow {
+  idRevenueCenter: number;
+  RevenueCenterName: string;
+  idCostCenterProject: number;
+  ProjectName: string;
+  EmployeesWorked: number;
+  EmployeeProjectWorkDays: number;
+  TotalHoursWorked: number;
+  TotalOvertimeHours: number;
+  TotalLaborCost: number;
+  OvertimePct: number;
+}
+
+export interface CostCenterAnalyticsEmployeeProductivityRow {
+  idRevenueCenter: number;
+  RevenueCenterName: string;
+  idCostCenterProject: number;
+  ProjectName: string;
+  idEmployee: number;
+  idUser: number | null;
+  firstName: string | null;
+  lastName: string | null;
+  position: string | null;
+  WorkedDays: number;
+  HoursWorked: number;
+  OvertimeHours: number;
+  LaborCost: number;
+  AvgHoursPerDay: number;
+  OvertimePct: number;
+  WorkloadRankInProject: number;
+}
+
+export interface CostCenterAnalyticsContractConsolidatedRow {
+  idRevenueCenter: number;
+  RevenueCenterName: string;
+  idCostCenterProject: number;
+  ProjectName: string;
+  Contract: string;
+  TotalInvoices: number;
+  TotalInvoiceAmount: number;
+  PaidInvoices: number;
+  PaidInvoiceAmount: number;
+  CancelledInvoices: number;
+  CancelledInvoiceAmount: number;
+  PaidInvoicePct: number;
+  CancelledInvoicePct: number;
+}
+
+export interface CostCenterAnalyticsReportResult {
+  summary: CostCenterAnalyticsSummaryRow | null;
+  profitabilityByProject: CostCenterAnalyticsProjectProfitabilityRow[];
+  stageCostByProject: CostCenterAnalyticsStageCostRow[];
+  monthlyTrend: CostCenterAnalyticsMonthlyTrendRow[];
+  invoicesByStatus: CostCenterAnalyticsInvoicesByStatusRow[];
+  employeeProjectDetail: CostCenterAnalyticsEmployeeProjectDetailRow[];
+  transactionalDetail: CostCenterAnalyticsTransactionalRow[];
+  contractAnalysis: CostCenterAnalyticsContractAnalysisRow[];
+  employeesByProject: CostCenterAnalyticsEmployeesByProjectRow[];
+  employeeProductivity: CostCenterAnalyticsEmployeeProductivityRow[];
+  contractConsolidated: CostCenterAnalyticsContractConsolidatedRow[];
+}
+
+export interface RevenueCenterCatalogRow {
+  idRevenueCenter: number;
+  name: string;
+}

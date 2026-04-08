@@ -2,7 +2,15 @@ import { QueryTypes } from "sequelize";
 import { dbConnection } from "../../config";
 import { GetReportEmployeesDTO } from "./reports.schema";
 import { GetReportExpenditureIncomeInvoiceDTO } from "./reports.schema";
-import { EmployeeReportResult, ExpenditureIncomeInvoiceReportResult, InvoiceDeductionRow, RetentionKpisRow } from "./reports.interface";
+import {
+  CostCenterAnalyticsReportResult,
+  EmployeeReportResult,
+  ExpenditureIncomeInvoiceReportResult,
+  InvoiceDeductionRow,
+  RevenueCenterCatalogRow,
+  RetentionKpisRow,
+} from "./reports.interface";
+import { GetReportCostCenterAnalyticsDTO } from "./reports.schema";
 
 export class ReportsRepository {
   private emptyResult(): EmployeeReportResult {
@@ -280,5 +288,213 @@ export class ReportsRepository {
     );
 
     return this.mapExpenditureResultSets(rawResult);
+  }
+
+  // ─── CostCenterAnalytics ──────────────────────────────────────────────────
+
+  private emptyCostCenterAnalyticsResult(): CostCenterAnalyticsReportResult {
+    return {
+      summary: null,
+      profitabilityByProject: [],
+      stageCostByProject: [],
+      monthlyTrend: [],
+      invoicesByStatus: [],
+      employeeProjectDetail: [],
+      transactionalDetail: [],
+      contractAnalysis: [],
+      employeesByProject: [],
+      employeeProductivity: [],
+      contractConsolidated: [],
+    };
+  }
+
+  private classifyCostCenterAnalyticsFlatRows(rows: any[]): CostCenterAnalyticsReportResult {
+    const result = this.emptyCostCenterAnalyticsResult();
+
+    for (const row of rows) {
+      if (!row || typeof row !== "object") continue;
+
+      // Dataset 7: detalle transaccional
+      if ("SourceType" in row && "EventDate" in row && "Amount" in row) {
+        result.transactionalDetail.push(row);
+        continue;
+      }
+
+      // Dataset 1: resumen general
+      if (
+        "totalIncome" in row &&
+        "totalExpenditure" in row &&
+        "totalDirectExpenditure" in row &&
+        "totalLaborCost" in row &&
+        !Object.prototype.hasOwnProperty.call(row, "idRevenueCenter")
+      ) {
+        result.summary = row;
+        continue;
+      }
+
+      // Dataset 2: rentabilidad por proyecto
+      if ("Profitability" in row && "Why" in row && "NetMargin" in row) {
+        result.profitabilityByProject.push(row);
+        continue;
+      }
+
+      // Dataset 3: costo por etapa
+      if ("StageOrExpenseType" in row && "StageCost" in row && "ExpenditureClass" in row) {
+        result.stageCostByProject.push(row);
+        continue;
+      }
+
+      // Dataset 4: tendencia mensual
+      if (
+        "year" in row &&
+        "month" in row &&
+        "income" in row &&
+        "expenditure" in row &&
+        "hoursWorked" in row &&
+        "overtimeHours" in row
+      ) {
+        result.monthlyTrend.push(row);
+        continue;
+      }
+
+      // Dataset 5: facturas por estado
+      if ("InvoiceCount" in row && "InvoiceAmount" in row && "idInvoiceStatus" in row) {
+        result.invoicesByStatus.push(row);
+        continue;
+      }
+
+      // Dataset 6: detalle por empleado/proyecto
+      if (
+        "idEmployee" in row &&
+        "workedDays" in row &&
+        "hoursWorked" in row &&
+        "laborCost" in row &&
+        "Enero" in row &&
+        "Diciembre" in row
+      ) {
+        result.employeeProjectDetail.push(row);
+        continue;
+      }
+
+      // Dataset 8: analisis de contratos
+      if ("InvoiceTotal" in row && "FirstInvoiceDate" in row && "LastInvoiceDate" in row) {
+        result.contractAnalysis.push(row);
+        continue;
+      }
+
+      // Dataset 9: resumen empleados por proyecto
+      if ("EmployeesWorked" in row && "EmployeeProjectWorkDays" in row && "TotalLaborCost" in row) {
+        result.employeesByProject.push(row);
+        continue;
+      }
+
+      // Dataset 10: productividad por empleado/proyecto
+      if ("WorkloadRankInProject" in row && "AvgHoursPerDay" in row && "WorkedDays" in row) {
+        result.employeeProductivity.push(row);
+        continue;
+      }
+
+      // Dataset 11: consolidados de contratos
+      if ("TotalInvoices" in row && "PaidInvoices" in row && "CancelledInvoices" in row) {
+        result.contractConsolidated.push(row);
+      }
+    }
+
+    return result;
+  }
+
+  private mapCostCenterAnalyticsResultSets(rawQueryResult: unknown): CostCenterAnalyticsReportResult {
+    const result = this.emptyCostCenterAnalyticsResult();
+
+    if (!Array.isArray(rawQueryResult) || rawQueryResult.length === 0) {
+      return result;
+    }
+
+    const [first] = rawQueryResult as any[];
+
+    if (Array.isArray(first) && first.length > 0 && Array.isArray(first[0])) {
+      const sets = first as any[][];
+      return {
+        summary: sets[0]?.[0] ?? null,
+        profitabilityByProject: sets[1] ?? [],
+        stageCostByProject: sets[2] ?? [],
+        monthlyTrend: sets[3] ?? [],
+        invoicesByStatus: sets[4] ?? [],
+        employeeProjectDetail: sets[5] ?? [],
+        transactionalDetail: sets[6] ?? [],
+        contractAnalysis: sets[7] ?? [],
+        employeesByProject: sets[8] ?? [],
+        employeeProductivity: sets[9] ?? [],
+        contractConsolidated: sets[10] ?? [],
+      };
+    }
+
+    // Fallback para drivers que devuelven filas planas de multiples resultsets.
+    if (Array.isArray(first)) {
+      return this.classifyCostCenterAnalyticsFlatRows(first);
+    }
+
+    return this.classifyCostCenterAnalyticsFlatRows([first]);
+  }
+
+  async getReportCostCenterAnalytics(
+    filters: GetReportCostCenterAnalyticsDTO
+  ): Promise<CostCenterAnalyticsReportResult> {
+    const params: Record<string, any> = {
+      IdRevenueCenter: filters.idRevenueCenter ?? null,
+      IdCostCenterProject: filters.idCostCenterProject ?? null,
+      IdRevenueCenterStatus: filters.idRevenueCenterStatus ?? null,
+      IdInvoiceStatus: filters.idInvoiceStatus ?? null,
+      IdExpenditureType: filters.idExpenditureType ?? null,
+      ReportYear: filters.year ?? null,
+      ReportMonth: filters.month ?? null,
+      ReportBimester: filters.bimester ?? null,
+      ReportSemester: filters.semester ?? null,
+      DateFrom: filters.dateFrom ?? null,
+      DateTo: filters.dateTo ?? null,
+    };
+
+    const paramsSql = Object.keys(params)
+      .map((key) => `@${key} = :${key}`)
+      .join(", ");
+
+    const rawResult = await dbConnection.query(
+      `EXEC [mvp1].[SP_Report_CostCenter_Analytics] ${paramsSql}`,
+      {
+        replacements: params,
+        type: QueryTypes.RAW,
+      }
+    );
+
+    return this.mapCostCenterAnalyticsResultSets(rawResult);
+  }
+
+  async getRevenueCentersCatalog(): Promise<RevenueCenterCatalogRow[]> {
+    const rows = await dbConnection.query<RevenueCenterCatalogRow>(
+      `
+      SELECT idRevenueCenter, name
+      FROM [mvp1].[TB_RevenueCenter]
+
+      UNION
+
+      SELECT idRevenueCenter, name
+      FROM [mvp1].[TB_RevenueCenter_Liquidation]
+
+      UNION
+
+      SELECT idRevenueCenter, name
+      FROM [mvp1].[TB_RevenueCenter_Inactive]
+
+      UNION
+
+      SELECT idRevenueCenter, name
+      FROM [mvp1].[TB_RevenueCenter_RetentionGuarantee]
+      `,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    return rows;
   }
 }
