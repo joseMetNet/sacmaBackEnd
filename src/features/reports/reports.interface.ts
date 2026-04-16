@@ -148,6 +148,13 @@ export interface ExpenditureByTypeRow {
   totalExpenditure: number;
 }
 
+export interface IncomeByExpenditureTypeRow {
+  idExpenditureType: number;
+  expenditureType: string;
+  totalRecords: number;
+  totalIncome: number;
+}
+
 export interface IncomeByInvoiceStatusRow {
   idInvoiceStatus: number;
   invoiceStatus: string;
@@ -183,6 +190,24 @@ export interface TopProjectExpenditureRow {
   idCostCenterProject: number | null;
   projectName: string;
   totalExpenditure: number;
+}
+
+export interface ProjectItemBillingProgressRow {
+  idProjectItem: number;
+  idCostCenterProject: number;
+  projectName: string;
+  item: string | null;
+  unitMeasure: string | null;
+  contract: string | null;
+  plannedQuantity: number;
+  unitPrice: number;
+  plannedTotal: number;
+  totalInvoicedQuantity: number;
+  totalInvoicedAmount: number;
+  invoicedPct: number | null;
+  pendingQuantity: number;
+  pendingPct: number | null;
+  linkedInvoices: number;
 }
 
 export interface InvoiceDeductionRow {
@@ -224,17 +249,32 @@ export interface RetentionKpisRow {
   deductionsPct: number | null;
 }
 
+export interface StatementOfAccountsMonthlyRow {
+  sectionName: string;
+  rowName: string;
+  Enero: number;
+  Febrero: number;
+  Marzo: number;
+  Abril: number;
+  Mayo: number;
+  Junio: number;
+  Julio: number;
+  Agosto: number;
+  Septiembre: number;
+  Octubre: number;
+  Noviembre: number;
+  Diciembre: number;
+}
+
 export interface ExpenditureIncomeInvoiceReportResult {
-  movements: MovementRow[];
-  kpis: ExpenditureIncomeKpis | null;
   expendituresByType: ExpenditureByTypeRow[];
+  incomesByExpenditureType: IncomeByExpenditureTypeRow[];
   incomesByInvoiceStatus: IncomeByInvoiceStatusRow[];
-  balanceByProject: ProjectBalanceRow[];
-  monthlyTrend: ExpenditureIncomeMonthlyTrendRow[];
   topProjectsMostExpenditure: TopProjectExpenditureRow[];
   topProjectsLeastExpenditure: TopProjectExpenditureRow[];
-  invoiceDeductions: InvoiceDeductionRow[];
+  projectItemsBillingProgress: ProjectItemBillingProgressRow[];
   retentionKpis: RetentionKpisRow | null;
+  statementOfAccountsMonthly: StatementOfAccountsMonthlyRow[];
 }
 
 // ─── CostCenterAnalytics Report ──────────────────────────────────────────────

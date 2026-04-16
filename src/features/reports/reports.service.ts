@@ -15,13 +15,42 @@ export class ReportsService {
     this.reportsRepository = reportsRepository;
   }
 
+  private getSqlErrorNumber(err: unknown): number | null {
+    if (!err || typeof err !== "object") {
+      return null;
+    }
+
+    const sqlError = err as {
+      number?: unknown;
+      parent?: { number?: unknown };
+      original?: { number?: unknown };
+    };
+
+    for (const candidate of [sqlError.number, sqlError.parent?.number, sqlError.original?.number]) {
+      if (typeof candidate === "number") {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
+  private buildReportErrorResponse(err: unknown, fallbackMessage: string): ResponseEntity {
+    const message = err instanceof Error ? err.message : fallbackMessage;
+    const errorNumber = this.getSqlErrorNumber(err);
+    const statusCode = errorNumber !== null && errorNumber >= 50000 && errorNumber < 60000
+      ? StatusCode.BadRequest
+      : StatusCode.InternalErrorServer;
+
+    return BuildResponse.buildErrorResponse(statusCode, { message });
+  }
+
   getReportEmployees = async (filters: GetReportEmployeesDTO): Promise<ResponseEntity> => {
     try {
       const data = await this.reportsRepository.getReportEmployees(filters);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Error al ejecutar el reporte de empleados";
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message });
+      return this.buildReportErrorResponse(err, "Error al ejecutar el reporte de empleados");
     }
   };
 
@@ -32,9 +61,7 @@ export class ReportsService {
       const data = await this.reportsRepository.getReportExpenditureIncomeInvoice(filters);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Error al ejecutar el reporte de egresos-ingresos-facturas";
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message });
+      return this.buildReportErrorResponse(err, "Error al ejecutar el reporte de egresos-ingresos-facturas");
     }
   };
 
@@ -43,9 +70,7 @@ export class ReportsService {
       const data = await this.reportsRepository.getReportCostCenterAnalytics(filters);
       return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Error al ejecutar el reporte de analitica de centros de costo";
-      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message });
+      return this.buildReportErrorResponse(err, "Error al ejecutar el reporte de analitica de centros de costo");
     }
   };
 

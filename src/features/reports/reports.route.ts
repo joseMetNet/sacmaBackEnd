@@ -445,11 +445,11 @@ export function reportsRoutes(app: Application): void {
  *     tags: [Reports]
  *     summary: Reporte integral de egresos, ingresos y facturas
  *     description: >
- *       Ejecuta el SP `SP_ReportExpenditureIncomeInvoice` y devuelve 10 datasets:
- *       movimientos detalle, KPIs de resumen, egresos por tipo, ingresos por estado de factura,
- *       balance por proyecto, tendencia mensual, top 10 proyectos con más gasto,
- *       top 10 proyectos con menos gasto, detalle de facturas con retenciones y
- *       KPIs globales de retenciones.
+ *       Ejecuta el SP `SP_ReportExpenditureIncomeInvoice` y devuelve 7 datasets base:
+ *       egresos por tipo, ingresos por tipo de egreso, ingresos por estado de factura,
+ *       top 10 proyectos con más gasto, top 10 proyectos con menos gasto,
+ *       avance de facturación por item de proyecto y KPIs globales de retenciones.
+ *       Además, devuelve un dataset 8 (estado de cuentas mensual) cuando se envía `year` explícitamente.
  *       Solo se puede usar **un** tipo de periodo a la vez (month, bimester, semester o dateFrom/dateTo).
  *     parameters:
  *       - in: query
@@ -483,13 +483,13 @@ export function reportsRoutes(app: Application): void {
  *         schema:
  *           type: string
  *           format: date
- *         description: "Fecha inicial del rango (YYYY-MM-DD). Exclusivo con month, bimester y semester."
+ *         description: "Fecha inicial del rango (YYYY-MM-DD). Si no se envía, el SP usa el inicio del año resuelto. Exclusivo con month, bimester y semester."
  *       - in: query
  *         name: dateTo
  *         schema:
  *           type: string
  *           format: date
- *         description: "Fecha final del rango (YYYY-MM-DD). Exclusivo con month, bimester y semester."
+ *         description: "Fecha final del rango (YYYY-MM-DD). Si no se envía, el SP usa el fin del año resuelto. Exclusivo con month, bimester y semester."
  *       - in: query
  *         name: idCostCenterProject
  *         schema:
@@ -523,24 +523,9 @@ export function reportsRoutes(app: Application): void {
  *           type: number
  *           minimum: 0
  *         description: "Monto máximo (inclusive)."
- *       - in: query
- *         name: orderNumber
- *         schema:
- *           type: string
- *         description: "Número de orden (búsqueda LIKE)."
- *       - in: query
- *         name: invoiceNumber
- *         schema:
- *           type: string
- *         description: "Número de factura (búsqueda LIKE). Aplica solo a ingresos."
- *       - in: query
- *         name: client
- *         schema:
- *           type: string
- *         description: "Nombre del cliente (búsqueda LIKE). Aplica solo a ingresos."
  *     responses:
  *       200:
- *         description: Resultado del reporte con 10 datasets
+ *         description: Resultado del reporte con 7 datasets base y 1 dataset condicional
  *         content:
  *           application/json:
  *             schema:
@@ -552,51 +537,9 @@ export function reportsRoutes(app: Application): void {
  *                 data:
  *                   type: object
  *                   properties:
- *                     movements:
- *                       type: array
- *                       description: "Dataset 1: detalle de movimientos (egresos e ingresos)"
- *                       items:
- *                         type: object
- *                         properties:
- *                           reportStartDate: { type: string, format: date }
- *                           reportEndDate: { type: string, format: date }
- *                           movementType: { type: string, enum: [EXPENDITURE, INCOME] }
- *                           movementId: { type: integer }
- *                           movementDate: { type: string, format: date }
- *                           idCostCenterProject: { type: integer, nullable: true }
- *                           projectName: { type: string }
- *                           idExpenditureType: { type: integer, nullable: true }
- *                           expenditureType: { type: string, nullable: true }
- *                           idInvoice: { type: integer, nullable: true }
- *                           invoiceNumber: { type: string, nullable: true }
- *                           idInvoiceStatus: { type: integer, nullable: true }
- *                           invoiceStatus: { type: string, nullable: true }
- *                           client: { type: string, nullable: true }
- *                           orderNumber: { type: string, nullable: true }
- *                           description: { type: string, nullable: true }
- *                           amount: { type: number, nullable: true }
- *                           incomeAmount: { type: number }
- *                           expenditureAmount: { type: number }
- *                           fromDate: { type: string, format: date, nullable: true }
- *                           toDate: { type: string, format: date, nullable: true }
- *                           timeDays: { type: integer, nullable: true }
- *                     kpis:
- *                       type: object
- *                       nullable: true
- *                       description: "Dataset 2: KPIs generales de resumen"
- *                       properties:
- *                         totalMovements: { type: integer }
- *                         totalExpenditures: { type: integer }
- *                         totalIncomes: { type: integer }
- *                         totalIncomeAmount: { type: number }
- *                         totalExpenditureAmount: { type: number }
- *                         netBalance: { type: number }
- *                         avgExpenditure: { type: number, nullable: true }
- *                         avgIncome: { type: number, nullable: true }
- *                         avgTimeDays: { type: number, nullable: true }
  *                     expendituresByType:
  *                       type: array
- *                       description: "Dataset 3: egresos agrupados por tipo (para gráfica)"
+ *                       description: "Dataset 1: egresos agrupados por tipo (para gráfica)"
  *                       items:
  *                         type: object
  *                         properties:
@@ -604,9 +547,19 @@ export function reportsRoutes(app: Application): void {
  *                           expenditureType: { type: string }
  *                           totalRecords: { type: integer }
  *                           totalExpenditure: { type: number }
+ *                     incomesByExpenditureType:
+ *                       type: array
+ *                       description: "Dataset 2: ingresos agrupados por tipo de egreso (top 8)"
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           idExpenditureType: { type: integer }
+ *                           expenditureType: { type: string }
+ *                           totalRecords: { type: integer }
+ *                           totalIncome: { type: number }
  *                     incomesByInvoiceStatus:
  *                       type: array
- *                       description: "Dataset 4: ingresos agrupados por estado de factura (para gráfica)"
+ *                       description: "Dataset 3: ingresos agrupados por estado de factura (para gráfica)"
  *                       items:
  *                         type: object
  *                         properties:
@@ -614,39 +567,9 @@ export function reportsRoutes(app: Application): void {
  *                           invoiceStatus: { type: string }
  *                           totalRecords: { type: integer }
  *                           totalIncome: { type: number }
- *                     balanceByProject:
- *                       type: array
- *                       description: "Dataset 5: balance por proyecto con sobrecosto y equivalencia presupuestal"
- *                       items:
- *                         type: object
- *                         properties:
- *                           idCostCenterProject: { type: integer, nullable: true }
- *                           projectName: { type: string }
- *                           totalIncome: { type: number }
- *                           totalExpenditure: { type: number }
- *                           projectBalance: { type: number }
- *                           hasOvercost: { type: integer }
- *                           overcostAmount: { type: number }
- *                           plannedBudget: { type: number }
- *                           expenditureVsPlannedPct: { type: number, nullable: true }
- *                           incomeExpenseEquivalence: { type: number, nullable: true }
- *                           avgTimeDays: { type: number, nullable: true }
- *                     monthlyTrend:
- *                       type: array
- *                       description: "Dataset 6: tendencia mensual de ingresos, egresos y balance"
- *                       items:
- *                         type: object
- *                         properties:
- *                           monthStart: { type: string, format: date }
- *                           year: { type: integer }
- *                           month: { type: integer }
- *                           monthName: { type: string }
- *                           totalIncome: { type: number }
- *                           totalExpenditure: { type: number }
- *                           netBalance: { type: number }
  *                     topProjectsMostExpenditure:
  *                       type: array
- *                       description: "Dataset 7: top 10 proyectos con mayor gasto"
+ *                       description: "Dataset 4: top 10 proyectos con mayor gasto"
  *                       items:
  *                         type: object
  *                         properties:
@@ -655,43 +578,38 @@ export function reportsRoutes(app: Application): void {
  *                           totalExpenditure: { type: number }
  *                     topProjectsLeastExpenditure:
  *                       type: array
- *                       description: "Dataset 8: top 10 proyectos con menor gasto"
+ *                       description: "Dataset 5: top 10 proyectos con menor gasto"
  *                       items:
  *                         type: object
  *                         properties:
  *                           idCostCenterProject: { type: integer, nullable: true }
  *                           projectName: { type: string }
  *                           totalExpenditure: { type: number }
- *                     invoiceDeductions:
+ *                     projectItemsBillingProgress:
  *                       type: array
- *                       description: "Dataset 9: detalle de facturas con desglose de retenciones"
+ *                       description: "Dataset 6: avance de facturación por item / contrato del proyecto"
  *                       items:
  *                         type: object
  *                         properties:
- *                           idInvoice: { type: integer }
- *                           invoiceNumber: { type: string }
- *                           contract: { type: string, nullable: true }
- *                           client: { type: string, nullable: true }
- *                           invoiceValue: { type: number, nullable: true }
- *                           idCostCenterProject: { type: integer, nullable: true }
+ *                           idProjectItem: { type: integer }
+ *                           idCostCenterProject: { type: integer }
  *                           projectName: { type: string }
- *                           invoiceStatus: { type: string }
- *                           invoiceCreatedAt: { type: string, format: date-time }
- *                           totalIncomeRecords: { type: integer }
- *                           totalRegisteredAmount: { type: number }
- *                           totalAdvance: { type: number }
- *                           totalReteguarantee: { type: number }
- *                           totalRetesource: { type: number }
- *                           totalReteica: { type: number }
- *                           totalFic: { type: number }
- *                           totalOther: { type: number }
- *                           totalDeductions: { type: number }
- *                           netAmount: { type: number }
- *                           deductionsPct: { type: number, nullable: true }
+ *                           item: { type: string, nullable: true }
+ *                           unitMeasure: { type: string, nullable: true }
+ *                           contract: { type: string, nullable: true }
+ *                           plannedQuantity: { type: number }
+ *                           unitPrice: { type: number }
+ *                           plannedTotal: { type: number }
+ *                           totalInvoicedQuantity: { type: number }
+ *                           totalInvoicedAmount: { type: number }
+ *                           invoicedPct: { type: number, nullable: true }
+ *                           pendingQuantity: { type: number }
+ *                           pendingPct: { type: number, nullable: true }
+ *                           linkedInvoices: { type: integer }
  *                     retentionKpis:
  *                       type: object
  *                       nullable: true
- *                       description: "Dataset 10: KPIs globales de retenciones y neto facturado"
+ *                       description: "Dataset 7: KPIs globales de retenciones y neto facturado"
  *                       properties:
  *                         reportStartDate: { type: string, format: date }
  *                         reportEndDate: { type: string, format: date }
@@ -706,6 +624,26 @@ export function reportsRoutes(app: Application): void {
  *                         totalDeductions: { type: number }
  *                         totalNetIncome: { type: number }
  *                         deductionsPct: { type: number, nullable: true }
+ *                     statementOfAccountsMonthly:
+ *                       type: array
+ *                       description: "Dataset 8 (condicional): estado de cuentas mensual; solo se llena cuando se envía year."
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           sectionName: { type: string, example: INGRESOS }
+ *                           rowName: { type: string, example: Factura }
+ *                           Enero: { type: number }
+ *                           Febrero: { type: number }
+ *                           Marzo: { type: number }
+ *                           Abril: { type: number }
+ *                           Mayo: { type: number }
+ *                           Junio: { type: number }
+ *                           Julio: { type: number }
+ *                           Agosto: { type: number }
+ *                           Septiembre: { type: number }
+ *                           Octubre: { type: number }
+ *                           Noviembre: { type: number }
+ *                           Diciembre: { type: number }
  *       400:
  *         description: Parámetros inválidos
  *         content:

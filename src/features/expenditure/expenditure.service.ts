@@ -280,13 +280,15 @@ export class ExpenditureService {
     if (request.month) {
       filter = {
         ...filter,
-        month: sequelize.where(sequelize.fn("MONTH", sequelize.col("Expenditure.createdAt")), request.month),
+        // month: sequelize.where(sequelize.fn("MONTH", sequelize.col("Expenditure.createdAt")), request.month),
+        month: sequelize.where(sequelize.fn("MONTH", sequelize.col("Expenditure.refundRequestDate")), request.month),
       };
     }
     if (request.year) {
       filter = {
         ...filter,
-        year: sequelize.where(sequelize.fn("YEAR", sequelize.col("Expenditure.createdAt")), request.year),
+        // year: sequelize.where(sequelize.fn("YEAR", sequelize.col("Expenditure.createdAt")), request.year),
+        year: sequelize.where(sequelize.fn("YEAR", sequelize.col("Expenditure.refundRequestDate")), request.year),
       };
     }
     return filter;
