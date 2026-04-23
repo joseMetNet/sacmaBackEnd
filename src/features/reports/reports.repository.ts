@@ -7,12 +7,22 @@ import {
   EmployeeReportResult,
   ExpenditureIncomeInvoiceReportResult,
   IncomeByExpenditureTypeRow,
+  InventoryWarehouseMovementReportResult,
   ProjectItemBillingProgressRow,
+  PurchasingSupplyReportResult,
+  QuotationsReportResult,
   RevenueCenterCatalogRow,
   RetentionKpisRow,
   StatementOfAccountsMonthlyRow,
+  SuppliersReportResult,
 } from "./reports.interface";
-import { GetReportCostCenterAnalyticsDTO } from "./reports.schema";
+import {
+  GetReportCostCenterAnalyticsDTO,
+  GetReportInventoryWarehouseMovementDTO,
+  GetReportPurchasingSupplyDTO,
+  GetReportQuotationsDTO,
+  GetReportSuppliersDTO,
+} from "./reports.schema";
 
 export class ReportsRepository {
   private emptyResult(): EmployeeReportResult {
@@ -287,12 +297,12 @@ export class ReportsRepository {
       stageCostByProject: [],
       monthlyTrend: [],
       invoicesByStatus: [],
-      employeeProjectDetail: [],
-      transactionalDetail: [],
       contractAnalysis: [],
       employeesByProject: [],
       employeeProductivity: [],
       contractConsolidated: [],
+      materialConsolidated: [],
+      materialDetail: [],
     };
   }
 
@@ -301,12 +311,6 @@ export class ReportsRepository {
 
     for (const row of rows) {
       if (!row || typeof row !== "object") continue;
-
-      // Dataset 7: detalle transaccional
-      if ("SourceType" in row && "EventDate" in row && "Amount" in row) {
-        result.transactionalDetail.push(row);
-        continue;
-      }
 
       // Dataset 1: resumen general
       if (
@@ -338,7 +342,6 @@ export class ReportsRepository {
         "month" in row &&
         "income" in row &&
         "expenditure" in row &&
-        "hoursWorked" in row &&
         "overtimeHours" in row
       ) {
         result.monthlyTrend.push(row);
@@ -351,39 +354,44 @@ export class ReportsRepository {
         continue;
       }
 
-      // Dataset 6: detalle por empleado/proyecto
-      if (
-        "idEmployee" in row &&
-        "workedDays" in row &&
-        "hoursWorked" in row &&
-        "laborCost" in row &&
-        "Enero" in row &&
-        "Diciembre" in row
-      ) {
-        result.employeeProjectDetail.push(row);
-        continue;
-      }
-
-      // Dataset 8: analisis de contratos
+      // Dataset 6: analisis de contratos
       if ("InvoiceTotal" in row && "FirstInvoiceDate" in row && "LastInvoiceDate" in row) {
         result.contractAnalysis.push(row);
         continue;
       }
 
-      // Dataset 9: resumen empleados por proyecto
+      // Dataset 7: resumen empleados por proyecto
       if ("EmployeesWorked" in row && "EmployeeProjectWorkDays" in row && "TotalLaborCost" in row) {
         result.employeesByProject.push(row);
         continue;
       }
 
-      // Dataset 10: productividad por empleado/proyecto
-      if ("WorkloadRankInProject" in row && "AvgHoursPerDay" in row && "WorkedDays" in row) {
+      // Dataset 8: productividad por empleado/proyecto
+      if ("WorkloadRankInProject" in row && "AvgOvertimePerDay" in row && "WorkedDays" in row) {
         result.employeeProductivity.push(row);
         continue;
       }
 
-      // Dataset 11: consolidados de contratos
+      // Dataset 9: consolidados de contratos
       if ("TotalInvoices" in row && "PaidInvoices" in row && "CancelledInvoices" in row) {
+        result.contractConsolidated.push(row);
+        continue;
+      }
+
+      // Dataset 10: consolidado de materiales por proyecto
+      if ("MaterialAssignedQty" in row && "PendingToInvoiceQty" in row) {
+        result.materialConsolidated.push(row);
+        continue;
+      }
+
+      // Dataset 11: detalle de materiales por item/contrato
+      if ("idInput" in row && "MaterialName" in row && "quantityAssigned" in row && "pendingToInvoiceQty" in row) {
+        result.materialDetail.push(row);
+        continue;
+      }
+
+      // Compatibilidad defensiva: filas de contratos en fallback plano.
+      if ("Contract" in row && "TotalInvoices" in row && "PaidInvoicePct" in row) {
         result.contractConsolidated.push(row);
       }
     }
@@ -408,12 +416,12 @@ export class ReportsRepository {
         stageCostByProject: sets[2] ?? [],
         monthlyTrend: sets[3] ?? [],
         invoicesByStatus: sets[4] ?? [],
-        employeeProjectDetail: sets[5] ?? [],
-        transactionalDetail: sets[6] ?? [],
-        contractAnalysis: sets[7] ?? [],
-        employeesByProject: sets[8] ?? [],
-        employeeProductivity: sets[9] ?? [],
-        contractConsolidated: sets[10] ?? [],
+        contractAnalysis: sets[5] ?? [],
+        employeesByProject: sets[6] ?? [],
+        employeeProductivity: sets[7] ?? [],
+        contractConsolidated: sets[8] ?? [],
+        materialConsolidated: sets[9] ?? [],
+        materialDetail: sets[10] ?? [],
       };
     }
 
@@ -485,4 +493,490 @@ export class ReportsRepository {
 
     return rows;
   }
+
+  // ─── Quotations ───────────────────────────────────────────────────────────
+
+  private emptyQuotationsResult(): QuotationsReportResult {
+    return {
+      quotations: [],
+      kpis: null,
+      quotationsByStatus: [],
+      quotationPercentages: [],
+      quotationComments: [],
+      quotationItemsDetail: [],
+    };
+  }
+
+  private classifyQuotationsFlatRows(rows: any[]): QuotationsReportResult {
+    const result = this.emptyQuotationsResult();
+
+    for (const row of rows) {
+      if (!row || typeof row !== "object") continue;
+
+      // Dataset 2: KPIs
+      if (
+        "totalQuotations" in row &&
+        "totalQuotedAmount" in row &&
+        "averageQuotedAmount" in row &&
+        !Object.prototype.hasOwnProperty.call(row, "idQuotation")
+      ) {
+        result.kpis = row;
+        continue;
+      }
+
+      // Dataset 5: comentarios
+      if ("idQuotationComment" in row && "comment" in row) {
+        result.quotationComments.push(row);
+        continue;
+      }
+
+      // Dataset 6: items y detalle
+      if ("idQuotationItem" in row && "idQuotationItemDetail" in row) {
+        result.quotationItemsDetail.push(row);
+        continue;
+      }
+
+      // Dataset 4: porcentajes
+      if (
+        "idQuotationPercentage" in row ||
+        "administrationPct" in row ||
+        "unforeseenPct" in row ||
+        "vatPct" in row
+      ) {
+        result.quotationPercentages.push(row);
+        continue;
+      }
+
+      // Dataset 3: estado de cotizaciones
+      if ("idQuotationStatus" in row && "totalQuotations" in row && "quotationStatus" in row) {
+        result.quotationsByStatus.push(row);
+        continue;
+      }
+
+      // Dataset 1: tabla principal
+      if ("idQuotation" in row && "quotedTotalCost" in row && "itemsCount" in row) {
+        result.quotations.push(row);
+      }
+    }
+
+    return result;
+  }
+
+  private mapQuotationsResultSets(rawQueryResult: unknown): QuotationsReportResult {
+    const result = this.emptyQuotationsResult();
+
+    if (!Array.isArray(rawQueryResult) || rawQueryResult.length === 0) {
+      return result;
+    }
+
+    const [first] = rawQueryResult as any[];
+
+    if (Array.isArray(first) && first.length > 0 && Array.isArray(first[0])) {
+      const sets = first as any[][];
+      return {
+        quotations: sets[0] ?? [],
+        kpis: sets[1]?.[0] ?? null,
+        quotationsByStatus: sets[2] ?? [],
+        quotationPercentages: sets[3] ?? [],
+        quotationComments: sets[4] ?? [],
+        quotationItemsDetail: sets[5] ?? [],
+      };
+    }
+
+    if (Array.isArray(first)) {
+      return this.classifyQuotationsFlatRows(first);
+    }
+
+    return this.classifyQuotationsFlatRows([first]);
+  }
+
+  async getReportQuotations(filters: GetReportQuotationsDTO): Promise<QuotationsReportResult> {
+    const params: Record<string, any> = {
+      Year: filters.year ?? null,
+      Month: filters.month ?? null,
+      Bimester: filters.bimester ?? null,
+      Semester: filters.semester ?? null,
+      DateFrom: filters.dateFrom ?? null,
+      DateTo: filters.dateTo ?? null,
+      IdQuotation: filters.idQuotation ?? null,
+      IdQuotationStatus: filters.idQuotationStatus ?? null,
+      IdResponsable: filters.idResponsable ?? null,
+      IdInput: filters.idInput ?? null,
+      AmountMin: filters.amountMin ?? null,
+      AmountMax: filters.amountMax ?? null,
+    };
+
+    const paramsSql = Object.keys(params)
+      .map((key) => `@${key} = :${key}`)
+      .join(", ");
+
+    const rawResult = await dbConnection.query(
+      `EXEC [mvp1].[SP_ReportQuotations] ${paramsSql}`,
+      {
+        replacements: params,
+        type: QueryTypes.RAW,
+      }
+    );
+
+    return this.mapQuotationsResultSets(rawResult);
+  }
+
+  // ─── InventoryWarehouseMovement ─────────────────────────────────────────
+
+  private emptyInventoryWarehouseMovementResult(): InventoryWarehouseMovementReportResult {
+    return {
+      stock: [],
+      movements: [],
+      kpis: null,
+      movementsByWarehouse: [],
+      returnReasons: [],
+    };
+  }
+
+  private classifyInventoryWarehouseMovementFlatRows(
+    rows: any[]
+  ): InventoryWarehouseMovementReportResult {
+    const result = this.emptyInventoryWarehouseMovementResult();
+
+    for (const row of rows) {
+      if (!row || typeof row !== "object") continue;
+
+      // Dataset 3: KPIs
+      if (
+        "totalMovements" in row &&
+        "totalEntriesQty" in row &&
+        !Object.prototype.hasOwnProperty.call(row, "idInventoryMovement") &&
+        !Object.prototype.hasOwnProperty.call(row, "idWarehouse")
+      ) {
+        result.kpis = row;
+        continue;
+      }
+
+      // Dataset 5: motivos de retorno
+      if ("reasonCode" in row && "totalReturns" in row) {
+        result.returnReasons.push(row);
+        continue;
+      }
+
+      // Dataset 4: resumen por bodega
+      if (
+        "idWarehouse" in row &&
+        "movements" in row &&
+        "totalQty" in row &&
+        !Object.prototype.hasOwnProperty.call(row, "idInventoryMovement")
+      ) {
+        result.movementsByWarehouse.push(row);
+        continue;
+      }
+
+      // Dataset 2: trazabilidad de movimientos
+      if ("idInventoryMovement" in row && "movementType" in row) {
+        result.movements.push(row);
+        continue;
+      }
+
+      // Dataset 1: stock actual
+      if ("idInventory" in row && "quantityAvailable" in row) {
+        result.stock.push(row);
+      }
+    }
+
+    return result;
+  }
+
+  private mapInventoryWarehouseMovementResultSets(
+    rawQueryResult: unknown
+  ): InventoryWarehouseMovementReportResult {
+    const result = this.emptyInventoryWarehouseMovementResult();
+
+    if (!Array.isArray(rawQueryResult) || rawQueryResult.length === 0) {
+      return result;
+    }
+
+    const [first] = rawQueryResult as any[];
+
+    if (Array.isArray(first) && first.length > 0 && Array.isArray(first[0])) {
+      const sets = first as any[][];
+      return {
+        stock: sets[0] ?? [],
+        movements: sets[1] ?? [],
+        kpis: sets[2]?.[0] ?? null,
+        movementsByWarehouse: sets[3] ?? [],
+        returnReasons: sets[4] ?? [],
+      };
+    }
+
+    if (Array.isArray(first)) {
+      return this.classifyInventoryWarehouseMovementFlatRows(first);
+    }
+
+    return this.classifyInventoryWarehouseMovementFlatRows([first]);
+  }
+
+  async getReportInventoryWarehouseMovement(
+    filters: GetReportInventoryWarehouseMovementDTO
+  ): Promise<InventoryWarehouseMovementReportResult> {
+    const params: Record<string, any> = {
+      Year: filters.year ?? null,
+      Month: filters.month ?? null,
+      Bimester: filters.bimester ?? null,
+      Semester: filters.semester ?? null,
+      DateFrom: filters.dateFrom ?? null,
+      DateTo: filters.dateTo ?? null,
+      IdWarehouse: filters.idWarehouse ?? null,
+      IdInput: filters.idInput ?? null,
+      IdCostCenterProject: filters.idCostCenterProject ?? null,
+      MovementType: filters.movementType ?? null,
+      IdReturnReason: filters.idReturnReason ?? null,
+      StockMin: filters.stockMin ?? null,
+      StockMax: filters.stockMax ?? null,
+    };
+
+    const paramsSql = Object.keys(params)
+      .map((key) => `@${key} = :${key}`)
+      .join(", ");
+
+    const rawResult = await dbConnection.query(
+      `EXEC [mvp1].[SP_ReportInventoryWarehouseMovement] ${paramsSql}`,
+      {
+        replacements: params,
+        type: QueryTypes.RAW,
+      }
+    );
+
+    return this.mapInventoryWarehouseMovementResultSets(rawResult);
+  }
+
+  // ─── PurchasingSupply ─────────────────────────────────────────────────
+
+  private emptyPurchasingSupplyResult(): PurchasingSupplyReportResult {
+    return {
+      purchaseRequests: [],
+      purchaseRequestDetails: [],
+      kpis: null,
+      purchasesBySupplier: [],
+      purchaseRequestsByStatus: [],
+    };
+  }
+
+  private classifyPurchasingSupplyFlatRows(rows: any[]): PurchasingSupplyReportResult {
+    const result = this.emptyPurchasingSupplyResult();
+
+    for (const row of rows) {
+      if (!row || typeof row !== "object") continue;
+
+      // Dataset 3: KPIs
+      if (
+        "totalRequests" in row &&
+        "totalRequestAmount" in row &&
+        !Object.prototype.hasOwnProperty.call(row, "idPurchaseRequest") &&
+        !Object.prototype.hasOwnProperty.call(row, "idSupplier") &&
+        !Object.prototype.hasOwnProperty.call(row, "idPurchaseRequestStatus")
+      ) {
+        result.kpis = row;
+        continue;
+      }
+
+      // Dataset 5: estado de solicitud
+      if ("idPurchaseRequestStatus" in row && "purchaseRequestStatus" in row && "totalRequests" in row) {
+        result.purchaseRequestsByStatus.push(row);
+        continue;
+      }
+
+      // Dataset 4: compras por proveedor
+      if (
+        "idSupplier" in row &&
+        "totalDetails" in row &&
+        !Object.prototype.hasOwnProperty.call(row, "idPurchaseRequest")
+      ) {
+        result.purchasesBySupplier.push(row);
+        continue;
+      }
+
+      // Dataset 2: detalle de solicitudes
+      if ("idPurchaseRequestDetail" in row) {
+        result.purchaseRequestDetails.push(row);
+        continue;
+      }
+
+      // Dataset 1: cabecera de solicitudes
+      if ("idPurchaseRequest" in row && "requestDate" in row) {
+        result.purchaseRequests.push(row);
+      }
+    }
+
+    return result;
+  }
+
+  private mapPurchasingSupplyResultSets(rawQueryResult: unknown): PurchasingSupplyReportResult {
+    const result = this.emptyPurchasingSupplyResult();
+
+    if (!Array.isArray(rawQueryResult) || rawQueryResult.length === 0) {
+      return result;
+    }
+
+    const [first] = rawQueryResult as any[];
+
+    if (Array.isArray(first) && first.length > 0 && Array.isArray(first[0])) {
+      const sets = first as any[][];
+      return {
+        purchaseRequests: sets[0] ?? [],
+        purchaseRequestDetails: sets[1] ?? [],
+        kpis: sets[2]?.[0] ?? null,
+        purchasesBySupplier: sets[3] ?? [],
+        purchaseRequestsByStatus: sets[4] ?? [],
+      };
+    }
+
+    if (Array.isArray(first)) {
+      return this.classifyPurchasingSupplyFlatRows(first);
+    }
+
+    return this.classifyPurchasingSupplyFlatRows([first]);
+  }
+
+  async getReportPurchasingSupply(
+    filters: GetReportPurchasingSupplyDTO
+  ): Promise<PurchasingSupplyReportResult> {
+    const params: Record<string, any> = {
+      Year: filters.year ?? null,
+      Month: filters.month ?? null,
+      Bimester: filters.bimester ?? null,
+      Semester: filters.semester ?? null,
+      DateFrom: filters.dateFrom ?? null,
+      DateTo: filters.dateTo ?? null,
+      IdPurchaseRequest: filters.idPurchaseRequest ?? null,
+      IdSupplier: filters.idSupplier ?? null,
+      IdWarehouse: filters.idWarehouse ?? null,
+      IdInput: filters.idInput ?? null,
+      IdPurchaseRequestStatus: filters.idPurchaseRequestStatus ?? null,
+      MovementType: filters.movementType ?? null,
+      IsActive: filters.isActive ?? null,
+      AmountMin: filters.amountMin ?? null,
+      AmountMax: filters.amountMax ?? null,
+    };
+
+    const paramsSql = Object.keys(params)
+      .map((key) => `@${key} = :${key}`)
+      .join(", ");
+
+    const rawResult = await dbConnection.query(
+      `EXEC [mvp1].[SP_ReportPurchasingSupply] ${paramsSql}`,
+      {
+        replacements: params,
+        type: QueryTypes.RAW,
+      }
+    );
+
+    return this.mapPurchasingSupplyResultSets(rawResult);
+  }
+
+
+  // ─── Suppliers ─────────────────────────────────────────────────────────────
+
+  private emptySuppliersResult(): SuppliersReportResult {
+    return {
+      suppliers: [],
+      contacts: [],
+      kpis: null,
+      ranking: [],
+    };
+  }
+
+  private classifySuppliersFlatRows(rows: any[]): SuppliersReportResult {
+    const result = this.emptySuppliersResult();
+
+    for (const row of rows) {
+      if (!row || typeof row !== "object") continue;
+
+      // Dataset 3: KPIs
+      if (
+        "totalSuppliers" in row &&
+        "totalActiveSuppliers" in row &&
+        !Object.prototype.hasOwnProperty.call(row, "idSupplier")
+      ) {
+        result.kpis = row;
+        continue;
+      }
+
+      // Dataset 4: ranking
+      if ("supplierRank" in row) {
+        result.ranking.push(row);
+        continue;
+      }
+
+      // Dataset 2: contactos
+      if ("idSupplierContact" in row) {
+        result.contacts.push(row);
+        continue;
+      }
+
+      // Dataset 1: maestro de proveedores con desempeño
+      if ("idSupplier" in row && "totalAmount" in row) {
+        result.suppliers.push(row);
+      }
+    }
+
+    return result;
+  }
+
+  private mapSuppliersResultSets(rawQueryResult: unknown): SuppliersReportResult {
+    const result = this.emptySuppliersResult();
+
+    if (!Array.isArray(rawQueryResult) || rawQueryResult.length === 0) {
+      return result;
+    }
+
+    const [first] = rawQueryResult as any[];
+
+    if (Array.isArray(first) && first.length > 0 && Array.isArray(first[0])) {
+      const sets = first as any[][];
+      return {
+        suppliers: sets[0] ?? [],
+        contacts: sets[1] ?? [],
+        kpis: sets[2]?.[0] ?? null,
+        ranking: sets[3] ?? [],
+      };
+    }
+
+    if (Array.isArray(first)) {
+      return this.classifySuppliersFlatRows(first);
+    }
+
+    return this.classifySuppliersFlatRows([first]);
+  }
+
+  async getReportSuppliers(filters: GetReportSuppliersDTO): Promise<SuppliersReportResult> {
+    const params: Record<string, any> = {
+      Year: filters.year ?? null,
+      Month: filters.month ?? null,
+      Bimester: filters.bimester ?? null,
+      Semester: filters.semester ?? null,
+      DateFrom: filters.dateFrom ?? null,
+      DateTo: filters.dateTo ?? null,
+      IdSupplier: filters.idSupplier ?? null,
+      SupplierStatus: filters.supplierStatus ?? null,
+      IdCity: filters.idCity ?? null,
+      IdState: filters.idState ?? null,
+      SearchText: filters.searchText ?? null,
+      AmountMin: filters.amountMin ?? null,
+      AmountMax: filters.amountMax ?? null,
+    };
+
+    const paramsSql = Object.keys(params)
+      .map((key) => `@${key} = :${key}`)
+      .join(", ");
+
+    const rawResult = await dbConnection.query(
+      `EXEC [mvp1].[SP_ReportSuppliers] ${paramsSql}`,
+      {
+        replacements: params,
+        type: QueryTypes.RAW,
+      }
+    );
+
+    return this.mapSuppliersResultSets(rawResult);
+  }
+
+  
 }

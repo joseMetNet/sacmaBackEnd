@@ -54,4 +54,56 @@ export class ReportsController {
     const response = await this.reportsService.getRevenueCentersCatalog();
     res.status(response.code).json({ status: response.status, data: response.data });
   };
+
+  getReportQuotations = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.getReportQuotations.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+    const response = await this.reportsService.getReportQuotations(request.data);
+    res.status(response.code).json({ status: response.status, data: response.data });
+  };
+
+  getReportInventoryWarehouseMovement = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.getReportInventoryWarehouseMovement.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+    const response = await this.reportsService.getReportInventoryWarehouseMovement(request.data);
+    res.status(response.code).json({ status: response.status, data: response.data });
+  };
+
+  getReportPurchasingSupply = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.getReportPurchasingSupply.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+    const response = await this.reportsService.getReportPurchasingSupply(request.data);
+    res.status(response.code).json({ status: response.status, data: response.data });
+  };
+
+  getReportSuppliers = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.getReportSuppliers.safeParse(req.query);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+    const response = await this.reportsService.getReportSuppliers(request.data);
+    res.status(response.code).json({ status: response.status, data: response.data });
+  };
 }

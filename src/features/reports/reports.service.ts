@@ -6,6 +6,10 @@ import {
   GetReportCostCenterAnalyticsDTO,
   GetReportEmployeesDTO,
   GetReportExpenditureIncomeInvoiceDTO,
+  GetReportInventoryWarehouseMovementDTO,
+  GetReportPurchasingSupplyDTO,
+  GetReportQuotationsDTO,
+  GetReportSuppliersDTO,
 } from "./reports.schema";
 
 export class ReportsService {
@@ -81,6 +85,44 @@ export class ReportsService {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Error al consultar el catalogo de centros de utilidad";
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message });
+    }
+  };
+
+  getReportQuotations = async (filters: GetReportQuotationsDTO): Promise<ResponseEntity> => {
+    try {
+      const data = await this.reportsRepository.getReportQuotations(filters);
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
+    } catch (err: unknown) {
+      return this.buildReportErrorResponse(err, "Error al ejecutar el reporte de cotizaciones");
+    }
+  };
+
+  getReportInventoryWarehouseMovement = async (
+    filters: GetReportInventoryWarehouseMovementDTO
+  ): Promise<ResponseEntity> => {
+    try {
+      const data = await this.reportsRepository.getReportInventoryWarehouseMovement(filters);
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
+    } catch (err: unknown) {
+      return this.buildReportErrorResponse(err, "Error al ejecutar el reporte de inventario y movimientos de bodega");
+    }
+  };
+
+  getReportPurchasingSupply = async (filters: GetReportPurchasingSupplyDTO): Promise<ResponseEntity> => {
+    try {
+      const data = await this.reportsRepository.getReportPurchasingSupply(filters);
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
+    } catch (err: unknown) {
+      return this.buildReportErrorResponse(err, "Error al ejecutar el reporte de compras y abastecimiento");
+    }
+  };
+
+  getReportSuppliers = async (filters: GetReportSuppliersDTO): Promise<ResponseEntity> => {
+    try {
+      const data = await this.reportsRepository.getReportSuppliers(filters);
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, data);
+    } catch (err: unknown) {
+      return this.buildReportErrorResponse(err, "Error al ejecutar el reporte de proveedores");
     }
   };
 }
