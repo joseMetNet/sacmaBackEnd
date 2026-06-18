@@ -8,6 +8,7 @@ import { dbConnection } from "../../config";
 import { Quotation } from "./quotation.model";
 import { QuotationPercentage } from "./quotation-percentage.model";
 import sequelize from "sequelize";
+import { QuotationAdditionalCost } from "./quotation-additional-costs.model";
 import { QuotationComment } from "./quotation-comment.model";
 import { QuotationItemDetail } from "./quotation-item-detail.model";
 import { QuotationItem } from "./quotation-item.model";
@@ -35,7 +36,7 @@ export class QuotationService {
     try {
       quotationData = {
         ...quotationData,
-        idQuotationStatus: 1,
+        idQuotationStatus: 7,
         builder: quotationData.builder ?? quotationData.client,
       };
       const quotation = await this.quotationRepository.create(quotationData, transaction);
@@ -57,6 +58,146 @@ export class QuotationService {
       await transaction.rollback();
       console.error("Error creating quotation", err);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to create quotation" });
+    }
+  };
+
+  duplicateQuotation = async (idQuotation: number): Promise<ResponseEntity> => {
+    const transaction = await dbConnection.transaction();
+    try {
+      const originalQuotation = await this.quotationRepository.findById(idQuotation);
+      if (!originalQuotation) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation not found" });
+      }
+
+      const originalQuotationItems = await this.quotationRepository.findAllQuotationItem({ idQuotation }, -1, 0);
+      const originalQuotationItemDetails = await this.quotationRepository.findAllQuotationItemDetail(
+        this.buildQuotationItemDetailFilter({ idQuotation }),
+        -1,
+        0
+      );
+      const originalQuotationComments = await this.quotationRepository.findAllQuotationComment({ idQuotation }, -1, 0);
+      const originalQuotationPercentage = await this.quotationRepository.findQuotationPercentageByQuotationId(idQuotation);
+      const originalQuotationAdditionalCost = await this.quotationRepository.findQuotationAdditionalCostByQuotationId(idQuotation);
+
+      if (originalQuotationItemDetails instanceof CustomError) {
+        await transaction.rollback();
+        return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: originalQuotationItemDetails.message });
+      }
+
+      const duplicatedQuotation = await this.quotationRepository.create(
+        {
+          name: originalQuotation.name,
+          idResponsable: originalQuotation.idResponsable,
+          builder: originalQuotation.builder,
+          builderAddress: originalQuotation.builderAddress,
+          projectName: originalQuotation.projectName,
+          itemSummary: originalQuotation.itemSummary,
+          totalCost: originalQuotation.totalCost,
+          perDiem: originalQuotation.perDiem,
+          sisoNumber: originalQuotation.sisoNumber,
+          documentUrl: originalQuotation.documentUrl,
+          client: originalQuotation.client,
+          executionTime: originalQuotation.executionTime,
+          policy: originalQuotation.policy,
+          advance: originalQuotation.advance,
+          technicalCondition: originalQuotation.technicalCondition,
+          idQuotationStatus: originalQuotation.idQuotationStatus,
+          consecutive: originalQuotation.consecutive ? `${originalQuotation.consecutive} copy` : "copy",
+        } as any,
+        transaction
+      );
+
+      const quotationItemIdMap = new Map<number, number>();
+      for (const originalItem of originalQuotationItems.rows) {
+        const duplicatedItem = await QuotationItem.create(
+          {
+            idQuotation: duplicatedQuotation.idQuotation,
+            item: originalItem.item,
+            technicalSpecification: originalItem.technicalSpecification,
+            unitMeasure: originalItem.unitMeasure,
+            quantity: originalItem.quantity,
+            unitPrice: originalItem.unitPrice,
+            total: originalItem.total,
+          },
+          { transaction }
+        );
+
+        quotationItemIdMap.set(originalItem.idQuotationItem, duplicatedItem.idQuotationItem);
+      }
+
+      for (const originalDetail of originalQuotationItemDetails.rows) {
+        const duplicatedQuotationItemId = quotationItemIdMap.get(originalDetail.idQuotationItem);
+        if (!duplicatedQuotationItemId) {
+          throw new Error(`Missing duplicated quotation item for idQuotationItem=${originalDetail.idQuotationItem}`);
+        }
+
+        await QuotationItemDetail.create(
+          {
+            idQuotationItem: duplicatedQuotationItemId,
+            idInput: originalDetail.idInput,
+            quantity: originalDetail.quantity,
+            performance: originalDetail.performance,
+            cost: originalDetail.cost,
+            totalCost: originalDetail.totalCost,
+          },
+          { transaction }
+        );
+      }
+
+      if (originalQuotationPercentage) {
+        await QuotationPercentage.create(
+          {
+            idQuotation: duplicatedQuotation.idQuotation,
+            administration: originalQuotationPercentage.administration,
+            unforeseen: originalQuotationPercentage.unforeseen,
+            utility: originalQuotationPercentage.utility,
+            vat: originalQuotationPercentage.vat,
+          },
+          { transaction }
+        );
+      }
+
+      if (originalQuotationAdditionalCost) {
+        await QuotationAdditionalCost.create(
+          {
+            idQuotation: duplicatedQuotation.idQuotation,
+            perDiem: originalQuotationAdditionalCost.perDiem,
+            sisoValue: originalQuotationAdditionalCost.sisoValue,
+            tax: originalQuotationAdditionalCost.tax,
+            commision: originalQuotationAdditionalCost.commision,
+            pettyCash: originalQuotationAdditionalCost.pettyCash,
+            policy: originalQuotationAdditionalCost.policy,
+            utility: originalQuotationAdditionalCost.utility,
+          },
+          { transaction }
+        );
+      }
+
+      for (const originalComment of originalQuotationComments.rows) {
+        await QuotationComment.create(
+          {
+            idQuotation: duplicatedQuotation.idQuotation,
+            idEmployee: originalComment.idEmployee,
+            idUser: originalComment.idUser,
+            comment: originalComment.comment,
+            createdAt: originalComment.createdAt,
+            updatedAt: originalComment.updatedAt,
+          },
+          { transaction }
+        );
+      }
+
+      await transaction.commit();
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, {
+        idQuotation: duplicatedQuotation.idQuotation,
+        idQuotationSource: idQuotation,
+        message: "Quotation duplicated successfully",
+      });
+    } catch (error) {
+      await transaction.rollback();
+      console.error("Error duplicating quotation", error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to duplicate quotation" });
     }
   };
 
@@ -374,10 +515,9 @@ export class QuotationService {
       }
 
       const quotationItemDetailsResponse = await this.quotationRepository.findAllQuotationItemDetail(
-        this.buildQuotationItemDetailFilter({ idQuotation: id }),
-        -1,
-        0
+        this.buildQuotationItemDetailFilter({ idQuotation: id }),        -1,        0
       );
+      
       if (quotationItemDetailsResponse instanceof CustomError) {
         return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: quotationItemDetailsResponse.message });
       }
@@ -1118,7 +1258,23 @@ export class QuotationService {
   createQuotationComment = async (quotationCommentData: dtos.CreateQuotationCommentDTO): Promise<ResponseEntity> => {
     try {
       const quotationComment = await this.quotationRepository.createQuotationComment(quotationCommentData);
-      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, quotationComment);
+      const persistedQuotationComment = await this.quotationRepository.findQuotationCommentById(quotationComment.idQuotationComment);
+
+      if (!persistedQuotationComment) {
+        return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+          message: "Quotation comment was created but could not be reloaded",
+        });
+      }
+
+      if (persistedQuotationComment.idUser !== quotationCommentData.idUser) {
+        return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, {
+          message: "idUser was not persisted in database",
+          expectedIdUser: quotationCommentData.idUser,
+          persistedIdUser: persistedQuotationComment.idUser,
+        });
+      }
+
+      return BuildResponse.buildSuccessResponse(StatusCode.ResourceCreated, persistedQuotationComment);
     } catch (error) {
       console.error(error);
       return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to create quotation comment" });
@@ -1175,6 +1331,7 @@ export class QuotationService {
   private buildQuotationComment = (quotationComment: QuotationComment, quotationCommentData: dtos.UpdateQuotationCommentDTO) => {
     quotationComment.idQuotation = quotationCommentData.idQuotation ?? quotationComment.idQuotation;
     quotationComment.idEmployee = quotationCommentData.idEmployee ?? quotationComment.idEmployee;
+    quotationComment.idUser = quotationCommentData.idUser ?? quotationComment.idUser;
     quotationComment.comment = quotationCommentData.comment ?? quotationComment.comment;
     quotationComment.createdAt = quotationCommentData.createdAt ?? quotationComment.createdAt;
     return quotationComment;

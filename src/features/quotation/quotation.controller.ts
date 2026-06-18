@@ -33,6 +33,23 @@ export class QuotationController {
     });
   };
 
+  duplicateQuotation = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.QuotationSchema.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+
+    const response = await this.quotationService.duplicateQuotation(request.data.idQuotation);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data,
+    });
+  };
+
   updateQuotation = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.UpdateQuotationSchema.safeParse(req.body);
     if (!request.success) {

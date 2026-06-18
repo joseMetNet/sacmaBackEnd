@@ -25,6 +25,7 @@ export function quotationRoute(app: Application): void {
 
   // POST routes
   router.post("/v1/quotation", quotationController.createQuotation);
+  router.post("/v1/quotation/duplicate/:idQuotation", quotationController.duplicateQuotation);
   router.post("/v1/quotation-item", quotationController.createQuotationItem);
   router.post("/v1/quotation-item-detail", quotationController.createQuotationItemDetail);
   router.post("/v1/quotation-comment", quotationController.createQuotationComment);
@@ -1064,6 +1065,9 @@ export function quotationRoute(app: Application): void {
  *         idEmployee:
  *           type: integer
  *           example: 1
+ *         idUser:
+ *           type: integer
+ *           example: 1
  *         comment:
  *           type: string
  *           example: "Comment"
@@ -1078,12 +1082,16 @@ export function quotationRoute(app: Application): void {
  *       required:
  *         - idQuotation
  *         - idEmployee
+ *         - idUser
  *         - comment
  *       properties:
  *         idQuotation:
  *           type: integer
  *           example: 1
  *         idEmployee:
+ *           type: integer
+ *           example: 1
+ *         idUser:
  *           type: integer
  *           example: 1
  *         comment:
@@ -1104,6 +1112,9 @@ export function quotationRoute(app: Application): void {
  *           type: integer
  *           example: 1
  *         idEmployee:
+ *           type: integer
+ *           example: 1
+ *         idUser:
  *           type: integer
  *           example: 1
  *         comment:

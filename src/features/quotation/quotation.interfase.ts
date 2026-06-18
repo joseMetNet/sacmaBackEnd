@@ -153,6 +153,7 @@ export interface QuotationItemDTO {
 export interface CreateQuotationCommentDTO {
   idQuotation: number;
   idEmployee: number;
+  idUser: number;
   comment: string;
   createdAt?: string;
 }
@@ -161,6 +162,7 @@ export interface UpdateQuotationCommentDTO {
   idQuotationComment: number;
   idQuotation?: number;
   idEmployee?: number;
+  idUser?: number;
   comment?: string;
   createdAt?: string;
 }

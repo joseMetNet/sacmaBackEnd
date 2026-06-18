@@ -921,9 +921,7 @@ export class RevenueCenterRepository {
     SELECT DISTINCT
       ti.idInput,
       ti.name AS material,
-      MAX(CAST(ti.performance AS DECIMAL(10,2))) AS performance,
-      
-      -- Cantidades ordenadas y pendientes
+      MAX(TRY_CAST(ti.performance AS DECIMAL(10,2))) AS performance,
       SUM(toid.quantity) AS totalOrdenado,
       COALESCE((
           SELECT SUM(im.quantityPending)
@@ -946,7 +944,7 @@ export class RevenueCenterRepository {
           FROM [mvp1].[TB_ProjectInventoryAssignment] im
           WHERE im.idInput = ti.idInput 
             AND im.idCostCenterProject = toi.idCostCenterProject
-      ), 0)) * MAX(CAST(ti.performance AS DECIMAL(10,2))) AS quantityM2,
+      ), 0)) * MAX(TRY_CAST(ti.performance AS DECIMAL(10,2))) AS quantityM2,
       
       -- Costo total enviado
       (SUM(toid.quantity) - COALESCE((
@@ -954,7 +952,7 @@ export class RevenueCenterRepository {
           FROM [mvp1].[TB_ProjectInventoryAssignment] im
           WHERE im.idInput = ti.idInput 
             AND im.idCostCenterProject = toi.idCostCenterProject
-      ), 0)) * MAX(ti.cost) AS totalCostSend,
+      ), 0)) * MAX(TRY_CONVERT(FLOAT, ti.cost)) AS totalCostSend,
       
       -- Valores de proyecto
       0 AS budgeted,
@@ -969,26 +967,7 @@ export class RevenueCenterRepository {
         WHERE ripi.idInput = toid.idInput 
           AND ttcr.idRevenueCenter = :idRevenueCenter
           AND pi.idCostCenterProject = toi.idCostCenterProject
-    ), 0) AS invoiced,
-      --0 AS invoiced,
-      --SUM(ipi.invoicedQuantity) AS invoiced,
-      /*
-      COALESCE((
-        SELECT SUM(ipi.invoicedQuantity * ISNULL((qid.quantity / NULLIF(qi.quantity, 0)), 1))
-        FROM [mvp1].[TB_QuotationItemDetail] qid
-        INNER JOIN [mvp1].[TB_QuotationItem] qi 
-            ON qi.idQuotationItem = qid.idQuotationItem
-        INNER JOIN [mvp1].[TB_ProjectItem] pi 
-            ON pi.idCostCenterProject = toi.idCostCenterProject
-        INNER JOIN [mvp1].[TB_InvoiceProjectItem] ipi 
-            ON ipi.idProjectItem = pi.idProjectItem
-        INNER JOIN [mvp1].[TB_Invoice] inv 
-            ON inv.idInvoice = ipi.idInvoice
-        WHERE qid.idInput = ti.idInput
-          AND qi.idQuotation = trc.idQuotation
-          AND inv.invoice IS NOT NULL
-        ), 0) AS invoiced, */
-     
+      ), 0) AS invoiced,
       0 AS shippedAndInvoiced,
       0 AS diff
       
@@ -996,17 +975,10 @@ export class RevenueCenterRepository {
     INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
     INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
     INNER JOIN ${revenueCenterSource} ON trc.idCostCenterProject = toi.idCostCenterProject
-    /*
-    INNER JOIN [mvp1].[TB_ProjectItem] pi ON pi.idCostCenterProject = trc.idCostCenterProject
-    LEFT JOIN [mvp1].[TB_InvoiceProjectItem] ipi ON ipi.idProjectItem = pi.idProjectItem
-    LEFT JOIN [mvp1].[TB_Invoice] inv ON inv.idInvoice = ipi.idInvoice AND inv.invoice IS NOT NULL
-       */ 
     WHERE trc.idRevenueCenter = :idRevenueCenter
       AND ti.idInputType = 1
-      
-    GROUP BY ti.idInput, ti.name, toi.idCostCenterProject, trc.idCostCenterProject, trc.idQuotation,toid.idInput
-    --, trc.idRevenueCenter
-    ORDER BY invoiced DESC;
+    GROUP BY ti.idInput, ti.name, toi.idCostCenterProject, trc.idCostCenterProject, trc.idQuotation, toid.idInput
+    ORDER BY ti.name;
   `;
 
     const totalQuery = `
@@ -1014,10 +986,10 @@ export class RevenueCenterRepository {
       ti.idInput,
       ti.name AS material,
       --MAX(ti.performance) AS performance,
-      MAX(CAST(ti.performance AS DECIMAL(10,2))) AS performance,
+      MAX(TRY_CAST(ti.performance AS DECIMAL(10,2))) AS performance,
       --SUM(toid.quantity) AS shipped,
       --SUM(toid.quantity) * MAX(ti.performance) AS quantityM2,
-      --SUM(toid.quantity) * MAX(CAST(ti.performance AS DECIMAL(10,2))) AS quantityM2,
+      --SUM(toid.quantity) * MAX(TRY_CAST(ti.performance AS DECIMAL(10,2))) AS quantityM2,
       --SUM(toid.quantity) * MAX(ti.cost) AS totalCostSend,
       SUM(toid.quantity) AS totalOrdenado,
     COALESCE((
@@ -1037,18 +1009,18 @@ export class RevenueCenterRepository {
         FROM [mvp1].[TB_ProjectInventoryAssignment] im
         WHERE im.idInput = ti.idInput 
           AND im.idCostCenterProject = toi.idCostCenterProject
-    ), 0)) * MAX(CAST(ti.performance AS DECIMAL(10,2))) AS quantityM2,
+    ), 0)) * MAX(TRY_CAST(ti.performance AS DECIMAL(10,2))) AS quantityM2,
     (SUM(toid.quantity) - COALESCE((
         SELECT SUM(im.quantityReturned)
         FROM [mvp1].[TB_ProjectInventoryAssignment] im
         WHERE im.idInput = ti.idInput 
           AND im.idCostCenterProject = toi.idCostCenterProject
-    ), 0)) * MAX(ti.cost) AS totalCostSend,
+    ), 0)) * MAX(TRY_CONVERT(FLOAT, ti.cost)) AS totalCostSend,
       0 AS budgeted,
       trc.idCostCenterProject AS idCostCenterProject,
       trc.idQuotation AS idQuotation,
       0 AS contracted,
-    COALESCE((
+      COALESCE((
         SELECT SUM(ripi.invoicedQuantity)
         FROM [mvp1].[TB_RelationsProjectItemsMaterialInvoice] AS ripi 
         INNER JOIN [mvp1].[TB_ProjectItem] pi ON pi.idProjectItem = ripi.idProjectItem
@@ -1056,42 +1028,16 @@ export class RevenueCenterRepository {
         WHERE ripi.idInput = toid.idInput 
           AND ttcr.idRevenueCenter = :idRevenueCenter
           AND pi.idCostCenterProject = toi.idCostCenterProject
-    ), 0) AS invoiced,
-      --0 AS invoiced,
-      --SUM(ipi.invoicedQuantity) AS invoiced,
-      /*
-      COALESCE((
-        SELECT SUM(ipi.invoicedQuantity * ISNULL((qid.quantity / NULLIF(qi.quantity, 0)), 1))
-        FROM [mvp1].[TB_QuotationItemDetail] qid
-        INNER JOIN [mvp1].[TB_QuotationItem] qi 
-            ON qi.idQuotationItem = qid.idQuotationItem
-        INNER JOIN [mvp1].[TB_ProjectItem] pi 
-            ON pi.idCostCenterProject = toi.idCostCenterProject
-        INNER JOIN [mvp1].[TB_InvoiceProjectItem] ipi 
-            ON ipi.idProjectItem = pi.idProjectItem
-        INNER JOIN [mvp1].[TB_Invoice] inv 
-            ON inv.idInvoice = ipi.idInvoice
-        WHERE qid.idInput = ti.idInput
-          AND qi.idQuotation = trc.idQuotation
-          AND inv.invoice IS NOT NULL
-    ), 0) AS invoiced,*/
-      
-
+      ), 0) AS invoiced,
       0 AS shippedAndInvoiced,
       0 AS diff
     FROM mvp1.TB_OrderItemDetail toid
     INNER JOIN mvp1.TB_OrderItem toi ON toi.idOrderItem = toid.idOrderItem
     INNER JOIN mvp1.TB_Input ti ON ti.idInput = toid.idInput
     INNER JOIN ${revenueCenterSource} ON trc.idCostCenterProject = toi.idCostCenterProject
-    /*
-    INNER JOIN [mvp1].[TB_ProjectItem] pi ON pi.idCostCenterProject = trc.idCostCenterProject
-    LEFT JOIN [mvp1].[TB_InvoiceProjectItem] ipi ON ipi.idProjectItem = pi.idProjectItem
-    LEFT JOIN [mvp1].[TB_Invoice] inv ON inv.idInvoice = ipi.idInvoice AND inv.invoice IS NOT NULL
-    */
     WHERE trc.idRevenueCenter = :idRevenueCenter AND ti.idInputType = 1
-    GROUP BY ti.idInput, ti.name, toi.idCostCenterProject, trc.idCostCenterProject, trc.idQuotation,toid.idInput
-    --, trc.idRevenueCenter
-    ORDER BY invoiced DESC;
+    GROUP BY ti.idInput, ti.name, toi.idCostCenterProject, trc.idCostCenterProject, trc.idQuotation, toid.idInput
+    ORDER BY ti.name;
   `;
 
     const countQuery = `

@@ -246,7 +246,18 @@ export class QuotationRepository {
   }
 
   async createQuotationComment(quotationCommentData: dtos.CreateQuotationCommentDTO): Promise<QuotationComment> {
-    return await QuotationComment.create(quotationCommentData as any);
+    return await QuotationComment.create(
+      {
+        idQuotation: quotationCommentData.idQuotation,
+        idEmployee: quotationCommentData.idEmployee,
+        idUser: quotationCommentData.idUser,
+        comment: quotationCommentData.comment,
+        createdAt: quotationCommentData.createdAt,
+      } as any,
+      {
+        fields: ["idQuotation", "idEmployee", "idUser", "comment", "createdAt"],
+      }
+    );
   }
 
   async findAllQuotationComment(
@@ -256,14 +267,18 @@ export class QuotationRepository {
     const quotationComments = await QuotationComment.findAndCountAll({
       include: [
         {
-          model: Employee,
-          attributes: ["idEmployee"],
+          association: "employee",
+          attributes: ["idEmployee", "idUser"],
           include: [
             {
               model: User,
               attributes: ["firstName", "lastName"],
             },
           ],
+        },
+        {
+          association: "commentUser",
+          attributes: ["idUser", "firstName", "lastName"],
         },
       ],
       where: filter,

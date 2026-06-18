@@ -1,11 +1,13 @@
 import { DataTypes, Model } from "sequelize";
 import { dbConnection } from "../../config";
 import { Employee } from "../employee";
+import { User } from "../authentication";
 
 export class QuotationComment extends Model {
   declare idQuotationComment: number;
   declare idQuotation: number;
   declare idEmployee: number;
+  declare idUser: number;
   declare comment: string;
   declare createdAt: string;
   declare updatedAt: string;
@@ -30,6 +32,10 @@ QuotationComment.init({
     type: DataTypes.STRING,
     allowNull: false,
   },
+  idUser: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
 }, {
   sequelize: dbConnection,
   tableName: "TB_QuotationComment",
@@ -37,7 +43,14 @@ QuotationComment.init({
   paranoid: true
 });
 
-QuotationComment.hasOne(Employee, {
+QuotationComment.belongsTo(Employee, {
   foreignKey: "idEmployee",
-  sourceKey: "idEmployee",
+  targetKey: "idEmployee",
+  as: "employee",
+});
+
+QuotationComment.belongsTo(User, {
+  foreignKey: "idUser",
+  targetKey: "idUser",
+  as: "commentUser",
 });

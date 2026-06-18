@@ -149,16 +149,18 @@ export const UpdateQuotationPercentageSchema = z.object({
 export const CreateQuotationCommentSchema = z.object({
   idQuotation: z.coerce.number(),
   idEmployee: z.coerce.number(),
+  idUser: z.coerce.number(),
   comment: z.string(),
-  createAt: z.string().optional(),
+  createdAt: z.string().optional(),
 });
 
 export const UpdateQuotationCommentSchema = z.object({
   idQuotationComment: z.coerce.number(),
   idQuotation: z.coerce.number().optional(),
   idEmployee: z.coerce.number().optional(),
+  idUser: z.coerce.number().optional(),
   comment: z.string().optional(),
-  createAt: z.string().optional(),
+  createdAt: z.string().optional(),
 });
 
 export const FindAllQuotationCommentSchema = z.object({

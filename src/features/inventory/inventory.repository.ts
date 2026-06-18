@@ -663,9 +663,9 @@ export class InventoryRepository {
           SELECT
             ti.idInput,
             ti.name AS material,
-            CAST(ti.performance AS DECIMAL(10,2)) AS performance,
+            TRY_CAST(ti.performance AS DECIMAL(10,2)) AS performance,
             SUM(toid.quantity) AS shipped,
-            SUM(toid.quantity) * MAX(CAST(ti.performance AS DECIMAL(10,2))) AS quantityM2,
+            SUM(toid.quantity) * MAX(TRY_CAST(ti.performance AS DECIMAL(10,2))) AS quantityM2,
             SUM(toid.quantity) * MAX(ti.cost) AS totalCostSend,
             MAX(trc.idCostCenterProject) AS idCostCenterProject,
             MAX(trc.idQuotation) AS idQuotation
