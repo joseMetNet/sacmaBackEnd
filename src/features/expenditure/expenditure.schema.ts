@@ -33,6 +33,8 @@ export const idExpenditureTypeSchema = z.object({
 export const createSchema = z.object({
   idExpenditureType: z.coerce.number(),
   idCostCenterProject: z.coerce.number().optional(),
+  idSupplier: z.coerce.number().optional(),
+  idPurchaseRequest: z.coerce.number().optional(),
   description: z.string(),
   value: z.string(),
   refundRequestDate: z.string().optional(),
@@ -40,6 +42,14 @@ export const createSchema = z.object({
   toDate: z.string().optional(),
   createdAt: z.string().optional(),
   orderNumber: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.idExpenditureType === 19 && !data.idPurchaseRequest) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["idPurchaseRequest"],
+      message: "idPurchaseRequest es obligatorio cuando idExpenditureType es 19",
+    });
+  }
 });
 
 export const createExpenditureItemSchema = z.object({
@@ -58,6 +68,8 @@ export const updateSchema = z.object({
   idExpenditure: z.coerce.number(),
   idExpenditureType: z.coerce.number().optional(),
   idCostCenterProject: z.coerce.number().optional(),
+  idSupplier: z.coerce.number().optional(),
+  idPurchaseRequest: z.coerce.number().optional(),
   description: z.string().optional(),
   value: z.string().optional(),
   refundRequestDate: z.string().optional(),

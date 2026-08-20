@@ -250,6 +250,17 @@ export class PurchaseRepository {
     });
   };
 
+  updatePurchaseRequestStatus = (idPurchaseRequest: number, idPurchaseRequestStatus: number) => {
+    return PurchaseRequest.update(
+      { idPurchaseRequestStatus },
+      { where: { idPurchaseRequest } }
+    );
+  };
+
+  findPurchaseRequestStatusById = (idPurchaseRequestStatus: number) => {
+    return PurchaseRequestStatus.findByPk(idPurchaseRequestStatus);
+  };
+
   // Actualizar costo en TB_Input
   updateInputCost = async (idInput: number, newCost: string) => {
     return Input.update(

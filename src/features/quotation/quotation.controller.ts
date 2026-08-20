@@ -166,6 +166,32 @@ export class QuotationController {
     });
   };
 
+  generateQuotationSupplyLaborDocxV3 = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.QuotationSchema.safeParse(req.params);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) },
+      });
+      return;
+    }
+
+    const response = await this.quotationService.generateQuotationSupplyLaborDocxV3(request.data.idQuotation);
+    if (Buffer.isBuffer(response)) {
+      res.set({
+        "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "Content-Disposition": "attachment; filename=\"COT_SACIPR_Suministro_Mano_Obra_V3_Generado.docx\"",
+      });
+      res.send(response);
+      return;
+    }
+
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data,
+    });
+  };
+
   updateQuotationItem = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.UpdateQuotationItemSchema.safeParse(req.body);
     if (!request.success) {

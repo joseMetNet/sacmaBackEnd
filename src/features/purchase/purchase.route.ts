@@ -10,6 +10,7 @@ export function purchaseRoute(app: Application) {
   const purchaseController = new PurchaseController(purchaseService);
 
   router.get("/v1/purchase/request", purchaseController.findAllPurchaseRequest);
+  router.get("/v1/purchase/request/list-purchase-by-idSupplier/:idSupplier", purchaseController.findPurchaseRequestBySupplier);
   router.get("/v1/purchase/request/status", purchaseController.findPurchaseRequestStatus);
   router.get("/v1/purchase/request/detail", purchaseController.findAllPurchaseRequestDetail);
   router.get("/v1/purchase/inventory-purchase", purchaseController.findAllInventoryPurchase);
@@ -24,6 +25,7 @@ export function purchaseRoute(app: Application) {
   router.post("/v1/purchase/request/detailMachineryUsed", purchaseController.createPurchaseRequestDetailMachineryUsed);
   
   router.patch("/v1/purchase/request", purchaseController.updatePurchaseRequest);
+  router.patch("/v1/purchase/request/status", purchaseController.updatePurchaseRequestStatus);
   router.patch("/v1/purchase/request/detail", purchaseController.updatePurchaseRequestDetail);
   router.patch("/v1/purchase/request/updateDetailMachineryUsed", purchaseController.updatePurchaseRequestDetailMachineryUsed);
 
@@ -67,6 +69,11 @@ export function purchaseRoute(app: Application) {
  *         schema:
  *           type: integer
  *         description: Input ID
+ *       - in: query
+ *         name: idExpenditure
+ *         schema:
+ *           type: integer
+ *         description: Expenditure ID
  *       - in: query
  *         name: idWarehouse
  *         schema:
@@ -146,6 +153,58 @@ export function purchaseRoute(app: Application) {
  *               $ref: '#/components/schemas/failedResponse'
 */
 
+
+/**
+ * @openapi
+ * /v1/purchase/request/list-purchase-by-idSupplier/{idSupplier}:
+ *   get:
+ *     tags: [Purchase]
+ *     summary: Find purchase requests by supplier
+ *     description: Retrieve a list of purchase requests filtered by supplier and by default with status idPurchaseRequestStatus = 1
+ *     parameters:
+ *       - in: path
+ *         name: idSupplier
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Supplier ID
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *         description: Number of items per page
+ *       - in: query
+ *         name: idPurchaseRequestStatus
+ *         schema:
+ *           type: integer
+ *         description: Purchase request status ID. Defaults to 1
+ *     responses:
+ *       200:
+ *         description: A list of purchase requests filtered by supplier
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/PurchaseRequest'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/failedResponse'
+*/
 
 /**
  * @openapi
@@ -383,6 +442,9 @@ export function purchaseRoute(app: Application) {
  *               idInput:
  *                 type: integer
  *                 example: 1
+ *               idExpenditure:
+ *                 type: integer
+ *                 example: 1
  *               idWarehouse:
  *                 type: integer
  *                 example: 1
@@ -615,6 +677,9 @@ export function purchaseRoute(app: Application) {
  *         idInput:
  *           type: integer
  *           example: 1
+ *         idExpenditure:
+ *           type: integer
+ *           example: 1
  *         idWarehouse:
  *           type: integer
  *           example: 1
@@ -681,6 +746,9 @@ export function purchaseRoute(app: Application) {
  *         idInput:
  *           type: integer
  *           example: 1
+ *         idExpenditure:
+ *           type: integer
+ *           example: 1
  *         idWarehouse:
  *           type: integer
  *           example: 1
@@ -713,6 +781,9 @@ export function purchaseRoute(app: Application) {
  *           type: integer
  *           example: 1
  *         idInput:
+ *           type: integer
+ *           example: 1
+ *         idExpenditure:
  *           type: integer
  *           example: 1
  *         idWarehouse:
@@ -795,6 +866,9 @@ export function purchaseRoute(app: Application) {
  *         requestOrder:
  *           type: string
  *           example: "20"
+ *         idExpenditure:
+ *           type: integer
+ *           example: 1
  *         idWarehouse:
  *           type: integer
  *           example: 1

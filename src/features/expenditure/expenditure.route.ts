@@ -508,6 +508,12 @@ export function expenditureRoute(app: Application) {
  *         idCostCenterProject:
  *           type: integer
  *           example: 1
+ *         idSupplier:
+ *           type: integer
+ *           example: 10
+ *         idPurchaseRequest:
+ *           type: integer
+ *           example: 200
  *         description:
  *           type: string
  *           example: "Description"
@@ -532,6 +538,12 @@ export function expenditureRoute(app: Application) {
  *         idCostCenterProject:
  *           type: integer
  *           example: 1
+ *         idSupplier:
+ *           type: integer
+ *           example: 10
+ *         idPurchaseRequest:
+ *           type: integer
+ *           example: 200
  *         description:
  *           type: string
  *           example: "Description"
@@ -556,6 +568,12 @@ export function expenditureRoute(app: Application) {
  *         idCostCenterProject:
  *           type: integer
  *           example: 1
+ *         idSupplier:
+ *           type: integer
+ *           example: 10
+ *         idPurchaseRequest:
+ *           type: integer
+ *           example: 200
  *         description:
  *           type: string
  *           example: "Description"

@@ -96,6 +96,10 @@ export class ExpenditureService {
     try {
       let expenditure = await this.expenditureRepository.create(request);
 
+      if (request.idExpenditureType === 19 && request.idPurchaseRequest) {
+        await this.expenditureRepository.updatePurchaseRequestStatus(request.idPurchaseRequest, expenditure.idExpenditure, 2);
+      }
+
       if (filePath) {
         const identifier = crypto.randomUUID();
         const contentType = "application/pdf";
@@ -143,6 +147,8 @@ export class ExpenditureService {
       }
       expenditure.idExpenditureType = request.idExpenditureType || expenditure.idExpenditureType;
       expenditure.idCostCenterProject = request.idCostCenterProject || expenditure.idCostCenterProject;
+      expenditure.idSupplier = request.idSupplier || expenditure.idSupplier;
+      expenditure.idPurchaseRequest = request.idPurchaseRequest || expenditure.idPurchaseRequest;
       expenditure.description = request.description || expenditure.description;
       expenditure.value = request.value || expenditure.value;
       expenditure.documentUrl = request.documentUrl || expenditure.documentUrl;

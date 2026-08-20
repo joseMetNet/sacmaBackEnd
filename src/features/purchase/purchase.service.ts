@@ -96,6 +96,44 @@ export class PurchaseService {
     }
   };
 
+  findPurchaseRequestBySupplier = async (
+    request: dtos.FindPurchaseRequestBySupplierDTO
+  ): Promise<ResponseEntity> => {
+    try {
+      const hasExplicitPagination = request.page !== undefined || request.pageSize !== undefined;
+      const page = request.page || 1;
+      const pageSize = request.pageSize || 10;
+      const returnAll = !hasExplicitPagination || pageSize === -1;
+      const limit = returnAll ? undefined : pageSize;
+      const offset = returnAll ? undefined : (page - 1) * pageSize;
+      const filter = this.buildRequestFilter({
+        ...request,
+        // idPurchaseRequestStatus: request.idPurchaseRequestStatus ?? 1,
+      });
+
+      if (returnAll) {
+        const purchaseRequests = await this.purchaseRepository.findAllPurchaseRequest(filter);
+        return BuildResponse.buildSuccessResponse(StatusCode.Ok, purchaseRequests.rows);
+      }
+
+      const purchaseRequests = await this.purchaseRepository.findAllPurchaseRequest(filter, limit, offset);
+      const response = {
+        data: purchaseRequests.rows,
+        totalItems: purchaseRequests.count,
+        currentPage: page,
+        totalPages: Math.ceil(purchaseRequests.count / pageSize)
+      };
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, response);
+    } catch (err: any) {
+      console.error(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "Error while fetching purchase requests by supplier" }
+      );
+    }
+  };
+
   findAllPurchaseRequestDetail = async (request: dtos.FindAllPurchaseRequestDetailDTO): Promise<ResponseEntity> => {
     try {
       const { page, pageSize, limit, offset } = this.getPagination(request);
@@ -673,6 +711,58 @@ export class PurchaseService {
     }
   };
 
+  updatePurchaseRequestStatus = async (
+    updates: dtos.UpdatePurchaseRequestStatus[]
+  ): Promise<ResponseEntity> => {
+    try {
+      const statusIds = [...new Set(updates.map(update => update.idPurchaseRequestStatus))];
+      const statuses = await Promise.all(
+        statusIds.map(id => this.purchaseRepository.findPurchaseRequestStatusById(id))
+      );
+
+      if (statuses.some(status => !status)) {
+        return BuildResponse.buildErrorResponse(
+          StatusCode.BadRequest,
+          { message: "One or more purchase request statuses do not exist" }
+        );
+      }
+
+      const purchaseRequests = await Promise.all(
+        updates.map(update => this.purchaseRepository.findByIdPurchaseRequest(update.idPurchaseRequest))
+      );
+
+      const missingIndex = purchaseRequests.findIndex(purchaseRequest => !purchaseRequest);
+      if (missingIndex !== -1) {
+        return BuildResponse.buildErrorResponse(
+          StatusCode.NotFound,
+          { message: `Purchase request ${updates[missingIndex].idPurchaseRequest} not found` }
+        );
+      }
+
+      await Promise.all(
+        updates.map(update => this.purchaseRepository.updatePurchaseRequestStatus(
+          update.idPurchaseRequest,
+          update.idPurchaseRequestStatus
+        ))
+      );
+
+      const updated = await Promise.all(
+        updates.map(update => this.purchaseRepository.findByIdPurchaseRequest(update.idPurchaseRequest))
+      );
+
+      return BuildResponse.buildSuccessResponse(StatusCode.Ok, {
+        message: `${updated.length} purchase request status(es) updated successfully`,
+        updated
+      });
+    } catch (err: any) {
+      console.error(err);
+      return BuildResponse.buildErrorResponse(
+        StatusCode.InternalErrorServer,
+        { message: "Error while updating purchase request status" }
+      );
+    }
+  };
+
   updatePurchaseRequestDetail = async (purchaseRequestDetail: dtos.UpdatePurchaseRequestDetail): Promise<ResponseEntity> => {
     const transaction = await dbConnection.transaction();
     try {
@@ -1149,12 +1239,20 @@ export class PurchaseService {
       filter.idInput = request.idInput;
     }
 
+    if (request.idExpenditure !== undefined) {
+      filter.idExpenditure = request.idExpenditure;
+    }
+
     if (request.idWarehouse) {
       filter.idWarehouse = request.idWarehouse;
     }
 
     if (request.idSupplier) {
       filter.idSupplier = request.idSupplier;
+    }
+
+    if (request.idPurchaseRequestStatus !== undefined) {
+      filter.idPurchaseRequestStatus = request.idPurchaseRequestStatus;
     }
 
     if (request.isActive !== undefined) {

@@ -118,6 +118,24 @@ export class ExpenditureRepository {
     return Expenditure.create(data as any);
   }
 
+  async updatePurchaseRequestStatus(idPurchaseRequest: number, idExpenditure: number, idPurchaseRequestStatus = 2) {
+    const query = `
+      UPDATE [mvp1].[TB_PurchaseRequest]
+      SET idPurchaseRequestStatus = :idPurchaseRequestStatus,
+          idExpenditure = :idExpenditure
+      WHERE idPurchaseRequest = :idPurchaseRequest
+    `;
+
+    return dbConnection.query(query, {
+      replacements: {
+        idPurchaseRequest,
+        idExpenditure,
+        idPurchaseRequestStatus,
+      },
+      type: QueryTypes.UPDATE,
+    });
+  }
+
   async createExpenditureItem(data: dtos.CreateExpenditureItemDTO
   ) {
     return ExpenditureItem.create(data as any);

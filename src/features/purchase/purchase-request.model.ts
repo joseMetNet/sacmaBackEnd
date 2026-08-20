@@ -12,6 +12,7 @@ export class PurchaseRequest extends Model {
   declare updatedAt?: Date;
   declare documentUrl?: string;
   declare idInput?: number;
+  declare idExpenditure?: number;
   declare idWarehouse?: number;
   declare idSupplier?: number;
   declare idPurchaseRequestStatus?: number;
@@ -48,6 +49,10 @@ PurchaseRequest.init({
     type: DataTypes.INTEGER,
     allowNull: true
   },
+  idExpenditure: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
   idWarehouse: {
     type: DataTypes.INTEGER,
     allowNull: true
@@ -58,8 +63,9 @@ PurchaseRequest.init({
   },
   idPurchaseRequestStatus: {
     type: DataTypes.INTEGER,
-    allowNull: true,
-    defaultValue: 2
+    allowNull: true
+    // ,
+    // defaultValue: 2
   },
   purchaseRequest: {
     type: DataTypes.STRING(64),

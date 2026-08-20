@@ -7,6 +7,8 @@ export class Expenditure extends Model {
   declare idExpenditure: number;
   declare idExpenditureType: number;
   declare idCostCenterProject: number;
+  declare idSupplier?: number;
+  declare idPurchaseRequest?: number;
   declare description: string;
   declare value: string;
   declare documentUrl: string;
@@ -30,6 +32,14 @@ Expenditure.init(
       allowNull: false,
     },
     idCostCenterProject: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    idSupplier: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    idPurchaseRequest: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },

@@ -4,9 +4,18 @@ export interface FindAllPurchaseRequestDTO {
   purchaseRequest?: string;
   consecutive?: string;
   idInput?: number;
+  idExpenditure?: number;
   idWarehouse?: number;
   idSupplier?: number;
+  idPurchaseRequestStatus?: number;
   isActive?: boolean;
+}
+
+export interface FindPurchaseRequestBySupplierDTO {
+  page?: number;
+  pageSize?: number;
+  idSupplier: number;
+  idPurchaseRequestStatus?: number;
 }
 
 export interface FindAllPurchaseRequestDetailDTO {
@@ -34,6 +43,7 @@ export interface CreatePurchaseRequest {
   consecutive?: string;
   documentUrl?: string;
   idInput?: number;
+  idExpenditure?: number;
   idWarehouse?: number;
   idSupplier?: number;
   purchaseRequest?: string;
@@ -46,6 +56,7 @@ export interface CreatePurchaseRequest {
 export interface CreatePurchaseRequestWithItems {
   isActive?: boolean;
   purchaseRequest?: string;
+  idExpenditure?: number;
   idWarehouse?: number;
   idSupplier?: number;
   items: Array<{
@@ -125,9 +136,11 @@ export interface CreatePurchaseRequestDetailMachineryUsed {
 
 export interface UpdatePurchaseRequest {
   idPurchaseRequest: number;
+  idPurchaseRequestStatus?: number;
   consecutive?: string;
   documentUrl?: string;
   idInput?: number;
+  idExpenditure?: number;
   idWarehouse?: number;
   idSupplier?: number;
   purchaseRequest?: string;
@@ -135,6 +148,11 @@ export interface UpdatePurchaseRequest {
   price?: string;
   requestDocumentUrl?: string;
   isActive?: boolean;
+}
+
+export interface UpdatePurchaseRequestStatus {
+  idPurchaseRequest: number;
+  idPurchaseRequestStatus: number;
 }
 
 export interface UpdatePurchaseRequestDetail {

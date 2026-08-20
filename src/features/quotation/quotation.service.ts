@@ -384,7 +384,11 @@ export class QuotationService {
       const documentXmlFile = zip.file("word/document.xml");
       if (documentXmlFile) {
         const updatedDocumentXml = this.replaceSecondTablePlaceholders(documentXmlFile.asText());
-        zip.file("word/document.xml", updatedDocumentXml);
+        // Fuerza tablas en flujo normal para evitar superposición al abrir en Word.
+        const normalizedTablePositionXml = updatedDocumentXml
+          .replace(/<w:tblpPr[^>]*\/>/g, "")
+          .replace(/<w:tblOverlap\s+w:val="overlap"\s*\/>/g, "");
+        zip.file("word/document.xml", normalizedTablePositionXml);
       }
 
       const doc = new Docxtemplater(zip, {
@@ -449,9 +453,24 @@ export class QuotationService {
       const supplyVat = supplyUtility * 0.19;
       const supplyUnitValueAIUIncluded = supplyUnitValueAIU + supplyAdministration + supplyUnforeseen + supplyUtility + supplyVat;
 
+      console.log("[quotation][V3][supply][totals]", {
+        supplyUnitValueAIU,
+        supplyAdministration,
+        supplyUnforeseen,
+        supplyUtility,
+        supplyVat,
+        supplyUnitValueAIUIncluded,
+      });
+
       const laborUnitValueAIU = laborItemsCalculated.reduce((acc, item) => acc + item.rawTotal, 0);
       const laborVat = laborUnitValueAIU * 0.19;
       const laborUnitValueAIUIncluded = laborUnitValueAIU + laborVat;
+
+      console.log("[quotation][V3][labor][totals]", {
+        laborUnitValueAIU,
+        laborVat,
+        laborUnitValueAIUIncluded,
+      });
 
       const itemNames = rawItems.map((item: QuotationItem) => item.item).join(", ");
       const technicalSpecifications = rawItems.map((item: QuotationItem) => item.technicalSpecification).join(", ");
@@ -504,6 +523,10 @@ export class QuotationService {
 
   generateQuotationSupplyLaborDocxV2 = async (id: number): Promise<ResponseEntity | Buffer> => {
     try {
+      // ─── CARGA DE DATOS ──────────────────────────────────────────────────────────
+      // Trae encabezado de la cotización, ítems y detalles de ítems (insumos).
+      // Los porcentajes de AIU e IVA también se obtienen aquí y son compartidos
+      // por ambas tablas.
       const quotationResponse = await this.findQuotationById(id);
       if (quotationResponse.code !== StatusCode.Ok) {
         return quotationResponse;
@@ -526,14 +549,19 @@ export class QuotationService {
       if (!quotationPercentage) {
         return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation percentage not found" });
       }
+      // ─────────────────────────────────────────────────────────────────────────────
 
-      const administrationPercentage = this.toNumber(quotationPercentage.administration);
-      const unforeseenPercentage = this.toNumber(quotationPercentage.unforeseen);
-      const utilityPercentage = this.toNumber(quotationPercentage.utility);
-      const vatPercentage = this.toNumber(quotationPercentage.vat);
+      const administrationPercentage = 0.10;
+      const unforeseenPercentage = 0.02;
+      const utilityPercentage = 0.02;
+      const vatPercentage = 0.19;
 
-      const aiuFactor = 1 + administrationPercentage + unforeseenPercentage + utilityPercentage + (utilityPercentage * vatPercentage);
+      const aiuFactor = 1 + administrationPercentage + unforeseenPercentage + utilityPercentage;
+      // ─────────────────────────────────────────────────────────────────────────────
 
+      // ─── COSTO BASE DE MANO DE OBRA POR ÍTEM (insumo idInput = 131) ─────────────
+      // Se acumula el costo del insumo de mano de obra (idInput=131) por cada
+      // idQuotationItem. Este valor base es el punto de partida para TABLA 2.
       const laborCostByQuotationItem = quotationItemDetailsResponse.rows
         .filter((detail) => this.toNumber(detail.idInput) === 131)
         .reduce((acc, detail) => {
@@ -541,6 +569,7 @@ export class QuotationService {
           acc[idQuotationItem] = (acc[idQuotationItem] ?? 0) + this.toNumber(detail.cost);
           return acc;
         }, {} as Record<number, number>);
+      // ─────────────────────────────────────────────────────────────────────────────
 
       const templatePath = "template/cotizacionSuminstroManoObraV2.docx";
       const content = readFileSync(templatePath, "binary");
@@ -567,16 +596,40 @@ export class QuotationService {
         currency: "COP",
       });
 
+      // TABLA 1: MANO DE OBRA
+      // unitPrice = cost * 1.5
+      // total = unitPrice * quantity
+      const laborItemsCalculated = rawItems.map((item: QuotationItem) => {
+        const quantity = this.toNumber(item.quantity);
+        const idQuotationItem = this.toNumber(item.idQuotationItem);
+        const cost = laborCostByQuotationItem[idQuotationItem] ?? 0;
+        const unitPrice = cost * 1.5;
+        const total = unitPrice * quantity;
+
+        return {
+          item: item.item,
+          technicalSpecification: item.technicalSpecification,
+          unitMeasure: item.unitMeasure,
+          quantity: String(parseInt(String(quantity))),
+          cost: currencyFormatter.format(cost),
+          unitPrice: currencyFormatter.format(unitPrice),
+          total: currencyFormatter.format(total),
+          rawTotal: total,
+        };
+      });
+
+      // TABLA 2: SUMINISTRO
+      // x = unitPriceBase * aiuFactor
+      // unitPrice = (x - laborUnitPrice) / 1.19
+      // total = unitPrice * quantity
       const supplyItemsCalculated = rawItems.map((item: QuotationItem) => {
         const quantity = this.toNumber(item.quantity);
         const unitPriceBase = this.toNumber(item.unitPrice);
         const idQuotationItem = this.toNumber(item.idQuotationItem);
         const laborCostBase = laborCostByQuotationItem[idQuotationItem] ?? 0;
-
-        const totalValueAiu = unitPriceBase * aiuFactor;
-        const laborValueAiu = laborCostBase * aiuFactor;
-        const supplyValueAiu = totalValueAiu - laborValueAiu;
-        const unitPrice = aiuFactor > 0 ? supplyValueAiu / aiuFactor : 0;
+        const laborUnitPrice = laborCostBase * 1.5;
+        const x = unitPriceBase * aiuFactor;
+        const unitPrice = vatPercentage > 0 ? Math.max((x - laborUnitPrice) / (1 + vatPercentage), 0) : Math.max(x - laborUnitPrice, 0);
         const total = unitPrice * quantity;
 
         return {
@@ -590,35 +643,18 @@ export class QuotationService {
         };
       });
 
-      const laborItemsCalculated = rawItems.map((item: QuotationItem) => {
-        const quantity = this.toNumber(item.quantity);
-        const idQuotationItem = this.toNumber(item.idQuotationItem);
-        const laborCostBase = laborCostByQuotationItem[idQuotationItem] ?? 0;
-        const laborValueAiu = laborCostBase * aiuFactor;
-        const unitPrice = vatPercentage > 0 ? laborValueAiu / (1 + vatPercentage) : laborValueAiu;
-        const total = unitPrice * quantity;
-
-        return {
-          item: item.item,
-          technicalSpecification: item.technicalSpecification,
-          unitMeasure: item.unitMeasure,
-          quantity: String(parseInt(String(quantity))),
-          unitPrice: currencyFormatter.format(unitPrice),
-          total: currencyFormatter.format(total),
-          rawTotal: total,
-        };
-      });
-
-      const supplyUnitValueAIU = supplyItemsCalculated.reduce((acc, item) => acc + item.rawTotal, 0);
-      const supplyAdministration = supplyUnitValueAIU * administrationPercentage;
-      const supplyUnforeseen = supplyUnitValueAIU * unforeseenPercentage;
-      const supplyUtility = supplyUnitValueAIU * utilityPercentage;
-      const supplyVat = supplyUtility * vatPercentage;
-      const supplyUnitValueAIUIncluded = supplyUnitValueAIU + supplyAdministration + supplyUnforeseen + supplyUtility + supplyVat;
-
+      // TABLA 1: totales de mano de obra con AIU
       const laborUnitValueAIU = laborItemsCalculated.reduce((acc, item) => acc + item.rawTotal, 0);
-      const laborVat = laborUnitValueAIU * vatPercentage;
-      const laborUnitValueAIUIncluded = laborUnitValueAIU + laborVat;
+      const laborAdministration = laborUnitValueAIU * administrationPercentage;
+      const laborUnforeseen = laborUnitValueAIU * unforeseenPercentage;
+      const laborUtility = laborUnitValueAIU * utilityPercentage;
+      const laborVat = laborUtility * vatPercentage;
+      const laborUnitValueAIUIncluded = laborUnitValueAIU + laborAdministration + laborUnforeseen + laborUtility + laborVat;
+
+      // TABLA 2: totales de suministro con IVA solamente
+      const supplyUnitValueAIU = supplyItemsCalculated.reduce((acc, item) => acc + item.rawTotal, 0);
+      const supplyVat = supplyUnitValueAIU * vatPercentage;
+      const supplyUnitValueAIUIncluded = supplyUnitValueAIU + supplyVat;
 
       const itemNames = rawItems.map((item: QuotationItem) => item.item).join(", ");
       const technicalSpecifications = rawItems.map((item: QuotationItem) => item.technicalSpecification).join(", ");
@@ -632,8 +668,8 @@ export class QuotationService {
       const employee = employeeDb.toJSON();
 
       const response = {
-        items: supplyItemsCalculated.map(({ rawTotal, ...item }) => item),
-        itemsLabor: laborItemsCalculated.map(({ rawTotal, ...item }) => item),
+        items: laborItemsCalculated.map(({ rawTotal, ...item }) => item),
+        itemsLabor: supplyItemsCalculated.map(({ rawTotal, ...item }) => item),
         client: (quotation.data as any)?.client ?? "",
         itemNames,
         policy: (quotation.data as any)?.policy ?? "",
@@ -650,16 +686,286 @@ export class QuotationService {
         dateUntil: formatDate(getNextMonth(new Date().toISOString().split("T")[0])),
         consecutive: (quotation.data as any)?.consecutive ?? "",
         project: (quotation.data as any)?.projectName ?? "",
-        unitValueAIU: currencyFormatter.format(supplyUnitValueAIU),
-        administration: currencyFormatter.format(supplyAdministration),
-        unforeseen: currencyFormatter.format(supplyUnforeseen),
-        utility: currencyFormatter.format(supplyUtility),
-        vat: currencyFormatter.format(supplyVat),
-        unitValueAIUIncluded: currencyFormatter.format(supplyUnitValueAIUIncluded),
-        unitValueAIULabor: currencyFormatter.format(laborUnitValueAIU),
-        vatLabor: currencyFormatter.format(laborVat),
-        unitValueAIUIncludedLabor: currencyFormatter.format(laborUnitValueAIUIncluded),
+        unitValueAIU: currencyFormatter.format(laborUnitValueAIU),
+        administration: currencyFormatter.format(laborAdministration),
+        unforeseen: currencyFormatter.format(laborUnforeseen),
+        utility: currencyFormatter.format(laborUtility),
+        vat: currencyFormatter.format(laborVat),
+        unitValueAIUIncluded: currencyFormatter.format(laborUnitValueAIUIncluded),
+        unitValueAIULabor: currencyFormatter.format(supplyUnitValueAIU),
+        vatLabor: currencyFormatter.format(supplyVat),
+        unitValueAIUIncludedLabor: currencyFormatter.format(supplyUnitValueAIUIncluded),
       };
+
+      console.log("[quotation][V3][response]", {
+        items: response.items,
+        itemsLabor: response.itemsLabor,
+        laborTotals: {
+          unitValueAIU: response.unitValueAIU,
+          administration: response.administration,
+          unforeseen: response.unforeseen,
+          utility: response.utility,
+          vat: response.vat,
+          unitValueAIUIncluded: response.unitValueAIUIncluded,
+        },
+        supplyTotals: {
+          unitValueAIU: response.unitValueAIULabor,
+          vat: response.vatLabor,
+          unitValueAIUIncluded: response.unitValueAIUIncludedLabor,
+        },
+      });
+
+      doc.render(response);
+      return doc.getZip().generate({ type: "nodebuffer" });
+    } catch (error) {
+      console.error(error);
+      return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get supply and labor quotation report" });
+    }
+  };
+  
+  generateQuotationSupplyLaborDocxV3 = async (id: number): Promise<ResponseEntity | Buffer> => {
+    try {
+      // ─── CARGA DE DATOS ──────────────────────────────────────────────────────────
+      // Trae encabezado de la cotización, ítems y detalles de ítems (insumos).
+      // Los porcentajes de AIU e IVA también se obtienen aquí y son compartidos
+      // por ambas tablas.
+      const quotationResponse = await this.findQuotationById(id);
+      if (quotationResponse.code !== StatusCode.Ok) {
+        return quotationResponse;
+      }
+
+      const quotationItemsResponse = await this.findAllQuotationItems({ idQuotation: id, page: 1, pageSize: 100000 });
+      if (quotationItemsResponse.code !== StatusCode.Ok) {
+        return quotationItemsResponse;
+      }
+
+      const quotationItemDetailsResponse = await this.quotationRepository.findAllQuotationItemDetail(
+        this.buildQuotationItemDetailFilter({ idQuotation: id }),        -1,        0
+      );
+      
+      if (quotationItemDetailsResponse instanceof CustomError) {
+        return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: quotationItemDetailsResponse.message });
+      }
+
+      const quotationPercentage = await this.quotationRepository.findQuotationPercentageByQuotationId(id);
+      if (!quotationPercentage) {
+        return BuildResponse.buildErrorResponse(StatusCode.NotFound, { message: "Quotation percentage not found" });
+      }
+      // ─────────────────────────────────────────────────────────────────────────────
+
+      // ─── PORCENTAJES COMPARTIDOS (ambas tablas) ──────────────────────────────────
+      // TABLA 1 (Mano de obra): Administración, Imprevistos, Utilidad e IVA/Utilidad.
+      // TABLA 2 (Suministro): IVA.
+      const administrationPercentage = this.toNumber(quotationPercentage.administration);
+      const unforeseenPercentage = this.toNumber(quotationPercentage.unforeseen);
+      const utilityPercentage = this.toNumber(quotationPercentage.utility);
+      const vatPercentage = this.toNumber(quotationPercentage.vat);
+
+      // Factor AIU = 1 + A + I + U + (U * IVA) — usado para calcular base con AIU.
+      const aiuFactor = 1 + administrationPercentage + unforeseenPercentage + utilityPercentage + (utilityPercentage * vatPercentage);
+      // ─────────────────────────────────────────────────────────────────────────────
+
+      // ─── COSTO BASE DE MANO DE OBRA POR ÍTEM (insumo idInput = 131) ─────────────
+      // Se acumula el costo del insumo de mano de obra (idInput=131) por cada
+      // idQuotationItem. Este valor base se usa en ambos cálculos.
+      const laborCostByQuotationItem = quotationItemDetailsResponse.rows
+        .filter((detail) => this.toNumber(detail.idInput) === 131)
+        .reduce((acc, detail) => {
+          const idQuotationItem = this.toNumber(detail.idQuotationItem);
+          acc[idQuotationItem] = (acc[idQuotationItem] ?? 0) + this.toNumber(detail.cost);
+          return acc;
+        }, {} as Record<number, number>);
+      // ─────────────────────────────────────────────────────────────────────────────
+
+      const templatePath = "template/cotizacionSuminstroManoObraV3.docx";
+      const content = readFileSync(templatePath, "binary");
+
+      const zip = new PizZip(content);
+      const documentXmlFile = zip.file("word/document.xml");
+      if (documentXmlFile) {
+        const updatedDocumentXml = this.replaceSecondTablePlaceholders(documentXmlFile.asText());
+        zip.file("word/document.xml", updatedDocumentXml);
+      }
+
+      const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        delimiters: { start: "{{", end: "}}" },
+      });
+
+      const quotation = quotationResponse as ResponseEntity;
+      const quotationItems = quotationItemsResponse as ResponseEntity;
+
+      const rawItems = ((quotationItems.data as any)?.data ?? []) as QuotationItem[];
+      const currencyFormatter = new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+      });
+
+      console.log("[quotation][V3] rawItems", rawItems.map((item) => ({
+        idQuotationItem: item.idQuotationItem,
+        item: item.item,
+        unitMeasure: item.unitMeasure,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      })));
+
+      // ─── TABLA 1: MANO DE OBRA ────────────────────────────────────────────────────
+      // Por cada ítem:
+      //   laborValueAiu = laborCostBase * 1.5
+      //   unitPrice     = laborValueAiu
+      //   total         = unitPrice * quantity
+      const laborItemsCalculated = rawItems.map((item: QuotationItem) => {
+        const unitPriceBase = this.toNumber(item.unitPrice);
+        const quantity = this.toNumber(item.quantity);
+        const idQuotationItem = this.toNumber(item.idQuotationItem);
+        const laborCostBase = laborCostByQuotationItem[idQuotationItem] ?? 0;
+        const laborValueAiu = laborCostBase * 1.5;
+        const unitPrice = laborValueAiu;
+        const total = unitPrice * quantity;
+        const sumCantUnitPrice = unitPriceBase * quantity;
+
+        console.log("[quotation][V3][labor][item]", {
+          idQuotationItem,
+          quantity,
+          laborCostBase,
+          laborValueAiu,
+          unitPrice,
+          total,
+          sumCantUnitPrice,
+        });
+
+        return {
+          item: item.item,
+          technicalSpecification: item.technicalSpecification,
+          unitMeasure: item.unitMeasure,
+          quantity: String(parseInt(String(quantity))),
+          unitPrice: currencyFormatter.format(unitPrice),
+          total: currencyFormatter.format(total),
+          rawTotal: total,
+        };
+      });
+      // ─────────────────────────────────────────────────────────────────────────────
+
+      // ─── TABLA 2: SUMINISTRO — cálculo con AIU (sin IVA en unitario) ────────────
+      // Por cada ítem:
+      //   totalValueAiu  = unitPriceBase * aiuFactor       (total con AIU)
+      //   laborValueAiu  = laborCostBase * aiuFactor        (porción laboral con AIU)
+      //   supplyValueAiu = totalValueAiu - laborValueAiu    (porción suministro con AIU)
+      //   unitPrice      = supplyValueAiu / aiuFactor       (unitario suministro sin AIU)
+      //   total          = unitPrice * quantity
+      // Los totales globales llevan Administración, Imprevistos, Utilidad e IVA/Utilidad.
+      const supplyItemsCalculated = rawItems.map((item: QuotationItem) => {
+        const quantity = this.toNumber(item.quantity);
+        const unitPriceBase = this.toNumber(item.unitPrice);
+        const idQuotationItem = this.toNumber(item.idQuotationItem);
+        const laborCostBase = laborCostByQuotationItem[idQuotationItem] ?? 0;
+       
+
+        const totalValueAiu = unitPriceBase * aiuFactor;
+        // const laborValueAiu = laborCostBase * aiuFactor;
+        const laborValueAiu = laborCostBase * 1.5 * aiuFactor;
+        const supplyValueAiu = totalValueAiu - laborValueAiu;
+        // const unitPrice = aiuFactor > 0 ? supplyValueAiu / aiuFactor : 0;
+        const unitPrice = aiuFactor > 0 ? supplyValueAiu / 1.19 : 0;
+        const total = unitPrice * quantity;
+
+        console.log("[quotation][V3][supply][item]", {
+          idQuotationItem,
+          quantity,
+          unitPriceBase,
+          laborCostBase,
+          totalValueAiu,
+          laborValueAiu,
+          supplyValueAiu,
+          unitPrice,
+          total,
+        });
+
+        return {
+          item: item.item,
+          technicalSpecification: item.technicalSpecification,
+          unitMeasure: item.unitMeasure,
+          quantity: String(parseInt(String(quantity))),
+          unitPrice: currencyFormatter.format(unitPrice),
+          total: currencyFormatter.format(total),
+          rawTotal: total,
+        };
+      });
+      // ─────────────────────────────────────────────────────────────────────────────
+
+      // ─── TOTALES TABLA 1: MANO DE OBRA ───────────────────────────────────────────
+      // Subtotal + Administración + Imprevistos + Utilidad + IVA(Utilidad)
+      const laborUnitValueAIU = laborItemsCalculated.reduce((acc, item) => acc + item.rawTotal, 0);
+      const laborAdministration = laborUnitValueAIU * administrationPercentage;
+      const laborUnforeseen = laborUnitValueAIU * unforeseenPercentage;
+      const laborUtility = laborUnitValueAIU * utilityPercentage;
+      const laborVat = laborUtility * vatPercentage;
+      const laborUnitValueAIUIncluded = laborUnitValueAIU + laborAdministration + laborUnforeseen + laborUtility + laborVat;
+
+      // ─── TOTALES TABLA 2: SUMINISTRO ─────────────────────────────────────────────
+      // Subtotal + IVA
+      const supplyUnitValueAIU = supplyItemsCalculated.reduce((acc, item) => acc + item.rawTotal, 0);
+      const supplyVat = supplyUnitValueAIU * vatPercentage;
+      const supplyUnitValueAIUIncluded = supplyUnitValueAIU + supplyVat;
+
+      // ─────────────────────────────────────────────────────────────────────────────
+
+      const itemNames = rawItems.map((item: QuotationItem) => item.item).join(", ");
+      const technicalSpecifications = rawItems.map((item: QuotationItem) => item.technicalSpecification).join(", ");
+
+      const employeeDb = await this.employeeRepository.findById((quotation.data as any).idResponsable);
+      if (employeeDb instanceof CustomError) {
+        console.error(employeeDb);
+        return BuildResponse.buildErrorResponse(StatusCode.InternalErrorServer, { message: "Failed to get employee" });
+      }
+
+      const employee = employeeDb.toJSON();
+
+      const firstTableLaborItems = laborItemsCalculated.map(({ rawTotal, ...item }) => item);
+      const secondTableSupplyItems = supplyItemsCalculated.map(({ rawTotal, ...item }) => item);
+
+      // ─── PAYLOAD PARA PLANTILLA DOCX ─────────────────────────────────────────────
+      // items      → filas de TABLA 1 (Mano de obra)
+      // itemsLabor → filas de TABLA 2 (Suministro)
+      // unitValueAIU / administration / unforeseen / utility / vat / unitValueAIUIncluded
+      //   → totales del pie de TABLA 1 (Mano de obra)
+      // unitValueAIULabor / vatLabor / unitValueAIUIncludedLabor
+      //   → totales del pie de TABLA 2 (Suministro)
+      const response = {
+        items: firstTableLaborItems,
+        itemsLabor: secondTableSupplyItems,
+        client: (quotation.data as any)?.client ?? "",
+        itemNames,
+        policy: (quotation.data as any)?.policy ?? "",
+        quotationName: (quotation.data as any)?.name ?? "",
+        executionTime: (quotation.data as any)?.executionTime ?? "",
+        advance: (quotation.data as any)?.advance ?? "",
+        cuts: (quotation.data as any)?.advance ? 100 - parseInt((quotation.data as any)?.advance) : "",
+        technicalSpecifications,
+        employeeName: employee.User.firstName + " " + employee.User.lastName,
+        employeeEmail: employee.User.email,
+        technicalCondition: (quotation.data as any)?.technicalCondition ?? "",
+        employeePosition: employee.Position.position,
+        date: formatDate(new Date().toISOString().split("T")[0]),
+        dateUntil: formatDate(getNextMonth(new Date().toISOString().split("T")[0])),
+        consecutive: (quotation.data as any)?.consecutive ?? "",
+        project: (quotation.data as any)?.projectName ?? "",
+        // Totales TABLA 1 — Mano de obra (con AIU)
+        unitValueAIU: currencyFormatter.format(laborUnitValueAIU),
+        administration: currencyFormatter.format(laborAdministration),
+        unforeseen: currencyFormatter.format(laborUnforeseen),
+        utility: currencyFormatter.format(laborUtility),
+        vat: currencyFormatter.format(laborVat),
+        unitValueAIUIncluded: currencyFormatter.format(laborUnitValueAIUIncluded),
+        
+        // Totales TABLA 2 — Suministro (solo IVA)
+        unitValueAIULabor: currencyFormatter.format(supplyUnitValueAIU),
+        vatLabor: currencyFormatter.format(supplyVat),
+        unitValueAIUIncludedLabor: currencyFormatter.format(supplyUnitValueAIUIncluded),
+
+      };
+      // ─────────────────────────────────────────────────────────────────────────────
 
       doc.render(response);
       return doc.getZip().generate({ type: "nodebuffer" });
@@ -701,12 +1007,15 @@ export class QuotationService {
 
       const unitValueAIU = await Promise.all(unitValueAIUPromise);
 
-      const commentsMap = comments.rows.reduce((acc, comment) => {
-        if (!acc[comment.idQuotation]) {
-          acc[comment.idQuotation] = comment.comment;
-        }
-        return acc;
-      }, {} as { [key: number]: string });
+      const commentsMap = comments.rows
+        .slice()
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .reduce((acc, comment) => {
+          if (!acc[comment.idQuotation]) {
+            acc[comment.idQuotation] = comment.comment;
+          }
+          return acc;
+        }, {} as { [key: number]: string });
 
       const data = quotations.rows.map((quotation) => {
         let responsable: string | undefined;
@@ -1369,6 +1678,11 @@ export class QuotationService {
     return Number.isFinite(parsed) ? parsed : 0;
   };
 
+  private toRate = (value: unknown): number => {
+    const numeric = this.toNumber(value);
+    return numeric > 1 ? numeric / 100 : numeric;
+  };
+
   private buildQuotation = (quotation: Quotation, quotationData: dtos.UpdateQuotationDTO) => {
     quotation.name = quotationData.name ?? quotation.name;
     quotation.client = quotationData.client ?? quotation.client;
@@ -1498,14 +1812,21 @@ export class QuotationService {
       let total = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost), 0);
       total = total + additionalCosts.perDiem + additionalCosts.sisoValue;
 
+      // Normaliza porcentajes: soporta formato decimal (0.10) y entero (10).
+      const taxRate = this.toRate(additionalCosts.tax);
+      const policyRate = this.toRate(additionalCosts.policy);
+      const commisionRate = this.toRate(additionalCosts.commision);
+      const pettyCashRate = this.toRate(additionalCosts.pettyCash);
+      const utilityRate = this.toRate(additionalCosts.utility);
+
       const otherCost = {
-        impuesto: additionalCosts.tax * total * 1.5390,
-        poliza: additionalCosts.policy * total * 1.5390,
-        comision: additionalCosts.commision * total * 1.3317,
-        caja_menor: additionalCosts.pettyCash * total * 1.5390,
+        impuesto: taxRate * total * 1.5390,
+        poliza: policyRate * total * 1.5390,
+        comision: commisionRate * total * 1.3317,
+        caja_menor: pettyCashRate * total * 1.5390,
         sisos: additionalCosts.sisoValue,
         perDiem: additionalCosts.perDiem,
-        utility: additionalCosts.utility
+        utility: utilityRate
       };
 
       const totalByQuotationItem = quotationItemDetails.reduce((acc: { [key: number]: number }, item) => {
@@ -1523,10 +1844,10 @@ export class QuotationService {
         };
       });
 
-      percentage.administration = percentage.administration ? parseFloat(String(percentage.administration)) : 0;
-      percentage.unforeseen = percentage.unforeseen ? parseFloat(String(percentage.unforeseen)) : 0;
-      percentage.utility = percentage.utility ? parseFloat(String(percentage.utility)) : 0;
-      percentage.vat = percentage.vat ? parseFloat(String(percentage.vat)) : 0;
+      percentage.administration = this.toRate(percentage.administration);
+      percentage.unforeseen = this.toRate(percentage.unforeseen);
+      percentage.utility = this.toRate(percentage.utility);
+      percentage.vat = this.toRate(percentage.vat);
 
       const sumPercents = parseFloat(String(percentage.administration)) +
         parseFloat(String(percentage.unforeseen)) +
@@ -1563,8 +1884,8 @@ export class QuotationService {
           + (unitValueAIU * percentage.utility) * percentage.vat)
       };
 
-      //const directCost = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost), 0);
-      const directCost = summaryByItem.reduce((acc, item) => acc + item.totalCost, 0);
+      const directCost = quotationItemDetails.reduce((acc, item) => acc + parseFloat(item.totalCost), 0);
+      // const directCost = summaryByItem.reduce((acc, item) => acc + item.totalCost, 0);
 
       const quotationAdditionalCost = {
         perDiem: String(otherCost.perDiem),

@@ -28,6 +28,27 @@ export class PurchaseController {
     });
   };
 
+  findPurchaseRequestBySupplier = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.findPurchaseRequestBySupplierSchema.safeParse({
+      ...req.params,
+      ...req.query,
+    });
+
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const response = await this.purchaseService.findPurchaseRequestBySupplier(request.data);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
   findAllPurchaseRequestDetail = async (req: Request, res: Response): Promise<void> => {
     const request = schemas.findAllPurchaseRequestDetailSchema.safeParse(req.query);
     if (!request.success) {
@@ -262,6 +283,29 @@ export class PurchaseController {
     };
 
     const response = await this.purchaseService.updatePurchaseRequest(requestData);
+    res.status(response.code).json({
+      status: response.status,
+      data: response.data
+    });
+  };
+
+  updatePurchaseRequestStatus = async (req: Request, res: Response): Promise<void> => {
+    const request = schemas.updatePurchaseRequestStatusSchema.safeParse(req.body);
+    if (!request.success) {
+      res.status(StatusCode.BadRequest).json({
+        status: StatusValue.Failed,
+        data: { error: formatZodError(request.error) }
+      });
+      return;
+    }
+
+    const updates = Array.isArray(request.data)
+      ? request.data
+      : "updates" in request.data
+        ? request.data.updates
+        : [request.data];
+
+    const response = await this.purchaseService.updatePurchaseRequestStatus(updates);
     res.status(response.code).json({
       status: response.status,
       data: response.data

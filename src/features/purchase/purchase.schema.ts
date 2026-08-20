@@ -18,9 +18,18 @@ export const findAllPurchaseRequestSchema = z.object({
   consecutive: z.string().optional(),
   purchaseRequest: z.string().optional(),
   idInput: z.coerce.number().optional(),
+  idExpenditure: z.coerce.number().optional(),
   idWarehouse: z.coerce.number().optional(),
   idSupplier: z.coerce.number().optional(),
+  idPurchaseRequestStatus: z.coerce.number().optional(),
   isActive: z.coerce.boolean().optional(),
+});
+
+export const findPurchaseRequestBySupplierSchema = z.object({
+  idSupplier: z.coerce.number(),
+  idPurchaseRequestStatus: z.coerce.number().optional(),
+  page: z.coerce.number().optional(),
+  pageSize: z.coerce.number().optional(),
 });
 
 export const findAllPurchaseRequestDetailSchema = z.object({
@@ -40,6 +49,7 @@ export const createPurchaseRequestSchema = z.object({
   consecutive: z.string().optional(),
   documentUrl: z.string().optional(),
   idInput: z.coerce.number().optional(),
+  idExpenditure: z.coerce.number().optional(),
   idWarehouse: z.coerce.number().optional(),
   idSupplier: z.coerce.number().optional(),
   purchaseRequest: z.string().optional(),
@@ -52,6 +62,7 @@ export const createPurchaseRequestSchema = z.object({
 export const createPurchaseRequestWithItemsSchema = z.object({
   isActive: z.coerce.boolean().optional(),
   purchaseRequest: z.string().optional(),
+  idExpenditure: z.coerce.number().optional(),
   idWarehouse: z.coerce.number().optional(),
   idSupplier: z.coerce.number().optional(),
   items: z.array(z.object({
@@ -117,6 +128,7 @@ export const updatePurchaseRequestSchema = z.object({
   consecutive: z.string().optional(),
   documentUrl: z.string().optional(),
   idInput: z.coerce.number().optional(),
+  idExpenditure: z.coerce.number().optional(),
   idWarehouse: z.coerce.number().optional(),
   idSupplier: z.coerce.number().optional(),
   purchaseRequest: z.string().optional(),
@@ -125,6 +137,17 @@ export const updatePurchaseRequestSchema = z.object({
   requestDocumentUrl: z.string().optional(),
   isActive: z.coerce.boolean().optional(),
 });
+
+const updatePurchaseRequestStatusItemSchema = z.object({
+  idPurchaseRequest: z.coerce.number().int().positive(),
+  idPurchaseRequestStatus: z.coerce.number().int().positive(),
+});
+
+export const updatePurchaseRequestStatusSchema = z.union([
+  updatePurchaseRequestStatusItemSchema,
+  z.array(updatePurchaseRequestStatusItemSchema).min(1),
+  z.object({ updates: z.array(updatePurchaseRequestStatusItemSchema).min(1) }),
+]);
 
 export const updatePurchaseRequestDetailSchema = z.object({
   idPurchaseRequestDetail: z.coerce.number(),

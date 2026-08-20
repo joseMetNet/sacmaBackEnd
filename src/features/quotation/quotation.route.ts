@@ -34,6 +34,7 @@ export function quotationRoute(app: Application): void {
   router.post("/v1/quotation/generate-docx/:idQuotation", quotationController.generateQuotationDocx);
   router.post("/v1/quotation/generate-docx-suministro-mano-obra/:idQuotation", quotationController.generateQuotationSupplyLaborDocx);
   router.post("/v1/quotation/generate-docx-suministro-mano-obra-v2/:idQuotation", quotationController.generateQuotationSupplyLaborDocxV2);
+  router.post("/v1/quotation/generate-docx-suministro-mano-obra-v3/:idQuotation", quotationController.generateQuotationSupplyLaborDocxV3);
 
   // PATCH routes
   router.patch("/v1/quotation", quotationController.updateQuotation);

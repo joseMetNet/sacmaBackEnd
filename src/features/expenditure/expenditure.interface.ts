@@ -20,6 +20,8 @@ export interface FindAllExpenditureItemDTO {
 export interface CreateDTO {
   idExpenditureType: number;
   idCostCenterProject?: number;
+  idSupplier?: number;
+  idPurchaseRequest?: number;
   description: string;
   value: string;
   documentUrl?: string;
@@ -51,6 +53,8 @@ export interface UpdateDTO {
   idExpenditure: number;
   idExpenditureType?: number;
   idCostCenterProject?: number;
+  idSupplier?: number;
+  idPurchaseRequest?: number;
   description?: string;
   value?: string;
   documentUrl?: string;
